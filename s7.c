@@ -2020,9 +2020,9 @@ static s7_scheme *cur_sc = NULL;
 #define is_gensym(p)                  ((typeflag(_TSym(p)) & T_GENSYM) != 0)
 /* symbol is from gensym (GC-able etc) */
 
-#define T_SIMPLE_ARGS                 T_GENSYM
-#define has_simple_args(p)            ((typeflag(_TPair(p)) & T_SIMPLE_ARGS) != 0)
-#define set_simple_args(p)            typeflag(_TPair(p)) |= T_SIMPLE_ARGS
+#define T_SIMPLE_ARG_DEFAULTS         T_GENSYM
+#define has_simple_arg_defaults(p)    ((typeflag(_TPair(p)) & T_SIMPLE_ARG_DEFAULTS) != 0)
+#define set_simple_arg_defaults(p)    typeflag(_TPair(p)) |= T_SIMPLE_ARG_DEFAULTS
 /* are all lambda* default values simple? */
 
 #define T_LIST_IN_USE                 T_GENSYM
@@ -35310,16 +35310,6 @@ static bool arglist_has_rest(s7_scheme *sc, s7_pointer args)
 }
 
 
-static bool arglist_has_keyword(s7_pointer args)
-{
-  s7_pointer p;
-  for (p = args; is_pair(p); p = cdr(p))
-    if (is_keyword(car(p)))
-      return(true);
-  return(false);
-}
-
-
 /* -------- sort! -------- */
 
 #if (!WITH_GMP)
@@ -55663,7 +55653,7 @@ static opt_t optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
   if (is_closure_star(func))
     {
       if ((is_proper_list(sc, closure_args(func))) &&
-	  (has_simple_args(closure_body(func))))
+	  (has_simple_arg_defaults(closure_body(func))))
 	{
 	  set_unsafe_optimize_op(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR));
 	  set_opt_lambda(expr, func);
@@ -55977,9 +55967,8 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	      return(OPT_F);
 	    }
 	  if ((is_closure_star(func)) &&
-	      (has_simple_args(closure_body(func))) &&
+	      (has_simple_arg_defaults(closure_body(func))) &&
 	      (closure_star_arity_to_int(sc, func) >= 1) &&
-	      (!arglist_has_keyword(cdr(expr))) &&
 	      (!arglist_has_rest(sc, closure_args(func))))
 	    {
 	      set_unsafely_optimized(expr);
@@ -56263,7 +56252,15 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
   if (is_closure_star(func))
     {
       bool safe_case;
-      if ((!has_simple_args(closure_body(func))) ||
+#if 0
+      fprintf(stderr, "%s: %d %d %d %d %d\n", DISPLAY(expr), 
+	      has_simple_arg_defaults(closure_body(func)), 
+	      is_null(closure_args(func)), 
+	      is_safe_closure(func),
+	      arglist_has_rest(sc, closure_args(func)), 
+	      all_x_count(sc, expr));
+#endif
+      if ((!has_simple_arg_defaults(closure_body(func))) ||
 	  (is_null(closure_args(func))))
 	return(OPT_F);
       safe_case = is_safe_closure(func);
@@ -56417,9 +56414,8 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	      return(OPT_F);
 	    }
 	  if ((is_closure_star(func)) &&
-	      (has_simple_args(closure_body(func))) &&
+	      (has_simple_arg_defaults(closure_body(func))) &&
 	      (closure_star_arity_to_int(sc, func) >= 2) &&
-	      (!arglist_has_keyword(cdr(expr))) &&
 	      (!arglist_has_rest(sc, closure_args(func))))
 	    {
 	      set_unsafely_optimized(expr);
@@ -56959,9 +56955,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 
   if (is_closure_star(func))
     {
-      if (((!has_simple_args(closure_body(func))) ||
-	   (closure_star_arity_to_int(sc, func) < 2) ||
-	   (arglist_has_keyword(cdr(expr)))))
+      if (!has_simple_arg_defaults(closure_body(func)))
 	return(OPT_F);
 
       if ((!arglist_has_rest(sc, closure_args(func))) &&
@@ -57028,9 +57022,8 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 	      return(OPT_F);
 	    }
 	  if ((is_closure_star(func)) &&
-	      (has_simple_args(closure_body(func))) &&
+	      (has_simple_arg_defaults(closure_body(func))) &&
 	      (closure_star_arity_to_int(sc, func) >= 3) &&
-	      (!arglist_has_keyword(cdr(expr))) &&
 	      (!arglist_has_rest(sc, closure_args(func))))
 	    {
 	      set_unsafely_optimized(expr);
@@ -57374,9 +57367,8 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 
   if (is_closure_star(func))
     {
-      if ((!has_simple_args(closure_body(func))) ||
+      if ((!has_simple_arg_defaults(closure_body(func))) ||
 	  (closure_star_arity_to_int(sc, func) < 3) ||
-	  (arglist_has_keyword(cdr(expr))) ||
 	  (arglist_has_rest(sc, closure_args(func))))
 	return(OPT_F);
 
@@ -57507,9 +57499,8 @@ static opt_t optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
     }
 
   if ((is_closure_star(func)) &&
-      ((!has_simple_args(closure_body(func))) ||
-       (closure_star_arity_to_int(sc, func) < args) ||
-       (arglist_has_keyword(cdr(expr)))))
+      ((!has_simple_arg_defaults(closure_body(func))) ||
+       (closure_star_arity_to_int(sc, func) < args)))
     return(OPT_F);
 
   if (args < GC_TRIGGER_SIZE)
@@ -59044,6 +59035,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
       body_t result;
       slist *sargs = NULL;
       s7_pointer p;
+
       clear_symbol_list(sc);
       for (p = args; is_pair(p); p = cdr(p))
 	{
@@ -59056,10 +59048,11 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
       result = body_is_safe(sc, func, body, sargs, true);
       if (result == VERY_SAFE_BODY)
 	set_all_locals(sc, body, sargs);
-      /* fprintf(stderr, "%s: %d\n", DISPLAY(func), result); */
-      free_syms(sargs);
 
+      free_syms(sargs);
+      sc->cycle_counter = 0;
       clear_symbol_list(sc);  /* tracks locals */
+
       if (is_symbol(func))    /* func can be sc->gc_nil (see check_lambda and check_lambda_star) */
  	{
  	  s7_pointer lst;
@@ -59077,8 +59070,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	}
 
       /* if the body is safe, we can optimize the calling sequence */
-      if ((result != UNSAFE_BODY) &&
-	  (!arglist_has_rest(sc, args)))
+      if (!arglist_has_rest(sc, args))
 	{
 	  if (!unstarred_lambda)
 	    {
@@ -59100,15 +59092,11 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 		    }
 		}
 	      if (happy)
-		set_simple_args(body);
+		set_simple_arg_defaults(body);
 	    }
-	  sc->cycle_counter = 0;
-	  if ((unstarred_lambda) || (has_simple_args(body)))
-	    {
-	      set_safe_closure(body);
-	      /* this bit is set on the function itself in make_closure and friends */
-	      /* if result is VERY_SAFE_BODY, walk the body changing symbol lookups of known-safe-locals to local_slot accesses */
-	    }
+	  if (result != UNSAFE_BODY)
+	    set_safe_closure(body);
+	  /* this bit is set on the function itself in make_closure and friends */
 	}
     }
   return(NULL);
@@ -60439,74 +60427,6 @@ static void define_funchecked(s7_scheme *sc)
 }
 
 		    
-static int lambda_star_default(s7_scheme *sc)
-{
-  while (true)
-    {
-      s7_pointer z;
-      z = sc->args;
-      if (is_slot(z))
-	{
-	  if (slot_value(z) == sc->undefined)
-	    {
-	      if (is_closure_star(sc->code))
-		{
-		  s7_pointer val;
-		  val = slot_expression(z);
-		  if (is_symbol(val))
-		    {
-		      slot_set_value(z, find_symbol_checked(sc, val));
-		      if (slot_value(z) == sc->undefined)
-			{
-			  /* the current environment here contains the function parameters which
-			   *   defaulted to #<undefined> earlier in apply_lambda_star,
-			   *   so (define (f f) (define* (f (f f)) f) (f)) (f 0) looks for the
-			   *   default f, finds itself currently undefined, and raises an error!
-			   *   So, before claiming it is unbound, we need to check outlet as well.
-			   *   But in the case above, the inner define* shadows the caller's
-			   *   parameter before checking the default arg values, so the default f
-			   *   refers to the define* -- I'm not sure this is a bug.  It means 
-			   *   that (define* (f (a f)) a) returns f: (equal? f (f)) -> #t, so
-			   *   any outer f needs an extra let and endless outlets:
-			   *   (let ((f 3)) (let () (define* (f (a ((outlet (outlet (outlet (curlet)))) 'f))) a) (f))) -> 3
-			   *   We want the shadowing once the define* is done, so the current mess is simplest.
-			   */
-			  slot_set_value(z, s7_symbol_local_value(sc, val, outlet(sc->envir)));
-			  if (slot_value(z) == sc->undefined)
-			    eval_error_no_return(sc, sc->syntax_error_symbol, "lambda* defaults: ~A is unbound", slot_symbol(z));
-			  /* but #f is default if no expr, so there's some inconsistency here */
-			}
-		    }
-		  else
-		    {
-		      if (is_pair(val))
-			{
-			  if (car(val) == sc->quote_symbol)
-			    {
-			      if ((!is_pair(cdr(val))) ||      /* (lambda* ((a (quote))) a) or (lambda* ((a (quote 1 1))) a) etc */
-				  (is_pair(cddr(val))))
-				eval_error_no_return(sc, sc->syntax_error_symbol, "lambda* default: ~A is messed up", val);
-			      slot_set_value(z, cadr(val));
-			    }
-			  else
-			    {
-			      push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code);
-			      sc->code = val;
-			      return(goto_EVAL);
-			    }
-			}
-		      else slot_set_value(z, val);
-		    }
-		}
-	      else slot_set_value(z, slot_expression(z));
-	    }
-	  sc->args = slot_pending_value(z);
-	}
-      else break;
-    }
-  return(fall_through);
-}
-
 #define unsafe_closure_2(Sc, Arg1, Arg2) \
 { \
   s7_pointer Code, Args, A1, A2; A1 = Arg1; A2 = Arg2; \
@@ -63705,7 +63625,7 @@ static int unknown_ex(s7_scheme *sc, s7_pointer f)
       
     case T_CLOSURE_STAR:
       if ((!has_methods(f)) &&
-	  (has_simple_args(closure_body(f))))
+	  (has_simple_arg_defaults(closure_body(f))))
 	return(fixup_unknown_op(sc, code, f, ((is_immutable_symbol(car(code))) ? 1 : 0) + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR)));
       break;
       
@@ -63803,7 +63723,7 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
     case T_CLOSURE_STAR:
       if ((sym_case) &&
 	  (!has_methods(f)) &&
-	  (has_simple_args(closure_body(f))) &&
+	  (has_simple_arg_defaults(closure_body(f))) &&
 	  (!is_null(closure_args(f))))
 	{
 	  set_opt_sym2(code, cadr(code));
@@ -64046,9 +63966,8 @@ static int unknown_a_ex(s7_scheme *sc, s7_pointer f)
       
     case T_CLOSURE_STAR:
       if ((!has_methods(f)) &&
-	  (has_simple_args(closure_body(f))) &&
-	  (closure_star_arity_to_int(sc, f) >= 1) &&
-	  (!arglist_has_keyword(cdr(code))))
+	  (has_simple_arg_defaults(closure_body(f))) &&
+	  (closure_star_arity_to_int(sc, f) >= 1))
 	return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
       break;
       
@@ -64117,9 +64036,8 @@ static int unknown_aa_ex(s7_scheme *sc, s7_pointer f)
       
     case T_CLOSURE_STAR:
       if ((!has_methods(f)) &&
-	  (has_simple_args(closure_body(f))) &&
-	  (closure_star_arity_to_int(sc, f) >= 2) &&
-	  (!arglist_has_keyword(cdr(code))))
+	  (has_simple_arg_defaults(closure_body(f))) &&
+	  (closure_star_arity_to_int(sc, f) >= 2))
 	return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
       break;
       
@@ -64187,9 +64105,8 @@ static int unknown_all_x_ex(s7_scheme *sc, s7_pointer f)
       
     case T_CLOSURE_STAR:
       if ((!has_methods(f)) &&
-	  (has_simple_args(closure_body(f))) &&
-	  (closure_star_arity_to_int(sc, f) >= num_args) &&
-	  (!arglist_has_keyword(cdr(code))))
+	  (has_simple_arg_defaults(closure_body(f))) &&
+	  (closure_star_arity_to_int(sc, f) >= num_args))
 	{
 	  annotate_args(sc, cdr(code), sc->envir);
 	  return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
@@ -64735,6 +64652,73 @@ static void apply_lambda(s7_scheme *sc)                            /* -------- n
       sc->temp6 = sc->nil;
     }
   sc->code = closure_body(sc->code);
+}
+
+static int lambda_star_default(s7_scheme *sc)
+{
+  while (true)
+    {
+      s7_pointer z;
+      z = sc->args;
+      if (is_slot(z))
+	{
+	  if (slot_value(z) == sc->undefined)
+	    {
+	      if (is_closure_star(sc->code))
+		{
+		  s7_pointer val;
+		  val = slot_expression(z);
+		  if (is_symbol(val))
+		    {
+		      slot_set_value(z, find_symbol_checked(sc, val));
+		      if (slot_value(z) == sc->undefined)
+			{
+			  /* the current environment here contains the function parameters which
+			   *   defaulted to #<undefined> earlier in apply_lambda_star,
+			   *   so (define (f f) (define* (f (f f)) f) (f)) (f 0) looks for the
+			   *   default f, finds itself currently undefined, and raises an error!
+			   *   So, before claiming it is unbound, we need to check outlet as well.
+			   *   But in the case above, the inner define* shadows the caller's
+			   *   parameter before checking the default arg values, so the default f
+			   *   refers to the define* -- I'm not sure this is a bug.  It means 
+			   *   that (define* (f (a f)) a) returns f: (equal? f (f)) -> #t, so
+			   *   any outer f needs an extra let and endless outlets:
+			   *   (let ((f 3)) (let () (define* (f (a ((outlet (outlet (outlet (curlet)))) 'f))) a) (f))) -> 3
+			   *   We want the shadowing once the define* is done, so the current mess is simplest.
+			   */
+			  slot_set_value(z, s7_symbol_local_value(sc, val, outlet(sc->envir)));
+			  if (slot_value(z) == sc->undefined)
+			    eval_error_no_return(sc, sc->syntax_error_symbol, "lambda* defaults: ~A is unbound", slot_symbol(z));
+			}
+		    }
+		  else
+		    {
+		      if (is_pair(val))
+			{
+			  if (car(val) == sc->quote_symbol)
+			    {
+			      if ((!is_pair(cdr(val))) ||      /* (lambda* ((a (quote))) a) or (lambda* ((a (quote 1 1))) a) etc */
+				  (is_pair(cddr(val))))
+				eval_error_no_return(sc, sc->syntax_error_symbol, "lambda* default: ~A is messed up", val);
+			      slot_set_value(z, cadr(val));
+			    }
+			  else
+			    {
+			      push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code);
+			      sc->code = val;
+			      return(goto_EVAL);
+			    }
+			}
+		      else slot_set_value(z, val);
+		    }
+		}
+	      else slot_set_value(z, slot_expression(z));
+	    }
+	  sc->args = slot_pending_value(z);
+	}
+      else break;
+    }
+  return(fall_through);
 }
 
 static int apply_lambda_star(s7_scheme *sc) 	                  /* -------- define* (lambda*) -------- */
@@ -68520,6 +68504,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_STAR_ALL_X:
 		  {
 		    s7_pointer p, old_args;
+
+		    /* fprintf(stderr, "safe *: %s\n", DISPLAY(code)); */
+
 		    sc->w = cdr(code);               /* args aren't evaluated yet */
 		    sc->args = make_list(sc, integer(arglist_length(code)), sc->F);
 		    for (p = sc->args, old_args = sc->w; is_pair(p); p = cdr(p), old_args = cdr(old_args))
@@ -68853,35 +68840,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		case HOP_CLOSURE_STAR_ALL_X:
 		  {
-		    /* here also, all the args are simple */
-		    /* (let () (define* (hi (a 1)) (list a)) (define (ho) (hi (* 2 3))) (ho))
-		     */
-		    s7_pointer args, p, func, new_args;
-		    
-		    func = opt_lambda(code);
-		    sc->args = make_list(sc, closure_star_arity_to_int(sc, func), sc->nil);
-		    new_args = sc->args;
-		    
-		    for (p = closure_args(func), args = cdr(code); is_pair(args); p = cdr(p), args = cdr(args), new_args = cdr(new_args))
-		      set_car(new_args, c_call(args)(sc, car(args)));
-		    
-		    for (; is_pair(p); p = cdr(p), new_args = cdr(new_args))
-		      {
-			s7_pointer defval;
-			if (is_pair(car(p)))
-			  {
-			    defval = cadar(p);
-			    if (is_pair(defval))
-			      set_car(new_args, cadr(defval));
-			    else set_car(new_args, defval);
-			  }
-			else set_car(new_args, sc->F);
-		      }
+		    s7_pointer p, old_args;
+
+		    /* fprintf(stderr, "unsafe *: %s\n", DISPLAY(code)); */
+
+		    sc->w = cdr(code);               /* args aren't evaluated yet */
+		    sc->args = make_list(sc, integer(arglist_length(code)), sc->F);
+		    for (p = sc->args, old_args = sc->w; is_pair(p); p = cdr(p), old_args = cdr(old_args))
+		      set_car(p, c_call(old_args)(sc, car(old_args)));
+		    sc->w = sc->nil;
 		    sc->code = opt_lambda(code);
-		    unsafe_closure_star(sc);
+		    check_stack_size(sc);
+		    sc->envir = new_frame_in_env(sc, closure_let(sc->code));
+		    if (apply_lambda_star(sc) == goto_EVAL) goto EVAL;
 		    goto BEGIN1;
 		  }
-		  
 		  
 		case OP_CLOSURE_STAR:
 		  if (!closure_star_is_ok(sc, code, MATCH_UNSAFE_CLOSURE_STAR, 0)) {if (unknown_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
@@ -68896,10 +68869,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_CLOSURE_STAR_S:
 		  if (!closure_star_is_ok(sc, code, MATCH_UNSAFE_CLOSURE_STAR, 1)) {if (unknown_g_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
 		case HOP_CLOSURE_STAR_S:
-		  sc->args = list_1(sc, find_symbol_unchecked(sc, opt_sym2(code)));
-		  fill_closure_star(sc, cdr(closure_args(opt_lambda(code))));
-		  unsafe_closure_star(sc);
-		  goto BEGIN1;
+		  {
+		    s7_pointer val;
+		    val = find_symbol_unchecked(sc, opt_sym2(code));
+		    if (is_keyword(val))
+		      s7_error(sc, sc->wrong_type_arg_symbol,
+			       set_elist_4(sc, make_string_wrapper(sc, "~A: keyword argument's value is missing: ~S in ~S"),
+					   closure_name(sc, opt_lambda(code)), val, code));
+		    sc->args = list_1(sc, val);
+		    fill_closure_star(sc, cdr(closure_args(opt_lambda(code))));
+		    unsafe_closure_star(sc);
+		    goto BEGIN1;
+		  }
 
 		  
 		  /* -------------------------------------------------------------------------------- */
