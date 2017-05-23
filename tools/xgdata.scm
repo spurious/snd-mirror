@@ -1638,8 +1638,8 @@
 (CCAST "GTK_BOX(obj)" "GtkBox*")
 (CCHK "GTK_IS_BOX(obj)" "GtkBox*")
 ;;;;(CFNC "GType gtk_box_get_type void")
-(CFNC "void gtk_box_pack_start GtkBox* box GtkWidget* child gboolean expand gboolean fill guint padding")
-(CFNC "void gtk_box_pack_end GtkBox* box GtkWidget* child gboolean expand gboolean fill guint padding")
+;;; 3.91.0 (CFNC "void gtk_box_pack_start GtkBox* box GtkWidget* child gboolean expand gboolean fill guint padding")
+;;; 3.91.0 (CFNC "void gtk_box_pack_end GtkBox* box GtkWidget* child gboolean expand gboolean fill guint padding")
 ;;; out 2.13.5 (CFNC "void gtk_box_pack_start_defaults GtkBox* box GtkWidget* widget")
 ;;; out 2.13.5 (CFNC "void gtk_box_pack_end_defaults GtkBox* box GtkWidget* widget")
 (CFNC "void gtk_box_set_homogeneous GtkBox* box gboolean homogeneous")
@@ -5512,8 +5512,8 @@
 ;;; 3.89 (CFNC "void gtk_button_set_image GtkButton* button GtkWidget* image") 
 ;;; 3.89 (CFNC "GtkWidget* gtk_button_get_image GtkButton* button") 
 ;;; 3.12? (CFNC "void gtk_dialog_set_alternative_button_order_from_array GtkDialog* dialog gint n_params gint* new_order") 
-(CFNC "void gtk_label_set_angle GtkLabel* label gdouble angle") 
-(CFNC "gdouble gtk_label_get_angle GtkLabel* label") 
+;;; 3.91.0 (CFNC "void gtk_label_set_angle GtkLabel* label gdouble angle") 
+;;; 3.91.0 (CFNC "gdouble gtk_label_get_angle GtkLabel* label") 
 
 ;;; missed earlier somehow
 (CFNC "void gtk_menu_set_screen GtkMenu* menu GdkScreen* @screen")
@@ -7640,10 +7640,10 @@
 (CFNC-3.0 "gchar* gtk_notebook_get_group_name GtkNotebook* notebook" 'const-return)
 (CFNC-3.0 "void gtk_widget_draw GtkWidget* widget cairo_t* cr")
 (CFNC-3.0 "GtkSizeRequestMode gtk_widget_get_request_mode GtkWidget* widget")
-(CFNC-3.0 "void gtk_widget_get_preferred_width GtkWidget* widget gint* [minimum_width] gint* [natural_width]")
-(CFNC-3.0 "void gtk_widget_get_preferred_height_for_width GtkWidget* widget gint width gint* [minimum_height] gint* [natural_height]")
-(CFNC-3.0 "void gtk_widget_get_preferred_height GtkWidget* widget gint* [minimum_height] gint* [natural_height]")
-(CFNC-3.0 "void gtk_widget_get_preferred_width_for_height GtkWidget* widget gint height gint* [minimum_width] gint* [natural_width]")
+;;; 3.91.0 (CFNC-3.0 "void gtk_widget_get_preferred_width GtkWidget* widget gint* [minimum_width] gint* [natural_width]")
+;;; 3.91.0 (CFNC-3.0 "void gtk_widget_get_preferred_height_for_width GtkWidget* widget gint width gint* [minimum_height] gint* [natural_height]")
+;;; 3.91.0 (CFNC-3.0 "void gtk_widget_get_preferred_height GtkWidget* widget gint* [minimum_height] gint* [natural_height]")
+;;; 3.91.0 (CFNC-3.0 "void gtk_widget_get_preferred_width_for_height GtkWidget* widget gint height gint* [minimum_width] gint* [natural_width]")
 ;(CFNC-3.0 "void gtk_widget_get_preferred_size GtkWidget* widget GtkRequisition* [minimum_size] GtkRequisition* [natural_size]")
 (CFNC-3.0 "int gtk_widget_get_allocated_width GtkWidget* widget")
 (CFNC-3.0 "int gtk_widget_get_allocated_height GtkWidget* widget")
@@ -8307,8 +8307,8 @@
 (CFNC-3.4 "gchar* gtk_entry_completion_compute_prefix GtkEntryCompletion* completion char* key" 'const)
 (CFNC-3.4 "void gtk_scale_set_has_origin GtkScale* scale gboolean has_origin")
 (CFNC-3.4 "gboolean gtk_scale_get_has_origin GtkScale* scale")
-(CFNC-3.4 "void gtk_window_set_hide_titlebar_when_maximized GtkWindow* window gboolean setting")
-(CFNC-3.4 "gboolean gtk_window_get_hide_titlebar_when_maximized GtkWindow* window")
+;;; 3.91.0 (CFNC-3.4 "void gtk_window_set_hide_titlebar_when_maximized GtkWindow* window gboolean setting")
+;;; 3.91.0 (CFNC-3.4 "gboolean gtk_window_get_hide_titlebar_when_maximized GtkWindow* window")
 (CFNC-3.4 "GtkWidget* gtk_application_window_new GtkApplication* application")
 (CFNC-3.4 "void gtk_application_window_set_show_menubar GtkApplicationWindow* window gboolean show_menubar")
 (CFNC-3.4 "gboolean gtk_application_window_get_show_menubar GtkApplicationWindow* window")
@@ -8861,8 +8861,8 @@
 ;;; 3.11.6
 ;;; gtkmodelbutton.h
 
-(CFNC-3.12 "void gtk_box_set_center_widget GtkBox* box GtkWidget* widget")
-(CFNC-3.12 "GtkWidget* gtk_box_get_center_widget GtkBox* box")
+;;; 3.91.0 (CFNC-3.12 "void gtk_box_set_center_widget GtkBox* box GtkWidget* widget")
+;;; 3.91.0 (CFNC-3.12 "GtkWidget* gtk_box_get_center_widget GtkBox* box")
 (CFNC-3.12 "void gtk_entry_set_max_width_chars GtkEntry* entry gint n_chars")
 (CFNC-3.12 "gint gtk_entry_get_max_width_chars GtkEntry* entry")
 
@@ -9583,3 +9583,10 @@
 (CFNC-3.99 "gboolean gtk_show_uri_on_window GtkWindow* parent char* uri guint32 timestamp GError** [error]" 'const)
 
 ;;; 3.90.0
+;;; 3.91.0
+
+(CFNC-3.99 "void gtk_box_pack_start GtkBox* box GtkWidget* child")
+(CFNC-3.99 "void gtk_box_pack_end GtkBox* box GtkWidget* child")
+(CFNC-3.99 "void gtk_widget_insert_after GtkWidget* widget GtkWidget* parent GtkWidget* previous_sibling")
+(CFNC-3.99 "void gtk_widget_insert_before GtkWidget* widget GtkWidget* parent GtkWidget* next_sibling")
+

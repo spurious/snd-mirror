@@ -748,6 +748,25 @@ have been evaluated (as in named let).
 <pre class="indented">
 (define* (foo (a 0) (b (+ a 4)) (c (+ a 7))) (list a b c))
 </pre>
+<p>Also CL and s7 handle keywords as values in the same way:
+</p>
+<pre class="indented">
+&gt; (defun foo (&amp;key a) a)
+<em class="gray">FOO</em>
+&gt; (defvar x :a)
+<em class="gray">X</em>
+&gt; (foo x 1)
+<em class="gray">1</em>
+</pre>
+
+<pre class="indented">
+&gt; (define* (foo a) a)
+<em class="gray">foo</em>
+&gt; (define x :a)
+<em class="gray">:a</em>
+&gt; (foo x 1)
+<em class="gray">1</em>
+</pre>
 </div>
 
 

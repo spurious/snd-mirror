@@ -4181,34 +4181,6 @@ static Xen gxg_gtk_bin_get_child(Xen bin)
   return(C_to_Xen_GtkWidget_(gtk_bin_get_child(Xen_to_C_GtkBin_(bin))));
 }
 
-static Xen gxg_gtk_box_pack_start(Xen box, Xen child, Xen expand, Xen fill, Xen padding)
-{
-  #define H_gtk_box_pack_start "void gtk_box_pack_start(GtkBox* box, GtkWidget* child, gboolean expand, \
-gboolean fill, guint padding)"
-  Xen_check_type(Xen_is_GtkBox_(box), box, 1, "gtk_box_pack_start", "GtkBox*");
-  Xen_check_type(Xen_is_GtkWidget_(child), child, 2, "gtk_box_pack_start", "GtkWidget*");
-  Xen_check_type(Xen_is_gboolean(expand), expand, 3, "gtk_box_pack_start", "gboolean");
-  Xen_check_type(Xen_is_gboolean(fill), fill, 4, "gtk_box_pack_start", "gboolean");
-  Xen_check_type(Xen_is_guint(padding), padding, 5, "gtk_box_pack_start", "guint");
-  gtk_box_pack_start(Xen_to_C_GtkBox_(box), Xen_to_C_GtkWidget_(child), Xen_to_C_gboolean(expand), Xen_to_C_gboolean(fill), 
-                     Xen_to_C_guint(padding));
-  return(Xen_false);
-}
-
-static Xen gxg_gtk_box_pack_end(Xen box, Xen child, Xen expand, Xen fill, Xen padding)
-{
-  #define H_gtk_box_pack_end "void gtk_box_pack_end(GtkBox* box, GtkWidget* child, gboolean expand, gboolean fill, \
-guint padding)"
-  Xen_check_type(Xen_is_GtkBox_(box), box, 1, "gtk_box_pack_end", "GtkBox*");
-  Xen_check_type(Xen_is_GtkWidget_(child), child, 2, "gtk_box_pack_end", "GtkWidget*");
-  Xen_check_type(Xen_is_gboolean(expand), expand, 3, "gtk_box_pack_end", "gboolean");
-  Xen_check_type(Xen_is_gboolean(fill), fill, 4, "gtk_box_pack_end", "gboolean");
-  Xen_check_type(Xen_is_guint(padding), padding, 5, "gtk_box_pack_end", "guint");
-  gtk_box_pack_end(Xen_to_C_GtkBox_(box), Xen_to_C_GtkWidget_(child), Xen_to_C_gboolean(expand), Xen_to_C_gboolean(fill), 
-                   Xen_to_C_guint(padding));
-  return(Xen_false);
-}
-
 static Xen gxg_gtk_box_set_homogeneous(Xen box, Xen homogeneous)
 {
   #define H_gtk_box_set_homogeneous "void gtk_box_set_homogeneous(GtkBox* box, gboolean homogeneous)"
@@ -18394,22 +18366,6 @@ gboolean writable)"
   return(C_to_Xen_gboolean(gtk_selection_data_targets_include_image(Xen_to_C_GtkSelectionData_(selection_data), Xen_to_C_gboolean(writable))));
 }
 
-static Xen gxg_gtk_label_set_angle(Xen label, Xen angle)
-{
-  #define H_gtk_label_set_angle "void gtk_label_set_angle(GtkLabel* label, gdouble angle)"
-  Xen_check_type(Xen_is_GtkLabel_(label), label, 1, "gtk_label_set_angle", "GtkLabel*");
-  Xen_check_type(Xen_is_gdouble(angle), angle, 2, "gtk_label_set_angle", "gdouble");
-  gtk_label_set_angle(Xen_to_C_GtkLabel_(label), Xen_to_C_gdouble(angle));
-  return(Xen_false);
-}
-
-static Xen gxg_gtk_label_get_angle(Xen label)
-{
-  #define H_gtk_label_get_angle "gdouble gtk_label_get_angle(GtkLabel* label)"
-  Xen_check_type(Xen_is_GtkLabel_(label), label, 1, "gtk_label_get_angle", "GtkLabel*");
-  return(C_to_Xen_gdouble(gtk_label_get_angle(Xen_to_C_GtkLabel_(label))));
-}
-
 static Xen gxg_gtk_menu_set_screen(Xen menu, Xen screen)
 {
   #define H_gtk_menu_set_screen "void gtk_menu_set_screen(GtkMenu* menu, GdkScreen* screen)"
@@ -25146,52 +25102,6 @@ static Xen gxg_gtk_widget_get_request_mode(Xen widget)
   return(C_to_Xen_GtkSizeRequestMode(gtk_widget_get_request_mode(Xen_to_C_GtkWidget_(widget))));
 }
 
-static Xen gxg_gtk_widget_get_preferred_width(Xen widget, Xen ignore_minimum_width, Xen ignore_natural_width)
-{
-  #define H_gtk_widget_get_preferred_width "void gtk_widget_get_preferred_width(GtkWidget* widget, gint* [minimum_width], \
-gint* [natural_width])"
-  gint ref_minimum_width;
-  gint ref_natural_width;
-  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_get_preferred_width", "GtkWidget*");
-  gtk_widget_get_preferred_width(Xen_to_C_GtkWidget_(widget), &ref_minimum_width, &ref_natural_width);
-  return(Xen_list_2(C_to_Xen_gint(ref_minimum_width), C_to_Xen_gint(ref_natural_width)));
-}
-
-static Xen gxg_gtk_widget_get_preferred_height_for_width(Xen widget, Xen width, Xen ignore_minimum_height, Xen ignore_natural_height)
-{
-  #define H_gtk_widget_get_preferred_height_for_width "void gtk_widget_get_preferred_height_for_width(GtkWidget* widget, \
-gint width, gint* [minimum_height], gint* [natural_height])"
-  gint ref_minimum_height;
-  gint ref_natural_height;
-  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_get_preferred_height_for_width", "GtkWidget*");
-  Xen_check_type(Xen_is_gint(width), width, 2, "gtk_widget_get_preferred_height_for_width", "gint");
-  gtk_widget_get_preferred_height_for_width(Xen_to_C_GtkWidget_(widget), Xen_to_C_gint(width), &ref_minimum_height, &ref_natural_height);
-  return(Xen_list_2(C_to_Xen_gint(ref_minimum_height), C_to_Xen_gint(ref_natural_height)));
-}
-
-static Xen gxg_gtk_widget_get_preferred_height(Xen widget, Xen ignore_minimum_height, Xen ignore_natural_height)
-{
-  #define H_gtk_widget_get_preferred_height "void gtk_widget_get_preferred_height(GtkWidget* widget, \
-gint* [minimum_height], gint* [natural_height])"
-  gint ref_minimum_height;
-  gint ref_natural_height;
-  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_get_preferred_height", "GtkWidget*");
-  gtk_widget_get_preferred_height(Xen_to_C_GtkWidget_(widget), &ref_minimum_height, &ref_natural_height);
-  return(Xen_list_2(C_to_Xen_gint(ref_minimum_height), C_to_Xen_gint(ref_natural_height)));
-}
-
-static Xen gxg_gtk_widget_get_preferred_width_for_height(Xen widget, Xen height, Xen ignore_minimum_width, Xen ignore_natural_width)
-{
-  #define H_gtk_widget_get_preferred_width_for_height "void gtk_widget_get_preferred_width_for_height(GtkWidget* widget, \
-gint height, gint* [minimum_width], gint* [natural_width])"
-  gint ref_minimum_width;
-  gint ref_natural_width;
-  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_get_preferred_width_for_height", "GtkWidget*");
-  Xen_check_type(Xen_is_gint(height), height, 2, "gtk_widget_get_preferred_width_for_height", "gint");
-  gtk_widget_get_preferred_width_for_height(Xen_to_C_GtkWidget_(widget), Xen_to_C_gint(height), &ref_minimum_width, &ref_natural_width);
-  return(Xen_list_2(C_to_Xen_gint(ref_minimum_width), C_to_Xen_gint(ref_natural_width)));
-}
-
 static Xen gxg_gtk_widget_get_allocated_width(Xen widget)
 {
   #define H_gtk_widget_get_allocated_width "int gtk_widget_get_allocated_width(GtkWidget* widget)"
@@ -27230,23 +27140,6 @@ static Xen gxg_gtk_scale_get_has_origin(Xen scale)
   #define H_gtk_scale_get_has_origin "gboolean gtk_scale_get_has_origin(GtkScale* scale)"
   Xen_check_type(Xen_is_GtkScale_(scale), scale, 1, "gtk_scale_get_has_origin", "GtkScale*");
   return(C_to_Xen_gboolean(gtk_scale_get_has_origin(Xen_to_C_GtkScale_(scale))));
-}
-
-static Xen gxg_gtk_window_set_hide_titlebar_when_maximized(Xen window, Xen setting)
-{
-  #define H_gtk_window_set_hide_titlebar_when_maximized "void gtk_window_set_hide_titlebar_when_maximized(GtkWindow* window, \
-gboolean setting)"
-  Xen_check_type(Xen_is_GtkWindow_(window), window, 1, "gtk_window_set_hide_titlebar_when_maximized", "GtkWindow*");
-  Xen_check_type(Xen_is_gboolean(setting), setting, 2, "gtk_window_set_hide_titlebar_when_maximized", "gboolean");
-  gtk_window_set_hide_titlebar_when_maximized(Xen_to_C_GtkWindow_(window), Xen_to_C_gboolean(setting));
-  return(Xen_false);
-}
-
-static Xen gxg_gtk_window_get_hide_titlebar_when_maximized(Xen window)
-{
-  #define H_gtk_window_get_hide_titlebar_when_maximized "gboolean gtk_window_get_hide_titlebar_when_maximized(GtkWindow* window)"
-  Xen_check_type(Xen_is_GtkWindow_(window), window, 1, "gtk_window_get_hide_titlebar_when_maximized", "GtkWindow*");
-  return(C_to_Xen_gboolean(gtk_window_get_hide_titlebar_when_maximized(Xen_to_C_GtkWindow_(window))));
 }
 
 static Xen gxg_gtk_application_window_new(Xen application)
@@ -29406,22 +29299,6 @@ static Xen gxg_gtk_popover_get_modal(Xen popover)
   #define H_gtk_popover_get_modal "gboolean gtk_popover_get_modal(GtkPopover* popover)"
   Xen_check_type(Xen_is_GtkPopover_(popover), popover, 1, "gtk_popover_get_modal", "GtkPopover*");
   return(C_to_Xen_gboolean(gtk_popover_get_modal(Xen_to_C_GtkPopover_(popover))));
-}
-
-static Xen gxg_gtk_box_set_center_widget(Xen box, Xen widget)
-{
-  #define H_gtk_box_set_center_widget "void gtk_box_set_center_widget(GtkBox* box, GtkWidget* widget)"
-  Xen_check_type(Xen_is_GtkBox_(box), box, 1, "gtk_box_set_center_widget", "GtkBox*");
-  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 2, "gtk_box_set_center_widget", "GtkWidget*");
-  gtk_box_set_center_widget(Xen_to_C_GtkBox_(box), Xen_to_C_GtkWidget_(widget));
-  return(Xen_false);
-}
-
-static Xen gxg_gtk_box_get_center_widget(Xen box)
-{
-  #define H_gtk_box_get_center_widget "GtkWidget* gtk_box_get_center_widget(GtkBox* box)"
-  Xen_check_type(Xen_is_GtkBox_(box), box, 1, "gtk_box_get_center_widget", "GtkBox*");
-  return(C_to_Xen_GtkWidget_(gtk_box_get_center_widget(Xen_to_C_GtkBox_(box))));
 }
 
 static Xen gxg_gtk_entry_set_max_width_chars(Xen entry, Xen n_chars)
@@ -32202,6 +32079,46 @@ GError** [error])"
                                                       &ref_error));
     return(Xen_list_2(result, C_to_Xen_GError_(ref_error)));
    }
+}
+
+static Xen gxg_gtk_box_pack_start(Xen box, Xen child)
+{
+  #define H_gtk_box_pack_start "void gtk_box_pack_start(GtkBox* box, GtkWidget* child)"
+  Xen_check_type(Xen_is_GtkBox_(box), box, 1, "gtk_box_pack_start", "GtkBox*");
+  Xen_check_type(Xen_is_GtkWidget_(child), child, 2, "gtk_box_pack_start", "GtkWidget*");
+  gtk_box_pack_start(Xen_to_C_GtkBox_(box), Xen_to_C_GtkWidget_(child));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_box_pack_end(Xen box, Xen child)
+{
+  #define H_gtk_box_pack_end "void gtk_box_pack_end(GtkBox* box, GtkWidget* child)"
+  Xen_check_type(Xen_is_GtkBox_(box), box, 1, "gtk_box_pack_end", "GtkBox*");
+  Xen_check_type(Xen_is_GtkWidget_(child), child, 2, "gtk_box_pack_end", "GtkWidget*");
+  gtk_box_pack_end(Xen_to_C_GtkBox_(box), Xen_to_C_GtkWidget_(child));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_widget_insert_after(Xen widget, Xen parent, Xen previous_sibling)
+{
+  #define H_gtk_widget_insert_after "void gtk_widget_insert_after(GtkWidget* widget, GtkWidget* parent, \
+GtkWidget* previous_sibling)"
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_insert_after", "GtkWidget*");
+  Xen_check_type(Xen_is_GtkWidget_(parent), parent, 2, "gtk_widget_insert_after", "GtkWidget*");
+  Xen_check_type(Xen_is_GtkWidget_(previous_sibling), previous_sibling, 3, "gtk_widget_insert_after", "GtkWidget*");
+  gtk_widget_insert_after(Xen_to_C_GtkWidget_(widget), Xen_to_C_GtkWidget_(parent), Xen_to_C_GtkWidget_(previous_sibling));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_widget_insert_before(Xen widget, Xen parent, Xen next_sibling)
+{
+  #define H_gtk_widget_insert_before "void gtk_widget_insert_before(GtkWidget* widget, GtkWidget* parent, \
+GtkWidget* next_sibling)"
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_insert_before", "GtkWidget*");
+  Xen_check_type(Xen_is_GtkWidget_(parent), parent, 2, "gtk_widget_insert_before", "GtkWidget*");
+  Xen_check_type(Xen_is_GtkWidget_(next_sibling), next_sibling, 3, "gtk_widget_insert_before", "GtkWidget*");
+  gtk_widget_insert_before(Xen_to_C_GtkWidget_(widget), Xen_to_C_GtkWidget_(parent), Xen_to_C_GtkWidget_(next_sibling));
+  return(Xen_false);
 }
 
 #endif
@@ -35840,8 +35757,6 @@ Xen_wrap_1_arg(gxg_gtk_binding_set_by_class_w, gxg_gtk_binding_set_by_class)
 Xen_wrap_1_arg(gxg_gtk_binding_set_find_w, gxg_gtk_binding_set_find)
 Xen_wrap_3_args(gxg_gtk_binding_entry_remove_w, gxg_gtk_binding_entry_remove)
 Xen_wrap_1_arg(gxg_gtk_bin_get_child_w, gxg_gtk_bin_get_child)
-Xen_wrap_5_args(gxg_gtk_box_pack_start_w, gxg_gtk_box_pack_start)
-Xen_wrap_5_args(gxg_gtk_box_pack_end_w, gxg_gtk_box_pack_end)
 Xen_wrap_2_args(gxg_gtk_box_set_homogeneous_w, gxg_gtk_box_set_homogeneous)
 Xen_wrap_1_arg(gxg_gtk_box_get_homogeneous_w, gxg_gtk_box_get_homogeneous)
 Xen_wrap_2_args(gxg_gtk_box_set_spacing_w, gxg_gtk_box_set_spacing)
@@ -37380,8 +37295,6 @@ Xen_wrap_1_arg(gxg_gtk_label_get_single_line_mode_w, gxg_gtk_label_get_single_li
 Xen_wrap_2_args(gxg_gtk_progress_bar_set_ellipsize_w, gxg_gtk_progress_bar_set_ellipsize)
 Xen_wrap_1_arg(gxg_gtk_progress_bar_get_ellipsize_w, gxg_gtk_progress_bar_get_ellipsize)
 Xen_wrap_2_args(gxg_gtk_selection_data_targets_include_image_w, gxg_gtk_selection_data_targets_include_image)
-Xen_wrap_2_args(gxg_gtk_label_set_angle_w, gxg_gtk_label_set_angle)
-Xen_wrap_1_arg(gxg_gtk_label_get_angle_w, gxg_gtk_label_get_angle)
 Xen_wrap_2_args(gxg_gtk_menu_set_screen_w, gxg_gtk_menu_set_screen)
 Xen_wrap_3_args(gxg_pango_attr_underline_color_new_w, gxg_pango_attr_underline_color_new)
 Xen_wrap_3_args(gxg_pango_attr_strikethrough_color_new_w, gxg_pango_attr_strikethrough_color_new)
@@ -38122,10 +38035,6 @@ Xen_wrap_2_args(gxg_gtk_notebook_set_group_name_w, gxg_gtk_notebook_set_group_na
 Xen_wrap_1_arg(gxg_gtk_notebook_get_group_name_w, gxg_gtk_notebook_get_group_name)
 Xen_wrap_2_args(gxg_gtk_widget_draw_w, gxg_gtk_widget_draw)
 Xen_wrap_1_arg(gxg_gtk_widget_get_request_mode_w, gxg_gtk_widget_get_request_mode)
-Xen_wrap_3_optional_args(gxg_gtk_widget_get_preferred_width_w, gxg_gtk_widget_get_preferred_width)
-Xen_wrap_4_optional_args(gxg_gtk_widget_get_preferred_height_for_width_w, gxg_gtk_widget_get_preferred_height_for_width)
-Xen_wrap_3_optional_args(gxg_gtk_widget_get_preferred_height_w, gxg_gtk_widget_get_preferred_height)
-Xen_wrap_4_optional_args(gxg_gtk_widget_get_preferred_width_for_height_w, gxg_gtk_widget_get_preferred_width_for_height)
 Xen_wrap_1_arg(gxg_gtk_widget_get_allocated_width_w, gxg_gtk_widget_get_allocated_width)
 Xen_wrap_1_arg(gxg_gtk_widget_get_allocated_height_w, gxg_gtk_widget_get_allocated_height)
 Xen_wrap_1_arg(gxg_gtk_widget_get_halign_w, gxg_gtk_widget_get_halign)
@@ -38367,8 +38276,6 @@ Xen_wrap_2_args(gxg_gtk_application_set_menubar_w, gxg_gtk_application_set_menub
 Xen_wrap_2_args(gxg_gtk_entry_completion_compute_prefix_w, gxg_gtk_entry_completion_compute_prefix)
 Xen_wrap_2_args(gxg_gtk_scale_set_has_origin_w, gxg_gtk_scale_set_has_origin)
 Xen_wrap_1_arg(gxg_gtk_scale_get_has_origin_w, gxg_gtk_scale_get_has_origin)
-Xen_wrap_2_args(gxg_gtk_window_set_hide_titlebar_when_maximized_w, gxg_gtk_window_set_hide_titlebar_when_maximized)
-Xen_wrap_1_arg(gxg_gtk_window_get_hide_titlebar_when_maximized_w, gxg_gtk_window_get_hide_titlebar_when_maximized)
 Xen_wrap_1_arg(gxg_gtk_application_window_new_w, gxg_gtk_application_window_new)
 Xen_wrap_2_args(gxg_gtk_application_window_set_show_menubar_w, gxg_gtk_application_window_set_show_menubar)
 Xen_wrap_1_arg(gxg_gtk_application_window_get_show_menubar_w, gxg_gtk_application_window_get_show_menubar)
@@ -38629,8 +38536,6 @@ Xen_wrap_2_args(gxg_gtk_popover_set_position_w, gxg_gtk_popover_set_position)
 Xen_wrap_1_arg(gxg_gtk_popover_get_position_w, gxg_gtk_popover_get_position)
 Xen_wrap_2_args(gxg_gtk_popover_set_modal_w, gxg_gtk_popover_set_modal)
 Xen_wrap_1_arg(gxg_gtk_popover_get_modal_w, gxg_gtk_popover_get_modal)
-Xen_wrap_2_args(gxg_gtk_box_set_center_widget_w, gxg_gtk_box_set_center_widget)
-Xen_wrap_1_arg(gxg_gtk_box_get_center_widget_w, gxg_gtk_box_get_center_widget)
 Xen_wrap_2_args(gxg_gtk_entry_set_max_width_chars_w, gxg_gtk_entry_set_max_width_chars)
 Xen_wrap_1_arg(gxg_gtk_entry_get_max_width_chars_w, gxg_gtk_entry_get_max_width_chars)
 Xen_wrap_1_arg(gxg_gdk_device_get_last_event_window_w, gxg_gdk_device_get_last_event_window)
@@ -38955,6 +38860,10 @@ Xen_wrap_1_arg(gxg_gtk_widget_get_next_sibling_w, gxg_gtk_widget_get_next_siblin
 Xen_wrap_1_arg(gxg_gtk_widget_get_prev_sibling_w, gxg_gtk_widget_get_prev_sibling)
 Xen_wrap_2_args(gxg_gtk_widget_set_focus_child_w, gxg_gtk_widget_set_focus_child)
 Xen_wrap_4_optional_args(gxg_gtk_show_uri_on_window_w, gxg_gtk_show_uri_on_window)
+Xen_wrap_2_args(gxg_gtk_box_pack_start_w, gxg_gtk_box_pack_start)
+Xen_wrap_2_args(gxg_gtk_box_pack_end_w, gxg_gtk_box_pack_end)
+Xen_wrap_3_args(gxg_gtk_widget_insert_after_w, gxg_gtk_widget_insert_after)
+Xen_wrap_3_args(gxg_gtk_widget_insert_before_w, gxg_gtk_widget_insert_before)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -39698,7 +39607,7 @@ Xen_wrap_1_arg(gxg_GTK_IS_SHORTCUT_LABEL_w, gxg_GTK_IS_SHORTCUT_LABEL)
 
 #if HAVE_SCHEME
 static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_gtk_enum_t, s_pair_false;
-static s7_pointer pl_t, pl_tts, pl_tti, pl_b, pl_g, pl_btiib, pl_bti, pl_bt, pl_tb, pl_tg, pl_i, pl_tiu, pl_itiiub, pl_itsub, pl_itstttg, pl_itgiiut, pl_ti, pl_it, pl_s, pl_tsu, pl_tsb, pl_st, pl_tsig, pl_ts, pl_tsi, pl_tsiu, pl_tsiiuui, pl_tsiuui, pl_p, pl_tusiuiuit, pl_tuuiu, pl_tussu, pl_tuuuggu, pl_tuuggu, pl_tugiis, pl_tubu, pl_tuurru, pl_tuurrrrgr, pl_tuurrrrg, pl_tuuur, pl_tusg, pl_tuuuui, pl_tugiiu, pl_tuusb, pl_tugui, pl_tuuugi, pl_tuuuub, pl_tuttti, pl_tuuttti, pl_tuisi, pl_tugb, pl_tugs, pl_tugug, pl_turgs, pl_tubi, pl_tuttigsi, pl_tuiiiiui, pl_tuurb, pl_tuuiiiirrrrg, pl_tuuiiiirrrrgi, pl_tuiggu, pl_turrrb, pl_tuubbi, pl_tuubbig, pl_pt, pl_tuuti, pl_tubbi, pl_tuti, pl_tutti, pl_tutui, pl_tutisi, pl_tuuri, pl_tuusit, pl_tuurbr, pl_tuugi, pl_tuit, pl_tusr, pl_tusrt, pl_tusi, pl_turt, pl_tuui, pl_tut, pl_tuur, pl_tuig, pl_tur, pl_tub, pl_tui, pl_tu, pl_tus, pl_tusb, pl_tuuut, pl_tug, pl_tutb, pl_tust, pl_tuub, pl_tuus, pl_tuug, pl_tuibu, pl_tuut, pl_tuuig, pl_tuguig, pl_tuubr, pl_tuuub, pl_tuuiuui, pl_tugu, pl_tuuir, pl_tugr, pl_tugi, pl_tuuui, pl_tuib, pl_tusu, pl_tuusi, pl_tugt, pl_tuis, pl_tubiiiu, pl_tuiu, pl_tusiis, pl_tuiiu, pl_tuuug, pl_tusuig, pl_tuuubr, pl_big, pl_bi, pl_igi, pl_gi, pl_bsu, pl_bsigb, pl_sg, pl_gs, pl_bur, pl_buug, pl_buut, pl_buigu, pl_buuti, pl_butib, pl_buiuig, pl_buuusuug, pl_buuit, pl_buti, pl_butti, pl_busi, pl_buusib, pl_busib, pl_buuuub, pl_buuub, pl_buttu, pl_busgu, pl_buurbr, pl_buui, pl_buus, pl_buuui, pl_bug, pl_bu, pl_bus, pl_bui, pl_busu, pl_but, pl_buib, pl_buiu, pl_bub, pl_buub, pl_pb, pl_buig, pl_buuig, pl_gussitu, pl_gurrsiu, pl_gus, pl_guut, pl_guuut, pl_guugbuut, pl_pgr, pl_pgu, pl_pgi, pl_gug, pl_pgbi, pl_gu, pl_pg, pl_gui, pl_iiit, pl_iit, pl_isigutttiiu, pl_isi, pl_isgt, pl_sig, pl_si, pl_is, pl_iur, pl_iugi, pl_iuisi, pl_iuuui, pl_iuuuui, pl_iuis, pl_iug, pl_pit, pl_piu, pl_ius, pl_iusi, pl_iu, pl_iuui, pl_pi, pl_iui, pl_iuisut, pl_prrru, pl_dust, pl_dut, pl_du, pl_dusr, pl_dus, pl_pr, pl_ssig, pl_ssi, pl_psgi, pl_suiig, pl_sug, pl_psiuub, pl_psgbiiiit, pl_psrrrb, pl_sui, pl_suuub, pl_psu, pl_psb, pl_su, pl_sus, pl_ps, pl_psg, pl_psi, pl_psugt, pl_psiu, pl_psiiuusu, pl_psut, pl_pur, pl_puit, pl_puuui, pl_pusiig, pl_pusiigu, pl_pusiiugu, pl_puuiig, pl_puur, pl_purru, pl_puiiui, pl_pugi, pl_puuig, pl_puttiiiu, pl_pubi, pl_puiig, pl_puiigi, pl_puigu, pl_puuusuug, pl_pusi, pl_pusiu, pl_putu, pl_puri, pl_pusub, pl_pust, pl_pub, pl_puuiu, pl_pugiiu, pl_pusu, pl_pu, pl_puuubu, pl_puiiu, pl_pugu, pl_puutuuiu, pl_puutu, pl_pui, pl_pussu, pl_puibu, pl_pus, pl_pug, pl_put, pl_pusigu, pl_pusig, pl_puui, pl_puiu, pl_pusiuiu, pl_pusiuibu, pl_pusiiu, pl_puuiiu, pl_bpt;
+static s7_pointer pl_t, pl_tts, pl_tti, pl_b, pl_btiib, pl_bti, pl_bt, pl_tb, pl_g, pl_tg, pl_i, pl_tiu, pl_itiiub, pl_itsub, pl_itstttg, pl_itgiiut, pl_ti, pl_it, pl_s, pl_tsu, pl_tsb, pl_st, pl_tsig, pl_ts, pl_tsi, pl_tsiu, pl_tsiiuui, pl_tsiuui, pl_p, pl_tusiuiuit, pl_tuuiu, pl_tussu, pl_tuuuggu, pl_tuuggu, pl_tugiis, pl_tubu, pl_tuurru, pl_tuurrrrgr, pl_tuurrrrg, pl_tuuur, pl_tusg, pl_tuuuui, pl_tugiiu, pl_tuusb, pl_tugui, pl_tuuugi, pl_tuuuub, pl_tuttti, pl_tuuttti, pl_tuisi, pl_tugb, pl_tugs, pl_tugug, pl_turgs, pl_tubi, pl_tuttigsi, pl_tuiiiiui, pl_tuurb, pl_tuuiiiirrrrg, pl_tuuiiiirrrrgi, pl_tuiggu, pl_turrrb, pl_tuubbig, pl_pt, pl_tuuti, pl_tubbi, pl_tuti, pl_tutti, pl_tutui, pl_tutisi, pl_tuuri, pl_tuusit, pl_tuurbr, pl_tuugi, pl_tuit, pl_tusr, pl_tusrt, pl_tusi, pl_turt, pl_tuui, pl_tut, pl_tuur, pl_tuig, pl_tur, pl_tub, pl_tui, pl_tu, pl_tus, pl_tusb, pl_tuuut, pl_tug, pl_tutb, pl_tust, pl_tuub, pl_tuus, pl_tuug, pl_tuibu, pl_tuut, pl_tuuig, pl_tuguig, pl_tuubr, pl_tuuub, pl_tuuiuui, pl_tugu, pl_tuuir, pl_tugr, pl_tugi, pl_tuuui, pl_tuib, pl_tusu, pl_tuusi, pl_tugt, pl_tuis, pl_tubiiiu, pl_tuiu, pl_tusiis, pl_tuiiu, pl_tuuug, pl_tusuig, pl_tuuubr, pl_big, pl_bi, pl_igi, pl_gi, pl_bsu, pl_bsigb, pl_bur, pl_buug, pl_buut, pl_buigu, pl_buuti, pl_butib, pl_buiuig, pl_buuusuug, pl_buuit, pl_buti, pl_butti, pl_busi, pl_buusib, pl_busib, pl_buuuub, pl_buuub, pl_buttu, pl_busgu, pl_buurbr, pl_buui, pl_buus, pl_buuui, pl_bug, pl_bu, pl_bus, pl_bui, pl_busu, pl_but, pl_buib, pl_buiu, pl_bub, pl_buub, pl_pb, pl_buig, pl_buuig, pl_sg, pl_gs, pl_gussitu, pl_gurrsiu, pl_gus, pl_guut, pl_guuut, pl_guugbuut, pl_pgr, pl_pgu, pl_pgi, pl_gug, pl_pgbi, pl_gu, pl_pg, pl_gui, pl_iiit, pl_iit, pl_isigutttiiu, pl_isi, pl_isgt, pl_sig, pl_si, pl_is, pl_iur, pl_iugi, pl_iuisi, pl_iuuui, pl_iuuuui, pl_iuis, pl_iug, pl_pit, pl_piu, pl_ius, pl_iusi, pl_iu, pl_iuui, pl_pi, pl_iui, pl_iuisut, pl_prrru, pl_dust, pl_dut, pl_du, pl_dusr, pl_dus, pl_pr, pl_ssig, pl_ssi, pl_psgi, pl_suiig, pl_sug, pl_psiuub, pl_psgbiiiit, pl_psrrrb, pl_sui, pl_suuub, pl_psu, pl_psb, pl_su, pl_sus, pl_ps, pl_psg, pl_psi, pl_psugt, pl_psiu, pl_psiiuusu, pl_psut, pl_pur, pl_puit, pl_puuui, pl_pusiig, pl_pusiigu, pl_pusiiugu, pl_puuiig, pl_puur, pl_purru, pl_puiiui, pl_pugi, pl_puuig, pl_puttiiiu, pl_pubi, pl_puiig, pl_puiigi, pl_puigu, pl_puuusuug, pl_pusi, pl_pusiu, pl_putu, pl_puri, pl_pusub, pl_pust, pl_pub, pl_puuiu, pl_pugiiu, pl_pusu, pl_pu, pl_puuubu, pl_puiiu, pl_pugu, pl_puutuuiu, pl_puutu, pl_pui, pl_pussu, pl_puibu, pl_pus, pl_pug, pl_put, pl_pusigu, pl_pusig, pl_puui, pl_puiu, pl_pusiuiu, pl_pusiuibu, pl_pusiiu, pl_puuiiu, pl_bpt;
 #endif
 
 static void define_functions(void)
@@ -39724,11 +39633,11 @@ static void define_functions(void)
   pl_tts = s7_make_circular_signature(s7, 2, 3, s_any, s_any, s_string);
   pl_tti = s7_make_circular_signature(s7, 2, 3, s_any, s_any, s_integer);
   pl_b = s7_make_circular_signature(s7, 0, 1, s_boolean);
-  pl_g = s7_make_circular_signature(s7, 0, 1, s_gtk_enum_t);
   pl_btiib = s7_make_circular_signature(s7, 4, 5, s_boolean, s_any, s_integer, s_integer, s_boolean);
   pl_bti = s7_make_circular_signature(s7, 2, 3, s_boolean, s_any, s_integer);
   pl_bt = s7_make_circular_signature(s7, 1, 2, s_boolean, s_any);
   pl_tb = s7_make_circular_signature(s7, 1, 2, s_any, s_boolean);
+  pl_g = s7_make_circular_signature(s7, 0, 1, s_gtk_enum_t);
   pl_tg = s7_make_circular_signature(s7, 1, 2, s_any, s_gtk_enum_t);
   pl_i = s7_make_circular_signature(s7, 0, 1, s_integer);
   pl_tiu = s7_make_circular_signature(s7, 2, 3, s_any, s_integer, s_pair_false);
@@ -39782,7 +39691,6 @@ static void define_functions(void)
   pl_tuuiiiirrrrgi = s7_make_circular_signature(s7, 12, 13, s_any, s_pair_false, s_pair_false, s_integer, s_integer, s_integer, s_integer, s_real, s_real, s_real, s_real, s_gtk_enum_t, s_integer);
   pl_tuiggu = s7_make_circular_signature(s7, 5, 6, s_any, s_pair_false, s_integer, s_gtk_enum_t, s_gtk_enum_t, s_pair_false);
   pl_turrrb = s7_make_circular_signature(s7, 5, 6, s_any, s_pair_false, s_real, s_real, s_real, s_boolean);
-  pl_tuubbi = s7_make_circular_signature(s7, 5, 6, s_any, s_pair_false, s_pair_false, s_boolean, s_boolean, s_integer);
   pl_tuubbig = s7_make_circular_signature(s7, 6, 7, s_any, s_pair_false, s_pair_false, s_boolean, s_boolean, s_integer, s_gtk_enum_t);
   pl_pt = s7_make_circular_signature(s7, 1, 2, s_pair, s_any);
   pl_tuuti = s7_make_circular_signature(s7, 4, 5, s_any, s_pair_false, s_pair_false, s_any, s_integer);
@@ -39847,8 +39755,6 @@ static void define_functions(void)
   pl_gi = s7_make_circular_signature(s7, 1, 2, s_gtk_enum_t, s_integer);
   pl_bsu = s7_make_circular_signature(s7, 2, 3, s_boolean, s_string, s_pair_false);
   pl_bsigb = s7_make_circular_signature(s7, 4, 5, s_boolean, s_string, s_integer, s_gtk_enum_t, s_boolean);
-  pl_sg = s7_make_circular_signature(s7, 1, 2, s_string, s_gtk_enum_t);
-  pl_gs = s7_make_circular_signature(s7, 1, 2, s_gtk_enum_t, s_string);
   pl_bur = s7_make_circular_signature(s7, 2, 3, s_boolean, s_pair_false, s_real);
   pl_buug = s7_make_circular_signature(s7, 3, 4, s_boolean, s_pair_false, s_pair_false, s_gtk_enum_t);
   pl_buut = s7_make_circular_signature(s7, 3, 4, s_boolean, s_pair_false, s_pair_false, s_any);
@@ -39884,6 +39790,8 @@ static void define_functions(void)
   pl_pb = s7_make_circular_signature(s7, 1, 2, s_pair, s_boolean);
   pl_buig = s7_make_circular_signature(s7, 3, 4, s_boolean, s_pair_false, s_integer, s_gtk_enum_t);
   pl_buuig = s7_make_circular_signature(s7, 4, 5, s_boolean, s_pair_false, s_pair_false, s_integer, s_gtk_enum_t);
+  pl_sg = s7_make_circular_signature(s7, 1, 2, s_string, s_gtk_enum_t);
+  pl_gs = s7_make_circular_signature(s7, 1, 2, s_gtk_enum_t, s_string);
   pl_gussitu = s7_make_circular_signature(s7, 6, 7, s_gtk_enum_t, s_pair_false, s_string, s_string, s_integer, s_any, s_pair_false);
   pl_gurrsiu = s7_make_circular_signature(s7, 6, 7, s_gtk_enum_t, s_pair_false, s_real, s_real, s_string, s_integer, s_pair_false);
   pl_gus = s7_make_circular_signature(s7, 2, 3, s_gtk_enum_t, s_pair_false, s_string);
@@ -40270,8 +40178,6 @@ static void define_functions(void)
   Xg_define_procedure(gtk_binding_set_find, gxg_gtk_binding_set_find_w, 1, 0, 0, H_gtk_binding_set_find, pl_ps);
   Xg_define_procedure(gtk_binding_entry_remove, gxg_gtk_binding_entry_remove_w, 3, 0, 0, H_gtk_binding_entry_remove, pl_tuig);
   Xg_define_procedure(gtk_bin_get_child, gxg_gtk_bin_get_child_w, 1, 0, 0, H_gtk_bin_get_child, pl_pu);
-  Xg_define_procedure(gtk_box_pack_start, gxg_gtk_box_pack_start_w, 5, 0, 0, H_gtk_box_pack_start, pl_tuubbi);
-  Xg_define_procedure(gtk_box_pack_end, gxg_gtk_box_pack_end_w, 5, 0, 0, H_gtk_box_pack_end, pl_tuubbi);
   Xg_define_procedure(gtk_box_set_homogeneous, gxg_gtk_box_set_homogeneous_w, 2, 0, 0, H_gtk_box_set_homogeneous, pl_tub);
   Xg_define_procedure(gtk_box_get_homogeneous, gxg_gtk_box_get_homogeneous_w, 1, 0, 0, H_gtk_box_get_homogeneous, pl_bu);
   Xg_define_procedure(gtk_box_set_spacing, gxg_gtk_box_set_spacing_w, 2, 0, 0, H_gtk_box_set_spacing, pl_tui);
@@ -41810,8 +41716,6 @@ static void define_functions(void)
   Xg_define_procedure(gtk_progress_bar_set_ellipsize, gxg_gtk_progress_bar_set_ellipsize_w, 2, 0, 0, H_gtk_progress_bar_set_ellipsize, pl_tug);
   Xg_define_procedure(gtk_progress_bar_get_ellipsize, gxg_gtk_progress_bar_get_ellipsize_w, 1, 0, 0, H_gtk_progress_bar_get_ellipsize, pl_gu);
   Xg_define_procedure(gtk_selection_data_targets_include_image, gxg_gtk_selection_data_targets_include_image_w, 2, 0, 0, H_gtk_selection_data_targets_include_image, pl_bub);
-  Xg_define_procedure(gtk_label_set_angle, gxg_gtk_label_set_angle_w, 2, 0, 0, H_gtk_label_set_angle, pl_tur);
-  Xg_define_procedure(gtk_label_get_angle, gxg_gtk_label_get_angle_w, 1, 0, 0, H_gtk_label_get_angle, pl_du);
   Xg_define_procedure(gtk_menu_set_screen, gxg_gtk_menu_set_screen_w, 2, 0, 0, H_gtk_menu_set_screen, pl_tu);
   Xg_define_procedure(pango_attr_underline_color_new, gxg_pango_attr_underline_color_new_w, 3, 0, 0, H_pango_attr_underline_color_new, pl_pi);
   Xg_define_procedure(pango_attr_strikethrough_color_new, gxg_pango_attr_strikethrough_color_new_w, 3, 0, 0, H_pango_attr_strikethrough_color_new, pl_pi);
@@ -42552,10 +42456,6 @@ static void define_functions(void)
   Xg_define_procedure(gtk_notebook_get_group_name, gxg_gtk_notebook_get_group_name_w, 1, 0, 0, H_gtk_notebook_get_group_name, pl_su);
   Xg_define_procedure(gtk_widget_draw, gxg_gtk_widget_draw_w, 2, 0, 0, H_gtk_widget_draw, pl_tu);
   Xg_define_procedure(gtk_widget_get_request_mode, gxg_gtk_widget_get_request_mode_w, 1, 0, 0, H_gtk_widget_get_request_mode, pl_gu);
-  Xg_define_procedure(gtk_widget_get_preferred_width, gxg_gtk_widget_get_preferred_width_w, 1, 2, 0, H_gtk_widget_get_preferred_width, pl_pu);
-  Xg_define_procedure(gtk_widget_get_preferred_height_for_width, gxg_gtk_widget_get_preferred_height_for_width_w, 2, 2, 0, H_gtk_widget_get_preferred_height_for_width, pl_puiu);
-  Xg_define_procedure(gtk_widget_get_preferred_height, gxg_gtk_widget_get_preferred_height_w, 1, 2, 0, H_gtk_widget_get_preferred_height, pl_pu);
-  Xg_define_procedure(gtk_widget_get_preferred_width_for_height, gxg_gtk_widget_get_preferred_width_for_height_w, 2, 2, 0, H_gtk_widget_get_preferred_width_for_height, pl_puiu);
   Xg_define_procedure(gtk_widget_get_allocated_width, gxg_gtk_widget_get_allocated_width_w, 1, 0, 0, H_gtk_widget_get_allocated_width, pl_iu);
   Xg_define_procedure(gtk_widget_get_allocated_height, gxg_gtk_widget_get_allocated_height_w, 1, 0, 0, H_gtk_widget_get_allocated_height, pl_iu);
   Xg_define_procedure(gtk_widget_get_halign, gxg_gtk_widget_get_halign_w, 1, 0, 0, H_gtk_widget_get_halign, pl_gu);
@@ -42797,8 +42697,6 @@ static void define_functions(void)
   Xg_define_procedure(gtk_entry_completion_compute_prefix, gxg_gtk_entry_completion_compute_prefix_w, 2, 0, 0, H_gtk_entry_completion_compute_prefix, pl_sus);
   Xg_define_procedure(gtk_scale_set_has_origin, gxg_gtk_scale_set_has_origin_w, 2, 0, 0, H_gtk_scale_set_has_origin, pl_tub);
   Xg_define_procedure(gtk_scale_get_has_origin, gxg_gtk_scale_get_has_origin_w, 1, 0, 0, H_gtk_scale_get_has_origin, pl_bu);
-  Xg_define_procedure(gtk_window_set_hide_titlebar_when_maximized, gxg_gtk_window_set_hide_titlebar_when_maximized_w, 2, 0, 0, H_gtk_window_set_hide_titlebar_when_maximized, pl_tub);
-  Xg_define_procedure(gtk_window_get_hide_titlebar_when_maximized, gxg_gtk_window_get_hide_titlebar_when_maximized_w, 1, 0, 0, H_gtk_window_get_hide_titlebar_when_maximized, pl_bu);
   Xg_define_procedure(gtk_application_window_new, gxg_gtk_application_window_new_w, 1, 0, 0, H_gtk_application_window_new, pl_pu);
   Xg_define_procedure(gtk_application_window_set_show_menubar, gxg_gtk_application_window_set_show_menubar_w, 2, 0, 0, H_gtk_application_window_set_show_menubar, pl_tub);
   Xg_define_procedure(gtk_application_window_get_show_menubar, gxg_gtk_application_window_get_show_menubar_w, 1, 0, 0, H_gtk_application_window_get_show_menubar, pl_bu);
@@ -43059,8 +42957,6 @@ static void define_functions(void)
   Xg_define_procedure(gtk_popover_get_position, gxg_gtk_popover_get_position_w, 1, 0, 0, H_gtk_popover_get_position, pl_gu);
   Xg_define_procedure(gtk_popover_set_modal, gxg_gtk_popover_set_modal_w, 2, 0, 0, H_gtk_popover_set_modal, pl_tub);
   Xg_define_procedure(gtk_popover_get_modal, gxg_gtk_popover_get_modal_w, 1, 0, 0, H_gtk_popover_get_modal, pl_bu);
-  Xg_define_procedure(gtk_box_set_center_widget, gxg_gtk_box_set_center_widget_w, 2, 0, 0, H_gtk_box_set_center_widget, pl_tu);
-  Xg_define_procedure(gtk_box_get_center_widget, gxg_gtk_box_get_center_widget_w, 1, 0, 0, H_gtk_box_get_center_widget, pl_pu);
   Xg_define_procedure(gtk_entry_set_max_width_chars, gxg_gtk_entry_set_max_width_chars_w, 2, 0, 0, H_gtk_entry_set_max_width_chars, pl_tui);
   Xg_define_procedure(gtk_entry_get_max_width_chars, gxg_gtk_entry_get_max_width_chars_w, 1, 0, 0, H_gtk_entry_get_max_width_chars, pl_iu);
   Xg_define_procedure(gdk_device_get_last_event_window, gxg_gdk_device_get_last_event_window_w, 1, 0, 0, H_gdk_device_get_last_event_window, pl_pu);
@@ -43385,6 +43281,10 @@ static void define_functions(void)
   Xg_define_procedure(gtk_widget_get_prev_sibling, gxg_gtk_widget_get_prev_sibling_w, 1, 0, 0, H_gtk_widget_get_prev_sibling, pl_pu);
   Xg_define_procedure(gtk_widget_set_focus_child, gxg_gtk_widget_set_focus_child_w, 2, 0, 0, H_gtk_widget_set_focus_child, pl_tu);
   Xg_define_procedure(gtk_show_uri_on_window, gxg_gtk_show_uri_on_window_w, 3, 1, 0, H_gtk_show_uri_on_window, pl_pusiu);
+  Xg_define_procedure(gtk_box_pack_start, gxg_gtk_box_pack_start_w, 2, 0, 0, H_gtk_box_pack_start, pl_tu);
+  Xg_define_procedure(gtk_box_pack_end, gxg_gtk_box_pack_end_w, 2, 0, 0, H_gtk_box_pack_end, pl_tu);
+  Xg_define_procedure(gtk_widget_insert_after, gxg_gtk_widget_insert_after_w, 3, 0, 0, H_gtk_widget_insert_after, pl_tu);
+  Xg_define_procedure(gtk_widget_insert_before, gxg_gtk_widget_insert_before_w, 3, 0, 0, H_gtk_widget_insert_before, pl_tu);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create, pl_pu);
@@ -47554,7 +47454,7 @@ void Init_libxg(void)
           Xen_provide_feature("gtk2");
         #endif
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("05-May-17"));
+      Xen_define("xg-version", C_string_to_Xen_string("23-May-17"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
