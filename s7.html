@@ -2600,6 +2600,28 @@ local variable:
 <em class="gray">100</em>
 </pre>
 
+<p><b>funclet</b> returns a function's local environment.  Here's an example that
+keeps a circular buffer of the calls to that function:
+</p>
+
+<pre class="indented">
+(define func (let ((history (let ((lst (make-list 8 #f)))
+			      (set-cdr! (list-tail lst 7) lst)
+			      lst)))
+	       (lambda (x y)
+		 (let ((result (+ x y)))
+		   (set-car! history (list result x y))
+		   (set! history (cdr history))
+		   result))))
+
+&gt; (func 1 2)
+<em class="gray">3</em>
+&gt; (func 3 4)
+<em class="gray">7</em>
+&gt; ((funclet func) 'history)
+<em class="gray">#1=(#f #f #f #f #f #f (3 1 2) (7 3 4) . #1#)</em>
+</pre>
+
 <blockquote>
 <div class="indented">
 <p>I originally used a bunch of foolishly pompous names for the environment functions.
