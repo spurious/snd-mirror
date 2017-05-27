@@ -91,7 +91,26 @@
      (let ((c-args (vector-ref auto-arglists args-now)))
        (copy args c-args)
 
-       (let ((p (list-tail c-args args-now)))
+       (let ((p (list-tail c-args args-now))
+	     (checker (and (pair? sig) (car sig))))
+	 
+	 (define (call-func1 c)
+	   (when (checker c)
+	     (catch #t 
+	       (lambda () 
+		 (set-car! p c)
+		 (apply func c-args))
+	       (lambda any 
+		 'error))))
+
+	 (define (call-func2 c)
+	   (catch #t 
+	     (lambda () 
+	       (set-car! p c)
+	       (apply func c-args))
+	     (lambda any 
+	       'error)))
+
 	 (if (= args-left 1)
 	     (call-with-exit
 	      (lambda (quit)
@@ -107,41 +126,22 @@
 			     (< (caddr (cadr any)) low))
 			(quit))))
 		 
-		(let ((checker (and (pair? sig) (car sig))))
-		  (if checker ; map-values -> function here
-		      (for-each
-		       (lambda (c)
-			 (when (checker c)
-			   (catch #t 
-			     (lambda () 
-			       (set-car! p c)
-			       (apply func c-args))
-			     (lambda any 
-			       'error))))
-		       cdr-auto-constants)
-		      (for-each
-		       (lambda (c)
-			 (catch #t 
-			   (lambda () 
-			     (set-car! p c)
-			     (apply func c-args))
-			   (lambda any 
-			     'error)))
-		       cdr-auto-constants)))))
+		(if checker ; map-values -> function here
+		    (for-each call-func1 cdr-auto-constants)
+		    (for-each call-func2 cdr-auto-constants))))
 	   
-	     (let ((checker (and (pair? sig) (car sig))))
-	       (if checker
-		   (for-each
-		    (lambda (c)
-		      (when (checker c)
-			(set-car! p c)
-			(autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ()))))
-		    auto-constants)
-		   (for-each
-		    (lambda (c)
+	     (if checker
+		 (for-each
+		  (lambda (c)
+		    (when (checker c)
 		      (set-car! p c)
-		      (autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ())))
-		    auto-constants)))))))))
+		      (autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ()))))
+		  auto-constants)
+		 (for-each
+		  (lambda (c)
+		    (set-car! p c)
+		    (autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ())))
+		  auto-constants))))))))
 
 (define safe-fill!
   (let ((signature '(#t sequence? #t)))
@@ -174,7 +174,7 @@
 		  mock-symbol mock-port mock-hash-table m 
 		  *mock-number* *mock-pair* *mock-string* *mock-char* *mock-vector*
 		  *mock-symbol* *mock-port* *mock-hash-table*
-
+		  
 		  c-define-1 apropos map-values ;set-current-output-port
 		  tree-count outlet-member make-method make-object))
 

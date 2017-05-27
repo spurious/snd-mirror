@@ -11016,7 +11016,7 @@
 	      (when (pair? first)
 		(let ((op (car first)))
 		  (when (and (symbol? op)
-			     (not (or (eq? op 'unquote)
+			     (not (or (memq op '(unquote apply-values list-values))
 				      (hash-table-ref makers op)
 				      (eq? vname op)))              ; not a function (this kind if repetition is handled elsewhere)
 			     (len>1? (cdr hist))
@@ -13719,14 +13719,13 @@
 	    ((memq sym '(else =>)) ; also in r7rs ... and _, but that is for syntax-rules
 	     (lint-format "redefinition of ~A is a bad idea: ~A" caller sym (truncated-list->string form)))))
     
-    (define binders '(let let* letrec letrec* do
-		      lambda lambda* define define* 
-		      call/cc call-with-current-continuation 
-		      define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
-		      load eval eval-string require))
-    
     (define walker-functions
-      (let ((walker-table (make-hash-table))
+      (let ((binders '(let let* letrec letrec* do
+		       lambda lambda* define define* 
+		       call/cc call-with-current-continuation 
+		       define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
+		       load eval eval-string require))
+    	    (walker-table (make-hash-table))
 	    (lint-let-reduction-factor 3)) ; maybe make this a global switch -- the higher this number, the fewer let-reduction suggestions
 
 	(define (hash-walker key value)
@@ -16952,37 +16951,6 @@
 	;; ---------------- case ----------------		  
 	(let ()
 
-	  ;; -------- case->case+args --------
-	  (define (case->case+args caller form len)
-	    ;; if all args match, move outside case (case sets func)
-	    (let ((first-clause (caddr form))
-		  (else-clause (list-ref form (+ len 1))))
-	      (when (and (eq? (car else-clause) 'else)
-			 (len=1? (cdr first-clause))
-			 (len>1? (cadr first-clause))
-			 (not (hash-table-ref syntaces (caadr first-clause)))
-			 (lint-every? (lambda (c)
-					(and (len=2? c)
-					     (pair? (cadr c))
-					     (not (hash-table-ref syntaces (caadr c)))
-					     (equal? (cdadr first-clause) (cdadr c))))
-				      (cdddr form)))
-		;; (case x ((a) (f y z)) (else (g y z))) -> ((if (eq? x 'a) f g) y z)
-		(lint-format "perhaps ~A" caller      ; all results share trailing args
-			     (lists->string form
-					    (if (and (= len 2)
-						     (symbol? (caar first-clause))
-						     (null? (cdar first-clause)))
-						`((if (eq? ,(cadr form) ',(caar first-clause))
-						      ,(caadr first-clause)
-						      ,(caadr else-clause))
-						  ,@(cdadr first-clause))
-						`((case ,(cadr form)
-						    ,@(map (lambda (c)
-							     (list (car c) (caadr c)))
-							   (cddr form)))
-						  ,@(cdadr first-clause))))))))
-	  
 	  ;; -------- case->header+case+trailer --------
 	  (define (case->header+case+trailer caller form len env)
 	    ;; if start/end args match (including func), move outside case (case sets whatever differs, using values if necessary)
@@ -17426,6 +17394,37 @@
 	  ;; -------- case-walker --------
 	  (define case-walker 
 	    (let ((selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number? null? eof-object?)))
+
+	      (define (case->case+args caller form len)
+		;; if all args match, move outside case (case sets func)
+		(let ((first-clause (caddr form))
+		      (else-clause (list-ref form (+ len 1))))
+		  (when (and (eq? (car else-clause) 'else)
+			     (len=1? (cdr first-clause))
+			     (len>1? (cadr first-clause))
+			     (not (hash-table-ref syntaces (caadr first-clause)))
+			     (lint-every? (lambda (c)
+					    (and (len=2? c)
+						 (pair? (cadr c))
+						 (not (hash-table-ref syntaces (caadr c)))
+						 (equal? (cdadr first-clause) (cdadr c))))
+					  (cdddr form)))
+		    ;; (case x ((a) (f y z)) (else (g y z))) -> ((if (eq? x 'a) f g) y z)
+		    (lint-format "perhaps ~A" caller      ; all results share trailing args
+				 (lists->string form
+						(if (and (= len 2)
+							 (symbol? (caar first-clause))
+							 (null? (cdar first-clause)))
+						    `((if (eq? ,(cadr form) ',(caar first-clause))
+							  ,(caadr first-clause)
+							  ,(caadr else-clause))
+						      ,@(cdadr first-clause))
+						    `((case ,(cadr form)
+							,@(map (lambda (c)
+								 (list (car c) (caadr c)))
+							       (cddr form)))
+						      ,@(cdadr first-clause))))))))
+	      
 	      (lambda (caller form env)
 		;; here the keys are not evaluated, so we might have a list like (letrec define ...)
 		;; also unlike cond, only 'else marks a default branch (not #t)
@@ -21793,8 +21792,8 @@
 	     env)
 
 	    ((vector? form)
-	     (when (not (or (int-vector? form)
-			    (float-vector? form)))
+	     (unless (or (int-vector? form)
+			 (float-vector? form))
 	       (let ((len (length form)))
 		 (when (positive? len)
 		   (if (integer? (form 0))
