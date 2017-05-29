@@ -63,13 +63,36 @@
 			   (vector allpass5 allpass6 allpass7 allpass8))))
 	    (combs (make-comb-bank (vector comb1 comb2 comb3 comb4 comb5 comb6)))
 	    (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (out-bank filts i
-		      (all-pass allpass4
-				(one-pole low
-					  (all-pass-bank allpasses 
-							 (comb-bank combs (* volume (ina i *reverb*))))))))))))
+
+	(if (not chan2)
+	    (let ((gen (filts 0)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i len))
+		(outa i (all-pass gen
+				  (all-pass allpass4
+					    (one-pole low
+						      (all-pass-bank allpasses 
+								     (comb-bank combs (* volume (ina i *reverb*))))))))))
+	    (if (not chan4)
+		(let ((gen1 (filts 0))
+		      (gen2 (filts 1)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i len))
+		    (let ((val (all-pass allpass4
+					 (one-pole low
+						   (all-pass-bank allpasses 
+								  (comb-bank combs (* volume (ina i *reverb*))))))))
+		      (outa i (all-pass gen1 val))
+		      (outb i (all-pass gen2 val)))))
+
+		(do ((i 0 (+ i 1)))
+		    ((= i len))
+		  (out-bank filts i
+			    (all-pass allpass4
+				      (one-pole low
+						(all-pass-bank allpasses 
+							       (comb-bank combs (* volume (ina i *reverb*))))))))))))))
+
 									
 
 ;;; (with-sound (:reverb nrev) (outa 0 .1) (outa 0 .5 *reverb*))
