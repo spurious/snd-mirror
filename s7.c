@@ -8283,7 +8283,6 @@ static void annotate_expansion(s7_pointer p)
       annotate_expansion(car(p));
 }
 
-
 static s7_pointer copy_body(s7_scheme *sc, s7_pointer p)
 {
   /* ideally we'd use tree_len here, but it currently does not protect against cycles */
@@ -27898,13 +27897,23 @@ static s7_pointer check_nref(s7_pointer p, const char *func, int line)
 
 static void print_gc_info(s7_pointer obj, int line)
 {
-  fprintf(stderr, "%s%p is free (line %d), current: %s[%d], previous: %s[%d],  gc call: %s[%d], alloc: %s[%d]%s\n",
-	  BOLD_TEXT, 
-	  obj, line,
-	  obj->current_alloc_func, obj->current_alloc_line,
-	  obj->previous_alloc_func, obj->previous_alloc_line,
-	  obj->gc_func, obj->gc_line, obj->alloc_func, obj->alloc_line,
-	  UNBOLD_TEXT);
+  if (!obj)
+    fprintf(stderr, "[%d]: obj is %p\n", line, obj);
+  else
+    {
+      if (unchecked_type(obj) != T_FREE)
+	fprintf(stderr, "[%d]: %p type is %d?\n", line, obj, type(obj));
+      else
+	{
+	  fprintf(stderr, "%s%p is free (line %d), current: %s[%d], previous: %s[%d],  gc call: %s[%d], alloc: %s[%d]%s\n",
+		  BOLD_TEXT, 
+		  obj, line,
+		  obj->current_alloc_func, obj->current_alloc_line,
+		  obj->previous_alloc_func, obj->previous_alloc_line,
+		  obj->gc_func, obj->gc_line, obj->alloc_func, obj->alloc_line,
+		  UNBOLD_TEXT);
+	}
+    }
   abort();
 }
 
@@ -34219,6 +34228,21 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), ind, (index < 0) ? its_negative_string : its_too_large_string));
 
   return(vector_getter(vec)(sc, vec, index));
+}
+
+static s7_pointer vector_ref_2_direct;
+static s7_pointer g_vector_ref_2_direct(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer vec, ind;
+  s7_int index;
+  vec = car(args);
+  ind = cadr(args);
+  if (!s7_is_integer(ind))
+    method_or_bust(sc, ind, sc->vector_ref_symbol, args, T_INTEGER, 2);
+  index = s7_integer(ind);
+  if ((index < 0) || (index >= vector_length(vec)))
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), ind, (index < 0) ? its_negative_string : its_too_large_string));
+  return(vector_element(vec, index));
 }
 
 
@@ -47885,19 +47909,18 @@ static void show_optlist(s7_scheme *sc, s7_pointer olst)
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
  * what others like d_pid_sso? need stats... pip_ssf in tref->p_p_f pp_fc
  *    hash: opt_p_ppp_sfs has 3 choices opt_b_pi_fs + pp_ss
- *    tall: opt_set_d_d_f 
- *    tfft: opt_set_p_i_f
  *    tmap: opt_if_nbp
- *    tlet: opt_p_pi_fc + p_p_s
- * d|i_to_p_nr cases could back up sc->pc before int|float_optimize, then use d_as_p as call, saving call.fd in vx
- * save optlist in vector held by closure_optlist, all lookups either local or via opt_l_f: find_symbol_checked(l)
- *    in eval: op_optlist_n where n is index into vector, either memset into sc->opts or switch sc->opts(??)
- *    so need switch to say no unsafe slots during opt scan
- *    if function call, make sure recursive call addrs are fixed up
- *    opt scan takes as many exprs as it can handle? maybe one at a time for a start
- *    mark_closure just set_mark(optl) -- need S7_MARK if a vector
- *    change over to local slots right now
- *    this handles both named lets and the do problem (in do opt+save)
+ * d|i_to_p_nr cases could back up sc->pc before int|float_optimize, then use d_as_p as call, saving call.fd in vx??
+ * if saving optlist: if find_symbol, save the symbol+slot-loc (i.e. v2.p), (vector sym slot sym slot)
+ *      find_symbol in opt scan places &(v n) in v1.ptr = s7_pointer*, look uses *?
+ *      before call, run through vector setting slots via find_symbol
+ *      in gc mark optlist_symbols (vector) via mark_optlist and S7_MARK in mark_closure
+ *   save optlist in vector held by closure_optlist?
+ *   in eval: op_optlist_n where n is index into vector, either memset into sc->opts or switch sc->opts(??)
+ *   if function call, make sure recursive call addrs are fixed up
+ *   opt scan takes as many exprs as it can handle? maybe one at a time for a start
+ *   mark_closure just set_mark(optl) -- need S7_MARK if a vector
+ *   so need a local_frame flag 
  */
 
 static s7_double opt_d_dd_fso(void *p)
@@ -48269,6 +48292,78 @@ static bool i_ii_fc_combinable(s7_scheme *sc, opt_info *opc)
 	  opc->v2.p = o1->v2.p;
 	  opc->v4.p = o1->v4.p;	
 	  opc->call.fi = opt_i_ii_fco;
+	  sc->pc--;
+	  return(true);
+	}
+    }
+  return(false);
+}
+
+static s7_pointer opt_set_p_i_fo(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  s7_pointer x;
+  x = s7_make_integer(cur_sc, o->v6.i_ii_f(integer(slot_value(o->v3.p)), integer(slot_value(o->v4.p))));
+  slot_set_value(o->v2.p, x);
+  return(x);
+}
+
+static s7_pointer opt_set_p_i_fo1(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  s7_pointer x;
+  x = s7_make_integer(cur_sc, o->v6.i_ii_f(integer(slot_value(o->v3.p)), o->v1.i));
+  slot_set_value(o->v2.p, x);
+  return(x);
+}
+
+static bool set_p_i_f_combinable(s7_scheme *sc, opt_info *opc)
+{
+  if ((sc->pc > 1) &&
+      (opc == sc->opts[sc->pc - 2]))
+    {
+      opt_info *o1;
+      o1 = sc->opts[sc->pc - 1];
+      if (o1->call.fi == opt_i_ii_ss)
+	{
+	  opc->v6.i_ii_f = o1->v6.i_ii_f;
+	  opc->v3.p = o1->v2.p;
+	  opc->v4.p = o1->v4.p;	
+	  opc->call.fp = opt_set_p_i_fo;
+	  sc->pc--;
+	  return(true);
+	}
+      if (o1->call.fi == opt_i_ii_sc)
+	{
+	  opc->v6.i_ii_f = o1->v6.i_ii_f;
+	  opc->v3.p = o1->v2.p;
+	  opc->v1.i = o1->v1.i;
+	  opc->call.fp = opt_set_p_i_fo1;
+	  sc->pc--;
+	  return(true);
+	}
+    }
+  return(false);
+}
+
+static s7_pointer opt_p_pi_fco(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->v6.p_pi_f(o->v5.p_p_f(slot_value(o->v2.p)), o->v1.i));
+}
+
+static bool p_pi_fc_combinable(s7_scheme *sc, opt_info *opc)
+{
+  if ((sc->pc > 1) &&
+      (opc == sc->opts[sc->pc - 2]))
+    {
+      opt_info *o1;
+      o1 = sc->opts[sc->pc - 1];
+      if (o1->call.fp == opt_p_p_s)
+	{
+	  opc->v5.p_p_f = o1->v6.p_p_f;
+	  opc->v2.p = o1->v2.p;	
+	  opc->call.fp = opt_p_pi_fco;
 	  sc->pc--;
 	  return(true);
 	}
@@ -49981,7 +50076,8 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 				{
 				  if (int_optimize(sc, cddr(car_x)))
 				    {
-				      opc->call.fp = opt_set_p_i_f;
+				      if (!set_p_i_f_combinable(sc, opc))
+					opc->call.fp = opt_set_p_i_f;
 				      return(true);
 				    }
 				  return(return_false(sc, car_x, __func__, __LINE__));
@@ -51277,8 +51373,9 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 				      if (ifunc)
 					{
 					  opc->v1.i = integer(caddr(car_x));
-					  opc->call.fp = opt_p_pi_fc;
 					  opc->v6.p_pi_f = ifunc;
+					  if (!p_pi_fc_combinable(sc, opc))
+					    opc->call.fp = opt_p_pi_fc;
 					  return(true);
 					}
 				    }
@@ -51488,7 +51585,6 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 				}
 			    }
 			}
-
 		    }
 		  pc_fallback(sc, start);
 		}
@@ -54569,6 +54665,16 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 		  set_optimize_op(expr, HOP_SAFE_C_C);
 		  return(vector_ref_add1);
 		}
+	      
+	      if ((is_immutable_symbol(arg1)) &&
+		  (is_slot(local_slot(arg1))))
+		{
+		  s7_pointer v;
+		  v = slot_value(local_slot(arg1));
+		  if ((is_normal_vector(v)) &&
+		      (vector_rank(v) == 1))
+		    return(vector_ref_2_direct);
+		}
 	    }
 	}
       /* vector_ref_sub1 was not worth the code, and few other easily optimized expressions happen here */
@@ -55600,6 +55706,7 @@ static void init_choosers(s7_scheme *sc)
   vector_ref_ic_3 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_3, 1, 0, false, "vector-ref opt");
   vector_ref_add1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_add1, 2, 0, false, "vector-ref opt");
   vector_ref_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref opt");
+  vector_ref_2_direct = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2_direct, 2, 0, false, "vector-ref opt");
 
   /* vector-set! */
   f = set_function_chooser(sc, sc->vector_set_symbol, vector_set_chooser);
@@ -79671,25 +79778,25 @@ int main(int argc, char **argv)
 /* --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  |  17
- * tmac          |      |      |      || 9043 |  602          348
- * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127         1116
- * tref          |      |      | 2372 || 2083 | 1289         1166
- * tlet     3590 | 2400 | 2400 | 2244 || 2308 | 2008         1298
- * teq           |      |      | 6612 || 2787 | 2210         2142
- * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643         2398
- * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032         3058
- * lint          |      |      |      || 4029 | 3308 [155.6] 3148 [149.6]
- * tcopy         |      |      | 13.6 || 3185 | 3342         3160
- * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248         3204
- * tform         |      |      | 6816 || 3850 | 3627         3522
- * tmap          |      |      |  9.3 || 4300 | 3716         3655
- * tfft          |      | 14.3 | 15.2 || 16.4 | 4762         4362
- * titer         |      |      | 7503 || 5881 | 5069         4867
- * tsort         |      |      |      || 9186 | 5403         5135
- * thash         |      |      | 50.7 || 8926 | 8651         8549
- * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4         12.6
- * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1         18.7
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 [134.8] 41.6 [133.9]
+ * tmac          |      |      |      || 9043 |  602  348
+ * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1117
+ * tref          |      |      | 2372 || 2083 | 1289 1166
+ * tlet     3590 | 2400 | 2400 | 2244 || 2308 | 2008 1218
+ * teq           |      |      | 6612 || 2787 | 2210 2142
+ * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2398
+ * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 3024
+ * lint          |      |      |      || 4029 | 3308 3148 [150.2]
+ * tcopy         |      |      | 13.6 || 3185 | 3342 3160
+ * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3204
+ * tform         |      |      | 6816 || 3850 | 3627 3522
+ * tmap          |      |      |  9.3 || 4300 | 3716 3655
+ * tfft          |      | 14.3 | 15.2 || 16.4 | 4762 4277
+ * titer         |      |      | 7503 || 5881 | 5069 4867
+ * tsort         |      |      |      || 9186 | 5403 5135
+ * thash         |      |      | 50.7 || 8926 | 8651 8549
+ * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
+ * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.7
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.6 [133.9]
  * 
  * --------------------------------------------------------------------
  *
