@@ -415,8 +415,10 @@
 	    ;;    disable: (format *stderr* "~C[?9l" #\escape)
 	    ;; while enabled, mouse selection instead sends coords to repl (so it's annoying)
 	    ;;    also it's sticky!  exit repl does not clear this flag so mouse is effectively dead
-	    ;; upon click, we get ESC [ M bxy -- need to poll for this?
-	    
+	    ;; upon click, we get ESC [ M b x y (b = button info, x/y are coords starting at 32=0 -- 6 chars received)
+	    ;; to trap C-C (define (sigcatch no) (tty-reset) (#_exit)) (if (equal? (signal SIGINT sigcatch) SIG_ERR) (#_exit))
+	    ;; to see click, add a meta-key for M
+	    ;; all this apparently only works in xterm, so I hesitate to build on it here.
 	    
 	    ;; -------- display --------
 	    (define (display-prompt)

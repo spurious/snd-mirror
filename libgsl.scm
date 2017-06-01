@@ -2,23 +2,6 @@
 ;;;
 ;;; tie the gsl library into the *libgsl* environment
 
-
-#|
-2.1: gsl_multilarge.h
-+ double
-+ gsl_multifit_linear_rcond (const gsl_multifit_linear_workspace * w);
-+
-changes to sigs in multifit.h
-
-2.2:
-gsl_multifit_nlinear.h
-gsl_multilarge_nlinear.h
-gsl_permute_matrix_char.h
-gsl_permute_matrix_complex_double.h and float/long double and all other types
-many other additions/sig changes (triangular matrices primiarily)
-|#
-
-
 (require cload.scm)
 (provide 'libgsl.scm)
 
@@ -2570,6 +2553,8 @@ many other additions/sig changes (triangular matrices primiarily)
 	 (int gsl_multifit_linear_est (gsl_vector* gsl_vector* gsl_matrix* double* double*))
 	 (reader-cond ((>= gsl-version 2.1)
 		       (double gsl_multifit_linear_rcond (gsl_multifit_linear_workspace*))))
+	 (reader-cond ((>= gsl-version 2.3)
+		       (size_t gsl_multifit_linear_rank (double gsl_multifit_linear_workspace*))))
 	 (int gsl_multifit_linear_residuals (gsl_matrix* gsl_vector* gsl_vector* gsl_vector*))
 	 (reader-cond ((>= gsl-version 1.16) 
 		       (gsl_multifit_robust_workspace* gsl_multifit_robust_alloc (gsl_multifit_robust_type* size_t size_t))

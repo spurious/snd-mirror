@@ -458,7 +458,6 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 /* T_STACK, T_SLOT, T_BAFFLE, T_DYNAMIC_WIND, T_OPTLIST, and T_COUNTER are internal
  * I tried T_CASE_SELECTOR that turned a case statement into an array, but it was slower!
  */
-#define FREEZE 1
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE,
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST,
@@ -1218,6 +1217,12 @@ struct s7_scheme {
   opt_info *opts[OPTS_SIZE]; /* this form is a lot faster than opt_info**! */
 };
 
+/* (*s7* 'safety) settings */
+#define NO_SAFETY 0
+#define CLM_OPTIMIZATION_SAFETY 1
+#define ALL_OPTIMIZATION_SAFETY 2
+#define IMMUTABLE_VECTOR_SAFETY 3
+
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
 
 #define INITIAL_AUTOLOAD_NAMES_SIZE 4
@@ -1789,11 +1794,14 @@ static s7_scheme *cur_sc = NULL;
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 16))
 #define is_immutable(p)               ((typeflag(_NFre(p)) & T_IMMUTABLE) != 0)
+#define set_immutable(p)              typeflag(_NFre(p)) |= T_IMMUTABLE
 #define is_immutable_port(p)          ((typeflag(_TPrt(p)) & T_IMMUTABLE) != 0)
 #define is_immutable_symbol(p)        ((typeflag(_TSym(p)) & T_IMMUTABLE) != 0)
 #define is_immutable_integer(p)       ((typeflag(_TI(p)) & T_IMMUTABLE) != 0)
 #define is_immutable_real(p)          ((typeflag(_TR(p)) & T_IMMUTABLE) != 0)
-#define set_immutable(p)              typeflag(_TSym(p)) |= T_IMMUTABLE
+#define is_immutable_pair(p)          ((typeflag(_TPair(p)) & T_IMMUTABLE) != 0)
+#define is_immutable_vector(p)        ((typeflag(_TVec(p)) & T_IMMUTABLE) != 0)
+#define is_immutable_string(p)        ((typeflag(_TStr(p)) & T_IMMUTABLE) != 0)
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
  * this bit can't be in the second byte -- with-let, for example, is immutable, but we use SYNTACTIC_TYPE to 
  * recognize syntax in do loop optimizations.
@@ -5332,7 +5340,6 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       s7_remove_from_heap(sc, closure_body(x));
       if (has_optlist(x))
 	s7_remove_from_heap(sc, closure_optlist(x));
-      /* TODO: what about the setter? */
       return;
 
     default:
@@ -6472,7 +6479,7 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       (env == sc->rootlet)) /* TODO: what about shadow-rootlet for repl? */
     {
       s7_pointer ge, slot;
-      if ((sc->safety == 0) && (has_closure_let(value)))
+      if ((sc->safety == NO_SAFETY) && (has_closure_let(value)))
 	{
 	  s7_remove_from_heap(sc, closure_args(value));
 	  s7_remove_from_heap(sc, closure_body(value));
@@ -21959,6 +21966,10 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
   if (!is_string(x))
     method_or_bust(sc, x, sc->string_fill_symbol, args, T_STRING, 1); /* not two methods here */
 
+  if ((sc->safety > NO_SAFETY) &&
+      (is_immutable_string(x)))
+    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't fill! ~S (it is immutable)"), x)));
+
   chr = cadr(args);
   if (!is_byte_vector(x))
     {
@@ -28780,7 +28791,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
   TRACK(sc);
-  if ((sc->safety > 0) &&
+  if ((sc->safety > NO_SAFETY) &&
       (!s7_is_valid(sc, obj)))
     fprintf(stderr, "bad arg to %s: %p\n", __func__, obj);
 
@@ -28792,6 +28803,10 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write) /*
 {
   char *str;
   int len = 0;
+
+  if ((sc->safety > NO_SAFETY) &&
+      (!s7_is_valid(sc, obj)))
+    fprintf(stderr, "bad arg to %s: %p\n", __func__, obj);
 
   str = s7_object_to_c_string_1(sc, obj, (use_write) ? USE_WRITE : USE_DISPLAY, &len);
   if (str)
@@ -32891,7 +32906,6 @@ static void check_list_validity(s7_scheme *sc, const char *caller, s7_pointer ls
       fprintf(stderr, "bad arg (#%d) to %s: %p\n", i, caller, car(p));
 }
 
-
 s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 {
   int i;
@@ -32907,7 +32921,7 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
     sc->w = cons(sc, va_arg(ap, s7_pointer), sc->w);
   va_end(ap);
 
-  if (sc->safety > 0) /* if DEBUGGING, this is partly redundant because cons checks for free cells */
+  if (sc->safety > NO_SAFETY)
     check_list_validity(sc, "s7_list", sc->w);
 
   p = sc->w;
@@ -33363,6 +33377,10 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
        */
       return(wrong_type_argument(sc, sc->vector_fill_symbol, 1, x, T_VECTOR));
     }
+
+  if ((sc->safety > NO_SAFETY) &&
+      (is_immutable_vector(x)))
+    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't fill! ~S (it is immutable)"), x)));
 
   fill = cadr(args);
   if (is_float_vector(x))
@@ -35296,6 +35314,10 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
       return(sc->nil);
     }
 
+  if ((sc->safety > NO_SAFETY) &&
+      (is_immutable(data)))
+    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't sort! ~S (it is immutable)"), data)));
+
   lessp = cadr(args);
   if (type(lessp) < T_GOTO)
     method_or_bust_with_type(sc, lessp, sc->sort_symbol, args, a_procedure_string, 2);
@@ -35711,7 +35733,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   n = len - 1;
   k = ((int)(n / 2)) + 1;
 
-  lx = s7_make_vector(sc, (sc->safety == 0) ? 4 : 6);
+  lx = s7_make_vector(sc, (sc->safety == NO_SAFETY) ? 4 : 6);
   gc_loc = s7_gc_protect(sc, lx);
   sc->v = lx;
 
@@ -35719,7 +35741,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   vector_element(lx, 1) = make_mutable_integer(sc, k);
   vector_element(lx, 2) = make_mutable_integer(sc, 0);
   vector_element(lx, 3) = make_mutable_integer(sc, 0);
-  if (sc->safety != 0)
+  if (sc->safety > NO_SAFETY)
     {
       vector_element(lx, 4) = make_mutable_integer(sc, 0);
       vector_element(lx, 5) = make_integer(sc, n * n);
@@ -40407,7 +40429,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
 
-  if ((sc->safety > 0) &&
+  if ((sc->safety > NO_SAFETY) &&
       (is_immutable(p)))
     return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
 
@@ -40500,6 +40522,10 @@ static s7_pointer pair_fill(s7_scheme *sc, s7_pointer args)
   s7_int i, start = 0, end, len;
 
   obj = car(args);
+  if ((sc->safety > NO_SAFETY) &&
+      (is_immutable_pair(obj)))
+    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't fill! ~S (it is immutable)"), obj)));
+
   val = cadr(args);
   len = s7_list_length(sc, obj);
   end = len;
@@ -40877,7 +40903,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 		sc->temp8 = sc->nil;
 		return(result);
 	      }
-	    if (sc->safety > 0)
+	    if (sc->safety > NO_SAFETY)
 	      {
 		results++;
 		if (results > 10000)
@@ -43489,7 +43515,7 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
       _NFre(car(p));
   }
 #endif
-  if (sc->safety > 0)
+  if (sc->safety > NO_SAFETY)
     set_current_code(sc, cons(sc, fnc, args));
   else set_current_code(sc, fnc);
 
@@ -43512,7 +43538,7 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
   declare_jump_info();
   TRACK(sc);
 
-  if (sc->safety > 0)
+  if (sc->safety > NO_SAFETY)
     {
       if (!s7_is_valid(sc, code))
 	fprintf(stderr, "bad code arg to %s: %p\n", __func__, code);
@@ -43573,7 +43599,7 @@ pass (rootlet):\n\
       else sc->envir = e;
     }
   sc->code = car(args);
-  if (sc->safety > 0)
+  if (sc->safety > NO_SAFETY)
     {
       if (cyclic_sequences(sc, sc->code, false) == sc->T)
 	return(wrong_type_argument_with_type(sc, sc->eval_symbol, 1, sc->code, a_proper_list_string));
@@ -43597,7 +43623,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   declare_jump_info();
   TRACK(sc);
 
-  if (sc->safety > 0)
+  if (sc->safety > NO_SAFETY)
     set_current_code(sc, cons(sc, func, args));
   else set_current_code(sc, func); 
 
@@ -43620,7 +43646,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
     }
   else
     {
-      if (sc->safety > 0)
+      if (sc->safety > NO_SAFETY)
 	check_list_validity(sc, "s7_call", args);
 
       push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
@@ -45807,7 +45833,6 @@ static s7_pointer opt_p_ii_ss(void *p)
   opt_info *o = (opt_info *)p;
   return(o->v6.p_ii_f(integer(slot_value(o->v2.p)), integer(slot_value(o->v4.p))));
 }
-/* TODO: expt/make-polar p_ii */
 
 static s7_double opt_d_dd_cc(void *p)
 {
@@ -47770,7 +47795,7 @@ static bool opt_bool_call_1_1(void *p)       {return(opt_call_1_1(p) != cur_sc->
 
 static bool funcall_optimize(s7_scheme *sc, s7_pointer car_x, s7_pointer s_func)
 {
-  if (sc->safety > 1)
+  if (sc->safety > CLM_OPTIMIZATION_SAFETY)
     return(false);
 
   if (!closure_no_opt(s_func))
@@ -47910,17 +47935,14 @@ static void show_optlist(s7_scheme *sc, s7_pointer olst)
  * what others like d_pid_sso? need stats... pip_ssf in tref->p_p_f pp_fc
  *    hash: opt_p_ppp_sfs has 3 choices opt_b_pi_fs + pp_ss
  *    tmap: opt_if_nbp
- * d|i_to_p_nr cases could back up sc->pc before int|float_optimize, then use d_as_p as call, saving call.fd in vx??
- * if saving optlist: if find_symbol, save the symbol+slot-loc (i.e. v2.p), (vector sym slot sym slot)
+ * d|i_to_p_nr cases could back up sc->pc before int|float_optimize, then use d_as_p as call, saving call.fd in vx??--need known-clear field for this
+ *
+ * if saving optlist: if find_symbol, save the symbol+slot-loc (i.e. v2.p), (optlist-symbol sym opt-loc+vn+type ... next) 256+5+4=2bytes so 12 locs etc
  *      find_symbol in opt scan places &(v n) in v1.ptr = s7_pointer*, look uses *?
- *      before call, run through vector setting slots via find_symbol
- *      in gc mark optlist_symbols (vector) via mark_optlist and S7_MARK in mark_closure
- *   save optlist in vector held by closure_optlist?
- *   in eval: op_optlist_n where n is index into vector, either memset into sc->opts or switch sc->opts(??)
- *   if function call, make sure recursive call addrs are fixed up
- *   opt scan takes as many exprs as it can handle? maybe one at a time for a start
- *   mark_closure just set_mark(optl) -- need S7_MARK if a vector
- *   so need a local_frame flag 
+ *      before call, run through vector setting slots via find_symbol and check types
+ *      in gc mark optlist-symbols via mark_optlist? via mark_symbol for gensyms
+ *      save optlist in vector held by local (gensym) assign_internal_syntax-symbol of car -> OP_*
+ *      in eval: op_<car>_optlist_n where n is index into vector, either memset into sc->opts or switch sc->opts(??)
  */
 
 static s7_double opt_d_dd_fso(void *p)
@@ -50125,7 +50147,6 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 				  (is_sequence(obj)))
 				{
 				  s7_pointer index;
-				  /* TODO: vectors c-objects, unchecked? */
 				  switch (type(obj))
 				    {
 				    case T_STRING:     
@@ -52286,7 +52307,7 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr)
 #if WITH_GMP
   return(NULL);
 #endif
-  if (sc->safety > 1) return(NULL);
+  if (sc->safety > CLM_OPTIMIZATION_SAFETY) return(NULL);
 #if OPT_PRINT
   fprintf(stderr, "fl opt: %s\n", DISPLAY(expr));
 #endif
@@ -52304,7 +52325,7 @@ static s7_function s7_bool_optimize(s7_scheme *sc, s7_pointer expr)
 #if WITH_GMP
   return(NULL);
 #endif
-  if (sc->safety > 1) return(NULL);
+  if (sc->safety > CLM_OPTIMIZATION_SAFETY) return(NULL);
 #if OPT_PRINT
   fprintf(stderr, "bool opt: %s\n", DISPLAY(expr));
 #endif
@@ -52326,7 +52347,7 @@ s7_function s7_optimize_1(s7_scheme *sc, s7_pointer expr, bool nr)
 #if WITH_GMP
   return(NULL);
 #endif
-  if ((sc->safety > 1) || (pair_no_opt(expr))) 
+  if ((sc->safety > CLM_OPTIMIZATION_SAFETY) || (pair_no_opt(expr))) 
     return(NULL);
 #if OPT_PRINT
   fprintf(stderr, "opt: %s\n", DISPLAY(expr));
@@ -52409,7 +52430,7 @@ static s7_function s7_cell_optimize(s7_scheme *sc, s7_pointer expr, bool nr)
 #if WITH_GMP
   return(NULL);
 #endif
-  if (sc->safety > 1) return(NULL);
+  if (sc->safety > CLM_OPTIMIZATION_SAFETY) return(NULL);
   if (setjmp(sc->opt_exit) == 0)
     {
       start_opts(sc);
@@ -53954,12 +53975,11 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 	case TOKEN_DOUBLE_QUOTE:
 	  sc->value = read_string_constant(sc, sc->input_port);
-
 	  if (sc->value == sc->F)                                   /* can happen if input code ends in the middle of a string */
 	    return(string_read_error(sc, "end of input encountered while in a string"));
 	  if (sc->value == sc->T)
 	    return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
-
+	  if (sc->safety > IMMUTABLE_VECTOR_SAFETY) set_immutable(sc->value);
 	  return(sc->value);
 
 	case TOKEN_SHARP_CONST:
@@ -57945,7 +57965,7 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
       break;
 
     case OP_WITH_LET:
-      if (sc->safety != 0)
+      if (sc->safety > NO_SAFETY)
 	hop = 0;
       e = sc->nil;
       /* we can't trust anything here, so hop ought to be off.  For example,
@@ -58486,7 +58506,7 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
 static opt_t optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 {
   s7_pointer x;
-  if (sc->safety > 2) return(OPT_F);
+  if (sc->safety > ALL_OPTIMIZATION_SAFETY) return(OPT_F);
   for (x = code; (is_pair(x)) && (!is_checked(x)); x = cdr(x))
     {
       set_checked(x);
@@ -59334,7 +59354,7 @@ static void check_lambda_star(s7_scheme *sc)
   set_car(sc->code, check_lambda_star_args(sc, car(sc->code), NULL));
   clear_symbol_list(sc);
   
-  if ((sc->safety != 0) ||
+  if ((sc->safety > NO_SAFETY) ||
       (main_stack_op(sc) != OP_DEFINE1))
     {
       /* fprintf(stderr, "%s[%d]: %s\n", __func__, __LINE__, DISPLAY(cdr(sc->code))); */
@@ -60448,7 +60468,7 @@ static s7_pointer check_define(s7_scheme *sc)
 	eval_error_with_caller(sc, "~A ~A: keywords are constants", caller, func);
       if (is_syntactic(func))                                                    /* (define and a) */
 	{
-	  if (sc->safety > 0)
+	  if (sc->safety > NO_SAFETY)
 	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(func));
 	  set_local(func);
 	}
@@ -60473,7 +60493,7 @@ static s7_pointer check_define(s7_scheme *sc)
 	eval_error_with_caller(sc, "~A: define a non-symbol? ~S", caller, func);
       if (is_syntactic(func))                                                    /* (define (and a) a) */
 	{
-	  if (sc->safety > 0)
+	  if (sc->safety > NO_SAFETY)
 	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(func));
 	  set_local(func);
 	}
@@ -60632,7 +60652,7 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
     eval_error_with_caller(sc, "~A: ~S is not a symbol?", caller, x);
   if (dont_eval_args(x))                                               /* (define-macro (quote a) quote) */
     {
-      if (sc->safety > 0)
+      if (sc->safety > NO_SAFETY)
 	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
       set_local(x);
     }
@@ -62957,7 +62977,7 @@ static bool opt_dotimes(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool saf
   s7_int end;
   s7_pointer p;
 
-  if (sc->safety > 1) return(false);
+  if (sc->safety > CLM_OPTIMIZATION_SAFETY) return(false);
 
   if (safe_step)
     set_safe_stepper(sc->args);
@@ -63148,7 +63168,7 @@ static int opt_let(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool saf
   s7_pointer old_e, stepper;
   int body_len, var_len;
 
-  if (sc->safety > 1) return(fall_through);
+  if (sc->safety > CLM_OPTIMIZATION_SAFETY) return(fall_through);
   /* fprintf(stderr, "let_ok: %s\n", DISPLAY(scc)); */
 
   let_code = caddr(scc);
@@ -65479,7 +65499,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if ((n == k) || (k > ((s7_int)(n / 2)))) /* k == n == 0 is the first case */
 	      goto START;
 	    
-	    if (sc->safety != 0)
+	    if (sc->safety > NO_SAFETY)
 	      {
 		SORT_CALLS++;
 		if (SORT_CALLS > SORT_STOP)
@@ -65585,23 +65605,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_SORT_PAIR_END:       /* sc->value is the sort vector which needs to be copied into the original list */
 	  sc->value = vector_into_list(sc->value, car(sc->args));
-#if FREEZE
 	  free_cell(sc, sc->args);
-#endif
 	  break;
 	  
 	case OP_SORT_VECTOR_END:     /* sc->value is the sort (s7_pointer) vector which needs to be copied into the original (double/int) vector */
 	  sc->value = vector_into_fi_vector(sc->value, car(sc->args));
-#if FREEZE
 	  free_cell(sc, sc->args);
-#endif
 	  break;
 	  
 	case OP_SORT_STRING_END:
 	  sc->value = vector_into_string(sc->value, car(sc->args));
-#if FREEZE
 	  free_cell(sc, sc->args); 
-#endif
 	  break;
 	  
 	  /* batcher networks:
@@ -65646,10 +65660,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		sc->value = safe_reverse_in_place(sc, counter_result(args));
 		/* an experiment */	  
-#if FREEZE
 		free_cell(sc, sc->args);
 		sc->args = sc->nil; 
-#endif
 		goto START;
 	      }
 	    push_stack(sc, OP_MAP_GATHER_1, args, code);
@@ -65699,10 +65711,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (iterator_is_at_end(car(y)))
 		  {
 		    sc->value = safe_reverse_in_place(sc, counter_result(sc->args));
-#if FREEZE
 		    free_cell(sc, sc->args); 
 		    sc->args = sc->nil;
-#endif
 		    goto START;
 		  }
 		sc->x = cons(sc, x, sc->x);
@@ -65730,10 +65740,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (iterator_is_at_end(car(y)))
 		  {
 		    sc->value = sc->unspecified;
-#if FREEZE
 		    free_cell(sc, sc->args);
 		    sc->args = sc->nil;
-#endif
 		    goto START;
 		  }
 	      }
@@ -65761,10 +65769,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (iterator_is_at_end(p))
 	      {
 		sc->value = sc->unspecified;
-#if FREEZE
 		free_cell(sc, counter);
 		sc->args = sc->nil;
-#endif
 		goto START;
 	      }
 	    code = sc->code;
@@ -65794,10 +65800,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (!is_pair(lst))  /* '(1 2 . 3) as arg? -- counter_list can be anything here */
 	      {
 		sc->value = sc->unspecified;
-#if FREEZE
 		free_cell(sc, c);
 		sc->args = sc->nil;
-#endif
 		goto START;
 	      }
 	    code = _TClo(sc->code);
@@ -65809,10 +65813,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (counter_result(c) == counter_list(c))
 		  {
 		    sc->value = sc->unspecified;
-#if FREEZE
 		    free_cell(sc, c);
 		    sc->args = sc->nil;
-#endif
 		    goto START;
 		  }
 		push_stack(sc, OP_FOR_EACH_2, c, code);
@@ -72639,6 +72641,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  return(string_read_error(sc, "end of input encountered while in a string"));
 		if (sc->value == sc->T)
 		  return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
+		if (sc->safety > IMMUTABLE_VECTOR_SAFETY) set_immutable(sc->value);
 		goto READ_LIST;
 		
 	      case '`':
@@ -72646,13 +72649,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		push_stack_no_code(sc, OP_READ_LIST, sc->args);
 		sc->value = read_expression(sc);
 		if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
-		goto START; /* read_unquote */
+		goto START;
 		
 	      case ',':
 		sc->tok = read_comma(sc, pt); /* at_mark or comma */
 		push_stack_no_code(sc, OP_READ_LIST, sc->args);
 		sc->value = read_expression(sc);
-		goto START;  /* read_unquote */
+		goto START;
 		
 	      case '#':
 		sc->tok = read_sharp(sc, pt);
@@ -72723,6 +72726,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(string_read_error(sc, "end of input encountered while in a string"));
 	      if (sc->value == sc->T)
 		return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
+	      if (sc->safety > IMMUTABLE_VECTOR_SAFETY) set_immutable(sc->value);
 	      goto READ_LIST;
 	      
 	    case TOKEN_DOT:
@@ -72769,6 +72773,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_READ_QUOTE:
 	  /* can't check for sc->value = sc->nil here because we want ''() to be different from '() */
+	  if ((sc->safety > IMMUTABLE_VECTOR_SAFETY) &&
+	      ((is_pair(sc->value)) || (s7_is_vector(sc->value)) || (is_string(sc->value))))
+	    set_immutable(sc->value);
 	  sc->value = list_2(sc, sc->quote_symbol, sc->value);
 	  set_opt_back(sc->value);
 	  set_overlay(cdr(sc->value));
@@ -72796,9 +72803,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = g_vector(sc, sc->value);
 	  else sc->value = g_multivector(sc, s7_integer(sc->args), sc->value);
 	  /* here and below all of the sc->value list can be freed, but my tests showed no speed up even in large cases */
-#if FREEZE
 	  free_vlist(sc, sc->v);
-#endif
+	  if (sc->safety > IMMUTABLE_VECTOR_SAFETY) set_immutable(sc->value);
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 
@@ -72809,9 +72815,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
 	    sc->value = g_int_vector(sc, sc->value);
 	  else sc->value = g_int_multivector(sc, s7_integer(sc->args), sc->value);
-#if FREEZE
 	  free_vlist(sc, sc->v);
-#endif
+	  if (sc->safety > IMMUTABLE_VECTOR_SAFETY) set_immutable(sc->value);
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 
@@ -72822,9 +72827,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
 	    sc->value = g_float_vector(sc, sc->value);
 	  else sc->value = g_float_multivector(sc, s7_integer(sc->args), sc->value);
-#if FREEZE
 	  free_vlist(sc, sc->v);
-#endif
+	  if (sc->safety > IMMUTABLE_VECTOR_SAFETY) set_immutable(sc->value);
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;	  
 
@@ -72833,9 +72837,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(read_error(sc, "byte-vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  sc->value = g_byte_vector(sc, sc->value);
-#if FREEZE
 	  free_vlist(sc, sc->v);
-#endif
+	  if (sc->safety > IMMUTABLE_VECTOR_SAFETY) set_immutable(sc->value);
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 	  
@@ -73451,7 +73454,7 @@ static s7_int big_integer_to_s7_int(mpz_t n)
   if (mpz_fits_slong_p(n))
     return(mpz_get_si(n));
 
-  if ((cur_sc->safety > 0) &&
+  if ((cur_sc->safety > NO_SAFETY) &&
       (sizeof(s7_int) == sizeof(long int)))
     {
       char *str;
@@ -77808,7 +77811,7 @@ s7_scheme *s7_init(void)
   debug_history_loc = 0;
 #endif
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
-  cur_sc = sc;                                 /* for gdb/debugging */
+  cur_sc = sc;                                    /* for gdb/debugging */
   sc->gc_off = true;                              /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->gc_stats = 0;
   init_gc_caches(sc);
@@ -78065,7 +78068,7 @@ s7_scheme *s7_init(void)
   sc->s7_call_line = 0;
   sc->s7_call_file = NULL;
   sc->s7_call_name = NULL;
-  sc->safety = 0;
+  sc->safety = NO_SAFETY;
   sc->print_length = 8;
   sc->history_size = DEFAULT_HISTORY_SIZE;
   sc->true_history_size = DEFAULT_HISTORY_SIZE;
@@ -79796,29 +79799,15 @@ int main(int argc, char **argv)
  * thash         |      |      | 50.7 || 8926 | 8651 8549
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.7
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.6 [133.9]
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.5 [133.9]
  * 
  * --------------------------------------------------------------------
  *
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  *
  * s7:
- * unbound-variable could suggest respelling
- * should s7 flag (reverse! #(...)) et al? (set! fill! sort!)
- *   see reverse! and s7_is_constant -- we need some way in scheme code to distinguish (vector 1) from #(1)
- *   and read-time constants need to be set to immutable (reverse! "123") etc
- *   maybe add mutable? ambiguous -- need to indicate that contents are expected to be unchanged whereas pi the value is unchangeable
- *   constant? -> #f, #t=define-constant: binding symbol to value can't be changed, :reader=reader constant like #(...), are there others?
- *
- * extend the validity checks to all FFI funcs and add info about caller etc
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
- *
- * closure* handling in eval is not optimal
- * update libgsl.scm
- * lint: (define (permute1 op . args) `(format *stderr* "~D: ~A -> ~A ~A~%" ,args v1 v2))
- *   maybe call qq with _n_ args? then lint that
- * maybe with_r7rs switch to build in the common r7rs funcs
  *
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func

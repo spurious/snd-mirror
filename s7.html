@@ -2553,7 +2553,27 @@ original value.  It can handle anything settable:
 </pre>
 <p>This sets s7's print-length variable to 8 while displaying x, then
 puts it back to its original value.
-</p>
+
+<pre class="indented">
+&gt; (define ourlet
+    (let ((x 1))
+      (define (a-func) x)
+      (define b-func (let ((y 1))
+		       (lambda ()
+		         (+ x y))))
+    (curlet)))
+<em class="gray">(inlet 'x 1 'a-func a-func 'b-func b-func)</em>
+&gt; (ourlet 'x)
+<em class="gray">1</em>
+&gt; (let-temporarily (((ourlet 'x) 2))
+    ((ourlet 'a-func)))
+<em class="gray">2</em>
+&gt; ((funclet (ourlet 'b-func)) 'y)
+<em class="gray">1</em>
+&gt; (let-temporarily ((((funclet (ourlet 'b-func)) 'y) 3))
+    ((ourlet 'b-func)))
+<em class="gray">4</em>
+</pre>
 
 
 <p>
@@ -5791,7 +5811,7 @@ default-random-state          the default arg for random (settable)
 cpu-time                      run time so far
 file-names                    currently loaded files (a list)
 
-safety                        0
+safety                        0 (see below)
 undefined-identifier-warnings #f 
 autoloading?                  #t
 
@@ -5823,12 +5843,27 @@ Use the standard environment syntax to access these fields:
 *s7*-&gt;list that returns most of these fields in a list.
 </p>
 
-<p>
-Set (*s7* 'safety) to 3 or higher
-to turn off optimization.  Set (*s7* 'autoloading) to #f to turn off the autoloader.
+<p><code>(set! (*s7* 'autoloading) #f)</code> turns off the autoloader.
 </p>
 
-<p>stacktrace-defaults is a list of four integers and a boolean that tell the error
+<p>The 'safety variable is an integer. Currently:
+</p>
+<pre class="indented">
+0: default.
+1: no remove_from_heap (a GC optimization)
+   infinite loop check in eval, sort! and some iterators
+   immutable object check in reverse!, sort!, and fill!
+   more info in (*s7* 'history) for s7_apply_function, s7_call and s7_eval
+   less aggressive optimization in with-let and lambda
+   warnings about syntax redefinition
+2: incoming s7_pointer checks in some FFI functions
+   clm optimization off
+   bignum int to s7_int conversion checks
+3: all optimization off
+4: vector, string, and pair constants are immutable (but checks for this are currently sparse)
+</pre>
+
+<p><code>(*s7* 'stacktrace-defaults)</code> is a list of four integers and a boolean that tell the error
 handler how to format stacktrace information.  The four integers are: 
 how many frames to display, 
 how many columns are devoted to code display,
@@ -6690,65 +6725,7 @@ threads were not useful mainly because the GUI toolkits are not thread safe.
 Last but not least, the effort to make the non-threaded
 s7 faster messed up parts of the threaded version.  Rather than
 waste a lot of time fixing this, I chose to flush multithreading.
-Here's a very simple example of using an s7 interpreter per thread:
 </p>
-
-<pre class="indented">
-#include &lt;stdlib.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;string.h&gt;
-#include &lt;pthread.h&gt;
-#include "s7.h"
-
-typedef struct {
-  s7_scheme *sc;
-  s7_pointer func;
-  pthread_t *thread;
-} thred;
-
-static void *run_thread(void *obj)
-{
-  thred *f = (thred *)obj;
-  return((void *)s7_call(f-&gt;sc, f-&gt;func, s7_nil(f-&gt;sc)));
-}
-
-static thred *make_thread(s7_function func)
-{
-  thred *f;
-  f = (thred *)malloc(sizeof(thred));
-  f-&gt;sc = s7_init();
-  f-&gt;func = s7_make_function(f-&gt;sc, "a-test", func, 0, 0, false, "a test");
-  f-&gt;thread = (pthread_t *)malloc(sizeof(pthread_t));
-  pthread_create(f-&gt;thread, NULL, run_thread, (void *)f);
-  return(f);
-}
-
-static s7_pointer a_test(s7_scheme *sc, s7_pointer args)
-{
-  fprintf(stderr, "I am %p\n", sc);
-  /* do something time-consuming... */
-  return(args);
-}
-
-int main(int argc, char **argv)
-{
-  thred *f1, *f2;
-  f1 = make_thread(a_test);
-  f2 = make_thread(a_test);
-
-  pthread_join(*(f1-&gt;thread), NULL);
-  pthread_join(*(f2-&gt;thread), NULL);
-}
-
-/* build s7 with -DWITH_THREADS, then
- * gcc -o repl repl.c s7.o -g3 -Wl,-export-dynamic -lpthread -lm -I. -ldl 
- */
-</pre>
-
-<p>Unfortunately, there's no way yet to
-free all the resources s7_init allocates (the heap, stack, etc).
-</p>
-
 </div>
 </details>
 
@@ -8994,6 +8971,8 @@ int main(int argc, char **argv)
 
 /* in gtk-2: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-2.0 --cflags` -lm -ldl
  * in gtk-3: gcc gcall.c -o gcall s7.o glistener.o `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
+ * glistener.o can be built similarly:
+ * gcc glistener.c -c `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
  */
 </pre>
 
