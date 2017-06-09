@@ -75,86 +75,85 @@
 		       (do ((i 0 (+ i 1)))
 			   ((= i len))
 			 (set! sum (+ sum (* (amps i) (sin (phases i))))))
-		       sum))))
+		       sum)))
+	(pi2 (* 2.0 pi)))
 
     (lambda (pv input)
-      (let ((pi2 (* 2.0 pi)))
-	
-	(when (>= (pvoc-output pv) (pvoc-interp pv))
-	  ;; get next block of amp/phase info
-	  (let ((N (pvoc-N pv))
-		(D (pvoc-D pv))
-		(amps (pvoc-ampinc pv))
-		(freqs (pvoc-freqs pv))
-		(filptr (pvoc-filptr pv)))
-	    
-	    (if (pvoc-analyze pv)
-		((pvoc-analyze pv) pv input)
-		;; if no analysis func:
-		(begin
-		  (fill! freqs 0.0)
-		  (set-pvoc-output pv 0)
-		  (if (not (pvoc-in-data pv))
+      (when (>= (pvoc-output pv) (pvoc-interp pv))
+	;; get next block of amp/phase info
+	(let ((N (pvoc-N pv))
+	      (D (pvoc-D pv))
+	      (amps (pvoc-ampinc pv))
+	      (freqs (pvoc-freqs pv))
+	      (filptr (pvoc-filptr pv)))
+	  
+	  (if (pvoc-analyze pv)
+	      ((pvoc-analyze pv) pv input)
+	      ;; if no analysis func:
+	      (begin
+		(fill! freqs 0.0)
+		(set-pvoc-output pv 0)
+		(if (not (pvoc-in-data pv))
+		    (begin
+		      (set-pvoc-in-data pv (make-float-vector N))
+		      (do ((i 0 (+ i 1)))
+			  ((= i N))
+			(set! ((pvoc-in-data pv) i) (input))))
+		    (let ((indat (pvoc-in-data pv)))
+		      ;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
+		      (float-vector-move! indat 0 D)
+		      (do ((i (- N D) (+ i 1)))
+			  ((= i N))
+			(set! (indat i) (input)))))
+		(let ((buf (modulo filptr N)))
+		  (if (= buf 0)
 		      (begin
-			(set-pvoc-in-data pv (make-float-vector N))
-			(do ((i 0 (+ i 1)))
-			    ((= i N))
-			  (set! ((pvoc-in-data pv) i) (input))))
-		      (let ((indat (pvoc-in-data pv)))
-			;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
-			(float-vector-move! indat 0 D)
-			(do ((i (- N D) (+ i 1)))
-			    ((= i N))
-			  (set! (indat i) (input)))))
-		  (let ((buf (modulo filptr N)))
-		    (if (= buf 0)
-			(begin
-			  (fill! amps 0.0)
-			  (float-vector-add! amps (pvoc-in-data pv))
-			  (float-vector-multiply! amps (pvoc-window pv)))
-			(do ((k 0 (+ k 1)))
-			    ((= k N))
-			  (set! (amps buf) (* ((pvoc-window pv) k) ((pvoc-in-data pv) k)))
-			  (set! buf (+ 1 buf))
-			  (if (= buf N) (set! buf 0)))))
-		  (set-pvoc-filptr pv (+ filptr D))
-		  (mus-fft amps freqs N 1)
-		  (rectangular->polar amps freqs)))
-	    
-	    (if (pvoc-edit pv)
-		((pvoc-edit pv) pv)
-		(let ((lp (pvoc-lastphase pv))
-		      (pscl (/ 1.0 D))
-		      (kscl (/ pi2 N))
-		      (lim (floor (/ N 2))))
-		  ;; if no editing func:
-		  (do ((k 0 (+ k 1)))
-		      ((= k lim))
-		    (let ((phasediff (remainder (- (freqs k) (lp k)) pi2)))
-		      (float-vector-set! lp k (freqs k))
-		      (if (> phasediff pi) (set! phasediff (- phasediff pi2))
-			  (if (< phasediff (- pi)) (set! phasediff (+ phasediff pi2))))
-		      (set! (freqs k) (+ (* pscl phasediff) (* k kscl)))))))
-	    
-	    (let ((scl (/ 1.0 (pvoc-interp pv))))
-	      (float-vector-subtract! amps (pvoc-amps pv))
-	      (float-vector-subtract! freqs (pvoc-phaseinc pv))
-	      (float-vector-scale! amps scl)
-	      (float-vector-scale! freqs scl)
-	      )))
-	
-	(set-pvoc-output pv (+ 1 (pvoc-output pv)))
-	
-	(if (pvoc-synthesize pv)
-	    ((pvoc-synthesize pv) pv)
-	    ;; if no synthesis func:
-	    ;; synthesize next sample
-	    (begin
-	      (float-vector-add! (pvoc-amps pv) (pvoc-ampinc pv))
-	      (float-vector-add! (pvoc-phaseinc pv) (pvoc-freqs pv))
-	      (float-vector-add! (pvoc-phases pv) (pvoc-phaseinc pv))
-	      (sine-bank (pvoc-amps pv) (pvoc-phases pv))))
-	))))
+			(fill! amps 0.0)
+			(float-vector-add! amps (pvoc-in-data pv))
+			(float-vector-multiply! amps (pvoc-window pv)))
+		      (do ((k 0 (+ k 1)))
+			  ((= k N))
+			(set! (amps buf) (* ((pvoc-window pv) k) ((pvoc-in-data pv) k)))
+			(set! buf (+ 1 buf))
+			(if (= buf N) (set! buf 0)))))
+		(set-pvoc-filptr pv (+ filptr D))
+		(mus-fft amps freqs N 1)
+		(rectangular->polar amps freqs)))
+	  
+	  (if (pvoc-edit pv)
+	      ((pvoc-edit pv) pv)
+	      (let ((lp (pvoc-lastphase pv))
+		    (pscl (/ 1.0 D))
+		    (kscl (/ pi2 N))
+		    (lim (floor (/ N 2))))
+		;; if no editing func:
+		(do ((k 0 (+ k 1)))
+		    ((= k lim))
+		  (let ((phasediff (remainder (- (freqs k) (lp k)) pi2)))
+		    (float-vector-set! lp k (freqs k))
+		    (if (> phasediff pi) (set! phasediff (- phasediff pi2))
+			(if (< phasediff (- pi)) (set! phasediff (+ phasediff pi2))))
+		    (set! (freqs k) (+ (* pscl phasediff) (* k kscl)))))))
+	  
+	  (let ((scl (/ 1.0 (pvoc-interp pv))))
+	    (float-vector-subtract! amps (pvoc-amps pv))
+	    (float-vector-subtract! freqs (pvoc-phaseinc pv))
+	    (float-vector-scale! amps scl)
+	    (float-vector-scale! freqs scl)
+	    )))
+      
+      (set-pvoc-output pv (+ 1 (pvoc-output pv)))
+      
+      (if (pvoc-synthesize pv)
+	  ((pvoc-synthesize pv) pv)
+	  ;; if no synthesis func:
+	  ;; synthesize next sample
+	  (begin
+	    (float-vector-add! (pvoc-amps pv) (pvoc-ampinc pv))
+	    (float-vector-add! (pvoc-phaseinc pv) (pvoc-freqs pv))
+	    (float-vector-add! (pvoc-phases pv) (pvoc-phaseinc pv))
+	    (sine-bank (pvoc-amps pv) (pvoc-phases pv))))
+      )))
 
 #|
 (let* ((ind (open-sound "oboe.snd"))
@@ -231,7 +230,8 @@
   algorithm to the current sound (i.e. fft analysis, oscil bank resynthesis). 'pitch'
   specifies the pitch transposition ratio, 'time' - specifies the time dilation ratio,
   'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than
-  the gate value will not be synthesized), 'hoffset is a pitch offset in Hz."))
+  the gate value will not be synthesized), 'hoffset is a pitch offset in Hz.")
+	(pi2 (* 2.0 pi)))
     
     (lambda* ((fftsize 512) (overlap 4) (time 1.0)
 	      (pitch 1.0) (gate 0.0) (hoffset 0.0)
@@ -242,7 +242,6 @@
 	    (in-data (channel->float-vector 0 (* fftsize 2) snd chn)))
 	(let ((lastamp (make-float-vector N2))
 	      (lastfreq (make-float-vector N2))
-	      (pi2 (* 2 pi))
 	      (outlen (floor (* time len)))
 	      (interp (* (floor (/ fftsize overlap)) time)))
 	  (let ((obank (make-oscil-bank lastfreq (make-float-vector N2) lastamp))

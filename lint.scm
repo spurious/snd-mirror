@@ -441,7 +441,7 @@
     (denote var-scope   (dilambda (lambda (v) (let-ref (cdr v) 'scope))   (lambda (v x) (let-set! (cdr v) 'scope x))))
     (denote var-setters (dilambda (lambda (v) (let-ref (cdr v) 'setters)) (lambda (v x) (let-set! (cdr v) 'setters x))))
     (denote var-env     (dilambda (lambda (v) (let-ref (cdr v) 'env))     (lambda (v x) (let-set! (cdr v) 'env x))))
-    (define (var-arity v) 
+    (denote (var-arity v) 
       (let ((val (let-ref (cdr v) 'arit)))
 	(and (not (eq? val #<undefined>))
 	     val)))
@@ -520,7 +520,7 @@
 	   (pair? (cdr x))
 	   (pair? (cddr x))))
 
-    (define (last-ref x)
+    (denote (last-ref x)
       (let ((len (length x)))
 	(and (integer? len)
 	     (positive? len)
@@ -562,7 +562,7 @@
 	    (else (cons (car lst)
 			(remove-if p (cdr lst))))))
     
-    (define (lint-remove-duplicates lst env)
+    (denote (lint-remove-duplicates lst env)
       (reverse (let rem-dup ((lst lst)
 			     (nlst ()))
 		 (cond ((null? lst) nlst)
@@ -574,7 +574,7 @@
     
     (define applicable? arity)
     
-    (define lint-every? 
+    (denote lint-every? 
       (let ((documentation "(lint-every? func sequence) returns #t if func approves of every member of the list sequence")
 	    (signature '(boolean? procedure? list?)))
 	(lambda (f sequence)
@@ -583,7 +583,7 @@
 			 (f (car arg))))
 	       (null? arg))))))
 
-    (define lint-any? 
+    (denote lint-any? 
       (let ((documentation "(lint-any? func sequence) returns #t if func approves of any member of the list sequence")
 	    (signature '(boolean? procedure? list?)))
 	(lambda (f sequence)
@@ -592,7 +592,7 @@
 		   (f (car arg)))
 	       (pair? arg))))))
     
-    (define lint-find-if 
+    (denote lint-find-if 
       (let ((documentation "(lint-find-if func lst) applies func to each member of the list lst.\n\
               If func approves of one, find-if returns that member of the sequence")
 	    (signature '(#t procedure? list?)))

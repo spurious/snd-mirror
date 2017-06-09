@@ -133,14 +133,13 @@
 
   )
 
-
 (for-each test-hash (list 1 10 100 1000 10000 100000 1000000))
 
 ;;; ----------------------------------------
 (format *stderr* "reader~%")
 
 (define data "/home/bil/test/scheme/bench/src/bib")
-(define counts (make-hash-table (expt 2 18) string=?))
+(define counts (make-hash-table))
 
 (define (reader)
   (let ((port (open-input-file data))
@@ -160,18 +159,18 @@
 			       (char-alphabetic? (string-ref line k)))
 			   (+ k 1)))))
 	    (when (> end start)
-	      (let ((word (substring line start end)))
+	      (let ((word (string->symbol (substring line start end))))
 		(let ((refs (or (hash-table-ref counts word) 0)))
 		  (hash-table-set! counts word (+ refs 1)))))))
 	(set! new-pos (+ pos 1))))
 
     (close-input-port port)
-    (sort! (copy counts (make-vector (hash-table-entries counts))) 
+    (sort! (copy counts (make-vector (hash-table-entries counts)))
 	   (lambda (a b) (> (cdr a) (cdr b))))))
 
 (set! counts (reader))
 
-(if (not (and (string=? (car (counts 0)) "the")
+(if (not (and (eq? (car (counts 0)) 'the)
 	      (= (cdr (counts 0)) 62063)))
     (do ((i 0 (+ i 1))) 
 	((= i 40)) 
