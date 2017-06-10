@@ -501,7 +501,7 @@
      (dynamic-wind
 	 (lambda ()
 	   (set! *clm-notehook* (lambda (name . args)
-				  (set! mark-list (cons (append (list name) args) mark-list)))))
+				  (set! mark-list (cons (cons name args) mark-list)))))
 
 	 (lambda ()
 	   (let* ((result (with-sound-helper (lambda () ,@body) ,@args))

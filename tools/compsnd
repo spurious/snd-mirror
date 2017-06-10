@@ -295,9 +295,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth  --with-motif --with-editres --with-gl ---- '
+echo ' -----                --with-forth  --with-motif --with-gl ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth  --with-motif --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-forth  --with-motif --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'xm 'gl"

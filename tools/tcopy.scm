@@ -240,7 +240,6 @@
       (test (length bvec) (* size size))
       )))
       
-
 (define (t)
   (do ((i 0 (+ i 1)))
       ((= i 10000))
@@ -250,6 +249,16 @@
     (test-append i)))
 
 (t)
+
+#|
+(format *stderr* "copy~%")
+(test-copy 100000)
+;100000 : .1
+;1000000 : 4.6
+;10000000 : 356 = about 120 million objects = about 6Gbytes, mark_pair/gc 
+;(format *stderr* "append~%")
+;(test-append 10000)
+|#
 
 (s7-version)
 (exit)

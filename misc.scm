@@ -17,31 +17,30 @@
 ;(for-each-child (cadr (main-widgets)) (lambda (w) (XtSetValues w (list XmNbackgroundPixmap wd))))
 
 
+(let ((paint-all 
+       (let ((wd (make-pixmap (cadr (main-widgets)) rough)))
+	 (lambda (widget)
+	   (for-each-child
+	    widget
+	    (lambda (w)
+	      (if (and (Widget? w)
+		       (or (not (XmIsPushButton w))
+			   (member (XtName w) '("revscl-label" "contrast-label" "expand-label" "srate-label" "amp-label") string=?)))
+		  (XtSetValues w (list XmNbackgroundPixmap wd)))))))))
 
-(define paint-all 
-  (let ((wd (make-pixmap (cadr (main-widgets)) rough)))
-    (lambda (widget)
-      (for-each-child
-       widget
-       (lambda (w)
-	 (if (and (Widget? w)
-		  (or (not (XmIsPushButton w))
-		      (member (XtName w) '("revscl-label" "contrast-label" "expand-label" "srate-label" "amp-label") string=?)))
-	     (XtSetValues w (list XmNbackgroundPixmap wd))))))))
-
-(paint-all (cadr (main-widgets)))
-(for-each
- (lambda (w)
-   (if (and w
-	    (Widget? w))
-       (paint-all w)))
- (dialog-widgets))
-
-(define (hook-paint-all hook) 
-  (paint-all (hook 'widget)))
-
-(if (not (hook-member hook-paint-all new-widget-hook))
-    (hook-push new-widget-hook hook-paint-all))
+  (define (hook-paint-all hook) 
+    (paint-all (hook 'widget)))
+  
+  (paint-all (cadr (main-widgets)))
+  (for-each
+   (lambda (w)
+     (if (and w
+	      (Widget? w))
+	 (paint-all w)))
+   (dialog-widgets))
+  
+  (if (not (hook-member hook-paint-all new-widget-hook))
+      (hook-push new-widget-hook hook-paint-all)))
 
 (set! *mix-waveform-height* 32)
 
@@ -172,17 +171,17 @@
 ;;; additions to Edit menu
 ;;;
 
-(define selctr 0)
-
 ;;; -------- cut selection -> new file
 
-(define (cut-selection->new)
-  (if (selection?)
-      (let ((new-file-name (format #f "sel-~D.snd" selctr)))
-	(set! selctr (+ selctr 1))
-	(save-selection new-file-name)
-	(delete-selection)
-	(open-sound new-file-name))))
+(define cut-selection->new
+  (let ((selctr 0))
+    (lambda ()
+      (if (selection?)
+	  (let ((new-file-name (format #f "sel-~D.snd" selctr)))
+	    (set! selctr (+ selctr 1))
+	    (save-selection new-file-name)
+	    (delete-selection)
+	    (open-sound new-file-name))))))
 
 ;;; (add-to-menu 1 "Cut Selection -> New" cut-selection->new)
 

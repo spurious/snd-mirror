@@ -430,7 +430,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 	      (x-max (e (- (length e) 2))))
 	  (do ((x-incr (* 1.0 (/ (- x-max x-min) xgrid)))
 	       (new-e ())
-	       (x x-min (+ x x-incr)))
+	       (x x-min))
 	      ((>= x x-max)
 	       (reverse new-e))     
 	    (let ((y (envelope-interp x e)))
@@ -439,7 +439,8 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 				    (+ mn
 				       (* largest-diff
 					  (expt (/ (- y mn) largest-diff) power))))
-				(cons x new-e))))))))))
+				(cons x new-e)))
+	      (set! x (+ x x-incr)))))))))
 
 ;;; rms-envelope
 

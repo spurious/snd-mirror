@@ -2304,6 +2304,8 @@ static int not_heap = -1;
 #define dox_set_slot1(p, S)           (_TLet(p))->object.envr.edat.dox.dox1 = _TSlt(S)
 #define dox_slot2(p)                  _TSlt((_TLet(p))->object.envr.edat.dox.dox2)
 #define dox_set_slot2(p, S)           (_TLet(p))->object.envr.edat.dox.dox2 = _TSlt(S)
+#define dox_slot2_unchecked(p)        _TLet(p)->object.envr.edat.dox.dox2
+#define dox_set_slot2_unchecked(p, S) _TLet(p)->object.envr.edat.dox.dox2 = (S)
 
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
@@ -6399,7 +6401,7 @@ static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 
 static int let_length(s7_scheme *sc, s7_pointer e)
 {
-  /* used by length, applicable_length, and some length optimizations */
+  /* used by length, applicable_length, copy, and some length optimizations */
   int i;
   s7_pointer p;
 
@@ -6426,11 +6428,7 @@ static int let_length(s7_scheme *sc, s7_pointer e)
 
 static void slot_set_value_with_hook_1(s7_scheme *sc, s7_pointer slot, s7_pointer value)
   {
-    /* global funcs: 5945 6294 7300 7548 61107 66359 66522
-     * global vars: 7136
-     * some of these are set!s, not defines.
-     *   (set! (hook-functions *rootlet-redefinition-hook*) (list (lambda (hook) (format *stderr* "~A ~A~%" (hook 'symbol) (hook 'value))))) 
-     */
+    /* (set! (hook-functions *rootlet-redefinition-hook*) (list (lambda (hook) (format *stderr* "~A ~A~%" (hook 'symbol) (hook 'value))))) */
     s7_pointer symbol;
     symbol = slot_symbol(slot);
     if ((global_slot(symbol) == slot) &&      
@@ -37171,6 +37169,21 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
   if (hash_table_entries(new_hash) == 0)
     {
       hash_table_checker(new_hash) = hash_table_checker(old_hash);
+      if ((start == 0) && 
+	  (end >= hash_table_entries(old_hash)))
+	{
+	  for (i = 0; i < old_len; i++)
+	    for (x = old_lists[i]; x; x = x->next)
+	      {
+		unsigned int loc;
+		loc = x->raw_hash & new_len;
+		p = make_hash_entry(x->key, x->value, x->raw_hash);
+		p->next = new_lists[loc];
+		new_lists[loc] = p;
+	      }
+	  hash_table_entries(new_hash) = hash_table_entries(old_hash);
+	  return(new_hash);
+	}
       for (i = 0; i < old_len; i++)
 	for (x = old_lists[i]; x; x = x->next)
 	  {
@@ -37193,7 +37206,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
       return(new_hash);
     }
       
-  /* this can't be optimized much because we have to look for key matches */
+  /* this can't be optimized much because we have to look for key matches (we're copying old_hash into the exisiting, non-empty new_hash) */
   for (i = 0; i < old_len; i++)
     for (x = old_lists[i]; x; x = x->next)
       {
@@ -45623,33 +45636,10 @@ static s7_pointer opt_bool_any_nr(s7_scheme *sc, s7_pointer expr)
 
 
 /* callers for s7_optimize */
-static s7_pointer opt_wrap_float(s7_scheme *sc, s7_pointer expr)
-{
-  cur_sc = sc;
-  sc->pc = 0;
-  return(make_real(sc, sc->opts[0]->call.fd(sc->opts[0])));
-}
-
-static s7_pointer opt_wrap_int(s7_scheme *sc, s7_pointer expr)
-{
-  cur_sc = sc;
-  sc->pc = 0;
-  return(make_integer(sc, sc->opts[0]->call.fi(sc->opts[0])));
-}
-
-static s7_pointer opt_wrap_cell(s7_scheme *sc, s7_pointer expr)
-{
-  cur_sc = sc;
-  sc->pc = 0;
-  return(sc->opts[0]->call.fp(sc->opts[0]));
-}
-
-static s7_pointer opt_wrap_bool(s7_scheme *sc, s7_pointer expr)
-{
-  cur_sc = sc;
-  sc->pc = 0;
-  return((sc->opts[0]->call.fb(sc->opts[0])) ? sc->T : sc->F);
-}
+static s7_pointer opt_wrap_float(s7_scheme *sc, s7_pointer expr) {cur_sc = sc; sc->pc = 0; return(make_real(sc, sc->opts[0]->call.fd(sc->opts[0])));}
+static s7_pointer opt_wrap_int(s7_scheme *sc, s7_pointer expr)   {cur_sc = sc; sc->pc = 0; return(make_integer(sc, sc->opts[0]->call.fi(sc->opts[0])));}
+static s7_pointer opt_wrap_cell(s7_scheme *sc, s7_pointer expr)  {cur_sc = sc; sc->pc = 0; return(sc->opts[0]->call.fp(sc->opts[0]));}
+static s7_pointer opt_wrap_bool(s7_scheme *sc, s7_pointer expr)  {cur_sc = sc; sc->pc = 0; return((sc->opts[0]->call.fb(sc->opts[0])) ? sc->T : sc->F);}
 
 static s7_pointer b_to_p(void *p)    {opt_info *o = (opt_info *)p; return((o->call1.fb(o)) ? cur_sc->T : cur_sc->F);}
 static bool p_to_b(void *p)          {opt_info *o = (opt_info *)p; return(o->call1.fp(o) != cur_sc->F);}
@@ -50361,9 +50351,11 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 		    case T_STRING:     
 		      opc->v3.p_pip_f = string_set_p_pip_direct;     
 		      break;
+
 		    case T_VECTOR:     
 		      opc->v3.p_pip_f = vector_set_p_pip_direct;     
 		      break;
+
 		    case T_FLOAT_VECTOR:     
 		      opt_clear_call1(opc);
 		      if (opt_float_vector_set(sc, opc, caadr(car_x), cdadr(car_x), cddr(car_x)))
@@ -50374,6 +50366,7 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 			}
 		      return(return_false(sc, car_x, __func__, __LINE__));
 		      break;
+
 		    case T_INT_VECTOR:   
 		      opt_clear_call1(opc);
 		      if (opt_int_vector_set(sc, opc, caadr(car_x), cdadr(car_x), cddr(car_x)))
@@ -50384,15 +50377,19 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 			}
 		      return(return_false(sc, car_x, __func__, __LINE__));
 		      break;
+
 		    case T_PAIR:       
 		      opc->v3.p_pip_f = list_set_p_pip_direct;              
 		      break;
+
 		    case T_HASH_TABLE:
 		      opc->v3.p_ppp_f = hash_table_set_p_ppp_direct; 
 		      break;
+
 		    case T_LET:        
 		      opc->v3.p_ppp_f = let_set_p_ppp;               
 		      break;
+
 		    default:           
 		      return(return_false(sc, car_x, __func__, __LINE__));
 		    }
@@ -51396,7 +51393,9 @@ static s7_pointer opt_do_very_simple(void *p)
   cur_sc->envir = o->v2.p;
 
   vp = slot_value(dox_slot1(o->v2.p));
-  end = integer(slot_value(dox_slot2(o->v2.p)));
+  if (is_slot(dox_slot2_unchecked(o->v2.p)))
+    end = integer(slot_value(dox_slot2(o->v2.p)));
+  else end = o->v5.i;
   o1 = cur_sc->opts[++cur_sc->pc];
   integer(vp) = integer(o1->call.fp(o1));
 
@@ -51430,13 +51429,34 @@ static s7_pointer opt_do_very_simple(void *p)
 	}
       else
 	{
-	  s7_pointer (*f)(void *p);
-	  f = o1->call.fp;
-	  while (integer(vp) < end)
+	  if (o1->call.fp == opt_if_bp)
 	    {
-	      f(o1);
-	      cur_sc->pc = loop;
-	      integer(vp)++;
+	      bool (*f)(void *p);
+	      loop++;
+	      o1 = cur_sc->opts[loop];
+	      f = o1->call.fb;
+	      while (integer(vp) < end)
+		{
+		  if (f(o1))
+		    {
+		      opt_info *o2;
+		      o2 = cur_sc->opts[++cur_sc->pc];
+		      o2->call.fp(o2);
+		    }
+		  cur_sc->pc = loop;
+		  integer(vp)++;
+		}
+	    }
+	  else
+	    {
+	      s7_pointer (*f)(void *p);
+	      f = o1->call.fp;
+	      while (integer(vp) < end)
+		{
+		  f(o1);
+		  cur_sc->pc = loop;
+		  integer(vp)++;
+		}
 	    }
 	}
     }
@@ -51738,10 +51758,11 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 		    ind_step = caddr(var);
 		    end = car(caddr(car_x));
 		    slot = let_slots(frame);
+		    /* fprintf(stderr, "%s %s %s %s %s\n", DISPLAY(var), DISPLAY(ind), DISPLAY(ind_step), DISPLAY(end), DISPLAY(slot)); */
 		    if ((is_pair(end)) &&
 			(car(end) == sc->eq_symbol) &&
 			(cadr(end) == ind) &&
-			(is_symbol(caddr(end))) &&
+			((is_symbol(caddr(end))) || (is_t_integer(caddr(end)))) &&
 			(is_null(cdddr(end))) &&
 			(is_pair(ind_step)) &&
 			(car(ind_step) == sc->add_symbol) &&
@@ -51752,9 +51773,17 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 			/* fprintf(stderr, "very simple: %s\n", DISPLAY(car_x)); */
 			opt_set_fp(opc, opt_do_very_simple);
 			dox_set_slot1(frame, slot);
-			dox_set_slot2(frame, find_symbol(sc, caddr(end)));
+			dox_set_slot2_unchecked(frame, (is_symbol(caddr(end))) ? find_symbol(sc, caddr(end)) : sc->undefined);
 			slot_set_value(slot, make_mutable_integer(sc, integer(slot_value(slot))));
 			opc->v4.i = body_index;
+			if (is_t_integer(caddr(end)))
+			  opc->v5.i = integer(caddr(end));
+
+			/* if body is (set! x ...) where ... is simple and x is outside loop and x is real/int,
+			 *   set x value to mutable and rewrite the set to omit i|d_to_p. set_p_i_fo1 includes the make_int.
+			 *   then add mutable at start and unmutable at end.
+			 * f4? [if just incr, multiply len*incr... loop = set x + x len*incr]
+			 */
 		      }
 		  }
 		}
@@ -52115,35 +52144,6 @@ static bool funcall_optimize(s7_scheme *sc, s7_pointer car_x, s7_pointer s_func)
     }
   return(return_false(sc, car_x, __func__, __LINE__));
 }
-
-
-/* TODO:
- * check simple_do -- try opt of entire thing, then body etc
- * opt_let and opt_dotimes can be combined, at least from opt_let's view
- *   maybe split these at a lower level
- * for substring_to_temp, need to edit the opts as well somehow: in ops, args are ahead -- if one arg, is func?
- *   as it is currently, check_for_substring_temp can't work in opt case
- * ip for pi cases
- * snd-test: if envelope-interp set! frample->file file->sample[d_p|vii] et al array-interp
- * finish the t563.scm bugs: a couple number type problems 31905 30802 
- * weed out unused stuff -- choose.data/choose: not_is_string|char, simple_char_eq, is_eq_caar_q?
- * ash if arg2 known -- forego checks, similarly quotient: i_ii_direct as in modulo (these need opt_choosers too->call.fp)
- * map/for-each multi-expr bodies could be done in-place (rather than cons with begin)
- *   map/for-each/sort! in-place if c-func: p_pp 
- *   for-each+lambda also doable if lambda body is
- * varlet et al ok if let is not curlet or outlet(curlet) -- opt_chooser somehow?
- * need to test opt_sizes escape in sort et al
- *   perhaps save sc->envir, make sure it is ok if optimize fails
- * s7_macroexpand of multiple-value-set!? maybe disable values?
- *    s7test 29596 _sort_ 23890 use-redef-1 etc
- * what others like d_pid_sso? need stats... pip_ssf in tref->p_p_f pp_fc
- *    hash: opt_p_ppp_sfs has 3 choices opt_b_pi_fs + pp_ss
- *    tmap: for-each opt_cell_any_nr could be simplified or opt_wrap_cell? opt_cond_2 and s7_iterate in for-each -- can this (and int-v) use a mutable number?
- * all-lg-results (bench?) and limit tests (i.e. try huge data cases)
- * since lint is truncating, print-length checked via port-position?
- * g_multiply_2 gets (* i 2.0) etc thash
- */
-
 
 static s7_pointer func_returns(s7_scheme *sc, s7_pointer func)
 {
@@ -63407,27 +63407,10 @@ static bool opt_dotimes(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool saf
 		{
 		  s7_pointer (*fp)(void *o);
 		  fp = o->call.fp;
-		  if (fp == opt_if_bp)
+		  for (; integer(stepper) < end; integer(stepper)++)
 		    {
-		      o = sc->opts[1];
-		      for (; integer(stepper) < end; integer(stepper)++)
-			{
-			  sc->pc = 1;
-			  if (o->call.fb(o))
-			    {
-			      opt_info *o1;
-			      o1 = sc->opts[++sc->pc];
-			      o1->call.fp(o1);
-			    }
-			}
-		    }
-		  else
-		    {
-		      for (; integer(stepper) < end; integer(stepper)++)
-			{
-			  sc->pc = 0;
-			  fp(o);
-			}
+		      sc->pc = 0;
+		      fp(o);
 		    }
 		}
 	    }
@@ -80159,8 +80142,8 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2787 | 2210 2142
  * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2407
  * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 3011
+ * tcopy         |      |      | 13.6 || 3185 | 3342 3141
  * lint          |      |      |      || 4029 | 3308 3147 [150.2]
- * tcopy         |      |      | 13.6 || 3185 | 3342 3160
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3202
  * tmap          |      |      |  9.3 || 4300 | 3716 3413
  * tform         |      |      | 6816 || 3850 | 3627 3555
@@ -80197,4 +80180,33 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * ruby version crashes in test 4|8 -- file_copy?
+ */
+
+
+/* opts TODO:
+ * check simple_do -- try opt of entire thing, then body etc
+ * opt_let and opt_dotimes can be combined, at least from opt_let's view
+ *   maybe split these at a lower level
+ * for substring_to_temp, need to edit the opts as well somehow: in ops, args are ahead -- if one arg, is func?
+ *   as it is currently, check_for_substring_temp can't work in opt case
+ * ip for pi cases
+ * snd-test: if envelope-interp set! frample->file file->sample[d_p|vii] et al array-interp
+ * finish the t563.scm bugs: a couple number type problems 31905 30802 
+ * weed out unused stuff -- choose.data/choose: not_is_string|char, simple_char_eq, is_eq_caar_q?
+ * ash if arg2 known -- forego checks, similarly quotient: i_ii_direct as in modulo (these need opt_choosers too->call.fp)
+ * map/for-each multi-expr bodies could be done in-place (rather than cons with begin)
+ *   map/for-each/sort! in-place if c-func: p_pp 
+ *   for-each+lambda also doable if lambda body is
+ * varlet et al ok if let is not curlet or outlet(curlet) -- opt_chooser somehow?
+ * need to test opt_sizes escape in sort et al
+ *   perhaps save sc->envir, make sure it is ok if optimize fails
+ * s7_macroexpand of multiple-value-set!? maybe disable values?
+ *    s7test 29596 _sort_ 23890 use-redef-1 etc
+ * what others like d_pid_sso? need stats... pip_ssf in tref->p_p_f pp_fc
+ *    hash: opt_p_ppp_sfs has 3 choices opt_b_pi_fs + pp_ss
+ *    tmap: for-each opt_cell_any_nr could be simplified or opt_wrap_cell? opt_cond_2?
+ * all-lg-results (bench?)
+ * since lint is truncating, print-length checked via port-position?
+ * g_multiply_2 gets (* i 2.0) etc thash
+ * sp.scm: if just set! make it mutable for duration of loop
  */

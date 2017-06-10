@@ -125,7 +125,7 @@
 	      procedure-setter procedure-signature procedure-source procedure? proper-list? provided?
 	      quasiquote quote quotient
 	      random-state random-state->list random-state? rational? rationalize real-part real? remainder reverse rootlet round
-	      s7-version sequence? sin sinh square sqrt stacktrace string string->list string->number string->symbol string->keyword string-append 
+	      sequence? sin sinh square sqrt stacktrace string string->list string->number string->symbol string->keyword string-append 
 	      string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-downcase string-length
 	      string-position string-ref string-upcase string<=? string<? string=? string>=? string>? string?
 	      sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol?
@@ -136,6 +136,7 @@
 	      zero?
 	      list-values apply-values unquote))
 	   ;; do not include file-exists? or directory? (also not peek-char because these are checked via eval)
+	   ;;   also s7-version since it's used for reporting
 	   ht))
 
 	(built-in-functions (let ((ht (make-hash-table)))
