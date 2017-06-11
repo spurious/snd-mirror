@@ -26024,7 +26024,11 @@ static int circular_list_entries(s7_pointer lst)
 }
 
 static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, shared_info *ci);
-static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci);
+/* static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci); */
+
+static void (*display_functions[256])(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci); 
+#define object_to_port(Sc, Obj, Port, Use_Write, Ci) (*display_functions[unchecked_type(Obj)])(Sc, Obj, Port, Use_Write, Ci)
+
 static s7_pointer object_out(s7_scheme *sc, s7_pointer obj, s7_pointer strport, use_write_t choice);
 
 static bool string_needs_slashification(const char *str, int len)
@@ -26124,7 +26128,7 @@ static char *slashify_string(s7_scheme *sc, const char *p, int len, bool quoted,
   return(s);
 }
 
-static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
+static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   if ((obj == sc->standard_output) ||
       (obj == sc->standard_error))
@@ -26177,7 +26181,7 @@ static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
     }
 }
 
-static void input_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
+static void input_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   if (obj == sc->standard_input)
     port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
@@ -26277,7 +26281,7 @@ static bool symbol_needs_slashification(s7_pointer obj)
   return(false);
 }
 
-static void symbol_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
+static void symbol_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   /* I think this is the only place we print a symbol's name
    *   but in the readable case, what about (symbol "1;3")? it actually seems ok!
@@ -26649,7 +26653,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 }
 
 
-static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write)
+static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, shared_info *ignored)
 {
   s7_int i, len;
   int plen;
@@ -27207,7 +27211,7 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
 	      for (x = let_slots(obj); is_slot(x); x = next_slot(x))
 		{
 		  port_write_string(port)(sc, "(cons ", 6, port);
-		  symbol_to_port(sc, slot_symbol(x), port, use_write);
+		  symbol_to_port(sc, slot_symbol(x), port, use_write, NULL);
 		  port_write_character(port)(sc, ' ', port);
 		  object_to_port_with_circle_check(sc, slot_value(x), port, use_write, ci);
 		  port_write_character(port)(sc, ')', port);
@@ -28372,7 +28376,7 @@ static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use
     }
 }
 
-static void baffle_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port)
+static void baffle_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int nlen;
   char buf[64];
@@ -28380,7 +28384,7 @@ static void baffle_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port)
   port_write_string(port)(sc, buf, nlen, port);
 }
 
-static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
+static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int nlen;
   char buf[64];
@@ -28391,7 +28395,7 @@ static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, us
   port_write_string(port)(sc, buf, nlen, port);
 }
 
-static void rng_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
+static void rng_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int nlen;
   char buf[128];
@@ -28407,247 +28411,259 @@ static void rng_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
   port_write_string(port)(sc, buf, nlen, port);
 }
 
-static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+static void display_any(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
-  int nlen;
-  char *str;
-  switch (type(obj))
+#if DEBUGGING
+  print_debugging_state(sc, obj, port);
+#else
+  {
+    char *str, *tmp;
+    int nlen, len;
+    tmp = describe_type_bits(sc, obj);
+    len = 32 + safe_strlen(tmp);
+    tmpbuf_malloc(str, len);
+    if (is_free(obj))
+      nlen = snprintf(str, len, "<free cell! %s>", tmp);
+    else nlen = snprintf(str, len, "<unknown object! %s>", tmp);
+    free(tmp);
+    port_write_string(port)(sc, str, nlen, port);
+    tmpbuf_free(str, len);
+  }
+#endif
+}
+
+static void unique_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  port_write_string(port)(sc, unique_name(obj), unique_name_length(obj), port);
+}
+
+static void eof_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  /* if file has #<eof> it causes read to return #<eof> -> end of read! what is readable version? '#<eof> or (begin #<eof>) as below
+   * but this is silly -- to fool read, the #<eof> has to be all by itself at the top-level!
+   * and the read of #<eof> does not affect the port, so if you know it's there, just ignore #<eof> and continue reading.
+   */
+  if (use_write == USE_READABLE_WRITE)
+    port_write_string(port)(sc, "(begin #<eof>)", 14, port);
+  else port_write_string(port)(sc, unique_name(obj), unique_name_length(obj), port);
+}
+
+static void counter_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  port_write_string(port)(sc, "#<counter>", 10, port);
+}
+
+static void optlist_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  port_write_string(port)(sc, "#<optlist>", 10, port);
+}
+
+static void integer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (has_print_name(obj))
+    port_write_string(port)(sc, print_name(obj), print_name_length(obj), port);
+  else
     {
-    case T_FLOAT_VECTOR:
-    case T_INT_VECTOR:
-      int_or_float_vector_to_port(sc, obj, port, use_write);
-      break;
-
-    case T_VECTOR:
-      vector_to_port(sc, obj, port, use_write, ci);
-      break;
-
-    case T_PAIR:
-      pair_to_port(sc, obj, port, use_write, ci);
-      break;
-
-    case T_HASH_TABLE:
-      hash_table_to_port(sc, obj, port, use_write, ci);
-      break;
-
-    case T_ITERATOR:
-      iterator_to_port(sc, obj, port, use_write, ci);
-      break;
-
-    case T_LET:
-      let_to_port(sc, obj, port, use_write, ci);
-      break;
-
-    case T_EOF_OBJECT:
-      /* if file has #<eof> it causes read to return #<eof> -> end of read! what is readable version? '#<eof> or (begin #<eof>) as below
-       * but this is silly -- to fool read, the #<eof> has to be all by itself at the top-level!
-       * and the read of #<eof> does not affect the port, so if you know it's there, just ignore #<eof> and continue reading.
-       */
-      if (use_write == USE_READABLE_WRITE)
-	port_write_string(port)(sc, "(begin #<eof>)", 14, port);
-      else port_write_string(port)(sc, unique_name(obj), unique_name_length(obj), port);
-      break;
-
-    case T_BOOLEAN:
-    case T_NIL:
-    case T_UNSPECIFIED:
-    case T_UNDEFINED:
-      port_write_string(port)(sc, unique_name(obj), unique_name_length(obj), port);
-      break;
-
-    case T_INPUT_PORT:
-      input_port_to_port(sc, obj, port, use_write);
-      break;
-
-    case T_OUTPUT_PORT:
-      output_port_to_port(sc, obj, port, use_write);
-      break;
-
-    case T_COUNTER:
-      port_write_string(port)(sc, "#<counter>", 10, port);
-      break;
-
-    case T_OPTLIST:
-      port_write_string(port)(sc, "#<optlist>", 10, port);
-      break;
-
-    case T_BAFFLE:
-      baffle_to_port(sc, obj, port);
-      break;
-
-    case T_INTEGER:
-      if (has_print_name(obj))
-	port_write_string(port)(sc, print_name(obj), print_name_length(obj), port);
-      else
+      int nlen;
+      char *str;
+      nlen = 0;
+      str = integer_to_string_base_10_no_width(obj, &nlen);
+      if (nlen > 0)
 	{
-	  nlen = 0;
-	  str = integer_to_string_base_10_no_width(obj, &nlen);
-	  if (nlen > 0)
-	    {
-	      set_print_name(obj, str, nlen);
-	      port_write_string(port)(sc, str, nlen, port);
-	    }
-	  else port_display(port)(sc, str, port);
-	}
-      break;
-
-    case T_REAL:
-    case T_RATIO:
-    case T_COMPLEX:
-      if (has_print_name(obj))
-	port_write_string(port)(sc, print_name(obj), print_name_length(obj), port);
-      else
-	{
-	  nlen = 0;
-	  str = number_to_string_base_10(obj, 0, float_format_precision, 'g', &nlen, use_write); /* was 14 */
 	  set_print_name(obj, str, nlen);
 	  port_write_string(port)(sc, str, nlen, port);
 	}
-      break;
-
-#if WITH_GMP
-    case T_BIG_INTEGER:
-    case T_BIG_RATIO:
-    case T_BIG_REAL:
-    case T_BIG_COMPLEX:
-      nlen = 0;
-      str = big_number_to_string_with_radix(obj, BASE_10, 0, &nlen, use_write);
-      port_write_string(port)(sc, str, nlen, port);
-      free(str);
-      break;
-#endif
-
-    case T_SYMBOL:
-      symbol_to_port(sc, obj, port, use_write);
-      break;
-
-    case T_SYNTAX:
-      port_display(port)(sc, symbol_name(syntax_symbol(obj)), port);
-      break;
-
-    case T_STRING:
-      if (is_byte_vector(obj))
-	byte_vector_to_port(sc, obj, port, use_write);
-      else string_to_port(sc, obj, port, use_write);
-      break;
-
-    case T_CHARACTER:
-      if (use_write == USE_DISPLAY)
-	port_write_character(port)(sc, character(obj), port);
-      else port_write_string(port)(sc, character_name(obj), character_name_length(obj), port);
-      break;
-
-    case T_CLOSURE:
-    case T_CLOSURE_STAR:
-      if (has_methods(obj))
-	{
-	  /* look for object->string method else fallback on ordinary case.
-	   * can't use recursion on closure_let here because then the fallback name is #<let>.
-	   */
-	  s7_pointer print_func;
-	  print_func = find_method(sc, closure_let(obj), sc->object_to_string_symbol);
-	  if (print_func != sc->undefined)
-	    {
-	      s7_pointer p;
-	      p = s7_apply_function(sc, print_func, list_1(sc, obj));
-	      if (string_length(p) > 0)
-		port_write_string(port)(sc, string_value(p), string_length(p), port);
-	      break;
-	    }
-	}
-      if (use_write == USE_READABLE_WRITE)
-	write_closure_readably(sc, obj, port);
-      else write_closure_name(sc, obj, port);
-      break;
-
-    case T_MACRO:
-    case T_MACRO_STAR:
-    case T_BACRO:
-    case T_BACRO_STAR:
-      if (use_write == USE_READABLE_WRITE)
-	write_macro_readably(sc, obj, port);
-      else write_closure_name(sc, obj, port);
-      break;
-
-    case T_C_OPT_ARGS_FUNCTION:
-    case T_C_RST_ARGS_FUNCTION:
-    case T_C_ANY_ARGS_FUNCTION:
-    case T_C_FUNCTION:
-    case T_C_FUNCTION_STAR:
-      port_write_string(port)(sc, c_function_name(obj), c_function_name_length(obj), port);
-      break;
-
-    case T_C_MACRO:
-      port_write_string(port)(sc, c_macro_name(obj), c_macro_name_length(obj), port);
-      break;
-
-    case T_C_POINTER:
-      c_pointer_to_port(sc, obj, port, use_write);
-      break;
-
-    case T_RANDOM_STATE:
-      rng_to_port(sc, obj, port, use_write);
-      break;
-
-    case T_CONTINUATION:
-      if (use_write == USE_READABLE_WRITE)
-	port_write_string(port)(sc, "continuation", 12, port);
-      else port_write_string(port)(sc, "#<continuation>", 15, port);
-      break;
-
-    case T_GOTO:
-      if (use_write == USE_READABLE_WRITE)
-	port_write_string(port)(sc, "goto", 4, port);
-      else port_write_string(port)(sc, "#<goto>", 7, port);
-      break;
-
-    case T_CATCH:
-      port_write_string(port)(sc, "#<catch>", 8, port);
-      break;
-
-    case T_DYNAMIC_WIND:
-      /* this can happen because (*s7* 'stack) can involve dynamic-wind markers */
-      port_write_string(port)(sc, "#<dynamic-wind>", 15, port);
-      break;
-
-    case T_C_OBJECT:
-      if (use_write == USE_READABLE_WRITE)
-	str = ((*(c_object_print_readably(obj)))(sc, c_object_value(obj)));
-      else str = ((*(c_object_print(obj)))(sc, c_object_value(obj)));
-      port_display(port)(sc, str, port);
-      free(str);
-      break;
-
-    case T_SLOT:
-      if (use_write != USE_READABLE_WRITE)
-	port_write_character(port)(sc, '\'', port);
-      symbol_to_port(sc, slot_symbol(obj), port, use_write);
-      port_write_character(port)(sc, ' ', port);
-      object_to_port_with_circle_check(sc, slot_value(obj), port, use_write, ci);
-      break;
-
-    default:
-#if DEBUGGING
-      print_debugging_state(sc, obj, port);
-#else
-      {
-	char *str, *tmp;
-	int len;
-	tmp = describe_type_bits(sc, obj);
-	len = 32 + safe_strlen(tmp);
-	tmpbuf_malloc(str, len);
-	if (is_free(obj))
-	  nlen = snprintf(str, len, "<free cell! %s>", tmp);
-	else nlen = snprintf(str, len, "<unknown object! %s>", tmp);
-	free(tmp);
-	port_write_string(port)(sc, str, nlen, port);
-	tmpbuf_free(str, len);
-      }
-#endif
-      break;
+      else port_display(port)(sc, str, port);
     }
 }
 
+static void number_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (has_print_name(obj))
+    port_write_string(port)(sc, print_name(obj), print_name_length(obj), port);
+  else
+    {
+      int nlen;
+      char *str;
+      nlen = 0;
+      str = number_to_string_base_10(obj, 0, float_format_precision, 'g', &nlen, use_write); /* was 14 */
+      set_print_name(obj, str, nlen);
+      port_write_string(port)(sc, str, nlen, port);
+    }
+}
+
+#if WITH_GMP
+static void big_number_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  int nlen;
+  char *str;
+  nlen = 0;
+  str = big_number_to_string_with_radix(obj, BASE_10, 0, &nlen, use_write);
+  port_write_string(port)(sc, str, nlen, port);
+  free(str);
+}
+#endif
+
+static void syntax_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  port_display(port)(sc, symbol_name(syntax_symbol(obj)), port);
+}
+
+static void string_to_port_1(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (is_byte_vector(obj))
+    byte_vector_to_port(sc, obj, port, use_write);
+  else string_to_port(sc, obj, port, use_write);
+}
+
+static void character_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (use_write == USE_DISPLAY)
+    port_write_character(port)(sc, character(obj), port);
+  else port_write_string(port)(sc, character_name(obj), character_name_length(obj), port);
+}
+
+static void closure_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (has_methods(obj))
+    {
+      /* look for object->string method else fallback on ordinary case.
+       * can't use recursion on closure_let here because then the fallback name is #<let>.
+       */
+      s7_pointer print_func;
+      print_func = find_method(sc, closure_let(obj), sc->object_to_string_symbol);
+      if (print_func != sc->undefined)
+	{
+	  s7_pointer p;
+	  p = s7_apply_function(sc, print_func, list_1(sc, obj));
+	  if (string_length(p) > 0)
+	    port_write_string(port)(sc, string_value(p), string_length(p), port);
+	  return;
+	}
+    }
+  if (use_write == USE_READABLE_WRITE)
+    write_closure_readably(sc, obj, port);
+  else write_closure_name(sc, obj, port);
+}
+
+static void macro_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (use_write == USE_READABLE_WRITE)
+    write_macro_readably(sc, obj, port);
+  else write_closure_name(sc, obj, port);
+}
+
+static void c_function_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  port_write_string(port)(sc, c_function_name(obj), c_function_name_length(obj), port);
+}
+
+static void c_macro_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  port_write_string(port)(sc, c_macro_name(obj), c_macro_name_length(obj), port);
+}
+
+static void continuation_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (use_write == USE_READABLE_WRITE)
+    port_write_string(port)(sc, "continuation", 12, port);
+  else port_write_string(port)(sc, "#<continuation>", 15, port);
+}
+
+static void goto_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (use_write == USE_READABLE_WRITE)
+    port_write_string(port)(sc, "goto", 4, port);
+  else port_write_string(port)(sc, "#<goto>", 7, port);
+}
+
+static void catch_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  port_write_string(port)(sc, "#<catch>", 8, port);
+}
+
+static void dynamic_wind_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  /* this can happen because (*s7* 'stack) can involve dynamic-wind markers */
+  port_write_string(port)(sc, "#<dynamic-wind>", 15, port);
+}
+
+static void c_object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  char *str;
+  if (use_write == USE_READABLE_WRITE)
+    str = ((*(c_object_print_readably(obj)))(sc, c_object_value(obj)));
+  else str = ((*(c_object_print(obj)))(sc, c_object_value(obj)));
+  port_display(port)(sc, str, port);
+  free(str);
+}
+
+static void slot_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
+{
+  if (use_write != USE_READABLE_WRITE)
+    port_write_character(port)(sc, '\'', port);
+  symbol_to_port(sc, slot_symbol(obj), port, use_write, ci);
+  port_write_character(port)(sc, ' ', port);
+  object_to_port_with_circle_check(sc, slot_value(obj), port, use_write, ci);
+}
+
+
+static void init_display_functions(void)
+{
+  int i;
+  for (i = 0; i < 256; i++) display_functions[i] = display_any;
+  display_functions[T_FLOAT_VECTOR] = int_or_float_vector_to_port;
+  display_functions[T_INT_VECTOR] = int_or_float_vector_to_port;
+  display_functions[T_VECTOR] = vector_to_port;
+  display_functions[T_PAIR] = pair_to_port;
+  display_functions[T_HASH_TABLE] = hash_table_to_port;
+  display_functions[T_ITERATOR] = iterator_to_port;
+  display_functions[T_LET] = let_to_port;
+  display_functions[T_BOOLEAN] = unique_to_port;
+  display_functions[T_NIL] = unique_to_port;
+  display_functions[T_UNSPECIFIED] = unique_to_port;
+  display_functions[T_UNDEFINED] = unique_to_port;
+  display_functions[T_EOF_OBJECT] = eof_to_port;
+  display_functions[T_INPUT_PORT] = input_port_to_port;
+  display_functions[T_OUTPUT_PORT] = output_port_to_port;
+  display_functions[T_COUNTER] = counter_to_port;
+  display_functions[T_OPTLIST] = optlist_to_port;
+  display_functions[T_BAFFLE] = baffle_to_port;
+  display_functions[T_INTEGER] = integer_to_port;
+  display_functions[T_RATIO] = number_to_port;
+  display_functions[T_REAL] = number_to_port;
+  display_functions[T_COMPLEX] = number_to_port;
+#if WITH_GMP
+  display_functions[T_BIG_INTEGER] = big_number_to_port;
+  display_functions[T_BIG_RATIO] = big_number_to_port;
+  display_functions[T_BIG_REAL] = big_number_to_port;
+  display_functions[T_BIG_COMPLEX] = big_number_to_port;
+#endif
+  display_functions[T_SYMBOL] = symbol_to_port;
+  display_functions[T_SYNTAX] = syntax_to_port;
+  display_functions[T_STRING] = string_to_port_1;
+  display_functions[T_CHARACTER] = character_to_port;
+  display_functions[T_CLOSURE] = closure_to_port;
+  display_functions[T_CLOSURE_STAR] = closure_to_port;
+  display_functions[T_MACRO] = macro_to_port;
+  display_functions[T_MACRO_STAR] = macro_to_port;
+  display_functions[T_BACRO] = macro_to_port;
+  display_functions[T_BACRO_STAR] = macro_to_port;
+  display_functions[T_C_OPT_ARGS_FUNCTION] = c_function_to_port;
+  display_functions[T_C_RST_ARGS_FUNCTION] = c_function_to_port;
+  display_functions[T_C_ANY_ARGS_FUNCTION] = c_function_to_port;
+  display_functions[T_C_FUNCTION] = c_function_to_port;
+  display_functions[T_C_FUNCTION_STAR] = c_function_to_port;
+  display_functions[T_C_MACRO] = c_macro_to_port;
+  display_functions[T_C_POINTER] = c_pointer_to_port;
+  display_functions[T_RANDOM_STATE] = rng_to_port;
+  display_functions[T_CONTINUATION] = continuation_to_port;
+  display_functions[T_GOTO] = goto_to_port;
+  display_functions[T_CATCH] = catch_to_port;
+  display_functions[T_DYNAMIC_WIND] = dynamic_wind_to_port;
+  display_functions[T_C_OBJECT] = c_object_to_port;
+  display_functions[T_SLOT] = slot_to_port;
+}
 
 static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
@@ -51350,7 +51366,7 @@ static s7_pointer opt_do_2(void *p)
 static s7_pointer opt_do_simple(void *p)
 {
   /* 1 var step by 1, 1 expr, no return */
-  opt_info *o = (opt_info *)p; /* o->v2.p=frame, o->v1.i=body end index, o->v3.i=body length, o->v4.i=return length, o->v5.i=end index */
+  opt_info *o = (opt_info *)p; /* o->v2.p=frame, o->v5.i=end index */
   opt_info *o1, *ostart;
   int loop;
   s7_pointer vp, old_e;
@@ -51388,6 +51404,7 @@ static s7_pointer opt_do_very_simple(void *p)
   opt_info *o1;
   s7_int end, loop;
   s7_pointer vp, old_e;
+  s7_pointer (*f)(void *p);
 
   old_e = cur_sc->envir;
   cur_sc->envir = o->v2.p;
@@ -51395,76 +51412,148 @@ static s7_pointer opt_do_very_simple(void *p)
   vp = slot_value(dox_slot1(o->v2.p));
   if (is_slot(dox_slot2_unchecked(o->v2.p)))
     end = integer(slot_value(dox_slot2(o->v2.p)));
-  else end = o->v5.i;
+  else end = o->v3.i;
   o1 = cur_sc->opts[++cur_sc->pc];
   integer(vp) = integer(o1->call.fp(o1));
 
   loop = o->v4.i;
   cur_sc->pc = loop;
-  o1 = cur_sc->opts[loop];
+  o1 = cur_sc->opts[loop]; /* the body */
+  f = o1->call.fp;
+  while (integer(vp) < end)
+    {
+      f(o1);
+      cur_sc->pc = loop;
+      integer(vp)++;
+    }
+  cur_sc->pc = o->v5.i;
+  cur_sc->envir = old_e;
+  return(cur_sc->T);
+}
 
-  if (o1->call.fp == d_to_p_nr)
-    {
-      s7_double (*f)(void *p);
-      f = o1->call1.fd;
-      while (integer(vp) < end)
-	{
-	  f(o1);
-	  cur_sc->pc = loop;
-	  integer(vp)++;
-	}
-    }
-  else
-    {
-      if (o1->call.fp == i_to_p_nr)
-	{
-	  s7_int (*f)(void *p);
-	  f = o1->call1.fi;
-	  while (integer(vp) < end)
-	    {
-	      f(o1);
-	      cur_sc->pc = loop;
-	      integer(vp)++;
-	    }
-	}
-      else
-	{
-	  if (o1->call.fp == opt_if_bp)
-	    {
-	      bool (*f)(void *p);
-	      loop++;
-	      o1 = cur_sc->opts[loop];
-	      f = o1->call.fb;
-	      while (integer(vp) < end)
-		{
-		  if (f(o1))
-		    {
-		      opt_info *o2;
-		      o2 = cur_sc->opts[++cur_sc->pc];
-		      o2->call.fp(o2);
-		    }
-		  cur_sc->pc = loop;
-		  integer(vp)++;
-		}
-	    }
-	  else
-	    {
-	      s7_pointer (*f)(void *p);
-	      f = o1->call.fp;
-	      while (integer(vp) < end)
-		{
-		  f(o1);
-		  cur_sc->pc = loop;
-		  integer(vp)++;
-		}
-	    }
-	}
-    }
+static s7_pointer opt_do_prepackaged(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_int end;
+  s7_pointer vp, old_e;
+
+  old_e = cur_sc->envir;
+  cur_sc->envir = o->v2.p;
+
+  vp = slot_value(dox_slot1(o->v2.p));
+  if (is_slot(dox_slot2_unchecked(o->v2.p)))
+    end = integer(slot_value(dox_slot2(o->v2.p)));
+  else end = o->v3.i;
+  o1 = cur_sc->opts[++cur_sc->pc];
+  integer(vp) = integer(o1->call.fp(o1));
+  
+  o->v6.p = vp;
+  o->v1.i = end;
+  o->call1.fp(o);
 
   cur_sc->pc = o->v5.i;
   cur_sc->envir = old_e;
   return(cur_sc->T);
 }
+
+static s7_pointer opt_do_dpnr(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  int loop;
+  s7_pointer vp;
+  s7_int end;
+  s7_double (*f)(void *p);
+
+  end = o->v1.i;
+  vp = o->v6.p;
+  loop = o->v4.i;
+  o1 = cur_sc->opts[loop]; /* the body */
+  f = o1->call1.fd;
+  while (integer(vp) < end)
+    {
+      cur_sc->pc = loop;
+      f(o1);
+      integer(vp)++;
+    }
+  return(NULL);
+}
+
+static s7_pointer opt_do_ipnr(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  int loop;
+  s7_pointer vp;
+  s7_int end;
+  s7_int (*f)(void *p);
+
+  end = o->v1.i;
+  vp = o->v6.p;
+  loop = o->v4.i;
+  o1 = cur_sc->opts[loop]; /* the body */
+  f = o1->call1.fi;
+  while (integer(vp) < end)
+    {
+      cur_sc->pc = loop;
+      f(o1);
+      integer(vp)++;
+    }
+  return(NULL);
+}
+
+static s7_pointer opt_do_ifbp(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  int loop;
+  s7_pointer vp;
+  s7_int end;
+  bool (*f)(void *p);
+
+  end = o->v1.i;
+  vp = o->v6.p;
+  loop = o->v4.i + 1;
+  o1 = cur_sc->opts[loop];
+  f = o1->call.fb;
+  while (integer(vp) < end)
+    {
+      if (f(o1))
+	{
+	  opt_info *o2;
+	  o2 = cur_sc->opts[++cur_sc->pc];
+	  o2->call.fp(o2);
+	}
+      cur_sc->pc = loop;
+      integer(vp)++;
+    }
+  return(NULL);
+}
+
+static s7_pointer opt_do_setpif(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  int loop;
+  s7_pointer vp, val;
+  s7_int end;
+
+  end = o->v1.i;
+  vp = o->v6.p;
+  loop = o->v4.i;
+  o1 = cur_sc->opts[loop]; 
+
+  val = make_mutable_integer(cur_sc, integer(slot_value(o1->v1.p)));
+  slot_set_value(o1->v1.p, val);
+  while (integer(vp) < end)
+    {
+      integer(val) = o1->v4.i_ii_f(integer(slot_value(o1->v2.p)), o1->v3.i);
+      integer(vp)++;
+    }
+  return(NULL);
+}
+
 
 static bool stop_is_safe(s7_scheme *sc, s7_pointer stop, s7_pointer body)
 {
@@ -51728,7 +51817,7 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 	      return(return_false(sc, car_x, __func__, __LINE__));
 	    }
 	  opc->v2.p = frame;
-	  opc->v3.i = len - 3;
+	  opc->v3.i = len - 3; /* body_len */
 	  opc->v4.i = rtn_len;
 	  opc->v5.i = sc->pc - 1;
 	  sc->envir = old_e;
@@ -51749,7 +51838,7 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 		   *    set|let-set? if not caddr, hash-table|vector|list-set if not cadddr
 		   *    implicit set similar
 		   *    but this still needs a tree-walker
-		   *    also (+ 1 ind) and (= end ind) and >= and maybe a constant?
+		   *    also (+ 1 ind) and (= end ind) and >=
 		   */
 		  {
 		    s7_pointer ind, ind_step, end, slot, var;
@@ -51770,20 +51859,47 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 			(caddr(ind_step) == small_int(1)) &&
 			(is_null(cdddr(ind_step))))
 		      {
-			/* fprintf(stderr, "very simple: %s\n", DISPLAY(car_x)); */
+			opt_info *o1;
 			opt_set_fp(opc, opt_do_very_simple);
 			dox_set_slot1(frame, slot);
 			dox_set_slot2_unchecked(frame, (is_symbol(caddr(end))) ? find_symbol(sc, caddr(end)) : sc->undefined);
 			slot_set_value(slot, make_mutable_integer(sc, integer(slot_value(slot))));
 			opc->v4.i = body_index;
 			if (is_t_integer(caddr(end)))
-			  opc->v5.i = integer(caddr(end));
+			  opc->v3.i = integer(caddr(end));
 
-			/* if body is (set! x ...) where ... is simple and x is outside loop and x is real/int,
-			 *   set x value to mutable and rewrite the set to omit i|d_to_p. set_p_i_fo1 includes the make_int.
-			 *   then add mutable at start and unmutable at end.
-			 * f4? [if just incr, multiply len*incr... loop = set x + x len*incr]
-			 */
+			o1 = sc->opts[body_index];
+			/* v2, v3, v4, v5 are in use */
+			if (o1->call.fp == d_to_p_nr)
+			  {
+			    /* snd-test: (do ((k 0 (+ k 1))) ((= k N)) (float-vector-set! rl k (read-sample rd))) */
+			    opt_set_fp(opc, opt_do_prepackaged);
+			    opc->call1.fp = opt_do_dpnr;
+			  }
+			else
+			  {
+			    if (o1->call.fp == i_to_p_nr)
+			      {
+				opt_set_fp(opc, opt_do_prepackaged);
+				opc->call1.fp = opt_do_ipnr;
+			      }
+			    else
+			      {
+				if (o1->call.fp == opt_if_bp)
+				  {
+				    opt_set_fp(opc, opt_do_prepackaged);
+				    opc->call1.fp = opt_do_ifbp;
+				  }
+				else
+				  {
+				    if (o1->call.fp == opt_set_p_i_fo1)
+				      {
+					opt_set_fp(opc, opt_do_prepackaged);
+					opc->call1.fp = opt_do_setpif;
+				      }
+				  }
+			      }
+			  }
 		      }
 		  }
 		}
@@ -69371,7 +69487,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			}
 		      sc->code = closure_body(sc->code);
 		    }
-
 		    goto BEGIN1;
 		  }
 
@@ -78153,6 +78268,7 @@ s7_scheme *s7_init(void)
       init_types();
       init_ctables();
       init_mark_functions();
+      init_display_functions();
       init_equals();
       init_hash_maps();
       init_pows();
@@ -80139,14 +80255,14 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1120
  * tref          |      |      | 2372 || 2083 | 1289 1152
  * tlet     3590 | 2400 | 2400 | 2244 || 2308 | 2008 1218
- * teq           |      |      | 6612 || 2787 | 2210 2142
- * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2407
- * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 3011
+ * teq           |      |      | 6612 || 2787 | 2210 2052
+ * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2399
+ * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 3018
+ * lint          |      |      |      || 4029 | 3308 3104 [150.0]
  * tcopy         |      |      | 13.6 || 3185 | 3342 3141
- * lint          |      |      |      || 4029 | 3308 3147 [150.2]
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3202
- * tmap          |      |      |  9.3 || 4300 | 3716 3413
- * tform         |      |      | 6816 || 3850 | 3627 3555
+ * tform         |      |      | 6816 || 3850 | 3627 3391
+ * tmap          |      |      |  9.3 || 4300 | 3716 3434
  * tfft          |      | 14.3 | 15.2 || 16.4 | 4762 4091
  * tsort         |      |      |      || 9186 | 5403 4794
  * titer         |      |      | 7503 || 5881 | 5069 4860
@@ -80206,7 +80322,6 @@ int main(int argc, char **argv)
  *    hash: opt_p_ppp_sfs has 3 choices opt_b_pi_fs + pp_ss
  *    tmap: for-each opt_cell_any_nr could be simplified or opt_wrap_cell? opt_cond_2?
  * all-lg-results (bench?)
- * since lint is truncating, print-length checked via port-position?
  * g_multiply_2 gets (* i 2.0) etc thash
- * sp.scm: if just set! make it mutable for duration of loop
+ * check overheads/switch again
  */

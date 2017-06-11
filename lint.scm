@@ -360,7 +360,7 @@
     ;; -------- lint-format --------
     (define target-line-length 80) ; also 120 via let-temporarily
 
-    (define (truncate-string str)
+    (denote (lint-truncate-string str)
       (let ((len (length str)))
 	(if (< len target-line-length)
 	    str
@@ -372,9 +372,9 @@
 						     i))
 				"..."))))))
 
-    (define (truncated-list->string form)
+    (denote (truncated-list->string form)
       ;; return form -> string with limits on its length
-      (truncate-string (object->string form #t target-line-length)))
+      (lint-truncate-string (object->string form #t target-line-length)))
     
     (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-lint-var also collides)
     (define lint-pp-funclet #f)
@@ -383,29 +383,29 @@
       (set! lint-pp pp);
       (set! lint-pp-funclet (funclet pretty-print)))
     
-    (define (lists->string f1 f2)
-      (let ((str1 (truncate-string (object->string f1 #t (+ target-line-length 2)))))
+    (denote (lists->string f1 f2)
+      (let ((str1 (lint-truncate-string (object->string f1 #t (+ target-line-length 2)))))
 	(if (> (tree-leaves f2) 10)
 	    (begin
 	      (set! (lint-pp-funclet '*pretty-print-left-margin*) pp-left-margin)
 	      (set! (lint-pp-funclet '*pretty-print-length*) (- 114 pp-left-margin))
 	      (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space (lint-pp f2)))
-	    (let ((str2 (truncate-string (object->string f2 #t (+ target-line-length 2)))))
+	    (let ((str2 (lint-truncate-string (object->string f2 #t (+ target-line-length 2)))))
 	      (if (< (+ (length str1) (length str2)) target-line-length)
 		  (format #f "~A -> ~A" str1 str2)
 		  (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2))))))
 	
     (define (truncated-lists->string f1 f2)
       ;; same but 2 strings that may need to be lined up vertically and both are truncated
-      (let ((str1 (truncate-string (object->string f1 #t (+ target-line-length 2))))
-	    (str2 (truncate-string (object->string f2 #t (+ target-line-length 2)))))
+      (let ((str1 (lint-truncate-string (object->string f1 #t (+ target-line-length 2))))
+	    (str2 (lint-truncate-string (object->string f2 #t (+ target-line-length 2)))))
 	(if (< (+ (length str1) (length str2)) target-line-length)
 	    (format #f "~A -> ~A" str1 str2)
 	    (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2))))
     
     (define made-suggestion 0)
 
-    (define (lint-format str caller . args)
+    (denote (lint-format str caller . args)
       (let ((outstr (apply format #f 
 			   (string-append (if line-number
 					      "~NC~A (line ~D): " 
@@ -421,7 +421,7 @@
 	(if (> (length outstr) (+ target-line-length 40))
 	    (newline outport))))
 
-    (define (local-line-number tree)
+    (denote (local-line-number tree)
       (let ((tree-line (and (pair? tree) (pair-line-number tree))))
 	(if (and tree-line
 		 (not (= tree-line line-number)))
@@ -449,7 +449,7 @@
     (denote var-match-list (dilambda (lambda (v) (let-ref (cdr v) 'match-list)) (lambda (v x) (let-set! (cdr v) 'match-list x))))
     (denote var-initial-value (lambda (v) (let-ref (cdr v) 'initial-value))) ; not (easily) settable
 
-    (define var-refenv  
+    (denote var-refenv  
       (dilambda (lambda (v) 
 		  (let-ref (cdr v) 'refenv))  
 		(lambda (v e)
@@ -460,7 +460,7 @@
 			    (let-set! (cdr v) 'refenv #f))))
 		  e)))
 
-    (define var-side-effect 
+    (denote var-side-effect 
       (dilambda (lambda (v) 
 		  (case (let-ref (cdr v) 'side-effect)
 		    ((()) (let-set! (cdr v) 'side-effect (get-side-effect v)))
@@ -468,7 +468,7 @@
 		(lambda (v x) 
 		  (let-set! (cdr v) 'side-effect x))))
     
-    (define var-signature 
+    (denote var-signature 
       (dilambda (lambda (v) 
 		  (case (let-ref (cdr v) 'signature)
 		    ((()) (let-set! (cdr v) 'signature (get-signature v)))
@@ -477,7 +477,7 @@
 		  (if (defined? 'signature (cdr v))
 		      (let-set! (cdr v) 'signature x))))) ; perhaps fallback on varlet here and in var-ftype above?
     
-    (define (make-lint-var name initial-value definer)
+    (denote (make-lint-var name initial-value definer)
       (let* ((old (hash-table-ref other-identifiers name))
 	     (history (if old 
 			  (begin
@@ -809,7 +809,7 @@
 	     (tree-symbol-walk (car tree) syms)
 	     (tree-symbol-walk (cdr tree) syms)))))
     
-    (define (unbegin x)
+    (denote (unbegin x)
       ((if (and (pair? x)
 		(list? (cdr x))
 		(eq? (car x) 'begin))
@@ -819,25 +819,25 @@
     
     ;; -------- types --------
 
-    (define (unspecified? x)
+    (denote (unspecified? x)
       (eq? x #<unspecified>))
 
-    (define (quoted-pair? x)
+    (denote (quoted-pair? x)
       (and (pair? x)
 	   (eq? (car x) 'quote)
 	   (pair? (cdr x))
 	   (pair? (cadr x))))
 
-    (define (quoted-undotted-pair? x)
+    (denote (quoted-undotted-pair? x)
       (and (quoted-pair? x)
 	   (positive? (length (cadr x)))))
     
-    (define (quoted-null? x)
+    (denote (quoted-null? x)
       (and (len=2? x)
 	   (eq? (car x) 'quote)
 	   (null? (cadr x))))
 
-    (define (any-null? x)
+    (denote (any-null? x)
       (or (null? x)
 	  (and (pair? x)
 	       (case (car x)
@@ -849,25 +849,25 @@
 		 ;; no hits (in this context): (make-list 0 ...) (string->list "") (vector->list #()) (reverse ()) (copy ()) (append ()) (append)
 		 (else #f)))))
     
-    (define (quoted-not? x)
+    (denote (quoted-not? x)
       (and (len=2? x)
 	   (eq? (car x) 'quote)
 	   (not (cadr x))))
     
-    (define (quoted-symbol? x)
+    (denote (quoted-symbol? x)
       (and (pair? x)
 	   (eq? (car x) 'quote)
 	   (pair? (cdr x))
 	   (symbol? (cadr x))))
     
-    (define (just-symbols? form)
+    (denote (just-symbols? form)
       (or (symbol? form)
 	  (do ((p form (cdr p)))
 	      ((not (and (pair? p)
 			 (symbol? (car p))))
 	       (null? p)))))
     
-    (define (code-constant? x)
+    (denote (code-constant? x)
       (and (constant? x)
 	   (or (not (pair? x))
 	       (eq? (car x) 'quote))))
