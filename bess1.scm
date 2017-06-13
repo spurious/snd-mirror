@@ -27,7 +27,7 @@
 
 (with-let *motif*
 
-(set! *clm-srate* 22050)
+;(set! *clm-srate* 22050)
 
 (define *clm-sample-type* mus-lfloat)
 (define *clm-rt-bufsize* 1024)
