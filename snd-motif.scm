@@ -1754,7 +1754,7 @@
   (define showing-disk-space #f) ; for prefs dialog
   
   (define show-disk-space
-    (let ((documentation "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)")
+    (let ((documentation "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook: (set! (hook-functions after-open-hook) (list (*motif* 'show-disk-space))))")
 	  (labelled-snds ())
 
 	  (kmg (lambda (num)

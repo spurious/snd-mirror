@@ -351,21 +351,18 @@ int main(int argc, char **argv)
   add_file("ffitest.c");
   add_file("tools/gcall.c");
 
-  add_file("/home/bil/test/s7webserver/s7webserver.cpp");
-  add_file("/home/bil/test/radium-3.4.2/embedded_scheme/scheme.cpp");
+  add_file("/home/bil/dist/snd/s7webserver/s7webserver.cpp");
+  add_file("/home/bil/test/scheme/radium-3.4.2/embedded_scheme/scheme.cpp");
 
-  add_file("/home/bil/test/cm308/cm-3.8.0/src/CmSupport.cpp");
-  add_file("/home/bil/test/cm308/cm-3.8.0/src/Scheme.cpp");
-  add_file("/home/bil/test/cm308/cm-3.8.0/src/SndLib.cpp");
-  add_file("/home/bil/test/cm308/cm-3.8.0/src/SndLibBridge.cpp");
-
-  add_file("/home/bil/test/cm390/cm/src/CmSupport.cpp");
-  add_file("/home/bil/test/cm390/cm/src/Scheme.cpp");
-  add_file("/home/bil/test/cm390/cm/src/SndLib.cpp");
-  add_file("/home/bil/test/cm390/cm/src/SndLibBridge.cpp");
-  add_file("/home/bil/test/cm390/cm/src/s7.cpp");
-  add_file("/home/bil/test/cm390/cm/src/Osc.cpp");
-  add_file("/home/bil/test/cm390/cm/src/SchemeSources.cpp");
+  add_file("/home/bil/test/cm/src/CmSupport.cpp");
+  add_file("/home/bil/test/cm/src/Scheme.cpp");
+  add_file("/home/bil/test/cm/src/SndLib.cpp");
+  add_file("/home/bil/test/cm/src/SndLibBridge.cpp");
+  add_file("/home/bil/test/cm/src/s7.cpp");
+  add_file("/home/bil/test/cm/src/OscPack.cpp");
+  add_file("/home/bil/test/cm/src/SchemeSources.cpp");
+  add_file("/home/bil/test/cm/src/OpenSoundControl.cpp");
+  add_file("/home/bil/test/cm/src/Liblo.cpp");
 
   for (i = 0; i < headers_ctr; i++)
     {

@@ -424,6 +424,7 @@
 			      0)))))
       (lambda (hook)
 	;; (show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)
+	;; (set! (hook-functions after-open-hook) (list (*motif* 'show-disk-space)))
 	
 	(let* ((snd (hook 'snd))
 	       (previous-label (let find-if ((pred (lambda (n)
@@ -450,7 +451,7 @@
 ;;; (remove-main-menu 5) removes the Help menu
   
   (define remove-main-menu 
-    (let ((documentation "(remove-main-menu menu) removes the specified top-level menu: (remove-main-menu 5) removes the Help menu"))
+    (let ((documentation "(remove-main-menu menu) removes the specified top-level menu: ((*gtk* 'remove-main-menu) 5) removes the Help menu"))
       (lambda (menu)
 	(gtk_widget_hide ((menu-widgets) menu)))))
   

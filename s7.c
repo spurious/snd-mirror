@@ -1178,7 +1178,7 @@ struct s7_scheme {
              when_s_symbol, when_a_symbol, when_p_symbol, when_unchecked_symbol, 
              with_baffle_unchecked_symbol, with_let_s_symbol, with_let_unchecked_symbol, 
              dox_slot_symbol, 
-             do_no_vars_symbol, do_no_vars_no_opt_symbol;
+             do_no_vars_symbol, do_no_vars_no_opt_symbol, dotimes_one_step_symbol;
 
 #if WITH_GMP
   s7_pointer bignum_symbol, is_bignum_symbol;
@@ -3038,6 +3038,7 @@ enum {OP_NO_OP, OP_GC_PROTECT,
       OP_DOTIMES_P, OP_DOTIMES_STEP_P,
 
       OP_DO_NO_VARS, OP_DO_NO_VARS_NO_OPT, OP_DO_NO_VARS_NO_OPT_1,
+      OP_DOTIMES_ONE_STEP,
 
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6,
       OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV,
@@ -3249,6 +3250,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "dotimes_p", "dotimes_step_p",
 
       "do_no_vars", "do_no_vars_no_opt", "do_no_vars_no_opt_1",
+      "dotimes_one_step",
 
       "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "safe_c_pp_3", "safe_c_pp_4", "safe_c_pp_5", "safe_c_pp_6",
       "eval_args_p_2", "eval_args_p_2_mv", "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv",
@@ -44417,6 +44419,38 @@ static int next_tx(s7_scheme *sc)
   return(sc->t_temp_ctr);
 }
 
+static s7_pointer safe_list_if_possible(s7_scheme *sc, int num_args)
+{
+  if ((num_args != 0) &&
+      (num_args < NUM_SAFE_LISTS))
+    {
+      sc->current_safe_list = num_args;
+      if (!is_pair(sc->safe_lists[num_args]))
+	sc->safe_lists[num_args] = permanent_list(sc, num_args);
+      if (!list_is_in_use(sc->safe_lists[num_args]))
+	{
+	  set_list_in_use(sc->safe_lists[num_args]);
+	  return(sc->safe_lists[num_args]);
+	}
+    }
+  return(make_list(sc, num_args, sc->nil));
+}
+
+static s7_pointer all_x_c_all_s(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer args, p;
+  int tx;
+  tx = next_tx(sc);
+  sc->t_temps[tx] = safe_list_if_possible(sc, integer(arglist_length(arg)));
+  for (args = cdr(arg), p = sc->t_temps[tx]; is_pair(args); args = cdr(args), p = cdr(p))
+    set_car(p, find_symbol_unchecked(sc, car(args)));
+  clear_list_in_use(sc->t_temps[tx]);
+  sc->current_safe_list = 0;
+  return(c_call(arg)(sc, sc->t_temps[tx]));
+}
+
+/* h_safe_c_all_x (etc), h_safe_c_s_opaq, h_safe_c_c_opscq, h_safe_c_scc */
+ 
 static s7_pointer all_x_c_opcq_opcq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -44696,6 +44730,17 @@ static s7_pointer all_x_c_s_opssq(s7_scheme *sc, s7_pointer arg)
   set_car(sc->t2_2, find_symbol_unchecked(sc, caddr(largs)));
   set_car(sc->t2_2, c_call(largs)(sc, sc->t2_1));
   set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(arg)));
+  return(c_call(arg)(sc, sc->t2_1));
+}
+
+static s7_pointer all_x_c_c_opssq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = caddr(arg);
+  set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(largs)));
+  set_car(sc->t2_2, find_symbol_unchecked(sc, caddr(largs)));
+  set_car(sc->t2_2, c_call(largs)(sc, sc->t2_1));
+  set_car(sc->t2_1, cadr(arg));
   return(c_call(arg)(sc, sc->t2_1));
 }
 
@@ -45147,6 +45192,7 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_opSCq_C] = all_x_c_opscq_c;
   all_x_function[HOP_SAFE_C_opSSq_S] = all_x_c_opssq_s;
   all_x_function[HOP_SAFE_C_S_opSSq] = all_x_c_s_opssq;
+  all_x_function[HOP_SAFE_C_C_opSSq] = all_x_c_c_opssq;
   all_x_function[HOP_SAFE_C_S_opSCq] = all_x_c_s_opscq;
   all_x_function[HOP_SAFE_C_opSq_opSq] = all_x_c_opsq_opsq;
   all_x_function[HOP_SAFE_C_opSq_opCq] = all_x_c_opsq_opcq;
@@ -45174,6 +45220,7 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_CSC] = all_x_c_csc;
   all_x_function[HOP_SAFE_CLOSURE_S_C] = all_x_closure_s;
   all_x_function[HOP_SAFE_CLOSURE_A_C] = all_x_closure_a;
+  all_x_function[HOP_SAFE_C_ALL_S] = all_x_c_all_s;
 }
 
 static s7_pointer g_not_c_c(s7_scheme *sc, s7_pointer args);
@@ -45598,24 +45645,6 @@ static bool return_false(s7_scheme *sc, s7_pointer expr, const char *func, int l
 
 #define is_opt_int(p) is_t_integer(p)
 #define is_opt_real(p) is_real(p)
-
-
-static s7_pointer safe_list_if_possible(s7_scheme *sc, int num_args)
-{
-  if ((num_args != 0) &&
-      (num_args < NUM_SAFE_LISTS))
-    {
-      sc->current_safe_list = num_args;
-      if (!is_pair(sc->safe_lists[num_args]))
-	sc->safe_lists[num_args] = permanent_list(sc, num_args);
-      if (!list_is_in_use(sc->safe_lists[num_args]))
-	{
-	  set_list_in_use(sc->safe_lists[num_args]);
-	  return(sc->safe_lists[num_args]);
-	}
-    }
-  return(make_list(sc, num_args, sc->nil));
-}
 
 
 /* all_x fallback for all optimizers */
@@ -55125,7 +55154,6 @@ static s7_pointer g_not_is_number(s7_scheme *sc, s7_pointer args)   {check_boole
 static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args)     {check_boolean_not_method(sc, s7_is_character, sc->is_char_symbol, args);}
 static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args)   {check_boolean_not_method(sc, is_string,       sc->is_string_symbol, args);}
 static s7_pointer g_not_is_zero(s7_scheme *sc, s7_pointer args)     {check_boolean_not_method(sc, s7_is_zero,      sc->is_zero_symbol, args);}
-#define opt_is_list(p) s7_is_list(sc, p)
 
 /* eq? does not check for methods */
 static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args)
@@ -59888,8 +59916,11 @@ static void check_lambda(s7_scheme *sc)
     optimize_lambda(sc, true, sc->gc_nil, car(code), body); /* why was lambda the func? */
   else 
     {
-      /* fprintf(stderr, "%s[%d]: %s\n", __func__, __LINE__, DISPLAY(body)); */
-      if (optimize(sc, body, 0, collect_parameters(sc, car(sc->code), sc->nil)) == OPT_OOPS)
+      /* fprintf(stderr, "%s[%d]: %s %s\n", __func__, __LINE__, DISPLAY_80(body), (sc->op_stack_now > sc->op_stack) ? DISPLAY(*(sc->op_stack_now - 1)) : "??"); */
+      if (optimize(sc, body, 0,
+		   /* ((sc->op_stack_now > sc->op_stack) && (is_c_function((*(sc->op_stack_now - 1)))) && (is_scope_safe((*(sc->op_stack_now - 1))))) ? 1 : 0, */
+		   /* this works except when someone resets outlet(curlet) after defining a local function! */
+		   collect_parameters(sc, car(sc->code), sc->nil)) == OPT_OOPS)
 	clear_all_optimizations(sc, body);
     }
 
@@ -62821,7 +62852,14 @@ static bool preserves_type(s7_scheme *sc, unsigned int x)
 	 (x == sc->multiply_class));
 }
 
-
+static bool is_simple_expression(s7_scheme *sc, s7_pointer x)
+{
+  return((!is_pair(x)) ||
+	 ((is_optimized(x)) &&
+	  (is_all_x_safe(sc, x)) &&
+	  (car(x) != sc->quote_symbol)));
+}
+	
 static s7_pointer check_do(s7_scheme *sc)
 {
   s7_pointer x;
@@ -62840,33 +62878,38 @@ static s7_pointer check_do(s7_scheme *sc)
 
   if (is_pair(car(sc->code)))
     {
+      clear_symbol_list(sc);
       for (x = car(sc->code); is_pair(x); x = cdr(x))
 	{
-	  if (!(is_pair(car(x))))                        /* (do (4) (= 3)) */
+	  s7_pointer y;
+	  y = car(x);
+	  if (!(is_pair(y)))                             /* (do (4) (= 3)) */
 	    eval_error(sc, "do: variable name missing? ~A", sc->code);
 
-	  if (!is_symbol(caar(x)))                       /* (do ((3 2)) ()) */
-	    eval_error(sc, "do step variable: ~S is not a symbol?", car(x));
+	  if (!is_symbol(car(y)))                        /* (do ((3 2)) ()) */
+	    eval_error(sc, "do step variable: ~S is not a symbol?", y);
 
-	  if (is_immutable_symbol(caar(x)))              /* (do ((pi 3 (+ pi 1))) ((= pi 4)) pi) */
-	    eval_error(sc, "do step variable: ~S is immutable", car(x));
+	  if (is_immutable_symbol(car(y)))               /* (do ((pi 3 (+ pi 1))) ((= pi 4)) pi) */
+	    eval_error(sc, "do step variable: ~S is immutable", y);
 
-	  if (is_pair(cdar(x)))
+	  if (is_pair(cdr(y)))
 	    {
-	      if ((!is_pair(cddar(x))) &&
-		  (is_not_null(cddar(x))))               /* (do ((i 0 . 1)) ...) */
-		eval_error(sc, "do: step variable info is an improper list?: ~A", sc->code);
+	      if ((!is_pair(cddr(y))) &&
+		  (is_not_null(cddr(y))))               /* (do ((i 0 . 1)) ...) */
+		eval_error(sc, "do: step variable info is an improper list?: ~A", x);
 
-	      if ((is_pair(cddar(x))) &&
-		  (is_not_null(cdddar(x))))              /* (do ((i 0 1 (+ i 1))) ...) */
-		eval_error(sc, "do: step variable info has extra stuff after the increment: ~A", sc->code);
+	      if ((is_pair(cddr(y))) &&
+		  (is_not_null(cdddr(y))))              /* (do ((i 0 1 (+ i 1))) ...) */
+		eval_error(sc, "do: step variable info has extra stuff after the increment: ~A", x);
 	    }
 	  else eval_error(sc, "do: step variable has no initial value: ~A", x);
-	  set_local(caar(x));
+	  set_local(car(y));
 
-	  /* (do ((i)) ...) */
+	  if (symbol_is_in_list(sc, car(y)))            /* (do ((i 0 (+ i 1)) (i 2))...) */
+	    eval_error(sc, "duplicate identifier in do: ~A", x);
+	  add_symbol_to_list(sc, car(y));
 	}
-      if (is_not_null(x))                                /* (do ((i 0 i) . 1) ((= i 1))) */
+      if (is_not_null(x))                               /* (do ((i 0 i) . 1) ((= i 1))) */
 	eval_error(sc, "do: list of variables is improper: ~A", sc->code);
     }
 
@@ -62892,10 +62935,7 @@ static s7_pointer check_do(s7_scheme *sc)
       end = cadr(sc->code);
       if (!is_pair(end))              /* () as end+result -- uncommon, normally not optimizable anyway -- use (#f) instead */
 	return(sc->code);             
-      if ((!is_pair(car(end))) ||
-	  ((caar(end) != sc->quote_symbol) &&
-	   (is_optimized(car(end))) &&
-	   (is_all_x_safe(sc, car(end)))))
+      if (is_simple_expression(sc, car(end)))
 	set_x_call(end, all_x_eval(sc, end, sc->envir, let_symbol_is_safe));
       else return(sc->code);          /* if end is not allxable, give up */
 
@@ -62920,8 +62960,48 @@ static s7_pointer check_do(s7_scheme *sc)
 
       for (nvars = 0, p = vars; is_pair(p); nvars++, p = cdr(p))
 	if (is_pair(cddar(p)))
-	  nsteps++;
+	  {
+	    x = car(p);
+	    nsteps++;
+	  }
       /* 1/1 2/2 1/n n/m.  0/n almost never (only make-index where currently cell_optimize has no chance) */
+#if 0
+      if ((nvars > 1) &&
+	  (nsteps == 1))
+	{
+	  if (!is_simple_expression(sc, caddr(x)))  /* x is the stepper */
+	    return(sc->code);
+	  if (is_pair(caddr(x)))
+	    set_x_call(cddr(x), all_x_eval(sc, cddr(x), sc->envir, let_symbol_is_safe));
+	  if (is_simple_expression(sc, cadr(x)))
+	    {
+	      if (is_pair(cadr(x)))
+		set_x_call(cdr(x), all_x_eval(sc, cdr(x), sc->envir, let_symbol_is_safe));
+	      if (c_call(cddr(x)) == all_x_c_add1)
+		{
+		  if ((c_call(end) == all_x_c_ss) &&
+		      (caar(end) == sc->eq_symbol) &&
+		      (cadar(end) == car(x)))
+		    {
+		      bool has_set = false;
+		      if ((is_null(cdr(body))) &&
+			  (do_is_safe(sc, body, sc->w = list_1(sc, car(x)), sc->nil, &has_set)))
+			{
+			  if (!has_set)
+			    {
+			      pair_set_syntax_symbol(sc->code, sc->dotimes_one_step_symbol);
+			      return(sc->nil);
+			    }
+		      }
+		  }
+		}
+	    }
+	  
+	  /* inits all non-pair, or all allx, or any */
+	  /* steppers allx, +1 -1 cdr */
+	}
+#endif
+
       
       /* 1/1 is of course the biggy -- can 1/n share its code? */
       /* need to start: do_op_1step_no_opt[_1] = set up frame goto check end, then push _1, set code, goto begin1, step via allx
@@ -63074,6 +63154,11 @@ static s7_pointer check_do(s7_scheme *sc)
 	       (!is_all_x_safe(sc, caddr(var)))))
 	    {
 	      s7_pointer q;
+#if 0
+	      fprintf(stderr, "%s bad %s %s\n", DISPLAY(var), 
+		      (is_optimized(cadr(var))) ? opt_names[optimize_op(cadr(var))] : "?", 
+		      ((is_pair(cddr(var))) && (is_optimized(caddr(var)))) ? opt_names[optimize_op(caddr(var))] : "?");
+#endif
 	      for (q = vars; q != p; q = cdr(q))
 		clear_match_symbol(caar(q));
 	      return(sc->code);
@@ -63127,6 +63212,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	      s7_pointer step_expr;
 	      step_expr = caddr(var);
 	      set_x_call(cddr(var), all_x_eval(sc, cddr(var), vars, do_symbol_is_safe)); /* sets opt2(cddr(var)), not opt1 */
+
 	      if ((is_pair(step_expr)) &&
 		  (car(step_expr) != sc->quote_symbol) &&     /* opt_cfunc(==opt1) might not be set in this case (sigh) */
 		  ((preserves_type(sc, c_function_class(opt_cfunc(step_expr)))) || /* add etc */
@@ -63180,7 +63266,7 @@ static int dox_ex(s7_scheme *sc)
   sc->temp11 = frame;
   for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
     {
-      s7_pointer expr, val;
+      s7_pointer expr, val, step_expr;
       expr = cadar(vars);
       if (is_pair(expr))
 	{
@@ -63199,42 +63285,12 @@ static int dox_ex(s7_scheme *sc)
       slot_set_value(slot, val);
       slot_set_expression(slot, cddar(vars));
 
-      if ((is_pair(slot_expression(slot))) &&
-	  (is_safe_stepper(slot_expression(slot))) &&
-	  (!is_safe_stepper(slot)))
-	{
-	  s7_pointer step_expr;
-	  step_expr = cddar(slot_expression(slot));
-	  /* fprintf(stderr, "step: %s\n", DISPLAY(slot_expression(slot))); */
-	  /* caddr(step_expr) can be a constant or a symbol or a pair
-	   *   constant, check direct, symbol check value (shadowing??), else func sig? */
-	  if (!(is_pair(step_expr))) /* presumably no step */
-	    set_safe_stepper(slot);
-	  else
-	    {
-	      /* TODO: this is assuming (+ i 1) and the like and looking at the 1 */
-	      /* fprintf(stderr, "%d %d %d %s %s\n", is_safe_stepper(slot), type(val), type(car(step_expr)), DISPLAY(step_expr), DISPLAY(val)); */
-	      if (is_symbol(car(step_expr)))
-		{
-		  s7_pointer p;
-		  p = find_symbol(sc, car(step_expr));
-		  if ((is_slot(p)) &&
-		      (!has_methods(p)) &&
-		      (type(val) == type(slot_value(p))))
-		    set_safe_stepper(slot);
-		}
-	      else
-		{
-		  if (!is_pair(car(step_expr)))
-		    {
-		      if (type(val) == type(car(step_expr)))
-			set_safe_stepper(slot);
-		      else clear_safe_stepper(slot_expression(slot));
-		    }
-		}
-	      /* fprintf(stderr, "slot %s %d\n", DISPLAY(slot), is_safe_stepper(slot)); */
-	    }
-	}
+      step_expr = slot_expression(slot);
+      if ((!is_pair(step_expr)) ||
+	  (is_safe_stepper(step_expr)))
+	set_safe_stepper(slot);
+      /* more elaborate checks cost more than they are worth */
+
       set_next_slot(slot, let_slots(frame));
       let_set_slots(frame, slot);
     }
@@ -63326,9 +63382,15 @@ static int dox_ex(s7_scheme *sc)
 	      s7_pointer lcode;
 	      s7_function body = NULL;
 	      lcode = car(code);
-	      if (is_null(sp))
-		body = s7_optimize_nr(sc, code);
-	      else 
+
+	      if ((!pair_no_opt(code)) &&
+		  (is_null(sp)))
+		{
+		  body = s7_optimize_nr(sc, code);
+		  if (!body) 
+		    set_pair_no_opt(code);
+		}
+	      if (!body)
 		{
 		  if (is_all_x_safe(sc, lcode))
 		    body = all_x_eval(sc, code, sc->envir, let_symbol_is_safe);
@@ -63356,17 +63418,23 @@ static int dox_ex(s7_scheme *sc)
 	      int body_len = 0;
 	      p = code;
 
-	      if (is_null(sp))
+	      if ((!pair_no_opt(code)) &&
+		  (is_null(sp)))
 		{
 		  if (setjmp(sc->opt_exit) == 0)
 		    {
 		      start_opts(sc);
 		      for (; is_pair(p); p = cdr(p), body_len++)
 			if (!cell_optimize(sc, p))
-			  break;
+			  {
+			    set_pair_no_opt(code);
+			    p = code;
+			    break;
+			  }
 		    }
 		}
-	      else
+
+	      if (p == code)
 		{
 		  for (; is_pair(p); p = cdr(p))
 		    if (!is_all_x_safe(sc, car(p)))
@@ -65935,7 +66003,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_NO_OP:
 	case OP_GC_PROTECT:
 	  break;
-	  
+
 	case OP_READ_INTERNAL:
 	  /* if we're loading a file, and in the file we evaluate something like:
 	   *    (let ()
@@ -66034,22 +66102,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = splice_in_values(sc, multiple_value(sc->value));
 	  break;
 	  
-	  
-	case OP_EVAL_STRING_2:
-	  s7_close_input_port(sc, sc->input_port);
-	  pop_input_port(sc);
-	  
-	  if (is_multiple_value(sc->value))
-	    sc->value = splice_in_values(sc, multiple_value(sc->value));
-	  break;
-	  
-	case OP_EVAL_STRING_1:
-	  eval_string_1_ex(sc);
-	  goto EVAL;
-	  
-	  
+	 	  
 	  /* -------------------- sort! (heapsort, done directly so that call/cc in the sort function will work correctly) -------------------- */
-	  
           #define SORT_N integer(vector_element(sc->code, 0))
           #define SORT_K integer(vector_element(sc->code, 1))
           #define SORT_J integer(vector_element(sc->code, 2))
@@ -66555,9 +66609,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack_no_args(sc, OP_DO_NO_VARS_NO_OPT_1, sc->code);
 	  sc->code = cddr(sc->code);
 	  goto BEGIN1;
+
+
+	DOTIMES_ONE_STEP:
+	case OP_DOTIMES_ONE_STEP:
+	  fprintf(stderr, "dotimes one step %s\n", DISPLAY(sc->code));
+	  abort();
+
+
 	  
-
-
 	SAFE_DOTIMES:
 	case OP_SAFE_DOTIMES:
 	  {
@@ -66978,6 +67038,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (op == sc->safe_do_symbol)	 goto SAFE_DO;
 
 	      if (op == sc->do_no_vars_symbol)   goto DO_NO_VARS;
+	      if (op == sc->dotimes_one_step_symbol)   goto DOTIMES_ONE_STEP;
 
 	      goto SIMPLE_DO;
 	    }
@@ -70594,7 +70655,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  define2_ex(sc);
 	  break;
 	  
+
+	case OP_EVAL_STRING_2:
+	  s7_close_input_port(sc, sc->input_port);
+	  pop_input_port(sc);
+	  if (is_multiple_value(sc->value))
+	    sc->value = splice_in_values(sc, multiple_value(sc->value));
+	  break;
 	  
+	case OP_EVAL_STRING_1:
+	  eval_string_1_ex(sc);
+	  goto EVAL;
+	  
+	  	  
 	  /* -------------------------------- SET! -------------------------------- */
 	case OP_SET_PAIR_P:
 	  /* ([set!] (car a) (cadr a)) */
@@ -78874,6 +78947,7 @@ s7_scheme *s7_init(void)
   sc->dox_symbol =                   assign_internal_syntax(sc, "do",          OP_DOX);
   sc->do_no_vars_symbol =            assign_internal_syntax(sc, "do",          OP_DO_NO_VARS);
   sc->do_no_vars_no_opt_symbol =     assign_internal_syntax(sc, "do",          OP_DO_NO_VARS_NO_OPT);
+  sc->dotimes_one_step_symbol =      assign_internal_syntax(sc, "do",          OP_DOTIMES_ONE_STEP);
 
   sc->lambda_unchecked_symbol =      assign_internal_syntax(sc, "lambda",      OP_LAMBDA_UNCHECKED);
   sc->lambda_star_unchecked_symbol = assign_internal_syntax(sc, "lambda*",     OP_LAMBDA_STAR_UNCHECKED);
@@ -80363,21 +80437,21 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1117
  * tref          |      |      | 2372 || 2083 | 1289 1152
  * tlet     3590 | 2400 | 2400 | 2244 || 2308 | 2008 1218
- * teq           |      |      | 6612 || 2787 | 2210 2049
+ * teq           |      |      | 6612 || 2787 | 2210 2055
  * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2399
  * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2953
- * lint          |      |      |      || 4029 | 3308 3104 [150.0]
+ * lint          |      |      |      || 4029 | 3308 3118 [150.0]
  * tcopy         |      |      | 13.6 || 3185 | 3342 3141
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3199
- * tform         |      |      | 6816 || 3850 | 3627 3380
+ * tform         |      |      | 6816 || 3850 | 3627 3407
  * tmap          |      |      |  9.3 || 4300 | 3716 3434
  * tfft          |      | 14.3 | 15.2 || 16.4 | 4762 4065
  * tsort         |      |      |      || 9186 | 5403 4794
- * titer         |      |      | 7503 || 5881 | 5069 4851
- * thash         |      |      | 50.7 || 8926 | 8651 8197
+ * titer         |      |      | 7503 || 5881 | 5069 4859
+ * thash         |      |      | 50.7 || 8926 | 8651 8175
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.5
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.2 [133.9]
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.5 [133.9]
  * 
  * --------------------------------------------------------------------
  *
@@ -80390,6 +80464,9 @@ int main(int argc, char **argv)
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func
  * musglyphs gtk version is broken (probably cairo_t confusion -- make/free-cairo are obsolete for example)
+ *   the problem is less obvious:
+ *     "The window 0x5555564dab00 already has a drawing context. You cannot call gdk_window_begin_draw_frame() without calling gdk_window_end_draw_frame() first."
+ *   and the stupid thing segfaults.  This is called in make-cairo, end in free-cairo. 
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -80425,6 +80502,5 @@ int main(int argc, char **argv)
  *   perhaps save sc->envir, make sure it is ok if optimize fails
  * s7_macroexpand of multiple-value-set!? maybe disable values?
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
- * see g_float_vector_ref -- 3mil univects! -- need do+no-step-vars etc
- * fix crossref cm
+ * see g_float_vector_ref -- 3mil univects!
  */

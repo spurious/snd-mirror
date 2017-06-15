@@ -12901,7 +12901,8 @@
 		      (when (or (not feq)
 				(= ctr (- len 1))) ; this assumes we're not returning the last value?
 			(when (and (> repeats 2)
-				   (not (hash-table-ref syntaces (car prev-f)))) ; macros should be ok here if args are constants
+				   (or (zero? repeat-arg)        ; all forms are the identical
+				       (not (hash-table-ref syntaces (car prev-f))))) ; macros should be ok here if args are constants
 			  (repeats->for-each caller prev-f (if (not feq) fs (cdr fs)) repeats start-repeats repeat-arg env))
 			(set! repeats 0)
 			(set! repeat-arg 0)
@@ -22498,3 +22499,6 @@
 |#
 
 ;;; 62 31733 884052
+;;;
+;;; combine do|case|cond: currently combine-successive-ifs for if|when|unless 12874 (see t605 for examples)
+
