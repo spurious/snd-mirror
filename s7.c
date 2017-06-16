@@ -1825,6 +1825,7 @@ static s7_scheme *cur_sc = NULL;
 #define T_HAS_ALL_X                   T_SETTER
 #define set_has_all_x(p)              typeflag(_TPair(p)) |= T_HAS_ALL_X
 #define has_all_x(p)                  ((typeflag(_TPair(p)) & T_HAS_ALL_X) != 0)
+#define clear_has_all_x(p)            typeflag(_TPair(p)) &= (~T_HAS_ALL_X)
 
 /* closure stored optlists */
 #define T_HAS_OPTLIST                 T_SETTER
@@ -1855,7 +1856,7 @@ static s7_scheme *cur_sc = NULL;
 #define T_STEP_END                    T_MUTABLE
 #define is_step_end(p)                ((typeflag(_TSlt(p)) & T_STEP_END) != 0)
 #define set_step_end(p)               typeflag(_TSlt(p)) |= T_STEP_END
-/* marks a slot that holds a do-loop's step-ro-end variable, numerator=current, denominator=end */
+/* marks a slot that holds a do-loop's step-or-end variable, numerator=current, denominator=end */
 
 
 #define T_PAIR_NO_OPT                 T_MUTABLE
@@ -2093,14 +2094,23 @@ static int not_heap = -1;
 #define set_opt_pair1(P, X)           set_opt1(P, _TLst(X),      E_PAIR)
 #define opt_con1(P)                   _NFre(opt1(P,              E_CON))
 #define set_opt_con1(P, X)            set_opt1(P, _NFre(X),      E_CON)
-#define opt_any1(P)                   opt1(P,                    E_ANY) /* can be free in closure_is_ok */
+#define opt_any1(P)                   opt1(P,                    E_ANY)    /* can be free in closure_is_ok */
 #define opt_slot1(P)                  _TSlt(opt1(P,              E_SLOT))
 #define set_opt_slot1(P, X)           set_opt1(P, _TSlt(X),      E_SLOT)
 
 #define c_callee(f)                   ((s7_function)opt2(f,      F_CALL))
 #define c_call(f)                     ((s7_function)opt2(f,      F_CALL))
-#define set_c_call(f, X)              set_opt2(f, (s7_pointer)(X), F_CALL)
-#define set_x_call(f, X)              do {set_opt2(f, (s7_pointer)(X), F_CALL); set_has_all_x(f);} while (0)
+#if DEBUGGING
+  #define set_c_call(f, X)              do {if (!(X)) fprintf(stderr, "%s[%d] c_call null\n", __func__, __LINE__); set_opt2(f, (s7_pointer)(X), F_CALL);} while (0)
+  #define set_x_call_checked(f, X)      do {if ((!(X)) && (strcmp(__func__, "check_and") != 0) && (strcmp(__func__, "check_or") != 0)) fprintf(stderr, "%s[%d] x_call null\n", __func__, __LINE__); set_opt2(f, (s7_pointer)(X), F_CALL); if (X) set_has_all_x(f); else clear_has_all_x(f);} while (0)
+  #define set_x_call(f, X)              do {if (!(X)) fprintf(stderr, "%s[%d] x_call null\n", __func__, __LINE__); set_opt2(f, (s7_pointer)(X), F_CALL); if (X) set_has_all_x(f); else clear_has_all_x(f);} while (0)
+#else
+  #define set_c_call(f, X)              set_opt2(f, (s7_pointer)(X), F_CALL)
+  #define set_x_call(f, X)              do {set_opt2(f, (s7_pointer)(X), F_CALL); set_has_all_x(f);} while (0)
+  #define set_x_call_checked(f, X)      do {set_opt2(f, (s7_pointer)(X), F_CALL); if (X) set_has_all_x(f); else clear_has_all_x(f);} while (0)
+#endif
+#define set_x_call_direct(f, X)         do {set_opt2(f, (s7_pointer)(X), F_CALL); set_has_all_x(f);} while (0)
+
 #define opt_key(P)                    _NFre(opt2(P,              F_KEY))
 #define set_opt_key(P, X)             set_opt2(P, _NFre(X),      F_KEY)
 #define opt_slow(P)                   _TLst(opt2(P,              F_SLOW))
@@ -35046,7 +35056,6 @@ static s7_pointer univect_set(s7_scheme *sc, s7_pointer args, bool flt)
       if (!s7_is_real(val))
 	method_or_bust(sc, val, caller, args, T_REAL, 3);
       float_vector_element(vec, index) = real_to_double(sc, val, "float-vector-set!");
-      /* currently this accepts a complex value and assigns real_part(val) to the float-vector -- maybe an error instead? */
     }
   else
     {
@@ -35065,7 +35074,6 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
   /* fprintf(stderr, "%s\n", DISPLAY_80(current_code(sc))); */
   /* (lambda (y) (> (magnitude (- y (* 0.5 (float-vector-ref vals (floor (-..
      (do ((sum 0.0) (len (min (length v1) (length v2))) (mx (float-vector-peak...
-     (float-vector-set! data i (contrast-enhancement (float-vector-ref data i)         contrast-channel extensions -- looks like it should be ok
      (* (env e1) (oscil osc (float-vector-ref x 0)))
      (= (float-vector-ref (cadr qr) 0) 0.0)
      (let ((wkm-k (float-vector-ref wkm k)) (old-wk1 (copy wk1))) (do ((j 0 (+ j
@@ -56797,7 +56805,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
       /* wrap the bad arg in a check symbol lookup */
       if (s7_is_aritable(sc, func, 1))
 	{
-	  set_x_call(cdr(expr), all_x_unsafe_s); /* was set_c_call 21-May-17 */
+	  set_x_call_direct(cdr(expr), all_x_unsafe_s); /* was set_c_call 21-May-17 */
 	  set_arglist_length(expr, small_int(1));
 	  if (is_c_function(func))
 	    {
@@ -60705,8 +60713,9 @@ static s7_pointer check_and(s7_scheme *sc)
 	    {
 	      s7_function callee;
 	      callee = all_x_eval(sc, p, sc->envir, let_symbol_is_safe);  /* c_callee can be nil! */
-	      if (!callee) any_nils = true;
-	      set_x_call(p, callee);
+	      if (!callee) 
+		any_nils = true;
+	      set_x_call_checked(p, callee);
 	    }
 	  if ((c_callee(sc->code)) &&
 	      (is_pair(cdr(sc->code))) &&
@@ -60750,7 +60759,7 @@ static s7_pointer check_or(s7_scheme *sc)
 	      s7_function callee;
 	      callee = all_x_eval(sc, ep, sc->envir, let_symbol_is_safe);
 	      if (!callee) any_nils = true;
-	      set_x_call(ep, callee);
+	      set_x_call_checked(ep, callee);
 	    }
 	  if ((c_callee(sc->code)) &&
 	      (is_pair(cdr(sc->code))) &&
@@ -62958,6 +62967,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	  (caar(body) == sc->define_symbol))
 	return(sc->code);
 
+      /* TODO: set up init/step allx choices */
       for (nvars = 0, p = vars; is_pair(p); nvars++, p = cdr(p))
 	if (is_pair(cddar(p)))
 	  {
@@ -62965,21 +62975,28 @@ static s7_pointer check_do(s7_scheme *sc)
 	    nsteps++;
 	  }
       /* 1/1 2/2 1/n n/m.  0/n almost never (only make-index where currently cell_optimize has no chance) */
-#if 0
+#if 1
       if ((nvars > 1) &&
 	  (nsteps == 1))
 	{
+	  /* temporary */
+	  for (nvars = 0, p = vars; is_pair(p); nvars++, p = cdr(p))
+	    {
+	      s7_pointer v;
+	      v = car(p);
+	      if (is_simple_expression(sc, cadr(v)))
+		set_x_call(cdr(v), all_x_eval(sc, cdr(v), sc->envir, let_symbol_is_safe));
+	      else return(sc->code);
+	    }
+
 	  if (!is_simple_expression(sc, caddr(x)))  /* x is the stepper */
 	    return(sc->code);
 	  if (is_pair(caddr(x)))
-	    set_x_call(cddr(x), all_x_eval(sc, cddr(x), sc->envir, let_symbol_is_safe));
-	  if (is_simple_expression(sc, cadr(x)))
 	    {
-	      if (is_pair(cadr(x)))
-		set_x_call(cdr(x), all_x_eval(sc, cdr(x), sc->envir, let_symbol_is_safe));
-	      if (c_call(cddr(x)) == all_x_c_add1)
+	      set_x_call(cddr(x), all_x_eval(sc, cddr(x), sc->envir, let_symbol_is_safe));
+	      if (c_callee(cddr(x)) == all_x_c_add1)
 		{
-		  if ((c_call(end) == all_x_c_ss) &&
+		  if ((c_callee(end) == all_x_c_ss) &&
 		      (caar(end) == sc->eq_symbol) &&
 		      (cadar(end) == car(x)))
 		    {
@@ -62989,11 +63006,11 @@ static s7_pointer check_do(s7_scheme *sc)
 			{
 			  if (!has_set)
 			    {
-			      pair_set_syntax_symbol(sc->code, sc->dotimes_one_step_symbol);
+			      pair_set_syntax_symbol(sc->code, sc->dotimes_one_step_symbol); /* safe dotimes */
 			      return(sc->nil);
 			    }
-		      }
-		  }
+			}
+		    }
 		}
 	    }
 	  
@@ -63232,6 +63249,84 @@ static s7_pointer check_do(s7_scheme *sc)
   return(sc->code);
 }
 
+static s7_pointer make_do_frame(s7_scheme *sc)
+{
+  long long int id;
+  s7_pointer frame, vars;
+
+  new_frame(sc, sc->envir, frame);           /* new frame is not tied into the symbol lookup process yet */
+  sc->temp11 = frame;
+  id = let_id(frame);
+
+  for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
+    {
+      s7_pointer v, slot;
+      v = car(vars);
+      new_cell_no_check(sc, slot, T_SLOT);
+      slot_set_symbol(slot, car(v));
+      slot_set_value(slot, sc->F);
+      set_next_slot(slot, let_slots(frame)); /* GC protect it right away */
+      let_set_slots(frame, slot);
+      symbol_set_local(slot_symbol(slot), id, slot);
+      slot_set_value(slot, c_call(cdr(v))(sc, cadr(v)));
+      slot_set_expression(slot, cddr(v));
+      if (is_pair(cddr(v)))
+	dox_set_slot1(frame, slot);
+    }
+
+  sc->temp11 = sc->nil;
+  return(frame);
+}
+
+static void update_steppers(s7_scheme *sc)
+{
+  /* TODO: probably need to use pending_expr here etc */
+  s7_pointer v;
+  for (v = let_slots(sc->envir); is_slot(v); v = next_slot(v))
+    {
+      s7_pointer step_expr;
+      step_expr = slot_expression(v);
+      if (!is_null(step_expr))
+	slot_set_value(v, c_call(step_expr)(sc, car(step_expr)));
+    }
+}
+
+static bool has_safe_steppers(s7_scheme *sc, s7_pointer frame)
+{
+  s7_pointer slot;
+  for (slot = let_slots(frame); is_slot(slot); slot = next_slot(slot))
+    {
+      s7_pointer step_expr, val;
+      val = slot_value(slot);
+      step_expr = slot_expression(slot);
+      if ((!is_pair(step_expr)) ||
+	  (is_safe_stepper(step_expr)))
+	{
+	  if (is_t_integer(val)) /* a temporary kludge */
+	    {
+	      sc->pc = 0;
+	      if (int_optimize(sc, step_expr))
+		set_safe_stepper(slot);
+	      else clear_safe_stepper(slot);
+	    }
+	  else 
+	    {
+	      if (is_real(val)) /* a temporary kludge */
+		{
+		  sc->pc = 0;
+		  if (float_optimize(sc, step_expr))
+		    set_safe_stepper(slot);
+		  else clear_safe_stepper(slot);
+                }
+              else set_safe_stepper(slot);
+	    }
+	}
+      if (!is_safe_stepper(slot))
+	return(false);
+    }
+  return(true);
+}
+
 
 static int dox_ex(s7_scheme *sc)
 {
@@ -63266,7 +63361,7 @@ static int dox_ex(s7_scheme *sc)
   sc->temp11 = frame;
   for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
     {
-      s7_pointer expr, val, step_expr;
+      s7_pointer expr, val;
       expr = cadar(vars);
       if (is_pair(expr))
 	{
@@ -63284,13 +63379,6 @@ static int dox_ex(s7_scheme *sc)
       slot_set_symbol(slot, caar(vars));
       slot_set_value(slot, val);
       slot_set_expression(slot, cddar(vars));
-
-      step_expr = slot_expression(slot);
-      if ((!is_pair(step_expr)) ||
-	  (is_safe_stepper(step_expr)))
-	set_safe_stepper(slot);
-      /* more elaborate checks cost more than they are worth */
-
       set_next_slot(slot, let_slots(frame));
       let_set_slots(frame, slot);
     }
@@ -63367,14 +63455,9 @@ static int dox_ex(s7_scheme *sc)
     {
       if (!is_unsafe_do(sc->code))
 	{
-	  s7_pointer sp, slots;
+	  s7_pointer slots;
 	  slots = let_slots(sc->envir);
 	  /* is let activated? also multiexpr body  and other allx? */
-
-	  /* if any of the step vars is unsafe, we can't use s7_optimize */
-	  for (sp = slots; is_slot(sp); sp = next_slot(sp))
-	    if (!is_safe_stepper(sp))
-	      break;
 
 	  if ((is_null(cdr(code))) &&
 	      (is_pair(car(code))))
@@ -63384,7 +63467,7 @@ static int dox_ex(s7_scheme *sc)
 	      lcode = car(code);
 
 	      if ((!pair_no_opt(code)) &&
-		  (is_null(sp)))
+		  (has_safe_steppers(sc, sc->envir)))
 		{
 		  body = s7_optimize_nr(sc, code);
 		  if (!body) 
@@ -63415,11 +63498,12 @@ static int dox_ex(s7_scheme *sc)
 	  else /* more than one expr */
 	    {
 	      s7_pointer p;
+	      bool use_opts = false;
 	      int body_len = 0;
 	      p = code;
 
 	      if ((!pair_no_opt(code)) &&
-		  (is_null(sp)))
+		  (has_safe_steppers(sc, sc->envir)))
 		{
 		  if (setjmp(sc->opt_exit) == 0)
 		    {
@@ -63431,6 +63515,7 @@ static int dox_ex(s7_scheme *sc)
 			    p = code;
 			    break;
 			  }
+		      use_opts = is_null(p);
 		    }
 		}
 
@@ -63444,13 +63529,13 @@ static int dox_ex(s7_scheme *sc)
 	      if (is_null(p))
 		{
 		  int i;
-		  if (!is_null(sp))
+		  if (!use_opts)
 		    annotate_args(sc, code, sc->envir);
 
 		  while (true)
 		    {
 		      s7_pointer slot;
-		      if (is_null(sp))
+		      if (use_opts)
 			{
 			  sc->pc = 0;
 			  for (i = 0; i < body_len; i++)
@@ -64266,6 +64351,7 @@ static int do_init_ex(s7_scheme *sc)
    */
   return(fall_through);
 }
+/* -------------------------------------------------------------------------------- */
   
   
 static bool closure_is_ok_1(s7_scheme *sc, s7_pointer code, unsigned short type, int args)
@@ -66613,11 +66699,79 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	DOTIMES_ONE_STEP:
 	case OP_DOTIMES_ONE_STEP:
-	  fprintf(stderr, "dotimes one step %s\n", DISPLAY(sc->code));
-	  abort();
+	  {
+	    s7_pointer end, stepper, end_slot;
+	    s7_int lim;
+
+	    /* fprintf(stderr, "dotimes one step %s\n", DISPLAY(sc->code)); */
+
+	    sc->envir = make_do_frame(sc);
+	    /* fprintf(stderr, "frame: %s\n", DISPLAY(sc->envir)); */
+
+	    end = cadr(sc->code);
+	    do_all_x_end(end);
+
+	    stepper = dox_slot1(sc->envir);
+	    end_slot = find_symbol(sc, caddar(end)); /* can't trust local slot here (local_symbol?) */
+	    if (is_t_integer(slot_value(end_slot)))
+	      {
+		/* TODO: need to make sure step not set */
+		lim = integer(slot_value(end_slot));
+		denominator(slot_value(stepper)) = lim;
+		set_step_end(stepper);
+	      }
+
+	    if (s7_optimize_nr(sc, cddr(sc->code)))
+	      {
+		s7_pointer step_expr;
+		step_expr = car(slot_expression(stepper));
+		/* fprintf(stderr, "slot: %s, end: %s %s\n", DISPLAY(stepper), DISPLAY(end), DISPLAY(slot_expression(stepper))); */
+
+		if ((is_slot(stepper)) &&
+		    (c_callee(end) == all_x_c_ss) &&
+		    (c_callee(car(end)) == g_equal_2) &&
+		    (cadar(end) == slot_symbol(stepper)) &&
+		    (is_t_integer(slot_value(stepper))) &&
+		    /* (is_safe_stepper(stepper)) && */
+		    (caar(end) = sc->add_symbol) &&
+		    (cadar(end) == cadr(step_expr)) &&
+		    (is_t_integer(caddr(step_expr))) &&
+		    (integer(caddr(step_expr)) == 1) &&
+		    (is_step_end(stepper)))
+		  {
+		    opt_info *o;
+		    s7_pointer (*fp)(void *o);
+		    s7_pointer val;
+		    /* fprintf(stderr, "lim: %lld\n", lim); */
+		    o = sc->opts[0];
+		    fp = o->call.fp;
+		    slot_set_value(stepper, val = make_mutable_integer(sc, integer(slot_value(stepper))));
+		    for (; integer(val) < lim; integer(val)++)
+		      {
+			sc->pc = 0;
+			fp(o);
+		      }
+		    sc->value = sc->T;
+		    sc->code = cdr(end);
+		    goto SAFE_DO_END_CLAUSES; /* no multiple-values here */
+		  }
+		  
+		while (true)
+		  {
+		    sc->pc = 0;
+		    sc->opts[0]->call.fp(sc->opts[0]);
+		    update_steppers(sc);
+		    /* TODO: get the stepper and handle direct in more than just +1 (opt_let|dotimes) */
+		    do_all_x_end(end);
+		  }
+	      }
+	  }
+	  push_stack_no_args(sc, OP_DOX_STEP, sc->code);
+	  sc->code = _TPair(cddr(sc->code));
+	  goto BEGIN1;
 
 
-	  
+	  /* -------------------------------- */
 	SAFE_DOTIMES:
 	case OP_SAFE_DOTIMES:
 	  {
@@ -80440,15 +80594,15 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2787 | 2210 2055
  * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2399
  * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2953
- * lint          |      |      |      || 4029 | 3308 3118 [150.0]
+ * lint          |      |      |      || 4029 | 3308 3110 [150.0]
  * tcopy         |      |      | 13.6 || 3185 | 3342 3141
- * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3199
- * tform         |      |      | 6816 || 3850 | 3627 3407
+ * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3202
+ * tform         |      |      | 6816 || 3850 | 3627 3396
  * tmap          |      |      |  9.3 || 4300 | 3716 3434
  * tfft          |      | 14.3 | 15.2 || 16.4 | 4762 4065
  * tsort         |      |      |      || 9186 | 5403 4794
- * titer         |      |      | 7503 || 5881 | 5069 4859
- * thash         |      |      | 50.7 || 8926 | 8651 8175
+ * titer         |      |      | 7503 || 5881 | 5069 4867
+ * thash         |      |      | 50.7 || 8926 | 8651 8159
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.5
  * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.5 [133.9]
@@ -80484,11 +80638,8 @@ int main(int argc, char **argv)
  */
 
 /* opts TODO:
- * check simple_do -- try opt of entire thing, then body etc
  * opt_let and opt_dotimes can be combined, at least from opt_let's view
  *   maybe split these at a lower level
- * for substring_to_temp, need to edit the opts as well somehow: in ops, args are ahead -- if one arg, is func?
- *   as it is currently, check_for_substring_temp can't work in opt case
  * ip for pi cases
  * snd-test: if envelope-interp set! frample->file file->sample[d_p|vii] et al array-interp
  * finish the t563.scm bugs: a couple number type problems 31905 30802 
@@ -80503,4 +80654,10 @@ int main(int argc, char **argv)
  * s7_macroexpand of multiple-value-set!? maybe disable values?
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
  * see g_float_vector_ref -- 3mil univects!
+ *
+ * how often is let_s|c|a body one line all_x_able? -- all_x_c_let_s...
+ *   this could avoid making a frame -- make sure allx uses local_slot, and set it (id in sym to warn)
+ *   i.e. set_local_symbol in body and call all_x_eval if necessary
+ * in counts, cond all test opts, safe_c_p(*) and safe_c*p split to p/e cases (not goto eval)
+ * catch_all is normally opt?  same safe_closure_s set_symbol_p simple ifs like if_c|a
  */
