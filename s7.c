@@ -1132,8 +1132,8 @@ struct s7_scheme {
   /* optimizer symbols */
   s7_pointer and_p2_symbol, and_p_symbol, and_safe_p2_symbol, and_safe_p_symbol, 
              and_unchecked_symbol, begin_unchecked_symbol, case_a_symbol, case_unchecked_symbol,
-             cond_all_x_2_symbol, cond_all_x_symbol, cond_simple_symbol, cond_unchecked_symbol, decrement_1_symbol,
-             define_constant_unchecked_symbol, define_funchecked_symbol, define_star_unchecked_symbol, define_unchecked_symbol,
+             cond_all_x_2_symbol, cond_all_x_symbol, cond_all_opt_symbol, cond_simple_symbol, cond_unchecked_symbol, cond_unchecked_opt_symbol,
+             decrement_1_symbol, define_constant_unchecked_symbol, define_funchecked_symbol, define_star_unchecked_symbol, define_unchecked_symbol,
              do_unchecked_symbol, dotimes_p_symbol, dox_symbol, cond_feed_symbol, 
              if_unchecked_symbol,
 
@@ -2969,7 +2969,7 @@ enum {OP_NO_OP, OP_GC_PROTECT,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
       OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1,
       OP_LET_TEMPORARILY, OP_LET_TEMP_UNCHECKED, OP_LET_TEMP_INIT1, OP_LET_TEMP_INIT2, OP_LET_TEMP_DONE, OP_LET_TEMP_DONE1,
-      OP_COND, OP_COND1, OP_COND1_1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
+      OP_COND, OP_COND1, OP_COND1_1, OP_COND_SIMPLE, OP_COND1_SIMPLE, OP_COND_UNCHECKED_OPT,
       OP_AND, OP_AND1, OP_OR, OP_OR1,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, 
@@ -3042,7 +3042,7 @@ enum {OP_NO_OP, OP_GC_PROTECT,
       OP_IF_PPP, OP_IF_PP, OP_IF_PR, OP_IF_PRR,
       OP_WHEN_PP,
 
-      OP_CATCH_1, OP_CATCH_2, OP_CATCH_ALL, OP_COND_ALL_X, OP_COND_ALL_X_2, 
+      OP_CATCH_1, OP_CATCH_2, OP_CATCH_ALL, OP_COND_ALL_X, OP_COND_ALL_X_2, OP_COND_ALL_OPT,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O,
       OP_SAFE_DO, OP_SAFE_DO_STEP, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, 
       OP_DOTIMES_P, OP_DOTIMES_STEP_P,
@@ -3181,7 +3181,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "let", "let1", "let_star", "let_star1", "let_star2",
       "letrec", "letrec1", "letrec_star", "letrec_star1", 
       "let_temporarily", "let_temp_unchecked", "let_temp_init1", "let_temp_init2", "let_temp_done", "let_temp_done1",
-      "cond", "cond1", "cond1_1", "cond_simple", "cond1_simple",
+      "cond", "cond1", "cond1_1", "cond_simple", "cond1_simple", "cond_unchecked_opt",
       "and", "and1", "or", "or1",
       "define_macro", "define_macro_star", "define_expansion",
       "case", "read_list", "read_next", "read_dot", "read_quote",
@@ -3254,7 +3254,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "if_ppp", "if_pp", "if_pr", "if_prr",
       "when_pp",
 
-      "catch_1", "catch_2", "catch_all", "cond_all_x", "cond_all_x_2", 
+      "catch_1", "catch_2", "catch_all", "cond_all_x", "cond_all_x_2", "cond_all_opt",
       "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "safe_dotimes_step_p", "safe_dotimes_step_o", 
       "safe_do", "safe_do_step", "dox", "dox_step", "dox_step_p", 
       "dotimes_p", "dotimes_step_p",
@@ -4464,7 +4464,7 @@ static void mark_pair(s7_pointer p)
    *   Now I've already forgotten the rest of the story, and it was just an hour ago! -- the upshot is that temp_cell_2|3
    *   are not now used as arg list members.
    */
-  for (x = cdr(p); (is_pair(x)) & (!is_marked(x)); x = cdr(x))
+  for (x = cdr(p); (is_pair(x)) && (!is_marked(x)); x = cdr(x))
     {
       set_mark(x);
       S7_MARK(car(x));
@@ -8106,6 +8106,16 @@ static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
 {
   /* I believe that we would not have been optimized to begin with if the tree were circular,
    *   and this tree is supposed to be a function call + args -- a circular list here is a bug.
+   *
+   * This function introduces complications: say we have op_safe_c_z and the "z" is unknown_a.
+   *   If the unknown is not optimizable in unknown_a_ex, there's no way to clear the calling
+   *   pair's optimization, so it can still call op_safe_z.  This sends the now unoptimized
+   *   pair to eval (or worse opt_eval), causing a complaint about an unknown operator.
+   *   The hop bit below keeps this from happening on h_optimized exprs, so the "z" ops
+   *   always insist on h_optimized args.  But unknown_a's hop bit is set to indicate a
+   *   tail call.  Luckily, a subsequent unknown_a call should not cause trouble.  But
+   *   we'd like "z" ops to be non-h_optimized (the vast majority are safe), but I haven't
+   *   found a way to handle the one-in-a-trillion bad case.
    */
   if (is_pair(p))
     {
@@ -8114,11 +8124,6 @@ static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
 	{
 	  clear_optimized(p);
 	  clear_optimize_op(p);
-
-	  /* these apparently make no difference */
-	  p->object.cons.opt1 = sc->nil;
-	  p->object.cons.opt2 = sc->nil;
-	  p->object.cons.opt3 = sc->nil;
 	}
       clear_all_optimizations(sc, cdr(p));
       clear_all_optimizations(sc, car(p));
@@ -60155,7 +60160,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 
   pair_set_syntax_symbol(sc->code, sc->let_one_symbol);
   binding = car(start);
-
+  /* all-x-able body happens a few times, but to avoid the new frame we'd need to ensure it was safe etc */
   if (is_pair(cadr(binding)))
     {
       if (is_h_optimized(cadr(binding)))
@@ -60180,6 +60185,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 		       * pair_set_syntax_op(cadr(sc->code)) as below, the optimization bit is on, but the
 		       * apparent optimize_op (op) is now safe_c_qq! So eval ejects it and it is handled by the
 		       * explicit ("trailers") code.
+		       * I think the optimize bit is now turned off by pair_set_syntax_op.
 		       */
 		      pair_set_syntax_op(cadr(sc->code), symbol_syntax_op(caadr(sc->code)));
 		    }
@@ -60429,6 +60435,7 @@ static s7_pointer check_let(s7_scheme *sc)
 	  s7_pointer p;
 	  for (p = start; is_pair(p); p = cdr(p))
 	    set_x_call(cdar(p), all_x_eval(sc, cdar(p), sc->envir, let_symbol_is_safe));
+	  /* all-x-able body does not happen much */
 	}
     }
   return(sc->code);
@@ -61429,7 +61436,7 @@ static s7_pointer check_cond(s7_scheme *sc)
     {
       if (has_feed_to)
 	{
-	  pair_set_syntax_symbol(sc->code, sc->cond_unchecked_symbol);
+	  pair_set_syntax_symbol(sc->code, (is_optimized(caar(sc->code))) ? sc->cond_unchecked_opt_symbol : sc->cond_unchecked_symbol);
 	  if (is_null(cdr(sc->code)))
 	    {
 	      s7_pointer expr, f;
@@ -61470,6 +61477,25 @@ static s7_pointer check_cond(s7_scheme *sc)
 		set_x_call(car(p), all_x_eval(sc, car(p), (is_null(sc->envir)) ? sc->rootlet : sc->envir, let_symbol_is_safe));
 	      if (i == 2)
 		pair_set_syntax_symbol(sc->code, sc->cond_all_x_2_symbol);
+#if 0	      
+	      {
+	      bool eopt = true;
+	      for (p = sc->code; eopt && (is_pair(p)); p = cdr(p))
+		eopt = ((!is_pair(cdar(p))) || ((!is_pair(cddar(p))) && ((!is_pair(cadar(p))) || (is_optimized(cadar(p))))));
+	      if (eopt) fprintf(stderr, "%s\n", DISPLAY(sc->code));
+	      }
+#endif
+	    }
+	  else
+	    {
+	      bool eopt = true;
+	      for (p = sc->code; eopt && (is_pair(p)); p = cdr(p))
+		eopt = ((!is_pair(caar(p))) || (is_optimized(caar(p))));
+	      /*
+	      if (eopt)
+		pair_set_syntax_symbol(sc->code, sc->cond_all_opt_symbol);
+	      */
+	      /* TODO: look at feed to above */
 	    }
 	}
     }
@@ -64571,6 +64597,17 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
 	}
       break;
       
+    case T_CLOSURE_STAR:
+      if ((!has_methods(f)) &&
+	  (has_simple_arg_defaults(closure_body(f))) &&
+	  (closure_star_arity_to_int(sc, f) >= 1))
+	{
+	  annotate_arg(sc, cdr(code), sc->envir);
+	  set_arglist_length(code, small_int(1));
+	  return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_A : OP_CLOSURE_STAR_A));
+	}
+      break;
+
     case T_GOTO:
       return(fixup_unknown_op(sc, code, f, (sym_case) ? OP_GOTO_S : OP_GOTO_C));
       
@@ -64683,7 +64720,20 @@ static int unknown_gg_ex(s7_scheme *sc, s7_pointer f)
 	  return(goto_OPT_EVAL);
 	}
       break;
-      
+
+    case T_CLOSURE_STAR:
+      if ((!has_methods(f)) &&
+	  (has_simple_arg_defaults(closure_body(f))) &&
+	  (closure_star_arity_to_int(sc, f) >= 2))
+	{
+	  annotate_args(sc, cdr(code), sc->envir);
+	  set_arglist_length(code, small_int(2));
+	  if (closure_star_arity_to_int(sc, f) == 2)
+	    return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_AA));
+	  return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
+	}
+      break;
+
     default:
       break;
     }
@@ -64742,6 +64792,16 @@ static int unknown_all_s_ex(s7_scheme *sc, s7_pointer f)
 	}
       break;
 
+    case T_CLOSURE_STAR:
+      if ((!has_methods(f)) &&
+	  (has_simple_arg_defaults(closure_body(f))) &&
+	  (closure_star_arity_to_int(sc, f) >= num_args))
+	{
+	  annotate_args(sc, cdr(code), sc->envir);
+	  return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
+	}
+      break;
+      
     default:
       break;
     }
@@ -64874,17 +64934,18 @@ static int unknown_aa_ex(s7_scheme *sc, s7_pointer f)
 	  return(goto_OPT_EVAL);
 	}
       break;
-      
+
     case T_CLOSURE_STAR:
       if ((!has_methods(f)) &&
 	  (has_simple_arg_defaults(closure_body(f))))
 	{
+	  set_arglist_length(code, small_int(2));
 	  if (closure_star_arity_to_int(sc, f) == 2)
 	    return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_AA));
 	  return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
 	}
       break;
-      
+
     default:
       break;
     }
@@ -64946,17 +65007,18 @@ static int unknown_all_x_ex(s7_scheme *sc, s7_pointer f)
 	  return(goto_OPT_EVAL);
 	}
       break;
-      
+
     case T_CLOSURE_STAR:
       if ((!has_methods(f)) &&
 	  (has_simple_arg_defaults(closure_body(f))) &&
 	  (closure_star_arity_to_int(sc, f) >= num_args))
 	{
+	  set_arglist_length(code, small_int(num_args));
 	  annotate_args(sc, cdr(code), sc->envir);
 	  return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
 	}
       break;
-      
+
     default:
       break;
     }
@@ -70621,6 +70683,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   the array-index overhead is the same as the current switch statement's, but there was also the boolean+jump overhead,
 	   *   and the function-local overhead currently otherwise 0 (I assume because the compiler can simply plug it in here).
 	   */
+
 	APPLY:
 	case OP_APPLY:
 	  /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
@@ -72449,6 +72512,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, OP_COND1, sc->nil, sc->code);
 	  sc->code = caar(sc->code);
 	  goto EVAL;
+	  
+	case OP_COND_UNCHECKED_OPT:
+	  push_stack(sc, OP_COND1, sc->nil, sc->code);
+	  sc->code = caar(sc->code);
+	  goto OPT_EVAL;
 	  
 	case OP_COND1:
 	  if (is_true(sc, sc->value))
@@ -79091,7 +79159,6 @@ s7_scheme *s7_init(void)
   sc->let_temporarily_unchecked_symbol = assign_internal_syntax(sc, "let-temporarily", OP_LET_TEMP_UNCHECKED);
   sc->case_unchecked_symbol =        assign_internal_syntax(sc, "case",        OP_CASE_UNCHECKED);
   sc->cond_unchecked_symbol =        assign_internal_syntax(sc, "cond",        OP_COND_UNCHECKED);
-  sc->cond_simple_symbol =           assign_internal_syntax(sc, "cond",        OP_COND_SIMPLE);
 
   sc->do_unchecked_symbol =          assign_internal_syntax(sc, "do",          OP_DO_UNCHECKED);
   sc->dotimes_p_symbol =             assign_internal_syntax(sc, "do",          OP_DOTIMES_P);
@@ -79154,7 +79221,10 @@ s7_scheme *s7_init(void)
   sc->or_safe_p2_symbol =            assign_internal_syntax(sc, "or",          OP_OR_SAFE_P2);
   sc->if_unchecked_symbol =          assign_internal_syntax(sc, "if",          OP_IF_UNCHECKED);
 
+  sc->cond_unchecked_opt_symbol =    assign_internal_syntax(sc, "cond",        OP_COND_UNCHECKED_OPT);
+  sc->cond_simple_symbol =           assign_internal_syntax(sc, "cond",        OP_COND_SIMPLE);
   sc->cond_feed_symbol =             assign_internal_syntax(sc, "cond",        OP_COND_FEED);
+  sc->cond_all_opt_symbol =          assign_internal_syntax(sc, "cond",        OP_COND_ALL_OPT);
   sc->cond_all_x_symbol =            assign_internal_syntax(sc, "cond",        OP_COND_ALL_X);
   sc->cond_all_x_2_symbol =          assign_internal_syntax(sc, "cond",        OP_COND_ALL_X_2);
 
@@ -80588,22 +80658,22 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  ||  16  |  17
  * tmac          |      |      |      || 9043 |  602  334
- * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1117
+ * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1116
  * tref          |      |      | 2372 || 2083 | 1289 1152
  * tlet     3590 | 2400 | 2400 | 2244 || 2308 | 2008 1218
  * teq           |      |      | 6612 || 2787 | 2210 2055
  * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2399
- * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2953
- * lint          |      |      |      || 4029 | 3308 3110 [150.0]
- * tcopy         |      |      | 13.6 || 3185 | 3342 3141
- * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3202
- * tform         |      |      | 6816 || 3850 | 3627 3396
+ * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2956
+ * lint          |      |      |      || 4029 | 3308 3102 [149.3]
+ * tcopy         |      |      | 13.6 || 3185 | 3342 3138
+ * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3227
+ * tform         |      |      | 6816 || 3850 | 3627 3380
  * tmap          |      |      |  9.3 || 4300 | 3716 3434
  * tfft          |      | 14.3 | 15.2 || 16.4 | 4762 4065
  * tsort         |      |      |      || 9186 | 5403 4794
- * titer         |      |      | 7503 || 5881 | 5069 4867
+ * titer         |      |      | 7503 || 5881 | 5069 4871
  * thash         |      |      | 50.7 || 8926 | 8651 8159
- * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
+ * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.5
  * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.5 [133.9]
  * 
@@ -80654,10 +80724,4 @@ int main(int argc, char **argv)
  * s7_macroexpand of multiple-value-set!? maybe disable values?
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
  * see g_float_vector_ref -- 3mil univects!
- *
- * how often is let_s|c|a body one line all_x_able? -- all_x_c_let_s...
- *   this could avoid making a frame -- make sure allx uses local_slot, and set it (id in sym to warn)
- *   i.e. set_local_symbol in body and call all_x_eval if necessary
- * in counts, cond all test opts, safe_c_p(*) and safe_c*p split to p/e cases (not goto eval)
- * catch_all is normally opt?  same safe_closure_s set_symbol_p simple ifs like if_c|a
  */
