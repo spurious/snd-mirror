@@ -22498,7 +22498,7 @@
     #f))
 |#
 
-;;; 62 31733 884052
+;;; 62 31733 883913
 ;;;
 ;;; combine do|case|cond: currently combine-successive-ifs for if|when|unless 12874 (see t605 for examples)
 
