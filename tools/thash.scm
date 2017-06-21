@@ -4,10 +4,7 @@
 (define-constant symbols (make-vector 1000000))
 (define-constant strings (make-vector 1000000))
 
-(define (test-hash size)
-
-  (format *stderr* "~D " size)
-
+(define (test1 size)
   (let ((int-hash (make-hash-table size))
 	(p (cons #f #f)))
     (do ((i 0 (+ i 1))) 
@@ -21,8 +18,9 @@
 		(if (not (= (car key&value) (cdr key&value)))
 		    (display "oops"))) ;(format *stderr* "hash iter ~A~%" key&value)))
 	      (make-iterator int-hash p))
-    (fill! int-hash #f))
+    (fill! int-hash #f)))
 
+(define (test2 size)
   (let ((int-hash (make-hash-table size =)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
@@ -31,9 +29,9 @@
 	((= i size))
       (if (not (= (hash-table-ref int-hash i) i))
 	  (display "oops")))
-    (fill! int-hash #f))
+    (fill! int-hash #f)))
 
-
+(define (test3 size)
   (let ((flt-hash (make-hash-table size)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
@@ -42,9 +40,9 @@
 	((= i size))
       (if (not (= (hash-table-ref flt-hash (* 2.0 i)) i))
 	  (display "oops")))
-    (fill! flt-hash #f))
+    (fill! flt-hash #f)))
 
-
+(define (test4 size)
   (let ((sym-hash (make-hash-table size)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
@@ -53,9 +51,9 @@
 	((= i size)) 
       (if (not (= (hash-table-ref sym-hash (vector-ref symbols i)) i)) 
 	  (display "oops")))
-    (fill! sym-hash #f))
+    (fill! sym-hash #f)))
 
-
+(define (test5 size)
   (let ((str-hash (make-hash-table size eq?)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
@@ -64,9 +62,9 @@
 	((= i size)) 
       (if (not (= (hash-table-ref str-hash (vector-ref strings i)) i)) 
 	  (display "oops")))
-    (fill! str-hash #f))
+    (fill! str-hash #f)))
 
-
+(define (test6 size)
   (let ((sym-hash (make-hash-table size eq?)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
@@ -75,9 +73,9 @@
 	((= i size)) 
       (if (not (= (hash-table-ref sym-hash (vector-ref symbols i)) i)) 
 	  (display "oops")))
-    (fill! sym-hash #f))
+    (fill! sym-hash #f)))
 
-
+(define (test7 size)
   (let ((chr-hash (make-hash-table 256)))
     (do ((i 0 (+ i 1))) 
 	((= i 256)) 
@@ -86,9 +84,9 @@
 	((= i 256)) 
       (if (not (= (hash-table-ref chr-hash (integer->char i)) i))
 	  (display "oops")))
-    (fill! chr-hash #f))
+    (fill! chr-hash #f)))
 
-
+(define (test8 size)
   (let ((any-hash (make-hash-table size eq?)))
     (if (= size 1)
 	(hash-table-set! any-hash (vector-set! strings 0 (list 0)) 0)
@@ -101,9 +99,9 @@
 	((= i size)) 
       (if (not (= i (hash-table-ref any-hash (vector-ref strings i))))
 	  (display "oops")))
-    (fill! any-hash #f))
+    (fill! any-hash #f)))
 
-
+(define (test9 size)
   (let ((any-hash1 (make-hash-table size eq?)))
     (if (= size 1)
 	(hash-table-set! any-hash1 (vector-set! strings 0 (inlet :a 0)) 0)
@@ -118,9 +116,9 @@
       (if (not (= i (hash-table-ref any-hash1 (vector-ref strings i))))
 	  (display "oops")))
     (vector-fill! strings #f)
-    (fill! any-hash1 #f))
+    (fill! any-hash1 #f)))
 
-
+(define (test10 size)
   (let ((cmp-hash (make-hash-table size)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
@@ -129,21 +127,29 @@
 	((= i size)) 
       (if (not (= (hash-table-ref cmp-hash (complex i i)) i)) 
 	  (display "oops")))
-    (fill! cmp-hash #f))
+    (fill! cmp-hash #f)))
 
-  )
+(define (test-hash size)
+  (format *stderr* "~D " size)
+  (test1 size)
+  (test2 size)
+  (test3 size)
+  (test4 size)
+  (test5 size)
+  (test6 size)
+  (test7 size)
+  (test8 size)
+  (test9 size)
+  (test10 size))
 
 (for-each test-hash (list 1 10 100 1000 10000 100000 1000000))
 
 ;;; ----------------------------------------
-(format *stderr* "reader~%")
-
-(define data "/home/bil/test/scheme/bench/src/bib")
-(define counts (make-hash-table))
 
 (define (reader)
-  (let ((port (open-input-file data))
-	(new-pos 0))
+  (let ((port (open-input-file "/home/bil/test/scheme/bench/src/bib"))
+	(new-pos 0)
+	(counts (make-hash-table)))
     (do ((line (read-line port) (read-line port)))
 	((eof-object? line))
       (set! new-pos 0)
@@ -163,18 +169,19 @@
 		(let ((refs (or (hash-table-ref counts word) 0)))
 		  (hash-table-set! counts word (+ refs 1)))))))
 	(set! new-pos (+ pos 1))))
-
+    
     (close-input-port port)
     (sort! (copy counts (make-vector (hash-table-entries counts)))
 	   (lambda (a b) (> (cdr a) (cdr b))))))
 
-(set! counts (reader))
+(format *stderr* "reader~%")
 
-(if (not (and (eq? (car (counts 0)) 'the)
-	      (= (cdr (counts 0)) 62063)))
-    (do ((i 0 (+ i 1))) 
-	((= i 40)) 
-      (format *stderr* "~A: ~A~%" (car (counts i)) (cdr (counts i)))))
+(let ((counts (reader)))
+  (if (not (and (eq? (car (counts 0)) 'the)
+		(= (cdr (counts 0)) 62063)))
+      (do ((i 0 (+ i 1))) 
+	  ((= i 40)) 
+	(format *stderr* "~A: ~A~%" (car (counts i)) (cdr (counts i))))))
 ;;; ----------------------------------------
 
 ;(gc)

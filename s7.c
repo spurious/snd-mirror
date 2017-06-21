@@ -1841,7 +1841,7 @@ static s7_scheme *cur_sc = NULL;
 #define T_LET_REMOVED                 T_SETTER
 #define let_set_removed(p)            typeflag(_TLet(p)) |= T_LET_REMOVED
 #define let_removed(p)                ((typeflag(_TLet(p)) & T_LET_REMOVED) != 0)
-
+/* these mark objects that have been removed from the heap or checked for that possibility */
 
 #define T_MUTABLE                     (1 << (TYPE_BITS + 18))
 #define is_mutable(p)                 ((typeflag(_TNum(p)) & T_MUTABLE) != 0)
@@ -3860,6 +3860,7 @@ static void mark_symbol(s7_pointer p)
     set_mark(p);
   /* don't set the mark bit of a normal symbol!  It wrecks the check against SYNTACTIC_TYPE,
    *   slowing everything down by a large amount.
+   * (this comment is obsolete I think)
    */
 }
 
@@ -4611,19 +4612,22 @@ static void mark_hash_table(s7_pointer p)
   S7_MARK(hash_table_procedures(p));
   if (hash_table_entries(p) > 0)
     {
-      unsigned int i, len;
-      hash_entry_t **entries;
+      unsigned int len;
+      hash_entry_t **entries, **last;
+
       entries = hash_table_elements(p);
       len = hash_table_mask(p) + 1;
-      for (i = 0; i < len; i++)
+      last = (hash_entry_t **)(entries + len);
+
+      while (entries < last)
 	{
 	  hash_entry_t *xp;
-	  for (xp = entries[i++]; xp; xp = xp->next)
+	  for (xp = *entries++; xp; xp = xp->next)
 	    {
 	      S7_MARK(xp->key);
 	      S7_MARK(xp->value);
 	    }
-	  for (xp = entries[i]; xp; xp = xp->next)
+	  for (xp = *entries++; xp; xp = xp->next)
 	    {
 	      S7_MARK(xp->key);
 	      S7_MARK(xp->value);
@@ -27654,35 +27658,88 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   typ,
 	   type_name(sc, obj, NO_ARTICLE),
 	   full_typ,
-	   ((full_typ & T_GC_MARK) != 0) ?               " gc-marked" : "",
-	   ((full_typ & T_LOCAL_SYMBOL) != 0) ?          " local-symbol" : "",
-	   ((full_typ & T_IMMUTABLE) != 0) ?             " immutable" : "",
-	   ((full_typ & T_EXPANSION) != 0) ?             " expansion" : "",
-	   ((full_typ & T_MULTIPLE_VALUE) != 0) ?        " values-or-matched" : "",
-	   ((full_typ & T_KEYWORD) != 0) ?               " keyword" : "",
-	   ((full_typ & T_DONT_EVAL_ARGS) != 0) ?        " dont-eval-args" : "",
-	   ((full_typ & T_SYNTACTIC) != 0) ?             " syntactic" : "",
-	   ((full_typ & T_OVERLAY) != 0) ?               ((is_symbol(obj)) ? " local" : " overlay") : "",
-	   ((full_typ & T_CHECKED) != 0) ?               " checked" : "",
-	   ((full_typ & T_UNSAFE) != 0) ?                ((is_symbol(obj)) ? " clean" : " unsafe") : "",
-	   ((full_typ & T_OPTIMIZED) != 0) ?             " optimized" : "",
-	   ((full_typ & T_SAFE_CLOSURE) != 0) ?          " safe-closure" : "",
-	   ((full_typ & T_SAFE_PROCEDURE) != 0)  ?       " safe-procedure" : "",
-	   ((full_typ & T_SETTER) != 0) ?                " setter (or has-all-x)" : "",
-	   ((full_typ & T_COPY_ARGS) != 0) ?             " copy-args (or safe-locals)" : "",
-	   ((full_typ & T_COLLECTED) != 0) ?             " collected" : "",
-	   ((full_typ & T_SHARED) != 0) ?                " shared" : "",
-	   ((full_typ & T_HAS_METHODS) != 0) ?           " has-methods" : "",
-	   ((full_typ & T_GLOBAL) != 0) ?                ((is_pair(obj)) ? " unsafe-do" : " global") : "",
-	   ((full_typ & T_SAFE_STEPPER) != 0) ?          ((is_let(obj)) ? " let-set!-fallback" : ((is_slot(obj)) ? " safe-stepper" : " print-name")) : "",
-	   ((full_typ & T_LINE_NUMBER) != 0) ? 
-	        ((is_pair(obj)) ? " line-number" : ((is_input_port(obj)) ? " loader-port" : ((is_let(obj)) ? " with-let" : " has-accessor"))) : "",
-	   ((full_typ & T_MUTABLE) != 0) ? 
-               ((is_string(obj)) ? " byte-vector" : ((is_let(obj)) ? " let-ref-fallback" : 
-		   ((is_iterator(obj)) ? " mark-seq" : ((is_slot(obj)) ? " stepper" : " mutable")))) : "",
-	   ((full_typ & T_GENSYM) != 0) ?             
-               ((is_let(obj)) ? " function-env" : ((is_unspecified(obj)) ? " no-value" : ((is_pair(obj)) ? " list-in-use" :
-	       ((is_closure_star(obj)) ? " simple-args" : ((is_string(obj)) ? " documented" : " gensym"))))) : "");
+	   /* bit 0 (the first 8 bits are easy...) */
+	   ((full_typ & T_KEYWORD) != 0) ?        " keyword" : "",
+	   /* bit 1 */
+	   ((full_typ & T_SYNTACTIC) != 0) ?      " syntactic" : "",
+	   /* bit 2 */
+	   ((full_typ & T_LOCAL_SYMBOL) != 0) ?   " local-symbol" : "",
+	   /* bit 3 */
+	   ((full_typ & T_OPTIMIZED) != 0) ?      ((is_c_function(obj)) ? " scope-safe" : 
+						   ((is_pair(obj)) ? " optimized" :
+						    " ?3?")) : "",
+	   /* bit 4 */
+	   ((full_typ & T_SAFE_CLOSURE) != 0) ?   " safe-closure" : "",
+	   /* bit 5 */
+	   ((full_typ & T_DONT_EVAL_ARGS) != 0) ? " dont-eval-args" : "",
+	   /* bit 6 */
+	   ((full_typ & T_EXPANSION) != 0) ?      " expansion" : "",
+	   /* bit 7 */
+	   ((full_typ & T_MULTIPLE_VALUE) != 0) ? " values-or-matched" : "",
+	   /* bit 8 */
+	   ((full_typ & T_GLOBAL) != 0) ?         ((is_pair(obj)) ? " unsafe-do" : 
+						   ((is_symbol(obj)) ? " global" :
+						    " ?8?")) : "",
+	   /* bit 9 */
+	   ((full_typ & T_COLLECTED) != 0) ?      " collected" : "",
+	   /* bit 10 */
+	   ((full_typ & T_LINE_NUMBER) != 0) ?    ((is_pair(obj)) ? " line-number" : 
+						   ((is_input_port(obj)) ? " loader-port" : 
+						    ((is_let(obj)) ? " with-let" : 
+						     ((is_c_function(obj)) ? " simple-defaults" : 
+						      (((is_symbol(obj)) || (is_slot(obj))) ? " has-accessor" :
+						       " ?10?"))))) : "",
+	   /* bit 11 */
+	   ((full_typ & T_SHARED) != 0) ?         " shared" : "",
+	   /* bit 12 */
+	   ((full_typ & T_OVERLAY) != 0) ?        ((is_symbol(obj)) ? " local" : 
+						   ((is_pair(obj)) ? " overlay" :
+						    " ?12?")) : "",
+	   /* bit 13 */
+	   ((full_typ & T_SAFE_PROCEDURE) != 0) ? " safe-procedure" : "",
+	   /* bit 14 */
+	   ((full_typ & T_CHECKED) != 0) ?        " checked" : "",
+	   /* bit 15 */
+	   ((full_typ & T_UNSAFE) != 0) ?         ((is_symbol(obj)) ? " clean-symbol" : 
+						   ((is_slot(obj)) ? " has-stepper" : 
+						    ((is_pair(obj)) ? " unsafe-or-no-float-opt" :
+						     " ?15?"))) : "",
+	   /* bit 16 */
+	   ((full_typ & T_IMMUTABLE) != 0) ?      " immutable" : "",
+	   /* bit 17 */
+	   ((full_typ & T_SETTER) != 0) ?         ((is_symbol(obj)) ? " setter" :
+						   ((is_pair(obj)) ? " allow-other-keys-or-has-all-x-or-no-int-opt" :
+						    ((is_closure(obj)) ? " has-optlist" :
+						     (((is_hash_table(obj)) || (is_let(obj))) ? " removed" :
+						      " ?17?")))) : "",
+	   /* bit 18 */
+	   ((full_typ & T_MUTABLE) != 0) ?        ((is_number(obj)) ? " mutable" :
+						   ((is_string(obj)) ? " byte-vector" : 
+						    ((is_symbol(obj)) ? " has-keyword" :
+						     ((is_let(obj)) ? " let-ref-fallback" : 
+						      ((is_iterator(obj)) ? " mark-sequence" : 
+						       ((is_slot(obj)) ? " step-end" : 
+							((is_let(obj)) ? " ref-fallback" :
+							 (((is_pair(obj)) || (is_any_closure(obj))) ? " no-opt" :
+							  " ?18?")))))))) : "",
+	   /* bit 19 */
+	   ((full_typ & T_SAFE_STEPPER) != 0) ?   ((is_let(obj)) ? " set-fallback" : 
+						   ((is_slot(obj)) ? " safe-stepper" : 
+						    ((is_c_function(obj)) ? " maybe-safe" :
+						     ((is_number(obj)) ? " print-name" :
+						      " ?19?")))) : "",
+	   /* bit 20 */
+	   ((full_typ & T_COPY_ARGS) != 0) ?      " copy-args" : "",
+	   /* bit 21 */
+	   ((full_typ & T_GENSYM) != 0) ?         ((is_let(obj)) ? " funclet" : 
+						   ((is_pair(obj)) ? " list-in-use-or-simple-arg-defaults" :
+						    ((is_symbol(obj)) ? " gensym" :
+						     ((is_string(obj)) ? " documented-symbol" :
+						      " ?21?")))) : "",
+	   /* bit 22 */
+	   ((full_typ & T_HAS_METHODS) != 0) ?    " has-methods" : "",
+	   /* bit 23 */
+	   ((full_typ & T_GC_MARK) != 0) ?        " gc-marked" : "");
   return(buf);
 }
 
@@ -44084,6 +44141,15 @@ static s7_pointer all_x_c_addi(s7_scheme *sc, s7_pointer arg)
   return(g_add_2(sc, set_plist_2(sc, x, caddr(arg))));
 }
 
+static s7_pointer local_x_c_addi(s7_scheme *sc, s7_pointer arg)  
+{
+  s7_pointer x;
+  x = local_symbol_value(cadr(arg));
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) + integer(caddr(arg))));
+  return(g_add_2(sc, set_plist_2(sc, x, caddr(arg))));
+}
+
 static s7_pointer all_x_c_char_eq(s7_scheme *sc, s7_pointer arg)  
 {
   s7_pointer c;
@@ -44294,20 +44360,24 @@ static s7_pointer all_x_c_ss(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->t2_1));
 }
 
-static s7_pointer all_x_c_hash_table_ref_ss(s7_scheme *sc, s7_pointer arg)
+static s7_pointer x_c_hash_table_ref_ss(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  s7_pointer table, key;
   hash_entry_t *x;
-
-  table = find_symbol_unchecked(sc, cadr(arg));
-  key = find_symbol_unchecked(sc, caddr(arg));
-
   if (!is_hash_table(table))
     return(g_hash_table(sc, set_plist_2(sc, table, key)));
-
   x = (*hash_table_checker(table))(sc, table, key);
   if (x) return(x->value);
   return(sc->F);
+}
+
+static s7_pointer all_x_c_hash_table_ref_ss(s7_scheme *sc, s7_pointer arg)
+{
+  return(x_c_hash_table_ref_ss(sc, find_symbol_unchecked(sc, cadr(arg)), find_symbol_unchecked(sc, caddr(arg))));
+}
+
+static s7_pointer local_x_c_hash_table_ref_ss(s7_scheme *sc, s7_pointer arg)
+{
+  return(x_c_hash_table_ref_ss(sc, local_symbol_value(cadr(arg)), local_symbol_value(caddr(arg))));
 }
 
 static s7_pointer all_x_c_hash_table_ref_car(s7_scheme *sc, s7_pointer arg)
@@ -45305,7 +45375,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 		return(all_x_and3);
 	      if ((c_call(arg) == g_add_si) &&
 		  (checker(sc, cadr(arg), e)))
-		return(all_x_c_addi);
+		return((is_local_symbol(cdr(arg))) ? local_x_c_addi : all_x_c_addi);
 	      if ((c_call(arg) == g_char_equal_s_ic) &&
 		  (checker(sc, cadr(arg), e)))
 		return(all_x_c_char_eq);
@@ -45316,7 +45386,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 		  return(all_x_not_c_c);
 		}
 	      if (c_call(arg) == g_hash_table_ref_ss)
-		return(all_x_c_hash_table_ref_ss);
+		return((is_local_symbol(cdr(arg)) && is_local_symbol(cddr(arg))) ? local_x_c_hash_table_ref_ss : all_x_c_hash_table_ref_ss);
 	      if (c_call(arg) == g_hash_table_ref_car)
 		return(all_x_c_hash_table_ref_car);
 	      return(all_x_c_c);
@@ -46498,6 +46568,37 @@ static s7_int opt_set_i_i_f(void *p)
   return(x);
 }
 
+static s7_int opt_set_i_i_fo(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  s7_int x;
+  x = o->v4.i_ii_f(integer(slot_value(o->v3.p)), o->v2.i);
+  if (is_mutable(slot_value(o->v1.p)))
+    integer(slot_value(o->v1.p)) = x;
+  else slot_set_value(o->v1.p, s7_make_integer(cur_sc, x));
+  return(x);
+}
+
+static bool set_i_i_f_combinable(s7_scheme *sc, opt_info *opc)
+{
+  if ((sc->pc > 1) &&
+      (opc == sc->opts[sc->pc - 2]))
+    {
+      opt_info *o1;
+      o1 = sc->opts[sc->pc - 1];
+      if (o1->call.fi == opt_i_ii_sc)
+	{
+	  opc->v4.i_ii_f = o1->v3.i_ii_f;
+	  opc->v3.p = o1->v1.p;
+	  opc->v2.i = o1->v2.i;
+	  opt_set_fi(opc, opt_set_i_i_fo);
+	  sc->pc--;
+	  return(true);
+	}
+    }
+  return(false);
+}
+
 static bool i_syntax_ok(s7_scheme *sc, s7_pointer car_x, int len)
 {
   if ((car(car_x) == sc->set_symbol) &&
@@ -46518,7 +46619,8 @@ static bool i_syntax_ok(s7_scheme *sc, s7_pointer car_x, int len)
 	      if ((is_integer(slot_value(settee))) &&
 		  (int_optimize(sc, cddr(car_x))))
 		{
-		  opt_set_fi(opc, opt_set_i_i_f);
+		  if (!set_i_i_f_combinable(sc, opc))
+		    opt_set_fi(opc, opt_set_i_i_f);
 		  return(true);
 		}
 	    }
@@ -51047,6 +51149,7 @@ static s7_pointer opt_if_nbp(void *p)
   cur_sc->pc = o->v1.i;
   return(cur_sc->unspecified);
 }
+/* also b_ii_sf (mac) */
 
 static s7_pointer opt_if_nbp_f(void *p)
 {
@@ -51077,7 +51180,7 @@ static s7_pointer opt_if_nbp_s(void *p)
   return(cur_sc->unspecified);
 }
 
-static s7_pointer opt_if_nbp_sc(void *p)
+static s7_pointer opt_if_nbp_sc(void *p) /* b_pp_sc */
 {
   opt_info *o = (opt_info *)p;
   if (!(o->v3.b_pp_f(slot_value(o->v2.p), o->v4.p)))
@@ -51085,6 +51188,50 @@ static s7_pointer opt_if_nbp_sc(void *p)
       opt_info *o1;
       cur_sc->pc += 2;
       o1 = cur_sc->opts[cur_sc->pc];
+      return(o1->call.fp(o1));
+    }
+  cur_sc->pc = o->v1.i;
+  return(cur_sc->unspecified);
+}
+
+static s7_pointer opt_if_nbp_ss(void *p) /* b_ii_ss */
+{
+  opt_info *o = (opt_info *)p;
+  if (!(o->v3.b_ii_f(integer(slot_value(o->v2.p)), integer(slot_value(o->v4.p)))))
+    {
+      opt_info *o1;
+      cur_sc->pc += 2;
+      o1 = cur_sc->opts[cur_sc->pc];
+      return(o1->call.fp(o1));
+    }
+  cur_sc->pc = o->v1.i;
+  return(cur_sc->unspecified);
+}
+
+static s7_pointer opt_if_nbp_fs(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  cur_sc->pc += 2;
+  o1 = cur_sc->opts[cur_sc->pc];
+  if (!(o->v2.b_pi_f(o1->call.fp(o1), integer(slot_value(o->v3.p))))) /* b_pi_fs */
+    {
+      o1 = cur_sc->opts[++cur_sc->pc];
+      return(o1->call.fp(o1));
+    }
+  cur_sc->pc = o->v1.i;
+  return(cur_sc->unspecified);
+}
+
+static s7_pointer opt_if_nbp_sf(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  cur_sc->pc += 2;
+  o1 = cur_sc->opts[cur_sc->pc];
+  if (!(o->v2.b_pp_f(slot_value(o->v3.p), o1->call.fp(o1))))   /* b_pp_sf */
+    {
+      o1 = cur_sc->opts[++cur_sc->pc];
       return(o1->call.fp(o1));
     }
   cur_sc->pc = o->v1.i;
@@ -51136,12 +51283,31 @@ static bool opt_cell_if(s7_scheme *sc, s7_pointer car_x, int len)
 		  opc->v3.p = next->v1.p;
 		  opt_set_fp(opc, opt_if_nbp_s);
 		}
+	      if (next->call.fb == opt_b_pi_fs)
+		{
+		  opc->v2.b_pi_f = next->v2.b_pi_f;
+		  opc->v3.p = next->v1.p;
+		  opt_set_fp(opc, opt_if_nbp_fs);
+		}
+	      if (next->call.fb == opt_b_pp_sf)
+		{
+		  opc->v2.b_pp_f = next->v3.b_pp_f;
+		  opc->v3.p = next->v1.p;
+		  opt_set_fp(opc, opt_if_nbp_sf);
+		}
 	      if (next->call.fb == opt_b_pp_sc)
 		{
 		  opc->v3.b_pp_f = next->v3.b_pp_f;
 		  opc->v2.p = next->v1.p;
 		  opc->v4.p = next->v2.p;
 		  opt_set_fp(opc, opt_if_nbp_sc);
+		}
+	      if (next->call.fb == opt_b_ii_ss)
+		{
+		  opc->v3.b_ii_f = next->v3.b_ii_f;
+		  opc->v2.p = next->v1.p;
+		  opc->v4.p = next->v2.p;
+		  opt_set_fp(opc, opt_if_nbp_ss);
 		}
 	      return(true);
 	    }
@@ -59497,6 +59663,11 @@ static body_t body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, slis
 static void set_all_locals(s7_scheme *sc, s7_pointer tree, slist *args)
 {
   s7_pointer p;
+#if 0
+  fprintf(stderr, "set_all_locals: %s: ", DISPLAY_80(tree));
+  display_syms(sc, args);
+  fprintf(stderr, "\n");
+#endif
   for (p = tree; is_pair(p); p = cdr(p))
     {
       s7_pointer cp;
@@ -59737,6 +59908,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	    locals = split_slist(top, main_args);
 	    if (locals)
 	      {
+		/* fprintf(stderr, "form_is_safe %d %s: %d\n", __LINE__, DISPLAY_80(body), result); */
 		if (result == VERY_SAFE_BODY)
 		  set_all_locals(sc, body, locals);
 		free_syms(locals);
@@ -59787,6 +59959,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	    locals = split_slist(top, main_args);
 	    if (locals)
 	      {
+		/* fprintf(stderr, "form_is_safe %d %s: %d\n", __LINE__, DISPLAY_80(x), result); */
 		if (result == VERY_SAFE_BODY)
 		  {
 		    s7_pointer vars;
@@ -80950,22 +81123,22 @@ int main(int argc, char **argv)
 /* --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  |  17
- * tmac          |      |      |      || 9043 |  602  273
+ * tmac          |      |      |      || 9043 |  602  268
  * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1113
  * tref          |      |      | 2372 || 2083 | 1289 1152
  * tlet     3590 | 2400 | 2400 | 2244 || 2308 | 2008 1218
  * teq           |      |      | 6612 || 2787 | 2210 2001
  * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2388
- * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2943
+ * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2927
  * lint          |      |      |      || 4029 | 3308 3073 [146.9]
  * tcopy         |      |      | 13.6 || 3185 | 3342 3138
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3237
  * tform         |      |      | 6816 || 3850 | 3627 3378
  * tmap          |      |      |  9.3 || 4300 | 3716 3426
  * tfft          |      | 14.3 | 15.2 || 16.4 | 4762 4066
- * tsort         |      |      |      || 9186 | 5403 4776
+ * tsort         |      |      |      || 9186 | 5403 4796
  * titer         |      |      | 7503 || 5881 | 5069 4801
- * thash         |      |      | 50.7 || 8926 | 8651 8148
+ * thash         |      |      | 50.7 || 8926 | 8651 7966
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.5
  * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.5 [133.5]
@@ -81017,8 +81190,8 @@ int main(int argc, char **argv)
  * s7_macroexpand of multiple-value-set!? maybe disable values?
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
  * see g_float_vector_ref -- 3mil univects! [call/all] [opt_p_cf_ss in call?]
- * tref p_pip_ssf+p_p_f, let_a|s|one|c_a, int_opt check in new do(dox_ex) needs access to do-let, if step local and no return etc no need for do-let
- * fix check_let_star, maybe frame-opt let* in do? or if names are unique we're safe: letz (not let_star2)
+ * tref p_pip_ssf+p_p_f, let_a|s|one|c_a, int_opt check in new do(dox_ex) needs access to do-let
+ * let*->let: maybe frame-opt let* in do? or if names are unique we're safe: letz (not let_star2)
  *    so check_let_star looks for symbol_id==0 -- can this work? id==0 does happen
  * macro expanded in func (optimize_lambda)
  * need tests for cond/case in opt_dotimes_2
