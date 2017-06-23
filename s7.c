@@ -343,6 +343,10 @@
 #endif
 #endif
 
+#ifdef __MINGW32__
+  #include <inttypes.h>
+#endif
+
 #include <setjmp.h>
 
 #include "s7.h"
@@ -380,18 +384,31 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 #define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj, 80)
 #define ODISPLAY_80(Obj) object_to_truncated_string(cur_sc, Obj, 80)
 
+#define PRINT_NAME_PADDING 16
 #if (((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4)) || ((defined(__SIZEOF_POINTER__)) && (__SIZEOF_POINTER__ == 4)))
   #define opcode_t unsigned int
   #define ptr_int unsigned int
   #define INT_FORMAT "%u"
-  #define PRINT_NAME_PADDING 16
+  #define PD_U "%u"
+  #ifdef __MINGW32__
+    #define LL_U "PRIu64"
+    #define LL_D "PRId64"
+  else
+    #define LL_U "llu"
+    #define LL_D "lld"
+  #endif
+  /* INT_FORMAT is for opcode_t and raw c_pointer printout, not s7_int values, PD_U is for pointer differences */
   #define PRINT_NAME_SIZE (20 - PRINT_NAME_PADDING - 2) /* pointless */
+  #define POINTER_32 true
 #else
   #define opcode_t unsigned long long int
   #define ptr_int unsigned long long int
   #define INT_FORMAT "%llu"
-  #define PRINT_NAME_PADDING 16
+  #define PD_U "%lu"
+  #define LL_U "llu"
+  #define LL_D "lld"
   #define PRINT_NAME_SIZE (40 - PRINT_NAME_PADDING - 2)
+  #define POINTER_32 false
 #endif
 
 
@@ -2615,12 +2632,6 @@ static int num_object_types = 0;
 
 static void set_print_name(s7_pointer p, const char *name, int len)
 {
-#if (PRINT_NAME_PADDING == 8)
-  return;
-  /* this is currently useless because there's no room in the 32-bit case for a print name.
-   *    in the distant past, we used int/float (in C), so we had room.
-   */
-#else
   if ((len < PRINT_NAME_SIZE) &&
       (!is_mutable(p)))
     {
@@ -2628,7 +2639,6 @@ static void set_print_name(s7_pointer p, const char *name, int len)
       print_name_length(p) = (unsigned char)(len & 0xff);
       memcpy((void *)print_name(p), (void *)name, len);
     }
-#endif
 }
 
 #if WITH_GCC
@@ -5018,11 +5028,7 @@ static int gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
-#if (PRINT_NAME_PADDING == 8)
-      fprintf(stdout, "freed %d/%u (free: %d), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
-#else
-      fprintf(stdout, "freed %d/%u (free: %ld), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
-#endif
+      fprintf(stdout, "freed %d/%u (free: " PD_U "), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
 #else
       fprintf(stdout, "freed %d/%u\n", sc->gc_freed, sc->heap_size);
 #endif
@@ -10359,11 +10365,11 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
     case T_INTEGER:
       if (width == 0)
 	return(integer_to_string_base_10_no_width(obj, nlen));
-      (*nlen) = snprintf(num_to_str, num_to_str_size, "%*lld", width, (long long int)integer(obj));
+      (*nlen) = snprintf(num_to_str, num_to_str_size, "%*" LL_D, width, (long long int)integer(obj));
       break;
 
     case T_RATIO:
-      len = snprintf(num_to_str, num_to_str_size, "%lld/%lld", (long long int)numerator(obj), (long long int)denominator(obj));
+      len = snprintf(num_to_str, num_to_str_size, "%" LL_D "/%" LL_D, (long long int)numerator(obj), (long long int)denominator(obj));
       if (width > len)
 	{
 	  int spaces;
@@ -26434,7 +26440,7 @@ static char *multivector_indices_to_string(s7_scheme *sc, s7_int index, s7_point
   if (cur_dim > 0)
     multivector_indices_to_string(sc, (index - ind) / size, vect, str, cur_dim - 1);
 
-  snprintf(buf, 64, " %lld", ind);
+  snprintf(buf, 64, " %" LL_D, ind);
 #ifdef __OpenBSD__
   strlcat(str, buf, 128); /* 128=length of str */
 #else
@@ -26527,7 +26533,7 @@ static void make_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port)
   vlen = vector_length(vect);
   if (vector_rank(vect) == 1)
     {
-      plen = snprintf(buf, 128, "(make-%svector %lld ", vtyp, vlen);
+      plen = snprintf(buf, 128, "(make-%svector %" LL_D " ", vtyp, vlen);
       port_write_string(port)(sc, buf, plen, port);
     }
   else
@@ -26537,10 +26543,10 @@ static void make_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port)
       port_write_string(port)(sc, buf, plen, port);
       for (dim = 0; dim < vector_ndims(vect) - 1; dim++)
 	{
-	  plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
+	  plen = snprintf(buf, 128, "%" LL_D " ", vector_dimension(vect, dim));
 	  port_write_string(port)(sc, buf, plen, port);
 	}
-      plen = snprintf(buf, 128, "%lld) ", vector_dimension(vect, dim));
+      plen = snprintf(buf, 128, "%" LL_D ") ", vector_dimension(vect, dim));
       port_write_string(port)(sc, buf, plen, port);
     }
 }
@@ -26617,14 +26623,14 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	      port_write_string(port)(sc, "'(", 2, port);
 	      for (dim = 0; dim < vector_ndims(vect); dim++)
 		{
-		  plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
+		  plen = snprintf(buf, 128, "%" LL_D " ", vector_dimension(vect, dim));
 		  port_write_string(port)(sc, buf, plen, port);
 		}
 	      port_write_string(port)(sc, ")))) ", 5, port);
 	    }
 	  else 
 	    {
-	      plen = snprintf(buf, 128, "%lld))) ", vector_length(vect));
+	      plen = snprintf(buf, 128, "%" LL_D"))) ", vector_length(vect));
 	      port_write_string(port)(sc, buf, plen, port);
 	    }
 	  if (shared_ref(ci, vect) < 0)
@@ -26643,7 +26649,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	      for (i = 0; i < len; i++)
 		{
 		  port_write_string(port)(sc, "(set! ({v} ", 11, port);
-		  plen = snprintf(buf, 128, "%lld) ", i);
+		  plen = snprintf(buf, 128, "%" LL_D ") ", i);
 		  port_write_string(port)(sc, buf, plen, port);
 		  object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, ci);
 		  port_write_string(port)(sc, ") ", 2, port);
@@ -26670,10 +26676,10 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	      port_write_string(port)(sc, " '(", 3, port);
 	      for (dim = 0; dim < vector_ndims(vect) - 1; dim++)
 		{
-		  plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
+		  plen = snprintf(buf, 128, "%" LL_D " ", vector_dimension(vect, dim));
 		  port_write_string(port)(sc, buf, plen, port);
 		}
-	      plen = snprintf(buf, 128, "%lld", vector_dimension(vect, dim));
+	      plen = snprintf(buf, 128, "%" LL_D, vector_dimension(vect, dim));
 	      port_write_string(port)(sc, buf, plen, port);
 	      port_write_string(port)(sc, "))", 2, port);
 	    }
@@ -26784,7 +26790,7 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 	  make_vector_to_port(sc, vect, port);
 	  if (is_float_vector(vect))
 	    plen = snprintf(buf, 128, float_format_g, float_format_precision, float_vector_element(vect, 0));
-	  else plen = snprintf(buf, 128, "%lld", int_vector_element(vect, 0));
+	  else plen = snprintf(buf, 128, "%" LL_D, int_vector_element(vect, 0));
 	  port_write_string(port)(sc, buf, plen, port);
 	  port_write_character(port)(sc, ')', port);
 	}
@@ -26798,11 +26804,11 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 	  port_write_string(port)(sc, "#i(", 3, port);
 	  if (!is_string_port(port))
 	    {
-	      plen = snprintf(buf, 128, "%lld", int_vector_element(vect, 0));
+	      plen = snprintf(buf, 128, "%" LL_D, int_vector_element(vect, 0));
 	      port_write_string(port)(sc, buf, plen, port);
 	      for (i = 1; i < len; i++)
 		{
-		  plen = snprintf(buf, 128, " %lld", int_vector_element(vect, i));
+		  plen = snprintf(buf, 128, " %" LL_D, int_vector_element(vect, i));
 		  port_write_string(port)(sc, buf, plen, port);
 		}
 	    }
@@ -26821,7 +26827,7 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 		  next_len = port_data_size(port) - 128;
 		  dbuf = port_data(port);
 		}
-	      plen = snprintf((char *)(dbuf + new_len), 128, "%lld", int_vector_element(vect, 0));
+	      plen = snprintf((char *)(dbuf + new_len), 128, "%" LL_D, int_vector_element(vect, 0));
 	      new_len += plen;
 	      for (i = 1; i < len; i++)
 		{
@@ -26831,7 +26837,7 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 		      next_len = port_data_size(port) - 128;
 		      dbuf = port_data(port);
 		    }
-		  plen = snprintf((char *)(dbuf + new_len), 128, " %lld", int_vector_element(vect, i));
+		  plen = snprintf((char *)(dbuf + new_len), 128, " %" LL_D, int_vector_element(vect, i));
 		  new_len += plen;
 		}
 	      port_position(port) = new_len;
@@ -26982,7 +26988,7 @@ static void pair_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	  char buf[128];
 
 	  port_write_string(port)(sc, "let (({lst} (make-list ", 23, port);
-	  plen = snprintf(buf, 128, "%lld))) ", len);
+	  plen = snprintf(buf, 128, "%" LL_D "))) ", len);
 	  port_write_string(port)(sc, buf, plen, port);
 
 	  if ((shared_ref(ci, lst) < 0))
@@ -28474,7 +28480,7 @@ static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use
 		  int nlen;
 		  char *str;
 		  str = (char *)malloc(128 * sizeof(char));
-		  nlen = snprintf(str, 128, "))) (do ((i 0 (+ i 1))) ((= i %lld) iter) (iterate iter)))", iterator_position(obj));
+		  nlen = snprintf(str, 128, "))) (do ((i 0 (+ i 1))) ((= i %" LL_D ") iter) (iterate iter)))", iterator_position(obj));
 		  port_write_string(port)(sc, str, nlen, port);
 		  free(str);
 		}
@@ -28521,8 +28527,8 @@ static void rng_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
   else nlen = snprintf(buf, 128, "#<rng %p>", obj);
 #else
   if (use_write == USE_READABLE_WRITE)
-    nlen = snprintf(buf, 128, "(random-state %llu %llu)", random_seed(obj), random_carry(obj));
-  else nlen = snprintf(buf, 128, "#<rng %llu %llu>", random_seed(obj), random_carry(obj));
+    nlen = snprintf(buf, 128, "(random-state %" LL_U " %" LL_U ")", random_seed(obj), random_carry(obj));
+  else nlen = snprintf(buf, 128, "#<rng %" LL_U " %" LL_U ">", random_seed(obj), random_carry(obj));
 #endif
   port_write_string(port)(sc, buf, nlen, port);
 }
@@ -52584,7 +52590,7 @@ static bool funcall_optimize(s7_scheme *sc, s7_pointer car_x, s7_pointer s_func)
 	  olst = closure_optlist(s_func);
 	  if (optlist_num_args(olst) != opc->v1.i)
 	    {
-	      /* fprintf(stderr, "wrong argnum: %lld %d\n", opc->v1.i, optlist_num_args(olst)); */
+	      /* fprintf(stderr, "wrong argnum: %" LL_D " %d\n", opc->v1.i, optlist_num_args(olst)); */
 	      return(return_false(sc, car_x, __func__, __LINE__));
 	    }
 	  opc->v3.i = optlist_num_exprs(olst);
@@ -67178,7 +67184,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    opt_info *o;
 		    s7_pointer (*fp)(void *o);
 		    s7_pointer val;
-		    /* fprintf(stderr, "lim: %lld\n", lim); */
 		    o = sc->opts[0];
 		    fp = o->v7.fp;
 		    slot_set_value(stepper, val = make_mutable_integer(sc, integer(slot_value(stepper))));
@@ -78665,10 +78670,10 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
 #ifdef __linux__
   struct rusage info;
   getrusage(RUSAGE_SELF, &info);
-  fprintf(stderr, "process size: %lld\n", (s7_int)(info.ru_maxrss * 1024));
+  fprintf(stderr, "process size: %" LL_D "\n", (s7_int)(info.ru_maxrss * 1024));
 #endif
 
-  fprintf(stderr, "heap: %u (%lld bytes)", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
+  fprintf(stderr, "heap: %u (%" LL_D " bytes)", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
   {
     unsigned int k;
     int ts[NUM_TYPES];
@@ -78682,15 +78687,15 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
       }
     fprintf(stderr, "\n");
   }
-  fprintf(stderr, "permanent cells: %d (%lld bytes)\n", permanent_cells, (s7_int)(permanent_cells * sizeof(s7_cell)));
+  fprintf(stderr, "permanent cells: %d (%" LL_D " bytes)\n", permanent_cells, (s7_int)(permanent_cells * sizeof(s7_cell)));
 
   for (i = 0; i < vector_length(sc->symbol_table); i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       syms++;
-  fprintf(stderr, "symbol table: %d (%d symbols, %lld bytes)\n", SYMBOL_TABLE_SIZE, syms, 
+  fprintf(stderr, "symbol table: %d (%d symbols, %" LL_D " bytes)\n", SYMBOL_TABLE_SIZE, syms, 
 	  (s7_int)(SYMBOL_TABLE_SIZE * sizeof(s7_pointer) + syms * 3 * sizeof(s7_cell)));
 
-  fprintf(stderr, "stack: %u (%lld bytes, current top: %ld)\n", sc->stack_size, (s7_int)(sc->stack_size * sizeof(s7_pointer)), (long int)s7_stack_top(sc));
+  fprintf(stderr, "stack: %u (%" LL_D " bytes, current top: %ld)\n", sc->stack_size, (s7_int)(sc->stack_size * sizeof(s7_pointer)), (long int)s7_stack_top(sc));
   fprintf(stderr, "c_functions: %d (%d bytes)\n", c_functions, (int)(c_functions * sizeof(c_proc_t)));
 
   len = 0;
@@ -80551,7 +80556,9 @@ s7_scheme *s7_init(void)
 #ifdef __SUNPRO_C
   s7_provide(sc, "sunpro_c");
 #endif
-
+#ifdef __MINGW32__
+  s7_provide(sc, "mingw32");
+#endif
 
   sc->vector_set_function = slot_value(global_slot(sc->vector_set_symbol));
   set_setter(sc->vector_set_symbol);
