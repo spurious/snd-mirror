@@ -393,7 +393,7 @@ static int float_format_precision = WRITE_REAL_PRECISION;
   #ifdef __MINGW32__
     #define LL_U "PRIu64"
     #define LL_D "PRId64"
-  else
+  #else
     #define LL_U "llu"
     #define LL_D "lld"
   #endif
@@ -1206,6 +1206,7 @@ struct s7_scheme {
              apply_values_function, multivector_function, apply_function, vector_function, last_function;
 
   s7_pointer wrong_type_arg_info, out_of_range_info, simple_wrong_type_arg_info, simple_out_of_range_info;
+  s7_pointer err_wrap1, err_wrap2;
   s7_pointer too_many_arguments_string, not_enough_arguments_string, division_by_zero_error_string, missing_method_string;
   s7_pointer *syn_docs; /* prebuilt evaluator arg lists, syntax doc strings */
   #define NUM_SAFE_LISTS 64
@@ -20970,6 +20971,19 @@ s7_pointer s7_make_permanent_string(const char *str)
       string_value(x) = NULL;
       string_length(x) = 0;
     }
+  string_hash(x) = 0;
+  string_needs_free(x) = false;
+  return(x);
+}
+
+static s7_pointer make_permanent_string_wrapper(void)
+{
+  s7_pointer x;
+  x = alloc_pointer();
+  unheap(x);
+  set_type(x, T_STRING);
+  string_value(x) = NULL;
+  string_length(x) = 0;
   string_hash(x) = 0;
   string_needs_free(x) = false;
   return(x);
@@ -42225,14 +42239,15 @@ static s7_pointer simple_wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_poin
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
   /* info list is '(format_string caller arg_n arg type_name descr) */
+  string_value(sc->err_wrap1) = (char *)caller;
+  string_length(sc->err_wrap1) = safe_strlen(caller);
+  string_value(sc->err_wrap2) = (char *)descr;
+  string_length(sc->err_wrap2) = safe_strlen(descr);
   if (arg_n < 0) arg_n = 0;
+
   if (arg_n > 0)
-    return(wrong_type_arg_error_prepackaged(sc, make_string_wrapper(sc, caller),
-					    make_integer(sc, arg_n), arg, type_name_string(sc, arg),
-					    make_string_wrapper(sc, descr)));
-  return(simple_wrong_type_arg_error_prepackaged(sc, make_string_wrapper(sc, caller),
-						 arg, type_name_string(sc, arg),
-						 make_string_wrapper(sc, descr)));
+    return(wrong_type_arg_error_prepackaged(sc, sc->err_wrap1, make_integer(sc, arg_n), arg, type_name_string(sc, arg), sc->err_wrap2));
+  return(simple_wrong_type_arg_error_prepackaged(sc, sc->err_wrap1, arg, type_name_string(sc, arg), sc->err_wrap2));
 }
 
 
@@ -42254,11 +42269,15 @@ static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointe
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
   /* info list is '(format_string caller arg_n arg descr) */
+  string_value(sc->err_wrap1) = (char *)caller;
+  string_length(sc->err_wrap1) = safe_strlen(caller);
+  string_value(sc->err_wrap2) = (char *)descr;
+  string_length(sc->err_wrap2) = safe_strlen(descr);
   if (arg_n < 0) arg_n = 0;
 
   if (arg_n > 0)
-    return(out_of_range_error_prepackaged(sc, make_string_wrapper(sc, caller), make_integer(sc, arg_n), arg, make_string_wrapper(sc, descr)));
-  return(simple_out_of_range_error_prepackaged(sc, make_string_wrapper(sc, caller), arg, make_string_wrapper(sc, descr)));
+    return(out_of_range_error_prepackaged(sc, sc->err_wrap1, make_integer(sc, arg_n), arg, sc->err_wrap2));
+  return(simple_out_of_range_error_prepackaged(sc, sc->err_wrap1, arg, sc->err_wrap2));
 }
 
 
@@ -47457,6 +47476,18 @@ static s7_double opt_d_dd_ff_o3(void *p)
   return(o->v4.d_dd_f(x1, o->v6.d_vd_f(o->v2.obj, real(slot_value(o->v3.p)))));
 }
 
+static s7_double opt_d_dd_fff(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1, *o2;
+  s7_double x1, x2;
+  o1 = cur_sc->opts[++cur_sc->pc];
+  x1 = o1->v4.d_dd_f(o1->v5.d_pi_f(slot_value(o1->v2.p), integer(slot_value(o1->v3.p))), real(slot_value(o1->v1.p))); /* dd_fso */
+  o2 = cur_sc->opts[++cur_sc->pc];
+  x2 = o2->v4.d_dd_f(o2->v5.d_pi_f(slot_value(o2->v2.p), integer(slot_value(o2->v3.p))), real(slot_value(o2->v1.p))); /* dd_fso */
+  return(o->v3.d_dd_f(x1, x2));
+}
+
 static bool d_dd_ff_combinable(s7_scheme *sc, int start)
 {
   opt_info *opc, *o1;
@@ -47500,6 +47531,16 @@ static bool d_dd_ff_combinable(s7_scheme *sc, int start)
 	    }
 	}
       return(true);
+    }
+  if (o1->v7.fd == opt_d_dd_fso)
+    {
+      opt_info *o2;
+      o2 = sc->opts[start + 1];
+      if (o2->v7.fd == opt_d_dd_fso)
+	{
+	  opc->v7.fd = opt_d_dd_fff;
+	  return(true);
+	}
     }
   return(false);
 }
@@ -48002,6 +48043,31 @@ static s7_double opt_d_vid_ssf(void *p)
   return(o->v4.d_vid_f(o->v5.obj, integer(slot_value(o->v2.p)), o1->v7.fd(o1)));
 }
 
+/* d_vid_ssf -> d_dd_ff_o1 -> d_vd_o1 -> d_dd_ff_o3 */
+static s7_double opt_fmv(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1, *o2, *o3;
+  s7_double amp_env, index_env, vib;
+
+  o1 = cur_sc->opts[++cur_sc->pc]; /* ff_o1 */
+  amp_env = o1->v2.d_v_f(o1->v1.obj); 
+  o2 = cur_sc->opts[cur_sc->pc += 2];
+  cur_sc->pc += 2;
+  o3 = cur_sc->opts[cur_sc->pc];
+  index_env = o3->v5.d_v_f(o3->v1.obj);
+  vib = real(slot_value(o2->v2.p));
+  /* increment pc? */
+  
+  return(o->v4.d_vid_f(o->v5.obj, 
+		       integer(slot_value(o->v2.p)),
+		       o1->v3.d_dd_f(amp_env,
+				     o2->v3.d_vd_f(o2->v5.obj,
+						   o2->v4.d_dd_f(vib,
+								 o3->v4.d_dd_f(index_env,
+									       o3->v6.d_vd_f(o3->v2.obj, vib)))))));
+}
+
 static bool d_vid_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer car_x)
 {
   if ((is_symbol(cadr(car_x))) &&
@@ -48031,7 +48097,21 @@ static bool d_vid_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 		  if ((is_slot(opc->v2.p)) &&
 		      (is_integer(slot_value(opc->v2.p))) &&
 		      (float_optimize(sc, cdddr(car_x))))
-		    return(true);
+		    {
+		      opt_info *o1;
+		      o1 = sc->opts[start];
+		      if (o1->v7.fd == opt_d_dd_ff_o1)
+			{
+			  o1 = sc->opts[start + 2];
+			  if (o1->v7.fd == opt_d_vd_o1)
+			    {
+			      o1 = sc->opts[start + 4];
+			      if (o1->v7.fd == opt_d_dd_ff_o3)
+				opc->v7.fd = opt_fmv;
+			    }
+			}
+		      return(true);
+		    }
 		}
 	      pc_fallback(sc, start);
 	    }
@@ -79915,6 +79995,8 @@ s7_scheme *s7_init(void)
 
   sc->owlet = init_owlet(sc);
 
+  sc->err_wrap1 = make_permanent_string_wrapper();
+  sc->err_wrap2 = make_permanent_string_wrapper();
   sc->wrong_type_arg_info = permanent_list(sc, 6);
   set_car(sc->wrong_type_arg_info, s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A"));
 
@@ -81257,34 +81339,12 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  ||  16  |  17  17.5
- * tmac          |      |      |      || 9043 |  602  263
- * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1080
- * tref          |      |      | 2372 || 2083 | 1289 1145
- * teq           |      |      | 6612 || 2787 | 2210 2001
- * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2348
- * tlet     5318 | 3701 | 3712 | 3700 || 4004 | 3641 2483
- * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2747
- * lint          |      |      |      || 4029 | 3308 3022 [144.1]
- * tmap          |      |      |  9.3 || 4300 | 3716 3069
- * tcopy         |      |      | 13.6 || 3185 | 3342 3158
- * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3200
- * tform         |      |      | 6816 || 3850 | 3627 3374
- * tfft          |      |      |      || 17.3 | 4920 4142
- * tsort         |      |      |      || 9186 | 5403 4705
- * titer         |      |      |      || 5964 | 5234 4714
- * thash         |      |      | 50.7 || 8926 | 8651 7910
- * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
- * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.3
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.2 [131.2]
- * 
- * --------------------------------------------------------------------
- *
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  *
  * s7:
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
+ * perhaps add various version numbers etc to *features* (snd-help) or (*s7* 'version-info)?
  *
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func
@@ -81306,9 +81366,7 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * ruby version crashes in test 4|8 -- file_copy?
- */
-
-/* opts TODO:
+ *
  * opt_let and opt_dotimes can be combined, at least from opt_let's view
  *   maybe split these at a lower level
  * ip for pi cases (b_ip, but it doesn't appear to happen much)
@@ -81340,10 +81398,34 @@ int main(int argc, char **argv)
  * sort and|or_bb1?
  * even if body is unsafe, constants can be marked local
  * local all_x_c_opssq_s? -- in fft.scm if args rl/im local (why aren't they?) all would be local
- * mutable_string_wrapper for wrong_type_arg and out_of_range_arg
  * opt overhead: after optimize, fill one array with opt_infos, then march through it -- no opt* call, cur_sc->pc = index into array
- *   also no need for combined ops eventually, but how to tell what is being called?
  *   an array of functions, but what form
- *   how many opts are in fm-violin?
- * redo clm overheads with -g
+ * combine opts to reduce overhead, d_id_sf+d_dd_ff_o1, d_vid_ssf+same, opt_let d_dd_f2->d_vid_ssf, d_vd_o1+d_dd_ff_o3
+ *   maybe d_dd_ff_o1+d_vd_o1
+ * perhaps combine all wrappers into one temp?
+ *
+ * --------------------------------------------------------------------
+ *
+ *           12  |  13  |  14  |  15  ||  16  | 17.4 17.5
+ * tmac          |      |      |      || 9043 |  602  263
+ * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1080
+ * tref          |      |      | 2372 || 2083 | 1289 1145
+ * teq           |      |      | 6612 || 2787 | 2210 1990
+ * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2346
+ * tlet     5318 | 3701 | 3712 | 3700 || 4004 | 3641 2483
+ * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2747
+ * lint          |      |      |      || 4029 | 3308 3021 [144.1]
+ * tmap          |      |      |  9.3 || 4300 | 3716 3069
+ * tcopy         |      |      | 13.6 || 3185 | 3342 3158
+ * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3200
+ * tform         |      |      | 6816 || 3850 | 3627 3374
+ * tfft          |      |      |      || 17.3 | 4920 3989
+ * tsort         |      |      |      || 9186 | 5403 4705
+ * titer         |      |      |      || 5964 | 5234 4714
+ * thash         |      |      | 50.7 || 8926 | 8651 7910
+ * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
+ * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.0
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.1 [131.5]
+ * 
+ * --------------------------------------------------------------------
  */
