@@ -52,7 +52,7 @@
 		      (find-if-b (make-iterator vc))
 		      (find-if-c (make-iterator vc))
 		      (find-if-d (make-iterator vc)))))
-	   (d (let ((fv (make-float-vector size 0.0)))
+	   (d (let ((fv (make-float-vector size 1.0)))
 		(list (find-if-a (make-iterator fv))
 		      (find-if-b (make-iterator fv))
 		      (find-if-c (make-iterator fv))
