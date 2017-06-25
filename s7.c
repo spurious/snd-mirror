@@ -129,7 +129,7 @@
  * in openBSD I think you need to include -ftrampolines in CFLAGS.
  * if you want this file to compile into a stand-alone interpreter, define WITH_MAIN
  *
- * -O3 is often slower, sometimes faster (at least according to callgrind), similarly for -finline-functions
+ * -O3 is often slower, sometimes faster (at least according to callgrind), similarly for -finline-functions and -ftree-vectorize
  * -march=native -fomit-frame-pointer -m64 -funroll-loops gains about .1%
  * -ffast-math makes a mess of NaNs, and does not appear to be faster
  * for timing tests, I use: -O2 -DINITIAL_HEAP_SIZE=1024000 -march=native -fomit-frame-pointer -funroll-loops
@@ -384,29 +384,32 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 #define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj, 80)
 #define ODISPLAY_80(Obj) object_to_truncated_string(cur_sc, Obj, 80)
 
+#ifdef __MINGW32__
+  #define LL_U "PRIu64"
+  #define LL_D "PRId64"
+#else
+  #define LL_U "llu"
+  #define LL_D "lld"
+#endif
+
 #define PRINT_NAME_PADDING 16
 #if (((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4)) || ((defined(__SIZEOF_POINTER__)) && (__SIZEOF_POINTER__ == 4)))
   #define opcode_t unsigned int
   #define ptr_int unsigned int
   #define INT_FORMAT "%u"
   #define PD_U "%u"
-  #ifdef __MINGW32__
-    #define LL_U "PRIu64"
-    #define LL_D "PRId64"
-  #else
-    #define LL_U "llu"
-    #define LL_D "lld"
-  #endif
   /* INT_FORMAT is for opcode_t and raw c_pointer printout, not s7_int values, PD_U is for pointer differences */
   #define PRINT_NAME_SIZE (20 - PRINT_NAME_PADDING - 2) /* pointless */
   #define POINTER_32 true
 #else
   #define opcode_t unsigned long long int
   #define ptr_int unsigned long long int
-  #define INT_FORMAT "%llu"
-  #define PD_U "%lu"
-  #define LL_U "llu"
-  #define LL_D "lld"
+  #define INT_FORMAT "%" LL_U
+  #ifdef __MINGW32__
+    #define PD_U "%" LL_U
+  #else
+    #define PD_U "%lu"
+  #endif
   #define PRINT_NAME_SIZE (40 - PRINT_NAME_PADDING - 2)
   #define POINTER_32 false
 #endif
@@ -28122,8 +28125,8 @@ static const char *opt3_role_name(int role)
 static char* show_debugger_bits(unsigned int bits)
 {
   char *bits_str;
-  bits_str = (char *)calloc(256, sizeof(char));
-  snprintf(bits_str, 256, " %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  bits_str = (char *)calloc(512, sizeof(char));
+  snprintf(bits_str, 512, " %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	  ((bits & E_SET) != 0) ? " e-set" : "",
 	  ((bits & E_FAST) != 0) ? " opt_fast" : "",
 	  ((bits & E_CFUNC) != 0) ? " opt_cfunc" : "",
@@ -52824,6 +52827,9 @@ static bool float_optimize(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer car_x, head;
   /* fprintf(stderr, "float_optimize %s safe: %d, pair: %d\n", DISPLAY_80(expr), sc->safety, pair_no_opt(expr)); */
+#if (WITH_GMP)
+  return(false);
+#endif
 
   car_x = car(expr);
   if (!is_pair(car_x)) /* wrap constants/symbols */
@@ -52931,6 +52937,9 @@ static bool float_optimize(s7_scheme *sc, s7_pointer expr)
 static bool int_optimize(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer car_x, head;
+#if (WITH_GMP)
+  return(false);
+#endif
   car_x = car(expr);
 
   if (!is_pair(car_x)) /* wrap constants/symbols */
@@ -67302,7 +67311,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer val;
 		    o = sc->opts[0];
 		    fp = o->v7.fp;
-		    slot_set_value(stepper, val = make_mutable_integer(sc, integer(slot_value(stepper))));
+		    val = make_mutable_integer(sc, integer(slot_value(stepper)));
+		    slot_set_value(stepper, val);
 		    for (; integer(val) < lim; integer(val)++)
 		      {
 			sc->pc = 0;
@@ -80675,7 +80685,7 @@ s7_scheme *s7_init(void)
   s7_provide(sc, "sunpro_c");
 #endif
 #ifdef __MINGW32__
-  s7_provide(sc, "mingw32");
+  s7_provide(sc, "mingw");
 #endif
 
   sc->vector_set_function = slot_value(global_slot(sc->vector_set_symbol));
@@ -81394,7 +81404,7 @@ int main(int argc, char **argv)
  * for-each with c-func of int|float-vect could surely use mutable arg, but this never happens?
  * tform vector_a_ex -- local symbol here?
  *   catch/call-with-exit maybe be stack-unsafe, but we should ignore that for setting locals (if body is safe)
- * pending-unsafe for catch/call-with-exit etc -- needs lambda walker 
+ *   pending-unsafe for catch/call-with-exit etc -- needs lambda walker 
  * sort and|or_bb1?
  * even if body is unsafe, constants can be marked local
  * local all_x_c_opssq_s? -- in fft.scm if args rl/im local (why aren't they?) all would be local
@@ -81402,11 +81412,13 @@ int main(int argc, char **argv)
  *   an array of functions, but what form
  * combine opts to reduce overhead, d_id_sf+d_dd_ff_o1, d_vid_ssf+same, opt_let d_dd_f2->d_vid_ssf, d_vd_o1+d_dd_ff_o3
  *   maybe d_dd_ff_o1+d_vd_o1
- * perhaps combine all wrappers into one temp?
+ *   perhaps combine all wrappers into one temp?
+ * static string wrappers unheaped -- these are mostly permanent_strings I think
+ * how to get rid of *alloc warnings?
  *
  * --------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  ||  16  | 17.4 17.5
+ *           12  |  13  |  14  |  15  ||  16  | 17.4 17.5 17.6
  * tmac          |      |      |      || 9043 |  602  263
  * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1080
  * tref          |      |      | 2372 || 2083 | 1289 1145

@@ -1869,8 +1869,8 @@ static void make_auto_comment(file_dialog_info *fd)
 		{
 		  if (sp->nchans > 1)
 		    {
-		      char buf[32];
-		      snprintf(buf, 32, "\n-------- channel %d --------\n", i);
+		      char buf[64];
+		      snprintf(buf, 64, "\n-------- channel %d --------\n", i);
 		      strcat(comment, buf);
 		    }
 		  strcat(comment, edit_strs[i]);

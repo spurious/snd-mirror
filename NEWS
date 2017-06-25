@@ -1,8 +1,11 @@
-Snd 17.4:
+Snd 17.5:
 
-the clm optimizer has been totally rewritten.
-s7 new built-in function: type-of
+s7: s7_history and s7_add_to_history (Kjetil's suggestion).
+    (*s7* 'history) for non-error scheme-side access to the history info
+    lambda* keyword argument handling changed slightly.
+    multithread sanity-checks thanks to Kjetil.
+    Kjetil also ported s7 to mingw.
 
-checked: gtk 3.90.0, sbcl 1.3.17
+checked: gtk 3.91.0, sbcl 1.3.18, FC 26 (gcc 7.1.1)
 
-Thanks!: Tito Latini, Kjetil Matheussen, Renato Fabbri.
+Thanks!: Kjetil Matheussen, Rick Taube

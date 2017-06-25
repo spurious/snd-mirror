@@ -1565,7 +1565,7 @@ static Xen g_current_time(void)
   return(C_ulong_to_Xen_ulong(curtime));
 }
 
-
+#if (!DISABLE_DEPRECATED)
 static Xen g_tmpnam(void)
 {
   #define H_tmpnam "(tmpnam) returns a new (hopefully unused) temporary file name"
@@ -1599,12 +1599,15 @@ static Xen g_tmpnam(void)
   if (!tmpdir) tmpdir = xen_strdup("/tmp");
 #endif
 
-  snprintf(str, BUFFER_SIZE, "%s/xen_%d_%d", tmpdir, (int)getpid(), file_ctr++);
+  if (tmpdir) /* try to make C happy... */
+    snprintf(str, BUFFER_SIZE, "%s/xen_%d_%d", tmpdir, (int)getpid(), file_ctr++);
+  else snprintf(str, BUFFER_SIZE, "/xen_%d_%d", (int)getpid(), file_ctr++);
   if (tmpdir) free(tmpdir);
   result = C_string_to_Xen_string(str);
   free(str);
   return(result);
 }
+#endif
 
 
 static Xen g_ftell(Xen fd)
@@ -1642,11 +1645,12 @@ Xen_wrap_no_args(g_getcwd_w, g_getcwd)
 Xen_wrap_2_args(g_strftime_w, g_strftime)
 Xen_wrap_1_arg(g_localtime_w, g_localtime)
 Xen_wrap_no_args(g_current_time_w, g_current_time)
-Xen_wrap_no_args(g_tmpnam_w, g_tmpnam)
 Xen_wrap_1_arg(g_ftell_w, g_ftell)
-
 Xen_wrap_no_args(g_gc_off_w, g_gc_off)
 Xen_wrap_no_args(g_gc_on_w, g_gc_on)
+#if (!DISABLE_DEPRECATED)
+Xen_wrap_no_args(g_tmpnam_w, g_tmpnam)
+#endif
 
 #if ENABLE_WEBSERVER
   #if USE_MOTIF
@@ -1710,7 +1714,6 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 #endif
   Xen_define_typed_procedure("getcwd",       g_getcwd_w,        0, 0, 0, H_getcwd,        s7_make_signature(s7, 1, s));
   Xen_define_typed_procedure("strftime",     g_strftime_w,      2, 0, 0, H_strftime,      s7_make_signature(s7, 3, s, s, p));
-  Xen_define_typed_procedure("tmpnam",       g_tmpnam_w,        0, 0, 0, H_tmpnam,        s7_make_signature(s7, 1, s));
   Xen_define_typed_procedure("localtime",    g_localtime_w,     1, 0, 0, H_localtime,     s7_make_signature(s7, 2, p, i));
   Xen_define_typed_procedure("current-time", g_current_time_w,  0, 0, 0, H_current_time,  s7_make_signature(s7, 1, i));
   Xen_define_typed_procedure("ftell",        g_ftell_w,         1, 0, 0, "(ftell fd): lseek", s7_make_signature(s7, 2, i, i));
@@ -1733,6 +1736,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 		                     (else (loop (cdr l) (cons (car l) result)))))))");
 
 #if (!DISABLE_DEPRECATED)
+  Xen_define_typed_procedure("tmpnam",       g_tmpnam_w,        0, 0, 0, H_tmpnam,        s7_make_signature(s7, 1, s));
   Xen_eval_C_string("(define load-from-path load)");
   Xen_eval_C_string("(define (1+ x) \"add 1 to arg\" (+ x 1))");
   Xen_eval_C_string("(define (1- x) \"subtract 1 from arg\" (- x 1))");
