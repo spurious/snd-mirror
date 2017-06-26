@@ -369,7 +369,7 @@ typedef struct snd_info {
   int selected_channel;
   char *filename;
   char *short_filename;
-  int nchans;
+  unsigned int nchans;  /* "unsigned" to make gcc 7.1 happy */
   Xen properties;
   int properties_loc;
   bool remembering;

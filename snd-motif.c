@@ -6572,14 +6572,14 @@ void set_fft_with_phases(bool val)
 
 static void alpha_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  char alpha_number_buffer[11];
+  char alpha_number_buffer[512]; /* 11 before gcc 7.1 */
   mus_float_t alpha;
   
   alpha = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
   in_set_fft_window_alpha(alpha);
   chans_field(FCP_ALPHA, alpha);
 
-  snprintf(alpha_number_buffer, 11, "alpha:%.3f", alpha);
+  snprintf(alpha_number_buffer, 512, "alpha:%.3f", alpha);
   set_label(alpha_number, alpha_number_buffer);
 
   if (fft_window_alpha_in_use(fft_window(ss)))
@@ -6593,9 +6593,9 @@ static void alpha_drag_callback(Widget w, XtPointer context, XtPointer info)
 
 static void set_alpha_scale(mus_float_t val)
 {
-  char alpha_number_buffer[11];
+  char alpha_number_buffer[512];
   XtVaSetValues(alpha_scale, XmNvalue, (int)(val * 90), NULL);
-  snprintf(alpha_number_buffer, 11, "alpha:%.3f", val);
+  snprintf(alpha_number_buffer, 512, "alpha:%.3f", val);
   set_label(alpha_number, alpha_number_buffer);
 }
 

@@ -3206,7 +3206,7 @@ If a play-list is waiting, start it."
   Xen_check_type(Xen_is_boolean_or_unbound(In_Background), In_Background, 3, S_start_playing, "a boolean");
 
   if (Xen_is_integer(Chans)) chans = Xen_integer_to_C_int(Chans);
-  if ((chans <= 0) || (chans > 256))
+  if ((chans <= 0) || (chans > MUS_MAX_CHANS))
     Xen_out_of_range_error(S_start_playing, 1, Chans, "chans <= 0 or > 256?");
 
   if (Xen_is_integer(Srate)) srate = Xen_integer_to_C_int(Srate);

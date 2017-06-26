@@ -109,6 +109,7 @@
 #define MUS_JACK_API 2
 
 #define G7XX 0
+#define MUS_MAX_CHANS 256
 
 #include "sndlib.h"
 #include "xen.h"

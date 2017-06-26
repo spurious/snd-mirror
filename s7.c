@@ -67268,7 +67268,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_DOTIMES_ONE_STEP:
 	  {
 	    s7_pointer end, stepper, end_slot;
-	    s7_int lim;
+	    s7_int lim = 0; /* make the compiler happy */
 
 	    /* fprintf(stderr, "dotimes one step %s\n", DISPLAY(sc->code)); */
 
@@ -81414,7 +81414,6 @@ int main(int argc, char **argv)
  *   maybe d_dd_ff_o1+d_vd_o1
  *   perhaps combine all wrappers into one temp?
  * static string wrappers unheaped -- these are mostly permanent_strings I think
- * how to get rid of *alloc warnings?
  *
  * --------------------------------------------------------------------
  *
@@ -81431,7 +81430,7 @@ int main(int argc, char **argv)
  * tcopy         |      |      | 13.6 || 3185 | 3342 3158
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3200
  * tform         |      |      | 6816 || 3850 | 3627 3374
- * tfft          |      |      |      || 17.3 | 4920 3989
+ * tfft          |      |      | 16.4 || 17.3 | 4920 3989
  * tsort         |      |      |      || 9186 | 5403 4705
  * titer         |      |      |      || 5964 | 5234 4714
  * thash         |      |      | 50.7 || 8926 | 8651 7910

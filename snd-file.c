@@ -997,9 +997,9 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	  sr = mus_sound_srate(fullname);
 	  ch = mus_sound_chans(fullname);
 	  if ((fallback_srate > 0) && ((sr <= 0) || (sr > 100000000))) sr = fallback_srate;
-	  if ((fallback_chans > 0) && ((ch >= 256) || (ch <= 0))) ch = fallback_chans;
+	  if ((fallback_chans > 0) && ((ch >= MUS_MAX_CHANS) || (ch <= 0))) ch = fallback_chans;
 	  if ((sr <= 0) || (sr > 100000000) ||
-	      (ch >= 256) || (ch <= 0))
+	      (ch >= MUS_MAX_CHANS) || (ch <= 0))
 	    return(tackle_bad_header(fullname, read_only, selected));
 
 	  /* header is ok */

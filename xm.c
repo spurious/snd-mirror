@@ -2819,7 +2819,7 @@ retrieves rendition resources"
     Arg *args;
     unsigned long *locs;
     Xen val;
-    int i, len, gcloc;
+    unsigned int i, len, gcloc;
     XmRendition r;
     Xen arg2;
     arg2 = Xen_copy_arg(larg2);
@@ -2827,7 +2827,7 @@ retrieves rendition resources"
     /* here we need to make sure the ref args are ok from C's point of view */
     r = Xen_to_C_XmRendition(arg1);
     len = Xen_to_C_INT_DEF(arg3, arg2);
-    if (len <= 0) Xen_check_type(0, arg3, 3, "XmRenditionRetrieve", "positive integer");
+    if (len == 0) Xen_check_type(0, arg3, 3, "XmRenditionRetrieve", "positive integer");
     args = (Arg *)calloc(len, sizeof(Arg));
     locs = (unsigned long *)calloc(len, sizeof(unsigned long));
     for (i = 0; i < len; i++, arg2 = Xen_cddr(arg2))
@@ -5761,7 +5761,7 @@ retrieves resource values set on a drop site"
   Arg *args;
   unsigned long *locs;
   Xen val = Xen_false;
-  int i, len, gcloc;
+  unsigned int i, len, gcloc;
   Xen arg2;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmDropSiteRetrieve", "Widget");
   Xen_check_type(Xen_is_list(larg2), larg2, 2, "XmDropSiteRetrieve", "ArgList");
@@ -5769,7 +5769,7 @@ retrieves resource values set on a drop site"
   arg2 = Xen_copy_arg(larg2);
   gcloc = xm_protect(arg2);
   len = Xen_to_C_INT_DEF(arg3, larg2);
-  if (len <= 0) Xen_check_type(0, arg3, 3, "XmDropSiteRetrieve", "positive integer");
+  if (len == 0) Xen_check_type(0, arg3, 3, "XmDropSiteRetrieve", "positive integer");
   args = (Arg *)calloc(len, sizeof(Arg));
   locs = (unsigned long *)calloc(len, sizeof(unsigned long));
   for (i = 0; i < len; i++, arg2 = Xen_cddr(arg2))
@@ -8397,7 +8397,7 @@ pixel members of the XColor structures."
   /* DIFF: XStoreColors arg 3 is list of XColor 
    */
   XColor *xc;
-  int i, len;
+  unsigned int i, len;
   Xen arg3;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XStoreColors", "Display*");
   Xen_check_type(Xen_is_Colormap(arg2), arg2, 2, "XStoreColors", "Colormap");
@@ -8405,7 +8405,7 @@ pixel members of the XColor structures."
   Xen_check_type(Xen_is_integer(arg4), arg4, 4, "XStoreColors", "int");
   arg3 = Xen_copy_arg(larg3);
   len = Xen_integer_to_C_int(arg4);
-  if (len <= 0) Xen_check_type(0, arg4, 4, "XStoreColors", "positive integer");
+  if (len == 0) Xen_check_type(0, arg4, 4, "XStoreColors", "positive integer");
   xc = (XColor *)calloc(len, sizeof(XColor));
   for (i = 0; (i < len) && (!Xen_is_null(arg3)); i++, arg3 = Xen_cdr(arg3))
     {
@@ -8785,7 +8785,7 @@ the specified GC to the specified list of rectangles and sets the clip origin."
   /* DIFF: XSetClipRectangles XRectangle* arg (arg 5) is list of XRectangles
    */
   XRectangle *pt;
-  int i, len;
+  unsigned int i, len;
   Xen arg5;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XSetClipRectangles", "Display*");
   Xen_check_type(Xen_is_GC(arg2), arg2, 2, "XSetClipRectangles", "GC");
@@ -8796,7 +8796,7 @@ the specified GC to the specified list of rectangles and sets the clip origin."
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XSetClipRectangles", "int");
   arg5 = Xen_copy_arg(larg5);
   len = Xen_integer_to_C_int(arg6);
-  if (len <= 0) Xen_check_type(0, arg6, 6, "XSetClipRectangles", "positive integer");
+  if (len == 0) Xen_check_type(0, arg6, 6, "XSetClipRectangles", "positive integer");
   pt = (XRectangle *)calloc(len, sizeof(XRectangle));
   for (i = 0; (i < len) && (!Xen_is_null(arg5)); i++, arg5 = Xen_cdr(arg5))
     {
@@ -10219,7 +10219,7 @@ static Xen gxm_XFillPolygon(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5, X
   /* DIFF: XFillPolygon Point* arg (arg 4) is list of XPoint
    */
   XPoint *pt, *pt1;
-  int i, len;
+  unsigned int i, len;
   Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XFillPolygon", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XFillPolygon", "Drawable");
@@ -10230,7 +10230,7 @@ static Xen gxm_XFillPolygon(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5, X
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XFillPolygon", "int");
   arg4 = Xen_copy_arg(larg4);
   len = Xen_integer_to_C_int(arg5);
-  if (len <= 0) Xen_check_type(0, arg5, 5, "XFillPolygon", "positive integer");
+  if (len == 0) Xen_check_type(0, arg5, 5, "XFillPolygon", "positive integer");
   pt = (XPoint *)calloc(len, sizeof(XPoint));
   for (i = 0; (i < len) && (!Xen_is_null(arg4)); i++, arg4 = Xen_cdr(arg4))
     {
@@ -10473,7 +10473,7 @@ static Xen gxm_XDrawPoints(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5, Xe
   /* DIFF: XDrawPoints XPoint* arg (arg 4) is list of XPoints
    */
   XPoint *pt, *pt1;
-  int i, len;
+  unsigned int i, len;
   Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawPoints", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XDrawPoints", "Drawable");
@@ -10483,7 +10483,7 @@ static Xen gxm_XDrawPoints(Xen arg1, Xen arg2, Xen arg3, Xen larg4, Xen arg5, Xe
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XDrawPoints", "int");
   arg4 = Xen_copy_arg(larg4);
   len = Xen_integer_to_C_int(arg5);
-  if (len <= 0) Xen_check_type(0, arg5, 5, "XDrawPoints", "positive integer");
+  if (len == 0) Xen_check_type(0, arg5, 5, "XDrawPoints", "positive integer");
   pt = (XPoint *)calloc(len, sizeof(XPoint));
   for (i = 0; (i < len) && (!Xen_is_null(arg4)); i++, arg4 = Xen_cdr(arg4))
     {
@@ -10525,7 +10525,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
   /* DIFF: XDrawLines XPoint* arg (arg 4) is list of XPoints
    */
   XPoint *pt, *pt1;
-  int i, len;
+  unsigned int i, len;
   Xen arg4;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XDrawLines", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XDrawLines", "Drawable");
@@ -10535,7 +10535,7 @@ between each pair of points (point[i], point[i+1]) in the array of XPoint struct
   Xen_check_type(Xen_is_integer(arg6), arg6, 6, "XDrawLines", "int");
   arg4 = Xen_copy_arg(larg4);
   len = Xen_integer_to_C_int(arg5);
-  if (len <= 0) Xen_check_type(0, arg5, 5, "XDrawLines", "positive integer");
+  if (len == 0) Xen_check_type(0, arg5, 5, "XDrawLines", "positive integer");
   pt = (XPoint *)calloc(len, sizeof(XPoint));
   for (i = 0; (i < len) && (!Xen_is_null(arg4)); i++, arg4 = Xen_cdr(arg4))
     {
@@ -10580,13 +10580,13 @@ static Xen gxm_XDrawLinesDirect(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5
 static Xen gxm_Vector2XPoints(Xen arg1)
 {
   #define H_vector2XPoints "(vector->XPoints vect) packages point data in vect as (opaque) array of XPoints"
-  int i, j, len;
+  unsigned int i, j, len;
   /* vector assumed to be sequence of x y pairs (not XPoints from local view)
    */
   XPoint *pt;
   Xen_check_type(Xen_is_vector(arg1), arg1, 1, "vector->XPoints", "vector of x,y values");
   len = Xen_vector_length(arg1) / 2;
-  if (len <= 0) Xen_check_type(0, arg1, 1, "vector->XPoints", "positive integer");
+  if (len == 0) Xen_check_type(0, arg1, 1, "vector->XPoints", "positive integer");
   pt = (XPoint *)calloc(len, sizeof(XPoint));
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
@@ -11345,7 +11345,7 @@ static Xen gxm_XAllocColorPlanes(Xen args)
    */
   unsigned long r,g,b;
   unsigned long *ps;
-  int len, val;
+  unsigned int len, val;
   Xen lst = Xen_false;
   Xen arg1, arg2, arg3, arg5, arg6, arg7, arg8;
   arg1 = Xen_list_ref(args, 0);
@@ -11363,7 +11363,7 @@ static Xen gxm_XAllocColorPlanes(Xen args)
   Xen_check_type(Xen_is_integer(arg7), arg7, 7, "XAllocColorPlanes", "int");
   Xen_check_type(Xen_is_integer(arg8), arg8, 8, "XAllocColorPlanes", "int");
   len = Xen_integer_to_C_int(arg5);
-  if (len <= 0) Xen_check_type(0, arg5, 5, "XAllocColorPlanes", "positive integer");
+  if (len == 0) Xen_check_type(0, arg5, 5, "XAllocColorPlanes", "positive integer");
   ps = (unsigned long *)calloc(len, sizeof(unsigned long));
   val = XAllocColorPlanes(Xen_to_C_Display(arg1), 
 			  Xen_to_C_Colormap(arg2), 
@@ -12156,7 +12156,7 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   /* DIFF: XCreatePixmapFromBitmapData takes list of chars as arg3 (not char *)
    */
   char *bits;
-  int i, len;
+  unsigned int i, len;
   Pixmap p;
   Xen arg3;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreatePixmapFromBitmapData", "Display*");
@@ -12168,7 +12168,7 @@ pixmap of the given depth and then does a bitmap-format XPutImage of the data in
   Xen_check_type(Xen_is_Pixel(arg7), arg7, 7, "XCreatePixmapFromBitmapData", "pixel");
   Xen_check_type(Xen_is_ulong(arg8), arg8, 8, "XCreatePixmapFromBitmapData", "unsigned int");
   len = Xen_list_length(larg3);
-  if (len <= 0) Xen_check_type(0, larg3, 3, "XCreatePixmapFromBitmapData", "positive integer");
+  if (len == 0) Xen_check_type(0, larg3, 3, "XCreatePixmapFromBitmapData", "positive integer");
   arg3 = Xen_copy_arg(larg3);
   bits = (char *)calloc(len, sizeof(char));
   for (i = 0; i < len; i++, arg3 = Xen_cdr(arg3))
@@ -12190,7 +12190,7 @@ program a bitmap file that was written out by XWriteBitmapFile"
   /* DIFF: XCreateBitmapFromData takes list of chars as arg3 (not char *)
    */
   char *bits;
-  int i, len;
+  unsigned int i, len;
   Pixmap p;
   Xen arg3;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XCreateBitmapFromData", "Display*");
@@ -12199,7 +12199,7 @@ program a bitmap file that was written out by XWriteBitmapFile"
   Xen_check_type(Xen_is_ulong(arg4), arg4, 4, "XCreateBitmapFromData", "unsigned int");
   Xen_check_type(Xen_is_ulong(arg5), arg5, 5, "XCreateBitmapFromData", "unsigned int");
   len = Xen_list_length(larg3);
-  if (len <= 0) Xen_check_type(0, larg3, 3, "XCreateBitmapFromData", "positive integer");
+  if (len == 0) Xen_check_type(0, larg3, 3, "XCreateBitmapFromData", "positive integer");
   arg3 = Xen_copy_arg(larg3);
   bits = (char *)calloc(len, sizeof(char));
   for (i = 0; i < len; i++, arg3 = Xen_cdr(arg3))
@@ -13673,9 +13673,9 @@ static Boolean gxm_XtFilePredicate(String filename)
 
 static SubstitutionRec *gxm_make_subs(Xen lst_1)
 {
-  int len;
+  unsigned int len;
   SubstitutionRec *subs = NULL;
-  len = Xen_list_length(lst_1);
+  len = (unsigned int)Xen_list_length(lst_1);
   if (len > 0)
     {
       int i;
@@ -14316,11 +14316,11 @@ static Xen gxm_XtAppSetFallbackResources(Xen app, Xen specs)
   #define H_XtAppSetFallbackResources "XtAppSetFallbackResources(app, list-of-strings) sets the app's default resource values \
 from the list of strings"
   char **fallbacks;
-  int i, len;
+  unsigned int i, len;
   Xen lst;
   Xen_check_type(Xen_is_XtAppContext(app), app, 1, "XtAppSetFallbackResources", "XtAppContext");
   Xen_check_type(Xen_is_list(specs), specs, 2, "XtAppSetFallbackResources", "list of char*");
-  len = Xen_list_length(specs);
+  len = (unsigned int)Xen_list_length(specs);
   lst = Xen_copy_arg(specs);
   fallbacks = (char **)calloc(len + 1, sizeof(char *)); /* +1 for null termination */
   for (i = 0; i < len; i++, lst = Xen_cdr(lst)) 
@@ -14341,7 +14341,8 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
   XtAppContext app;
   Arg *args;
   Widget res;
-  int i, len = 0, argc, arglen;
+  unsigned int i, len = 0;
+  int argc, arglen;
   char **argv = NULL;
   char **fallbacks = NULL;
   Xen_check_type(Xen_is_string(arg2), arg2, 1, "XtVaAppInitialize", "char*");
@@ -14357,7 +14358,7 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
       Xen lst;
       int gcloc;
       len = Xen_list_length(specs);
-      if (len <= 0) return(Xen_false);
+      if (len == 0) return(Xen_false);
       lst = Xen_copy_arg(specs);
       gcloc = xm_protect(lst);
       fallbacks = (char **)calloc(len + 1, sizeof(char *)); /* +1 for null termination */
@@ -14417,7 +14418,7 @@ and the specified args and num_args and returns the created shell.  The num_args
   int argc, arglen;
   char **argv = NULL;
   char **fallbacks = NULL;
-  int i, len = 0;
+  unsigned int i, len = 0;
   Xen_check_type(Xen_is_string(arg2), arg2, 1, "XtAppInitialize", "char*");
   Xen_check_type(Xen_is_integer(arg5), arg5, 2, "XtAppInitialize", "int");
   Xen_check_type(Xen_is_list(arg6), arg6, 3, "XtAppInitialize", "list of String*");
@@ -14432,7 +14433,7 @@ and the specified args and num_args and returns the created shell.  The num_args
     {
       Xen lst;
       int gcloc;
-      len = Xen_list_length(arg9);
+      len = (unsigned int)Xen_list_length(arg9);
       lst = Xen_copy_arg(arg9);
       gcloc = xm_protect(lst);
       fallbacks = (char **)calloc(len + 1, sizeof(char *)); /* +1 for null termination */
@@ -14478,7 +14479,7 @@ static Xen gxm_XtVaOpenApplication(Xen arg1, Xen arg4, Xen arg5, Xen arg7, Xen a
   int argc, arglen;
   char **argv = NULL;
   char **fallbacks = NULL;
-  int i, len = 0;
+  unsigned int i, len = 0;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XtVaOpenApplication", "char*");
   Xen_check_type(Xen_is_integer(arg4), arg4, 2, "XtVaOpenApplication", "int"); /* was arg3 by mistake, 11-Oct-02 */
   Xen_check_type(Xen_is_list(arg5), arg5, 3, "XtVaOpenApplication", "list of String");
@@ -14492,7 +14493,7 @@ static Xen gxm_XtVaOpenApplication(Xen arg1, Xen arg4, Xen arg5, Xen arg7, Xen a
     {
       Xen lst;
       int gcloc;
-      len = Xen_list_length(specs);
+      len = (unsigned int)Xen_list_length(specs);
       lst = Xen_copy_arg(specs);
       gcloc = xm_protect(lst);
       fallbacks = (char **)calloc(len + 1, sizeof(char *)); /* +1 for null termination */
@@ -14543,7 +14544,7 @@ of fallback resources."
   int argc, arglen;
   char **argv;
   char **fallbacks = NULL;
-  int i, len = 0;
+  unsigned int i, len = 0;
   Xen_check_type(Xen_is_string(arg1), arg1, 1, "XtOpenApplication", "char*");
   Xen_check_type(Xen_is_integer(arg4), arg4, 2, "XtOpenApplication", "int");
   Xen_check_type(Xen_is_list(arg5), arg5, 3, "XtOpenApplication", "list of String*");
@@ -14558,7 +14559,7 @@ of fallback resources."
     {
       Xen lst;
       int gcloc;
-      len = Xen_list_length(arg9);
+      len = (unsigned int)Xen_list_length(arg9);
       lst = Xen_copy_arg(arg9);
       gcloc = xm_protect(lst);
       fallbacks = (char **)calloc(len + 1, sizeof(char *)); /* +1 for null termination */
@@ -15923,7 +15924,7 @@ static Xen gxm_XtCallActionProc(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5
 same manner and order as translation tables are bound. If found, the action routine is invoked with the specified widget, event pointer, \
 and parameters."
   char **params = NULL;
-  int i, len = 0;
+  unsigned int i, len = 0;
   Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XtCallActionProc", "Widget");
   Xen_check_type(Xen_is_string(arg2), arg2, 2, "XtCallActionProc", "char*");
   Xen_check_type(Xen_is_XEvent(arg3) || Xen_is_false(arg3), arg3, 3, "XtCallActionProc", "XEvent*");
@@ -15932,8 +15933,8 @@ and parameters."
   if (Xen_is_list(arg4))
     {
       if (Xen_is_integer(arg5)) 
-	len = Xen_integer_to_C_int(arg5); 
-      else len = Xen_list_length(arg4);
+	len = (unsigned int)Xen_integer_to_C_int(arg5); 
+      else len = (unsigned int)Xen_list_length(arg4);
     }
   if (len > 0) 
     {
@@ -16096,7 +16097,7 @@ static XtActionsRec *make_action_rec(int len, Xen larg2)
   Xen arg2;
   arg2 = Xen_copy_arg(larg2);
   gcloc = xm_protect(arg2);
-  act = (XtActionsRec *)calloc(len, sizeof(XtActionsRec));
+  act = (XtActionsRec *)calloc((unsigned int)len, sizeof(XtActionsRec));
   for (i = 0; i < len; i++, arg2 = Xen_cdr(arg2))
     {
       Xen pair;
@@ -16646,7 +16647,8 @@ static Xen gxm_XpmCreatePixmapFromData(Xen arg1, Xen arg2, Xen larg3, Xen arg6)
   /* DIFF: XpmCreatePixmapFromData omits and returns pixmap args, arg3 (bits) is list of strings
    */
   Pixmap p1, p2;
-  int val, i, len;
+  int val;
+  unsigned int i, len;
   char **bits;
   Xen arg3;
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XpmCreatePixmapFromData", "Display*");
@@ -16655,7 +16657,7 @@ static Xen gxm_XpmCreatePixmapFromData(Xen arg1, Xen arg2, Xen larg3, Xen arg6)
   Xen_check_type(Xen_is_XpmAttributes(arg6) || Xen_is_false(arg6), arg6, 6, "XpmCreatePixmapFromData", "XpmAttributes*");
   arg3 = Xen_copy_arg(larg3);
   len = Xen_list_length(arg3);
-  if (len <= 0) Xen_check_type(0, arg3, 3, "XpmCreatePixmapFromData", "positive integer");
+  if (len == 0) Xen_check_type(0, arg3, 3, "XpmCreatePixmapFromData", "positive integer");
   bits = (char **)calloc(len, sizeof(char *));
   for (i = 0; i < len; i++, arg3 = Xen_cdr(arg3))
     bits[i] = xen_strdup(Xen_string_to_C_string(Xen_car(arg3)));
@@ -16848,11 +16850,11 @@ static Xen gxm_colorsymbols(Xen ptr)
 static Xen gxm_set_colorsymbols(Xen ptr, Xen vals)
 {
   XpmAttributes *atr;
-  int len;
+  unsigned int len;
   XM_set_field_assert_type(Xen_is_XpmAttributes(ptr), ptr, 1, "colorsymbols", "XpmAttributes");
   XM_set_field_assert_type(Xen_is_list(vals), vals, 2, "colorsymbols", "list of XpmColorSymbols");
   atr = Xen_to_C_XpmAttributes(ptr);
-  len = Xen_list_length(vals);
+  len = (unsigned int)Xen_list_length(vals);
   if (len > 0)
     {
       Xen lst;

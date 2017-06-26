@@ -1210,7 +1210,7 @@ bool mus_sound_maxamp_exists(const char *ifile)
 mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_long_t *times)
 {
   mus_long_t framples;
-  int ichans, chn;
+  unsigned int ichans, chn;
   sound_file *sf; 
     
   sf = get_sf(ifile); 
@@ -1221,7 +1221,7 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
     {
       if (chans > sf->maxamps_size) 
 	ichans = sf->maxamps_size; 
-      else ichans = chans;
+      else ichans = (unsigned int)chans;
       for (chn = 0; chn < ichans; chn++)
 	{
 	  times[chn] = sf->maxtimes[chn];
@@ -1240,9 +1240,9 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
 
     ifd = mus_sound_open_input(ifile);
     if (ifd == MUS_ERROR) return(MUS_ERROR);
-    ichans = mus_sound_chans(ifile);
+    ichans = (unsigned int)mus_sound_chans(ifile);
     framples = mus_sound_framples(ifile);
-    if (framples == 0) 
+    if ((framples == 0) || (ichans > MUS_MAX_CHANS))
       {
 	mus_sound_close_input(ifd);
 	return(0);
@@ -1252,8 +1252,8 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
 
     ibufs = (mus_float_t **)calloc(ichans, sizeof(mus_float_t *));
     bufnum = 8192;
-    for (j = 0; j < ichans; j++) 
-      ibufs[j] = (mus_float_t *)calloc(bufnum, sizeof(mus_float_t));
+    for (chn = 0; chn < ichans; chn++) 
+      ibufs[chn] = (mus_float_t *)calloc(bufnum, sizeof(mus_float_t));
 
     time = (mus_long_t *)calloc(ichans, sizeof(mus_long_t));
     samp = (mus_float_t *)calloc(ichans, sizeof(mus_float_t));

@@ -2805,7 +2805,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
       if (!(is_player_sound(sp))) 
 	{
 	  ival = Xen_integer_to_C_int(val);
-	  if ((ival <= 0) || (ival > 256))
+	  if ((ival <= 0) || (ival > MUS_MAX_CHANS))
 	    Xen_out_of_range_error(S_set S_channels, 1, val, "highly unlikely number of channels");
 	  mus_sound_set_chans(sp->filename, ival);
 	  sp->hdr->chans = ival;
@@ -4017,7 +4017,7 @@ open file assuming the data matches the attributes indicated unless the file act
       file = mus_optkey_to_string(keys[0], S_open_raw_sound, orig_arg[0], NULL);
       oc = mus_optkey_to_int(keys[1], S_open_raw_sound, orig_arg[1], oc);
       if ((oc < 0) ||
-	  (oc > 256))
+	  (oc > MUS_MAX_CHANS))
 	Xen_out_of_range_error(S_open_raw_sound, 2, args[orig_arg[1]], "too many channels requested");
       if (!(Xen_is_keyword(keys[1]))) set_fallback_chans(oc);
       os = mus_optkey_to_int(keys[2], S_open_raw_sound, orig_arg[2], os);

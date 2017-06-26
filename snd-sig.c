@@ -4612,7 +4612,7 @@ swap the indicated channels"
 
 static mus_float_t *load_mus_float_ts(Xen scalers, int *result_len, const char *caller)
 {
-  int len = 0, i;
+  unsigned int len = 0, i;
   mus_float_t *scls;
   vct *v = NULL;
   if (Xen_is_number(scalers))
@@ -4622,7 +4622,7 @@ static mus_float_t *load_mus_float_ts(Xen scalers, int *result_len, const char *
       if (mus_is_vct(scalers))
 	{
 	  v = Xen_to_vct(scalers);
-	  len = mus_vct_length(v);
+	  len = (unsigned int)mus_vct_length(v);
 	}
       else
 	{
