@@ -4222,7 +4222,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 			 C_string_to_Xen_string(mus_sample_type_name(df)),
 			 C_string_to_Xen_string(mus_header_type_name(ht))));
 
-  if (chan >= sp->nchans)
+  if (chan >= (int)(sp->nchans))
     return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
 
   if (got_edpos)
