@@ -121,7 +121,7 @@ static char *channel_search(chan_info *cp, read_direction_t direction)
 
 static char *global_search(read_direction_t direction, bool repeating)
 {
-  int i, j;
+  int i;
 
   if ((repeating) &&
       ((!previous_channel) ||
@@ -132,7 +132,7 @@ static char *global_search(read_direction_t direction, bool repeating)
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
-
+      unsigned int j;
       sp = ss->sounds[i];
       if ((sp) &&
 	  (sp->inuse == SOUND_NORMAL))

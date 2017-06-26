@@ -1044,7 +1044,7 @@ void save_sound_state(snd_info *sp, void *ptr)
     {
       save_property_list(fd, Xen_vector_ref(sp->properties, 0), -1, -1); /* sound-properties */
     }
-  for (chan = 0; chan < sp->nchans; chan++)
+  for (chan = 0; chan < (int)sp->nchans; chan++)
     {
       axis_info *ap;
 

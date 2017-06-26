@@ -1268,7 +1268,6 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
 
 void snd_close_file(snd_info *sp)
 {
-  int i;
   Xen res = Xen_false;
   snd_info *chosen_sp = NULL;
 
@@ -1310,20 +1309,23 @@ void snd_close_file(snd_info *sp)
    * segfault!  
    */
 
-  for (i = 0; i < sp->nchans; i++) 
-    sp->chans[i]->squelch_update = true;
-  /* check_for_event(); */
-
-  sp->file_watcher = unmonitor_file(sp->file_watcher);
-
-  /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */
-  if (selection_creation_in_progress()) finish_selection_creation();
-
-  if (ss->deferred_regions > 0)
-    for (i = 0; i < sp->nchans; i++)
-      if (sp->chans[i]) 
-	sequester_deferred_regions(sp->chans[i], -1);
-
+  {
+    unsigned int i;
+    for (i = 0; i < sp->nchans; i++) 
+      sp->chans[i]->squelch_update = true;
+    /* check_for_event(); */
+    
+    sp->file_watcher = unmonitor_file(sp->file_watcher);
+    
+    /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */
+    if (selection_creation_in_progress()) finish_selection_creation();
+    
+    if (ss->deferred_regions > 0)
+      for (i = 0; i < sp->nchans; i++)
+	if (sp->chans[i]) 
+	  sequester_deferred_regions(sp->chans[i], -1);
+  }
+  
   sp->inuse = SOUND_IDLE;
   if (sp->playing) 
     stop_playing_sound(sp, PLAY_CLOSE);
@@ -1414,7 +1416,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   sp->index = TEMP_SOUND_INDEX;
   len = (hdr->samples) / (hdr->chans);
 
-  for (i = 0; i < sp->nchans; i++)
+  for (i = 0; i < (int)sp->nchans; i++)
     {
       int fd;
       cp = make_chan_info(NULL, i, sp);
@@ -1499,7 +1501,7 @@ axes_data *make_axes_data(snd_info *sp)
 void restore_axes_data(snd_info *sp, axes_data *sa, mus_float_t new_duration, bool need_edit_history_update)
 {
   int i, j;
-  for (i = 0, j = 0; i < sp->nchans; i++)
+  for (i = 0, j = 0; i < (int)sp->nchans; i++)
     {
       chan_info *cp;
       axis_info *ap;
@@ -1661,7 +1663,7 @@ static snd_info *sound_store_chan_info(snd_info *sp)
 {
   chan_info **cps;
   snd_info *nsp;
-  int i;
+  unsigned int i;
 
   nsp = (snd_info *)calloc(1, sizeof(snd_info));
   cps = (chan_info **)calloc(sp->nchans, sizeof(chan_info *));
@@ -1679,7 +1681,7 @@ static snd_info *sound_store_chan_info(snd_info *sp)
 
 static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
 {
-  int i;
+  unsigned int i;
   chan_info **cps;
 
   cps = osp->chans;
@@ -1845,17 +1847,17 @@ snd_info *snd_update(snd_info *sp)
 
       nsp->saved_controls = saved_controls;
       if (saved_controls) restore_controls(nsp);
-      if (nsp->nchans == sp_chans) sound_restore_chan_info(nsp, saved_sp);
+      if ((int)nsp->nchans == sp_chans) sound_restore_chan_info(nsp, saved_sp);
 
       if ((old_selected_channel != NO_SELECTION) &&
-	  (old_selected_channel < nsp->nchans) &&
+	  (old_selected_channel < (int)nsp->nchans) &&
 	  (nsp == selected_sound()))
 	select_channel(nsp, old_selected_channel);
 
       restore_axes_data(nsp, sa, mus_sound_duration(filename), false);
       sound_restore_marks(nsp, ms);
 
-      for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) 
+      for (i = 0; (i < (int)nsp->nchans) && (i < sp_chans); i++) 
 	cursor_sample(nsp->chans[i]) = old_cursors[i];
 
       if ((nsp->nchans > 1) && 
@@ -1875,7 +1877,7 @@ snd_info *snd_update(snd_info *sp)
 
   if (saved_sp)
     {
-      for (i = 0; i < saved_sp->nchans; i++)
+      for (i = 0; i < (int)saved_sp->nchans; i++)
 	if (saved_sp->chans[i]) free(saved_sp->chans[i]);
       free(saved_sp->chans);
       free(saved_sp);
@@ -2785,7 +2787,8 @@ static char *display_file_maxamps(const char *filename, int chans)
 static char *display_sound_maxamps(snd_info *sp)
 {
   char *ampstr = NULL;
-  int i, len;
+  unsigned int i;
+  int len;
   len = sp->nchans * 32;
   ampstr = (char *)calloc(len, sizeof(char));
   snprintf(ampstr, len, "maxamp%s: ", (sp->nchans > 1) ? "s" : "");
@@ -2835,7 +2838,7 @@ void display_info(snd_info *sp)
 	  post_it_append(buffer);
 	}
 
-      if (hdr->chans != sp->nchans)
+      if (hdr->chans != (int)sp->nchans)
 	{
 	  snprintf(buffer, INFO_BUFFER_SIZE, "    original chans: %d\n", hdr->chans);
 	  post_it_append(buffer);
@@ -2856,7 +2859,7 @@ void display_info(snd_info *sp)
 
       if (mus_sound_maxamp_exists(sp->filename))
 	{
-	  int i;
+	  unsigned int i;
 	  bool edits = false;
 	  for (i = 0; i < sp->nchans; i++)
 	    if (sp->chans[i]->edit_ctr > 0)
@@ -3575,7 +3578,7 @@ displayed whn it is opened."
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	{
-	  int j;
+	  unsigned int j;
 	  for (j = 0; j < sp->nchans; j++)
 	    set_x_axis_x0x1(sp->chans[j], 0.0, sp->chans[j]->axis->xmax);
 	}
@@ -3626,7 +3629,7 @@ max and min when it is opened."
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	{
-	  int j;
+	  unsigned int j;
 	  for (j = 0; j < sp->nchans; j++)
 	    {
 	      chan_info *cp;

@@ -13,11 +13,12 @@ static bool cp_has_selection(chan_info *cp)
 static bool map_over_chans(bool (*func)(chan_info *ncp))
 {
   /* non-zero = abort map, skips inactive sounds */
-  int i, j;
+  int i;
   bool val = false;
 
   for (i = 0; i < ss->max_sounds; i++)
     {
+      unsigned int j;
       snd_info *sp;
       chan_info *cp;
       sp = ss->sounds[i];
@@ -71,11 +72,12 @@ bool selection_is_visible_in_channel(chan_info *cp)
 
 static mus_long_t mus_long_t_map_over_chans(mus_long_t (*func)(chan_info *, mus_long_t *), mus_long_t *userptr)
 {
-  int i, j;
+  int i;
   mus_long_t val = 0;
 
   for (i = 0; i < ss->max_sounds; i++)
     {
+      unsigned int j;
       snd_info *sp;
       chan_info *cp;
 
@@ -617,7 +619,7 @@ static void redraw_selection(void)
 	{
 	  if (sp->inuse == SOUND_NORMAL)
 	    {
-	      int j;
+	      unsigned int j;
 	      for (j = 0; j < sp->nchans; j++)
 		{
 		  chan_info *cp;
@@ -1137,7 +1139,7 @@ io_error_t save_selection(const char *ofile, int srate, mus_sample_t samp_type, 
 	}
 
       copy_ok = ((samp_type == sp->hdr->sample_type) && 
-		 (chans == sp->nchans) &&
+		 (chans == (int)sp->nchans) &&
 		 (chan == SAVE_ALL_CHANS));
       if (copy_ok)
 	for (i = 0; i < chans; i++)

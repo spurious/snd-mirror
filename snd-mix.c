@@ -165,7 +165,7 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y)
       (snd < ss->max_sounds) && 
       (snd_ok(ss->sounds[snd])) &&
       (chn >= 0) &&
-      (chn < ss->sounds[snd]->nchans) &&
+      (chn < (int)(ss->sounds[snd]->nchans)) &&
       (mus_file_probe(filename)))
     {
       snd_info *sp = NULL;

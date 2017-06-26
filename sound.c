@@ -1285,7 +1285,7 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
     /* fprintf(stderr, "set in mus_sound_maxamps\n"); */
     mus_sound_set_maxamps(ifile, ichans, samp, time); /* save the complete set */
 
-    if (ichans > chans) ichans = chans;
+    if ((int)ichans > chans) ichans = chans;
     for (chn = 0; chn < ichans; chn++)
       {
 	times[chn] = time[chn];
@@ -1293,7 +1293,7 @@ mus_long_t mus_sound_maxamps(const char *ifile, int chans, mus_float_t *vals, mu
       }
     free(time);
     free(samp);
-    for (j = 0; j < ichans; j++) free(ibufs[j]);
+    for (j = 0; j < (int)ichans; j++) free(ibufs[j]);
     free(ibufs);
     return(framples);
   }

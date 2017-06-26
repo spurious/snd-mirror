@@ -169,10 +169,10 @@ static mark *find_mark_from_id(int id, chan_info **cps, int pos)
     {
       chan_info *cp;
       snd_info *sp;
-      int j;
+      unsigned int j;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	for (j = 0; j<(sp->nchans); j++)
+	for (j = 0; j < sp->nchans; j++)
 	  if ((cp = ((chan_info *)(sp->chans[j]))))
 	    {
 	      if (pos < cp->edit_size) /* pos can be -1 */
@@ -710,7 +710,7 @@ typedef struct {
 
 void *sound_store_marks(snd_info *sp)
 {
-  int i;
+  unsigned int i;
   mark_info **res = NULL;
   marks_info *rtn = NULL;
   res = (mark_info **)calloc(sp->nchans, sizeof(mark_info *));
@@ -750,7 +750,7 @@ void sound_restore_marks(snd_info *sp, void *mrk)
       mark_info **marks;
       marks = mrks->ms;
       lim = mrks->size;
-      if (sp->nchans < lim) lim = sp->nchans; /* update can change channel number either way */
+      if ((int)sp->nchans < lim) lim = sp->nchans; /* update can change channel number either way */
       for (i = 0; i < lim; i++)
 	{
 	  if (marks[i])
@@ -2589,7 +2589,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	    sp = get_sp(snd);
 	    if (!sp) 
 	      return(snd_no_such_sound_error(S_marks, snd));
-	    for (i = sp->nchans - 1; i >= 0; i--)
+	    for (i = (int)sp->nchans - 1; i >= 0; i--)
 	      {
 		cp = sp->chans[i];
 		ids = channel_marks(cp, cp->edit_ctr);
@@ -2753,7 +2753,7 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
   sv->syncs = NULL;
   if (all_chans)
     {
-      int i;
+      unsigned int i;
       snd_info *sp;
       sp = cp->sound;
       for (i = 0; i < sp->nchans; i++)

@@ -7736,7 +7736,7 @@ void reflect_regions_in_region_browser(void)
 {
   if (rsp)
     {
-      int i;
+      unsigned int i;
       rsp->active = true;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
@@ -7749,7 +7749,7 @@ void reflect_no_regions_in_region_browser(void)
 {
   if (rsp)
     {
-      int i;
+      unsigned int i;
       rsp->active = false;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
@@ -11305,7 +11305,7 @@ static void make_auto_comment(save_as_dialog_info *sd)
 	      fd->saved_comment = NULL;
 	    }
 
-	  for (i = 0; i < sp->nchans; i++)
+	  for (i = 0; i < (int)sp->nchans; i++)
 	    if (sp->chans[i]->edit_ctr != 0)
 	      {
 		edits = true;
@@ -11333,7 +11333,7 @@ static void make_auto_comment(save_as_dialog_info *sd)
 		    mus_strlen(original_sound_comment);
 
 	      edit_strs = (char **)malloc(sp->nchans * sizeof(char *));
-	      for (i = 0; i < sp->nchans; i++)
+	      for (i = 0; i < (int)sp->nchans; i++)
 		{
 		  edit_strs[i] = edit_list_to_function(sp->chans[i], 1, sp->chans[i]->edit_ctr);
 		  len += mus_strlen(edit_strs[i]);
@@ -11346,7 +11346,7 @@ static void make_auto_comment(save_as_dialog_info *sd)
 			   snd_local_time(),
 			   sp->filename);
 	      
-	      for (i = 0; i < sp->nchans; i++)
+	      for (i = 0; i < (int)sp->nchans; i++)
 		{
 		  if (sp->nchans > 1)
 		    {
@@ -22162,7 +22162,7 @@ static void full_dur_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp)
     {
-      int i;
+      unsigned int i;
       for (i = 0; i < sp->nchans; i++)
 	set_x_axis_x0x1(sp->chans[i], 0.0, sp->chans[i]->axis->xmax);
     }
@@ -22175,7 +22175,7 @@ static void zoom_out_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp)
     {
-      int i;
+      unsigned int i;
       for (i = 0; i < sp->nchans; i++)
 	zx_incremented(sp->chans[i], 2.0);
     }
@@ -22188,7 +22188,7 @@ static void zoom_in_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp)
     {
-      int i;
+      unsigned int i;
       for (i = 0; i < sp->nchans; i++)
 	zx_incremented(sp->chans[i], 0.5);
     }
@@ -22201,7 +22201,7 @@ static void goto_start_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp)
     {
-      int i;
+      unsigned int i;
       for (i = 0; i < sp->nchans; i++)
 	set_x_axis_x0x1(sp->chans[i], 0.0, sp->chans[i]->axis->x1 - sp->chans[i]->axis->x0);
     }
@@ -22213,7 +22213,7 @@ static void go_back_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp)
     {
-      int i;
+      unsigned int i;
       for (i = 0; i < sp->nchans; i++)
 	sx_incremented(sp->chans[i], -1.0);
     }
@@ -22226,7 +22226,7 @@ static void go_forward_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp)
     {
-      int i;
+      unsigned int i;
       for (i = 0; i < sp->nchans; i++)
 	sx_incremented(sp->chans[i], 1.0);
     }
@@ -22238,7 +22238,7 @@ static void goto_end_callback(Widget w, XtPointer info, XtPointer context)
   sp = any_selected_sound();
   if (sp)
     {
-      int i;
+      unsigned int i;
       for (i = 0; i < sp->nchans; i++)
 	set_x_axis_x0x1(sp->chans[i], sp->chans[i]->axis->xmax - sp->chans[i]->axis->x1 + sp->chans[i]->axis->x0, sp->chans[i]->axis->xmax);
     }
@@ -25551,7 +25551,8 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       chan_info *ncp;
-      int k, all_eds = 0, ed, filelen;
+      unsigned int k;
+      int all_eds = 0, ed, filelen;
       char *title;
 
       for (k = 0; k < sp->nchans; k++)
@@ -26338,7 +26339,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
       if (new_style != old_style)
 	{
-	  int i, height;
+	  unsigned int i, height;
 
 #if WITH_RELATIVE_PANES
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
@@ -26382,7 +26383,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 		  for (i = 0; i < sp->nchans; i++) 
 		    {
-		      if (i != selected_cp->chan)
+		      if ((int)i != selected_cp->chan)
 			{
 			  chan_info *ncp;
 			  ncp = sp->chans[i];
@@ -26411,7 +26412,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 	      for (i = 0; i < sp->nchans; i++) 
 		{
-		  if (i != selected_cp->chan)
+		  if ((int)i != selected_cp->chan)
 		    set_axes(sp->chans[i], ap->x0, ap->x1, ap->y0, ap->y1);
 		  if (i > 0)
 		    cleanup_cw(sp->chans[i]);
@@ -27811,7 +27812,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		      inner_sizes[outer_ctr] = (Dimension *)calloc(sp->nchans, sizeof(Dimension));
 		      XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
 
-		      for (k = 0; k < sp->nchans; k++)
+		      for (k = 0; k < (int)sp->nchans; k++)
 			XtVaGetValues(channel_main_pane(sp->chans[k]), XmNheight, &(inner_sizes[outer_ctr][k]), NULL);
 
 		      outer_ctr++;
@@ -27840,23 +27841,23 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 			  XtVaGetValues(SND_PANE(sp), XmNheight, &cur_outer_size, NULL);
 			  
 			  if ((cur_outer_size > 40) && 
-			      (abs(cur_outer_size - outer_sizes[outer_ctr]) > (sp->nchans * 2)))
+			      (abs(cur_outer_size - outer_sizes[outer_ctr]) > (int)(sp->nchans * 2)))
 			    {
 			      /* this pane has multiple chans and its size has changed enough to matter */
 			      Dimension total_inner = 0, diff;
 			      float ratio;
 			      
-			      for (k = 0; k < sp->nchans; k++)
+			      for (k = 0; k < (int)sp->nchans; k++)
 				total_inner += inner_sizes[outer_ctr][k];
 			      diff = outer_sizes[outer_ctr] - total_inner; /* this is non-channel stuff */
 			      
-			      for (k = 0; k < sp->nchans; k++)
+			      for (k = 0; k < (int)sp->nchans; k++)
 				XtUnmanageChild(channel_main_pane(sp->chans[k]));
 			      
 			      ratio = (float)(cur_outer_size - diff) / (float)(outer_sizes[outer_ctr] - diff);
 			      if (ratio > 0.0)
 				{
-				  for (k = 0; k < sp->nchans; k++)
+				  for (k = 0; k < (int)sp->nchans; k++)
 				    {
 				      int size;
 				      size = (int)(ratio * inner_sizes[outer_ctr][k]);
@@ -27865,9 +27866,9 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 						    XmNpaneMaximum, size + 1, 
 						    NULL);
 				    }
-				  for (k = 0; k < sp->nchans; k++)
+				  for (k = 0; k < (int)sp->nchans; k++)
 				    XtManageChild(channel_main_pane(sp->chans[k]));
-				  for (k = 0; k < sp->nchans; k++)
+				  for (k = 0; k < (int)sp->nchans; k++)
 				    XtVaSetValues(channel_main_pane(sp->chans[k]), 
 						  XmNpaneMinimum, 1,
 						  XmNpaneMaximum, LOTSA_PIXELS, 
@@ -28446,7 +28447,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       LOCK_OR_BOMB(sp) = XtCreateManagedWidget("", xmLabelWidgetClass, NAME_BOX(sp), args, n);
 
       {
-	int i;
+	unsigned int i;
 	Widget left_widget;
 
 	left_widget = LOCK_OR_BOMB(sp);

@@ -827,7 +827,7 @@ static void deferred_region_to_temp_file(region *r)
   sp0 = drp->cps[0]->sound;
 
   copy_ok = ((mus_header_writable(MUS_NEXT, sp0->hdr->sample_type)) && 
-	     (r->chans == sp0->nchans) &&
+	     (r->chans == (int)sp0->nchans) &&
 	     (r->peak_envs) &&
 	     ((drp->len - 1) == r->ends[0]));
   if (copy_ok)
@@ -1244,7 +1244,7 @@ void save_region_backpointer(snd_info *sp)
   r->maxamp_position = -1;
   r->framples = current_samples(sp->chans[0]);
 
-  for (i = 0; i < sp->nchans; i++)
+  for (i = 0; i < (int)sp->nchans; i++)
     {
       mus_float_t val;
       val = channel_maxamp(sp->chans[i], AT_CURRENT_EDIT_POSITION);

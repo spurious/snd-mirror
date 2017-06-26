@@ -1280,7 +1280,7 @@ char *shortname_indexed(snd_info *sp)
 
 void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed)
 {
-  int i;
+  unsigned int i;
   for (i = 0; i < sp->nchans; i++) 
     add_channel_data(filename, sp->chans[i], graphed);
 }
@@ -1833,7 +1833,7 @@ static bool apply_controls(apply_state *ap)
 		    remember_temp(ap->ofile, sp->nchans);
 		  if (apply_beg > 0)
 		    {
-		      for (i = 0; i < sp->nchans; i++)
+		      for (i = 0; i < (int)sp->nchans; i++)
 			{
 			  if (file_change_samples(apply_beg, apply_dur, ap->ofile, sp->chans[i], i,
 						  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
@@ -1843,7 +1843,7 @@ static bool apply_controls(apply_state *ap)
 		    }
 		  else
 		    {
-		      for (i = 0; i < sp->nchans; i++)
+		      for (i = 0; i < (int)sp->nchans; i++)
 			{
 			  if (file_override_samples(apply_dur, ap->ofile, sp->chans[i], i,
 						    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
@@ -1903,7 +1903,7 @@ static bool apply_controls(apply_state *ap)
 	      if ((sp->expand_control_on) || 
 		  (sp->speed_control_direction != 1) || (!(snd_feq(sp->speed_control, 1.0))))
 		{
-		  for (i = 0; i < sp->nchans; i++)
+		  for (i = 0; i < (int)sp->nchans; i++)
 		    {
 		      cp = sp->chans[i];
 		      if (cp->edits[cp->edit_ctr]->marks)
@@ -2260,7 +2260,7 @@ static Xen s7_xen_sound_fill(s7_scheme *sc, Xen args)
     {
       mus_float_t valf;
       chan_info *cp;
-      int i;
+      unsigned int i;
       s7_pointer val;
       
       val = s7_cadr(args);
@@ -2412,7 +2412,7 @@ channel for editing."
   sp = any_selected_sound();
   if ((sp) && 
       (chan >= 0) &&
-      (chan < sp->nchans)) 
+      (chan < (int)sp->nchans)) 
     {
       select_channel(sp, chan);
       return(chn_n);
@@ -2794,7 +2794,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 	  else 
 	    {
 	      /* reset x axis bounds */
-	      int i;
+	      unsigned int i;
 	      for (i = 0; i < sp->nchans; i++)
 		set_x_axis_x0x1(sp->chans[i], 0.0, (double)(current_samples(sp->chans[i])) / (double)ival);
 	    }
@@ -2830,7 +2830,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 		  mus_sound_set_samples(sp->filename, sp->hdr->samples);
 		}
 	      /* clear peak amp envs, if any -- is this right?  (snd-update below...) */
-	      for (i = 0; i < sp->nchans; i++)
+	      for (i = 0; i < (int)sp->nchans; i++)
 		{
 		  chan_info *cp;
 		  cp = sp->chans[i];
@@ -3734,7 +3734,7 @@ static Xen g_set_selected_channel(Xen snd, Xen chn_n)
       mus_long_t chan = 0;
       if (Xen_is_integer(chn_n)) chan = Xen_integer_to_C_int(chn_n);
       if ((chan >= 0) && 
-	  (chan < sp->nchans)) 
+	  (chan < (int)sp->nchans)) 
 	{
 	  select_channel(sp, (int)chan);
 	  return(chn_n);
@@ -3886,7 +3886,7 @@ static Xen g_revert_sound(Xen index)
 {
   #define H_revert_sound "("  S_revert_sound " :optional snd): revert snd to its unedited state (undo all)"
   snd_info *sp;
-  int i;
+  unsigned int i;
 
   Snd_assert_sound(S_revert_sound, index, 1);
 
@@ -4228,7 +4228,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if (got_edpos)
     {
       edit_position = to_c_edit_position(sp->chans[(chan >= 0) ? chan : 0], edpos, S_save_sound_as, 7);
-      for (i = 0; i < sp->nchans; i++)
+      for (i = 0; i < (int)sp->nchans; i++)
 	if (edit_position > sp->chans[i]->edit_ctr)
 	  Xen_error(Xen_make_error_type("no-such-edit"),
 		    Xen_list_5(C_string_to_Xen_string(S_save_sound_as ": no such edit position: ~A (~S chan ~A has ~A edits)"),
@@ -5510,7 +5510,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   sp = find_sound(fullname, 0);
   if (sp)
     {
-      if (chn < sp->nchans)
+      if (chn < (int)sp->nchans)
 	{
 	  cp = sp->chans[chn];
 	  if (cp->edits[0]->peak_env)
@@ -5584,7 +5584,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   if (fullname) free(fullname);
   fullname = NULL;
   if ((sp) &&
-      (chn < sp->nchans))
+      (chn < (int)sp->nchans))
     {
       cp = sp->chans[chn];
       if (cp)

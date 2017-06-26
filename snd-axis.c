@@ -1893,9 +1893,9 @@ static Xen g_set_x_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
 	    {
 	      if ((!Xen_is_bound(chn)) && (cp->sound->channel_style == CHANNELS_COMBINED))
 		{
-		  int i;
+		  unsigned int i;
 		  for (i = 0; i < sp->nchans; i++)
-		    if (i != cp->chan)
+		    if ((int)i != cp->chan)
 		      set_x_axis_x0x1(sp->chans[i], x0, x1);
 		  /* y-bounds are already tied together in the channels-combined case */
 		}

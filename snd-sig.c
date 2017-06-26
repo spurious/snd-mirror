@@ -3160,7 +3160,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
       sps[i] = make_sound_readable(files[i], false);
       sps[i]->short_filename = filename_without_directory(files[i]);
       sps[i]->filename = NULL; /* why? squelch graphics perhaps? */
-      for (chan = 0; chan < sps[i]->nchans; chan++)
+      for (chan = 0; chan < (int)sps[i]->nchans; chan++)
 	fds[i][chan] = init_sample_read(0, sps[i]->chans[chan], READ_FORWARD);
     }
 
@@ -3244,7 +3244,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 
   for (i = 0; i < len; i++)
     {
-      for (chan = 0; chan < sps[i]->nchans; chan++)
+      for (chan = 0; chan < (int)sps[i]->nchans; chan++)
 	free_snd_fd(fds[i][chan]);
       free(fds[i]);
       sps[i] = completely_free_snd_info(sps[i]);
@@ -4538,7 +4538,7 @@ swap the indicated channels"
 	return(snd_no_such_sound_error(S_swap_channels, snd1));
       if (cp0->sound == sp)
 	{
-	  if ((cp0->chan + 1) < sp->nchans)
+	  if ((cp0->chan + 1) < (int)sp->nchans)
 	    cp1 = sp->chans[cp0->chan + 1];
 	  else cp1 = sp->chans[0];
 	}
@@ -4628,9 +4628,11 @@ static mus_float_t *load_mus_float_ts(Xen scalers, int *result_len, const char *
 	{
 	  if (Xen_is_list(scalers))
 	    {
-	      len = Xen_list_length(scalers);
-	      if (len < 0)
+	      int lst_len;
+	      lst_len = Xen_list_length(scalers);
+	      if (lst_len < 0)
 		Xen_wrong_type_arg_error(caller, 1, scalers, "a proper list");
+	      len = (unsigned int)lst_len;
 	    }
 	  else Xen_wrong_type_arg_error(caller, 1, scalers, "a number, list, or " S_vct);
 	}

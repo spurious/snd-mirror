@@ -13678,7 +13678,7 @@ static SubstitutionRec *gxm_make_subs(Xen lst_1)
   len = (unsigned int)Xen_list_length(lst_1);
   if (len > 0)
     {
-      int i;
+      unsigned int i;
       Xen lst;
       lst = Xen_copy_arg(lst_1);
       subs = (SubstitutionRec *)calloc(len, sizeof(SubstitutionRec));
@@ -16858,7 +16858,7 @@ static Xen gxm_set_colorsymbols(Xen ptr, Xen vals)
   if (len > 0)
     {
       Xen lst;
-      int i;
+      unsigned int i;
       XpmColorSymbol *cols = NULL, *cur;
       cols = (XpmColorSymbol *)calloc(len, sizeof(XpmColorSymbol));
       for (lst = Xen_copy_arg(vals), i = 0; i < len; i++, lst = Xen_cdr(lst))

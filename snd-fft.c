@@ -979,7 +979,7 @@ static void display_fft(fft_state *fs)
        (sp->nchans > 1) && 
        (sp->channel_style == CHANNELS_SUPERIMPOSED)))
     {
-      int j;
+      unsigned int j;
       for (j = 0; j < sp->nchans; j++)
 	{
 	  ncp = sp->chans[j];

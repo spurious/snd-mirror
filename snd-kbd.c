@@ -499,7 +499,7 @@ static chan_info *goto_next_graph(chan_info *cp, int count)
   if (count < 0) 
     return(goto_previous_graph(cp, count)); 
   k = count;
-  if (chan < (sp->nchans - 1))
+  if (chan < ((int)(sp->nchans) - 1))
     {
       /* goto next channel in current sound */
       k -= (sp->nchans-chan - 1);
@@ -1429,7 +1429,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		      if (cp->sound->channel_style != CHANNELS_SEPARATE)
 			{
 			  int i;
-			  for (i = 0; i < sp->nchans; i++)
+			  for (i = 0; i < (int)sp->nchans; i++)
 			    if ((i != cp->chan) &&
 				(selection_is_active_in_channel(sp->chans[i])))
 			      {

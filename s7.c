@@ -2028,7 +2028,7 @@ static int not_heap = -1;
 #define S_OP                          (1 << 27)
 #define S_LINE                        (1 << 28)
 #define S_LEN                         (1 << 29)
-#define S_SYNOP                       0x80000000 /* (1 << 31) */
+#define S_SYNOP                       (1 << 30) /* 0x80000000 *//* (1 << 31) */
 
 #define E_SET                         (1 << 0)
 #define E_FAST                        (1 << 7)   /* fast list in member/assoc circular list check */
@@ -52368,13 +52368,13 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 		  (is_null(cdddr(ind_step))) &&
 		  (do_is_safe(sc, cdddr(car_x), sc->w = list_1(sc, ind), sc->nil, &has_set)))
 		{
-		  opt_info *o1;
 		  dox_set_slot1(frame, slot);
 		  dox_set_slot2_unchecked(frame, (is_symbol(caddr(end))) ? find_symbol(sc, caddr(end)) : sc->undefined);
 		  slot_set_value(slot, make_mutable_integer(sc, integer(slot_value(slot))));
 		  opc->v4.i = body_index;
 		  if (body_len == 1)
 		    {
+		      opt_info *o1;
 		      opc->v7.fp = opt_do_very_simple;
 		      if (is_t_integer(caddr(end)))
 			opc->v3.i = integer(caddr(end));
@@ -81413,7 +81413,6 @@ int main(int argc, char **argv)
  * combine opts to reduce overhead, d_id_sf+d_dd_ff_o1, d_vid_ssf+same, opt_let d_dd_f2->d_vid_ssf, d_vd_o1+d_dd_ff_o3
  *   maybe d_dd_ff_o1+d_vd_o1
  *   perhaps combine all wrappers into one temp?
- * static string wrappers unheaped -- these are mostly permanent_strings I think
  *
  * --------------------------------------------------------------------
  *
@@ -81430,7 +81429,7 @@ int main(int argc, char **argv)
  * tcopy         |      |      | 13.6 || 3185 | 3342 3158
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3200
  * tform         |      |      | 6816 || 3850 | 3627 3374
- * tfft          |      |      | 16.4 || 17.3 | 4920 3989
+ * tfft          |      | 15.5 | 16.4 || 17.3 | 4920 3989
  * tsort         |      |      |      || 9186 | 5403 4705
  * titer         |      |      |      || 5964 | 5234 4714
  * thash         |      |      | 50.7 || 8926 | 8651 7910

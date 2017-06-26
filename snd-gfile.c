@@ -1826,7 +1826,7 @@ static void make_auto_comment(file_dialog_info *fd)
 	      (!(*(fdat->saved_comment))))
 	    fdat->saved_comment = NULL;
 
-	  for (i = 0; i < sp->nchans; i++)
+	  for (i = 0; i < (int)sp->nchans; i++)
 	    if (sp->chans[i]->edit_ctr != 0)
 	      {
 		edits = true;
@@ -1853,7 +1853,7 @@ static void make_auto_comment(file_dialog_info *fd)
 		    mus_strlen(original_sound_comment);
 
 	      edit_strs = (char **)malloc(sp->nchans * sizeof(char *));
-	      for (i = 0; i < sp->nchans; i++)
+	      for (i = 0; i < (int)sp->nchans; i++)
 		{
 		  edit_strs[i] = edit_list_to_function(sp->chans[i], 1, sp->chans[i]->edit_ctr);
 		  len += mus_strlen(edit_strs[i]);
@@ -1865,7 +1865,7 @@ static void make_auto_comment(file_dialog_info *fd)
 			   snd_local_time(),
 			   sp->filename);
 	      
-	      for (i = 0; i < sp->nchans; i++)
+	      for (i = 0; i < (int)sp->nchans; i++)
 		{
 		  if (sp->nchans > 1)
 		    {

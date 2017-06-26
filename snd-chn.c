@@ -44,7 +44,7 @@ chan_info *get_cp(Xen snd, Xen x_chn_n, const char *caller)
       chn_n = sp->selected_channel;
     else chn_n = 0;
 
-  if ((chn_n >= 0) && (chn_n < sp->nchans) && (sp->chans[chn_n]))
+  if ((chn_n >= 0) && (chn_n < (int)sp->nchans) && (sp->chans[chn_n]))
     return(sp->chans[chn_n]);
 
   snd_no_such_channel_error(caller, snd, x_chn_n);
@@ -310,7 +310,7 @@ void chans_field(fcp_t field, mus_float_t val)
   int i;
   for (i = 0; i < ss->max_sounds; i++)
     {
-      int j;
+      unsigned int j;
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && ((sp->inuse == SOUND_NORMAL) || (sp->inuse == SOUND_WRAPPER)))
@@ -818,9 +818,9 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
       if ((sp->channel_style == CHANNELS_COMBINED) &&
 	  (sp->nchans > 1))
 	{
-	  if (cp->chan == sp->nchans - 1)
+	  if (cp->chan == (int)sp->nchans - 1)
 	    {
-	      int i;
+	      unsigned int i;
 	      ymax = 0.0;
 	      for (i = 0; i < sp->nchans; i++)
 		{
@@ -932,7 +932,7 @@ void apply_y_axis_change(chan_info *cp)
 
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
-      int i;
+      unsigned int i;
       mus_float_t zy, sy;
       sy = ap->sy;
       zy = ap->zy;
@@ -1076,7 +1076,7 @@ void apply_x_axis_change(chan_info *cp)
   else 
     {
       if (sp->channel_style != CHANNELS_SEPARATE)
-	for (i = 0; i < sp->nchans; i++)  /* not 1 (25-Oct-07: 1 might be selected chan, but 0 needs to reflect changes as well */
+	for (i = 0; i < (int)sp->nchans; i++)  /* not 1 (25-Oct-07: 1 might be selected chan, but 0 needs to reflect changes as well */
 	  update_xs(sp->chans[i], ap);
     }
 }
@@ -1187,9 +1187,9 @@ void focus_x_axis_change(chan_info *cp, int focus_style)
 	      sync = sp->sync;
 	      if (sync != 0)
 		{
-		  int i;
+		  unsigned int i;
 		  for (i = 0; i < sp->nchans; i++)
-		    if (i != ncp->chan)
+		    if ((int)i != ncp->chan)
 		      {
 			newf = zoom_focus_location(sp->chans[i]);
 			if (newf != NO_ZOOM_FOCUS_LOCATION)
@@ -4398,7 +4398,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	    channel_set_mix_tags_erased(cp);
 #endif
 
-	  if ((cp->chan == (sp->nchans - 1)) && 
+	  if ((cp->chan == (int)(sp->nchans - 1)) && 
 	      ((offset + chan_height) < height))
 	    chan_height = height - offset;
 	  if (((y0 < top) && (y0 >= bottom)) || 
@@ -4802,7 +4802,7 @@ void show_cursor_info(chan_info *cp)
 		       s1 = x_axis_location_to_string(cp, (double)samp / (double)snd_srate(sp)),
 		       samp,
 		       s2 = prettyf(y, digits));
-	  for (i = 1; i < sp->nchans; i++)
+	  for (i = 1; i < (int)sp->nchans; i++)
 	    {
 	      chan_info *ncp;
 
@@ -5249,7 +5249,7 @@ void waveb(chan_info *cp, bool on)
 
 static void propagate_wf_state(snd_info *sp)
 {
-  int i;
+  unsigned int i;
   bool w, f;
   chan_info *cp;
 
@@ -5281,7 +5281,7 @@ void f_button_callback(chan_info *cp, bool on, bool with_control)
       update_graph_or_warn(cp);
       if (with_control)
 	{
-	  int i;
+	  unsigned int i;
 	  for (i = 0; i < sp->nchans; i++) 
 	    {
 	      chan_info *ncp;
@@ -5315,7 +5315,7 @@ void w_button_callback(chan_info *cp, bool on, bool with_control)
       update_graph_or_warn(cp);
       if (with_control)
 	{
-	  int i;
+	  unsigned int i;
 	  for (i = 0; i < sp->nchans; i++) 
 	    {
 	      chan_info *ncp;
@@ -5369,7 +5369,7 @@ void key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
 
 chan_info *which_channel(snd_info *sp, int y)
 {
-  int i;
+  unsigned int i;
   chan_info *ncp = NULL;
 
   if (y <= 0) /* this can happen if we drag the mouse over the top of the Snd window, then release it */
@@ -5964,7 +5964,7 @@ void edit_history_select(chan_info *cp, int row)
 #if WITH_RELATIVE_PANES || USE_GTK
   if (cp->sound->channel_style != CHANNELS_SEPARATE)
     {
-      int k;
+      unsigned int k;
       snd_info *sp;
       chan_info *ncp = NULL;
       sp = cp->sound;
@@ -6497,7 +6497,7 @@ static Xen channel_get(Xen snd, Xen chn_n, cp_field_t fld, const char *caller)
 	  sp = get_sp(snd);
 	  if (!sp)
 	    return(snd_no_such_sound_error(caller, snd));
-	  for (i = sp->nchans - 1; i >= 0; i--)
+	  for (i = (int)sp->nchans - 1; i >= 0; i--)
 	    res = Xen_cons(channel_get(snd, C_int_to_Xen_integer(i), fld, caller), res);
 	  return(res);
 	}
@@ -6722,7 +6722,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
       sp = get_sp(snd);
       if (!sp) 
 	return(snd_no_such_sound_error(caller, snd));
-      for (i = sp->nchans - 1; i >= 0; i--)
+      for (i = (int)sp->nchans - 1; i >= 0; i--)
 	res = Xen_cons(channel_set(snd, C_int_to_Xen_integer(i), on, fld, caller), res);
       return(res);
     }
@@ -7578,7 +7578,7 @@ static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos)
     sp = get_sp(snd);
     if (sp)
       {
-	int i;
+	unsigned int i;
 	mus_float_t mx = 0.0;
 	mus_float_t *vals = NULL;
 	bool save_maxamp = true;

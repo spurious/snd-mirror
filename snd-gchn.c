@@ -523,7 +523,8 @@ static void remake_edit_history(chan_info *cp)
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
-      int k, ed, filelen;
+      unsigned int k;
+      int ed, filelen;
       char *title;
       chan_info *ncp;
       filelen = 16 + strlen(sp->filename);
@@ -1102,7 +1103,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
       if (new_style != old_style)
 	{
-	  int i;
+	  unsigned int i;
 	  int height[1];
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
 	    remake_edit_history(sp->chans[0]);
@@ -1140,7 +1141,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 		  for (i = 0; i < sp->nchans; i++) 
 		    {
-		      if (i != selected_cp->chan)
+		      if ((int)i != selected_cp->chan)
 			{
 			  chan_info *ncp;
 			  ncp = sp->chans[i];
@@ -1168,7 +1169,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 	      for (i = 0; i < sp->nchans; i++) 
 		{
-		  if (i != selected_cp->chan)
+		  if ((int)i != selected_cp->chan)
 		    set_axes(sp->chans[i], ap->x0, ap->x1, ap->y0, ap->y1);
 
 		  if (i > 0)
@@ -1188,7 +1189,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	      if (new_style == CHANNELS_SEPARATE)
 		{
 		  /* height[0] = total space available */
-		  height[0] /= sp->nchans;
+		  height[0] /= (int)sp->nchans;
 
 		  for_each_sound_chan(sp, channel_open_pane);
 		  /* for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]); */

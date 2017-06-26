@@ -57,7 +57,7 @@ void reflect_regions_in_region_browser(void)
 {
   if (rsp)
     {
-      int i;
+      unsigned int i;
       rsp->active = true;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
@@ -70,7 +70,7 @@ void reflect_no_regions_in_region_browser(void)
 {
   if (rsp)
     {
-      int i;
+      unsigned int i;
       rsp->active = false;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
