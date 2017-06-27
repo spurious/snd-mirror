@@ -861,8 +861,7 @@ static bool clm_arrays_are_equal(mus_float_t *arr1, mus_float_t *arr2, mus_long_
   return(mus_arrays_are_equal(arr1, arr2, float_equal_fudge_factor, len));
 }
 
-
-mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size)
+static mus_float_t dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size)
 {
   mus_long_t i, size4;
   mus_float_t sum = 0.0;
@@ -882,6 +881,11 @@ mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t s
   for (; i < size; i++) 
     sum += (data1[i] * data2[i]);
   return(sum);
+}
+
+mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size)
+{
+  return(dot_product(data1, data2, size));
 }
 
 

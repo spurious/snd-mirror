@@ -59,6 +59,12 @@
   #pragma warning(disable: 4244)
 #endif
 
+#if (defined(__GNUC__) && __GNUC__ >= 5)
+  #define WITH_VECTORIZE 1
+#else
+  #define WITH_VECTORIZE 0
+#endif
+
 #include "_sndlib.h"
 #include "xen.h"
 #include "clm.h"
@@ -595,6 +601,10 @@ static Xen g_vct_multiply(Xen obj1, Xen obj2)
   return(obj1);
 }
 
+#if WITH_VECTORIZE
+static void vct_add(mus_float_t *d1, mus_float_t *d2, mus_long_t lim) __attribute__((optimize("tree-vectorize")));
+#endif
+
 static void vct_add(mus_float_t *d1, mus_float_t *d2, mus_long_t lim)
 {
   mus_long_t i, lim8;
@@ -755,6 +765,10 @@ static Xen g_vct_equal(Xen uv1, Xen uv2, Xen udiff)
 
   return(C_double_to_Xen_real(max_diff));
 }
+
+#if WITH_VECTORIZE
+static void vct_scale(mus_float_t *d, mus_float_t scl, mus_long_t len) __attribute__((optimize("tree-vectorize")));
+#endif
 
 static void vct_scale(mus_float_t *d, mus_float_t scl, mus_long_t len)
 {
@@ -920,7 +934,6 @@ static Xen g_vct_fill(Xen obj1, Xen obj2)
   return(obj1);
 }
 #endif
-
 
 double mus_vct_peak(vct *v)
 {

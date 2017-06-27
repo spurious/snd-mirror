@@ -8081,10 +8081,6 @@ static Xen xen_one, xen_minus_one;
 #if HAVE_SCHEME
 static Xen as_needed_arglist;
 
-static s7_pointer env_symbol, polywave_symbol, triangle_wave_symbol, rand_interp_symbol, oscil_symbol;
-static s7_pointer multiply_symbol, add_symbol, vector_ref_symbol, quote_symbol, cos_symbol, comb_bank_symbol;
-
-
 static mus_float_t as_needed_input_float(void *ptr, int direction)
 {
   mus_xen *gn = (mus_xen *)ptr;
@@ -9914,20 +9910,6 @@ DF_2(ring_modulate)
 
 static void init_choosers(s7_scheme *sc)
 {
-  env_symbol = s7_make_symbol(sc, S_env);
-  comb_bank_symbol = s7_make_symbol(sc, S_comb_bank);
-  vector_ref_symbol = s7_make_symbol(sc, "vector-ref");
-  polywave_symbol = s7_make_symbol(sc, S_polywave);
-  triangle_wave_symbol = s7_make_symbol(sc, S_triangle_wave);
-  rand_interp_symbol = s7_make_symbol(sc, S_rand_interp);
-  oscil_symbol = s7_make_symbol(sc, S_oscil);
-  multiply_symbol = s7_make_symbol(sc, "*");
-  add_symbol = s7_make_symbol(sc, "+");
-  quote_symbol = s7_make_symbol(sc, "quote");
-  cos_symbol = s7_make_symbol(sc, "cos");
-  mus_copy_symbol = s7_make_symbol(sc, "mus-copy");
-  copy_function = s7_name_to_value(sc, "copy");
-
   sym_frequency = s7_make_symbol(sc, S_mus_frequency);
   sym_phase = s7_make_symbol(sc, S_mus_phase);
   sym_scaler = s7_make_symbol(sc, S_mus_scaler);

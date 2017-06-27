@@ -33464,12 +33464,18 @@ s7_int s7_set_print_length(s7_scheme *sc, s7_int new_len)
  return(old_len);
 }
 
-
-#if (!WITH_GMP)
-void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
+#if (defined(__GNUC__) && __GNUC__ >= 5)
+  #define WITH_VECTORIZE 1
 #else
-static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
+  #define WITH_VECTORIZE 0
 #endif
+
+
+#if WITH_VECTORIZE
+static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj) __attribute__((optimize("tree-vectorize")));
+#endif
+
+static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 {
   s7_int len, i, left;
 
@@ -33561,6 +33567,9 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
     }
 }
 
+#if (!WITH_GMP)
+void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj) {vector_fill(sc, vec, obj);}
+#endif
 
 static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 {
@@ -81413,29 +81422,31 @@ int main(int argc, char **argv)
  * combine opts to reduce overhead, d_id_sf+d_dd_ff_o1, d_vid_ssf+same, opt_let d_dd_f2->d_vid_ssf, d_vd_o1+d_dd_ff_o3
  *   maybe d_dd_ff_o1+d_vd_o1
  *   perhaps combine all wrappers into one temp?
+ * more tree-vectorize?
+ * all_x_c_opsq_opsq where it is (* (env ) (oscil )) -> (make_real * mus_env mus_oscil)??
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4 17.5 17.6
- * tmac          |      |      |      || 9043 |  602  263
- * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1080
- * tref          |      |      | 2372 || 2083 | 1289 1145
- * teq           |      |      | 6612 || 2787 | 2210 1990
- * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2346
- * tlet     5318 | 3701 | 3712 | 3700 || 4004 | 3641 2483
- * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2747
- * lint          |      |      |      || 4029 | 3308 3021 [144.1]
- * tmap          |      |      |  9.3 || 4300 | 3716 3069
- * tcopy         |      |      | 13.6 || 3185 | 3342 3158
- * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3200
- * tform         |      |      | 6816 || 3850 | 3627 3374
- * tfft          |      | 15.5 | 16.4 || 17.3 | 4920 3989
- * tsort         |      |      |      || 9186 | 5403 4705
- * titer         |      |      |      || 5964 | 5234 4714
- * thash         |      |      | 50.7 || 8926 | 8651 7910
- * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6
- * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.0
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.1 [131.5]
+ * tmac          |      |      |      || 9043 |  602  263  263
+ * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127 1080 1080
+ * tref          |      |      | 2372 || 2083 | 1289 1145 1144
+ * teq           |      |      | 6612 || 2787 | 2210 1990 1990
+ * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643 2346 2345
+ * tlet     5318 | 3701 | 3712 | 3700 || 4004 | 3641 2483 2483
+ * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032 2747 2746
+ * lint          |      |      |      || 4029 | 3308 3021 3020 [144.1]
+ * tmap          |      |      |  9.3 || 4300 | 3716 3069 3063
+ * tcopy         |      |      | 13.6 || 3185 | 3342 3158 3143
+ * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248 3200 3203
+ * tform         |      |      | 6816 || 3850 | 3627 3374 3360
+ * tfft          |      | 15.5 | 16.4 || 17.3 | 4920 3989 3989
+ * tsort         |      |      |      || 9186 | 5403 4705 4707
+ * titer         |      |      |      || 5964 | 5234 4714 4708
+ * thash         |      |      | 50.7 || 8926 | 8651 7910 7903
+ * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4 12.6 12.6
+ * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1 18.0 18.0
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 41.1 40.8 [131.5]
  * 
  * --------------------------------------------------------------------
  */
