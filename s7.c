@@ -1177,7 +1177,7 @@ struct s7_scheme {
              let_all_opsq_symbol, let_all_s_symbol, let_all_x_symbol, let_c_symbol, let_no_vars_symbol, let_one_symbol,
              let_opcq_symbol, let_opsq_p_symbol, let_opsq_symbol, let_car_symbol, let_opssq_symbol, let_opssq_e_symbol, let_opassq_e_symbol, 
              let_s_symbol, let_s_z_symbol, let_star2_symbol, let_a_symbol, let_a_z_symbol,
-             let_star_all_x_symbol, let_star_unchecked_symbol, let_unchecked_symbol, let_z_symbol, letrec_star_unchecked_symbol,
+             let_star_all_x_symbol, let_star_a2_symbol, let_star_unchecked_symbol, let_unchecked_symbol, let_z_symbol, letrec_star_unchecked_symbol,
              letrec_unchecked_symbol, named_let_no_vars_symbol, named_let_star_symbol, named_let_symbol, let_temporarily_unchecked_symbol,
 
              or_ap_symbol, or_az_symbol, or_p_symbol, or_safe_aa_symbol, or_safe_p_symbol,
@@ -3022,7 +3022,7 @@ enum {OP_NO_OP, OP_GC_PROTECT,
 
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
       OP_LET_C, OP_LET_S, OP_LET_S_Z, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
-      OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq, OP_LET_opSSq_E, OP_LET_opaSSq_E,
+      OP_LET_STAR_ALL_X, OP_LET_STAR_A2, OP_LET_STAR_A, OP_LET_opCq, OP_LET_opSSq, OP_LET_opSSq_E, OP_LET_opaSSq_E,
       OP_LET_opSq, OP_LET_ALL_opSq, OP_LET_opSq_P, OP_LET_CAR, OP_LET_ONE, OP_LET_ONE_1, OP_LET_Z, OP_LET_Z_1, OP_LET_A, OP_LET_A_Z,
 
       OP_CASE_A_E_S, OP_CASE_A_I_S, OP_CASE_A_G_S, OP_CASE_A_E_G, OP_CASE_A_G_G, 
@@ -3199,26 +3199,26 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "apply", "eval_macro", "lambda", "quote", "macroexpand",
       "define", "define1", "begin", "begin_unchecked", "begin1",
       "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
-      "let", "let1", "let_star", "let_star1", "let_star2",
-      "letrec", "letrec1", "letrec_star", "letrec_star1", 
+      "let", "let1", "let*", "let*1", "let*2",
+      "letrec", "letrec1", "letrec*", "letrec*1", 
       "let_temporarily", "let_temp_unchecked", "let_temp_init1", "let_temp_init2", "let_temp_done", "let_temp_done1",
       "cond", "cond1", "cond1_1", "cond_simple", "cond1_simple", "cond_unchecked_z", 
       "and", "and1", "or", "or1",
-      "define_macro", "define_macro_star", "define_expansion",
+      "define_macro", "define_macro*", "define_expansion",
       "case", "read_list", "read_next", "read_dot", "read_quote",
       "read_quasiquote", "read_unquote", "read_apply_values",
       "read_vector", "read_byte_vector", "read_int_vector", "read_float_vector", "read_done",
       "load_return_if_eof", "load_close_and_pop_if_eof", "eval_done",
       "catch", "dynamic_wind", "define_constant", "define_constant1",
       "do", "do_end", "do_end1", "do_step", "do_step2", "do_init",
-      "define_star", "lambda_star", "lambda_star_default", "error_quit", "unwind_input", "unwind_output",
+      "define*", "lambda*", "lambda*_default", "error_quit", "unwind_input", "unwind_output",
       "error_hook_quit",
       "with_let", "with_let1", "with_let_unchecked", "with_let_s",
       "with_baffle", "with_baffle_unchecked", "expansion",
       "for_each", "for_each_1", "for_each_2", "for_each_3", 
       "map", "map_1", "map_gather", "map_gather_1", "barrier", "deactivate_goto",
 
-      "define_bacro", "define_bacro_star",
+      "define_bacro", "define_bacro*",
       "get_output_string", "get_output_string_1",
       "sort", "sort1", "sort2", "sort3", "sort_pair_end", "sort_vector_end", "sort_string_end",
       "eval_string_1", "eval_string_2",
@@ -3235,13 +3235,13 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "increment_1", "decrement_1", "set_cons",
       "increment_ss", "increment_sss", "increment_sz", "increment_sa", "increment_saa",
 
-      "let_star_unchecked", "letrec_unchecked", "letrec_star_unchecked", "cond_unchecked",
-      "lambda_star_unchecked", "do_unchecked", "define_unchecked", "define_star_unchecked", "define_funchecked", "define_constant_unchecked",
+      "let*_unchecked", "letrec_unchecked", "letrec*_unchecked", "cond_unchecked",
+      "lambda*_unchecked", "do_unchecked", "define_unchecked", "define*_unchecked", "define_funchecked", "define_constant_unchecked",
       "define_with_accessor", "define_macro_with_accessor",
 
-      "let_no_vars", "named_let", "named_let_no_vars", "named_let_star",
+      "let_no_vars", "named_let", "named_let_no_vars", "named_let*",
       "let_c", "let_s", "let_s_z", "let_all_c", "let_all_s", "let_all_x",
-      "let_star_all_x", "let_opcq", "let_opssq", "let_opssq_e", "let_opassq_e",
+      "let*_all_x", "let*_a2", "let*_a", "let_opcq", "let_opssq", "let_opssq_e", "let_opassq_e",
       "let_opsq", "let_all_opsq", "let_opsq_p", "let_car", "let_one", "let_one_1", "let_z", "let_z_1", "let_a", "let_a_z",
 
       "case_a_e_s", "case_a_i_s", "case_a_g_s", "case_a_e_g", "case_a_g_g", 
@@ -3361,7 +3361,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "closure_fa", "h_closure_fa",
       "closure_ap", "h_closure_ap", "closure_pa", "h_closure_pa", 
 
-      "closure_star_a", "h_closure_star_a", "closure_star_aa", "h_closure_star_aa", "closure_star_all_x", "h_closure_star_all_x",
+      "closure*_a", "h_closure*_a", "closure*_aa", "h_closure*_aa", "closure*_all_x", "h_closure*_all_x",
 
       "safe_thunk", "h_safe_thunk", 
       "safe_thunk_e", "h_safe_thunk_e", 
@@ -3377,8 +3377,8 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa",
       "safe_closure_ap", "h_safe_closure_ap", "safe_closure_pa", "h_safe_closure_pa", 
 
-      "safe_closure_star_a", "h_safe_closure_star_a", "safe_closure_star_aa", "h_safe_closure_star_aa", 
-      "safe_closure_star_s0", "h_safe_closure_star_s0", "safe_closure_star_all_x", "h_safe_closure_star_all_x",
+      "safe_closure*_a", "h_safe_closure*_a", "safe_closure*_aa", "h_safe_closure*_aa", 
+      "safe_closure*_s0", "h_safe_closure*_s0", "safe_closure*_all_x", "h_safe_closure*_all_x",
 
       "apply_ss", "h_apply_ss",
       "c_all_x", "h_c_all_x", "call_with_exit", "h_call_with_exit", 
@@ -8089,13 +8089,21 @@ static bool do_symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
 
 static bool let_symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
 {
-  return((is_slot(global_slot(sym))) || ((!is_with_let_let(e)) && (is_slot(find_symbol(sc, sym)))));
+  return((is_slot(global_slot(sym))) || 
+	 ((!is_with_let_let(e)) && (is_slot(find_symbol(sc, sym)))));
+}
+
+static bool let_star_symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
+{
+  return((symbol_is_in_list(sc, sym)) || 
+	 (is_slot(global_slot(sym))) || 
+	 ((is_let(e)) && (!is_with_let_let(e)) && (is_slot(find_symbol(sc, sym)))));
 }
 
 static bool pair_symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
 {
-  /* fprintf(stderr, "%s: %s %d %s\n", DISPLAY(sym), DISPLAY(global_slot(sym)), direct_memq(sym, e), DISPLAY(e)); */
-  return((is_slot(global_slot(sym))) || (direct_memq(sym, e)));
+  return((is_slot(global_slot(sym))) || 
+	 (direct_memq(sym, e)));
 }
 
 
@@ -35222,7 +35230,7 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
      (set! unclipped-max (max unclipped-max (float-vector-ref data i)))
      (set! tj (if (zero? (float-vector-ref radii j)) 1e-10 (* (float-vector-ref...
      */
-  /* we need opt_do_let */
+  /* we need do_let */
   return(univect_ref(sc, args, true));
 }
 
@@ -45491,7 +45499,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 		if (car(arg) == sc->is_vector_symbol) return(all_x_is_vector_s);
 		if (car(arg) == sc->is_proper_list_symbol) return(all_x_is_proper_list_s);
 		if (car(arg) == sc->not_symbol) return(all_x_not_s);
-		return(all_x_c_s);
+		return((is_local) ? local_x_c_s : all_x_c_s);
 	      }
 
 	    case HOP_SAFE_C_L:
@@ -49862,6 +49870,12 @@ static s7_pointer opt_p_pip_ssc(void *p)
   return(o->v3.p_pip_f(slot_value(o->v1.p), integer(slot_value(o->v2.p)), o->v4.p));
 }
 
+static s7_pointer opt_p_pip_c(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->v3.p_pip_f(slot_value(o->v1.p), integer(slot_value(o->v2.p)), o->v5.p_p_f(o->v4.p)));
+}
+
 static s7_pointer opt_p_pip_sff(void *p)
 {
   opt_info *o = (opt_info *)p;
@@ -49882,9 +49896,15 @@ static s7_pointer opt_p_pip_sso(void *p)
 				       integer(slot_value(o->v4.p)))));
 }
 
+static s7_pointer opt_p_pip_ssf1(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  o1 = cur_sc->opts[cur_sc->pc += 2];
+  return(o->v3.p_pip_f(slot_value(o->v1.p), integer(slot_value(o->v2.p)), o->v4.p_p_f(o1->v7.fp(o1))));
+}
+
 #if 0
-p_p_c: (o->v2.p_p_f(o->v1.p))
-p_p_f: (o->v2.p_p_f(o1->v7.fp(o1))
 p_cf_s: (o->v2.cf(cur_sc, set_plist_1(cur_sc, slot_value(o->v1.p))))
 p_cf_ss: (o->v3.cf(cur_sc, set_plist_2(cur_sc, slot_value(o->v1.p), slot_value(o->v2.p)))
 p_pi_sf: (o->v3.p_pi_f(slot_value(o->v1.p), o1->v7.fi(o1)))
@@ -49899,23 +49919,17 @@ return(o->v3.p_pip_f(slot_value(o->v1.p), integer(slot_value(o->v2.p)), o1->v7.f
       /* p_pi_sf -> i_i_s (form)
        * p_cf_s, p_cf_ss (hash)
        * p_p_f -> i_to_p (ref), p_pp_fc -> p_pi_ss (ref)
-       * i_to_p (map), p_p_f -> i_to_p (map)
-       * [p_p_c], p_p_f -> p_p_c (sort)
+       * i_to_p (map), [p_p_f -> i_to_p (map)]
+       * [p_p_c], [p_p_f -> p_p_c (sort)]
        */
 #endif
 
-static s7_pointer opt_p_pip_c(void *p)
+static bool p_pip_ssf_combinable(s7_scheme *sc, opt_info *opc, int start)
 {
-  opt_info *o = (opt_info *)p;
-  return(o->v3.p_pip_f(slot_value(o->v1.p), integer(slot_value(o->v2.p)), o->v5.p_p_f(o->v4.p)));
-}
-
-static bool p_pip_ssf_combinable(s7_scheme *sc, opt_info *opc)
-{
+  opt_info *o1;
   if ((sc->pc > 1) &&
       (opc == sc->opts[sc->pc - 2]))
     {
-      opt_info *o1;
       o1 = sc->opts[sc->pc - 1];
       if (o1->v7.fp == opt_p_pi_ss)
 	{
@@ -49935,6 +49949,14 @@ static bool p_pip_ssf_combinable(s7_scheme *sc, opt_info *opc)
 	  opc->v7.fp = opt_p_pip_c;
 	  return(true);
 	}
+    }
+
+  o1 = sc->opts[start];
+  if (o1->v7.fp == opt_p_p_f)
+    {
+      opc->v4.p_p_f = o1->v2.p_p_f;
+      opc->v7.fp = opt_p_pip_ssf1;
+      return(true);
     }
   return(false);
 }
@@ -49977,6 +49999,8 @@ static bool p_pip_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
       if (is_symbol(caddr(car_x)))
 	{
 	  s7_pointer slot;
+	  int start;
+	  start = sc->pc;
 	  slot = find_symbol(sc, caddr(car_x));
 	  if ((is_slot(slot)) &&
 	      (is_opt_int(slot_value(slot))))
@@ -50031,7 +50055,7 @@ static bool p_pip_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 		}
 	      if (cell_optimize(sc, cdddr(car_x)))
 		{
-		  if (!p_pip_ssf_combinable(sc, opc))
+		  if (!p_pip_ssf_combinable(sc, opc, start))
 		    opc->v7.fp = opt_p_pip_ssf;
 		  return(true);
 		}
@@ -50821,6 +50845,8 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 		  if (is_symbol(index))
 		    {
 		      s7_pointer slot;
+		      int start;
+		      start = sc->pc;
 		      slot = find_symbol(sc, index);
 		      if ((is_slot(slot)) &&
 			  (!has_methods(slot_value(slot))))
@@ -50888,7 +50914,7 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 				  (s7_is_vector(obj)) ||
 				  (is_pair(obj)))
 				{
-				  if (!p_pip_ssf_combinable(sc, opc))
+				  if (!p_pip_ssf_combinable(sc, opc, start))
 				    opc->v7.fp = opt_p_pip_ssf;
 				}
 			      else opc->v7.fp = opt_p_ppp_ssf;
@@ -60845,21 +60871,23 @@ static s7_pointer check_let(s7_scheme *sc)
     {
       if (named_let)
 	{
-	  s7_pointer ex;
+	  s7_pointer ex, exp;
 
 	  if (is_null(start))
 	    pair_set_syntax_symbol(sc->code, sc->named_let_no_vars_symbol);
 	  else pair_set_syntax_symbol(sc->code, sc->named_let_symbol);
 
 	  /* this is (let name ...) so the initial values need to be removed from the closure arg list */
-	  
-	  sc->args = sc->nil;
-	  for (ex = start; is_pair(ex); ex = cdr(ex))
-	    sc->args = cons(sc, caar(ex), sc->args);
-	  
-	  optimize_lambda(sc, true, car(sc->code), sc->args = safe_reverse_in_place(sc, sc->args), cddr(sc->code));
-
-	  /* apparently these guys are almost never safe */
+	  if (vars > 0)
+	    {
+	      sc->args = safe_list_if_possible(sc, vars);
+	      for (ex = start, exp = sc->args; is_pair(ex); ex = cdr(ex), exp = cdr(exp))
+		car(exp) = caar(ex);
+	      optimize_lambda(sc, true, car(sc->code), sc->args, cddr(sc->code));
+	      clear_list_in_use(sc->args);
+	      sc->current_safe_list = 0;
+	    }
+	  else optimize_lambda(sc, true, car(sc->code), sc->nil, cddr(sc->code));
 	  return(sc->code);
 	}
 
@@ -61023,19 +61051,27 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	  else  /* more than one entry */
 	    {
 	      s7_pointer p, op;
+	      clear_symbol_list(sc);
 	      op = sc->let_star_all_x_symbol;
 	      set_opt_con2(sc->code, cadaar(sc->code));
 	      for (p = car(sc->code); is_pair(p); p = cdr(p))
 		{
 		  s7_pointer x;
 		  x = car(p);
+		  add_symbol_to_list(sc, car(x));
 		  if (is_pair(cadr(x)))
 		    {
 		      if ((!is_all_x_safe(sc, cadr(x))) &&
 			  (car(cadr(x)) != sc->quote_symbol))
 			{
-			  op = sc->let_star2_symbol;
-			  break;
+			  if (p == car(sc->code))
+			    op = sc->let_star_a2_symbol;
+			  else 
+			    {
+			      /* fprintf(stderr, "%s\n", DISPLAY_80(cadr(x))); */
+			      op = sc->let_star2_symbol;
+			      break;
+			    }
 			}
 		    }
 		}
@@ -61044,12 +61080,26 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	}
 
       if ((pair_syntax_symbol(sc->code) == sc->let_all_x_symbol) ||
-	  (pair_syntax_symbol(sc->code) == sc->let_star_all_x_symbol))
+	  (pair_syntax_symbol(sc->code) == sc->let_star_all_x_symbol) ||
+	  (pair_syntax_symbol(sc->code) == sc->let_star_a2_symbol))
 	{
 	  s7_pointer p;
-	  for (p = car(sc->code); is_pair(p); p = cdr(p))
-	    set_x_call(cdar(p), all_x_eval(sc, cdar(p), sc->envir, let_symbol_is_safe));
+	  clear_symbol_list(sc);
+	  if (pair_syntax_symbol(sc->code) == sc->let_star_a2_symbol)
+	    {
+	      p = cdar(sc->code);
+	      add_symbol_to_list(sc, caar(p));
+	    }
+	  else p = car(sc->code);
+	  for (; is_pair(p); p = cdr(p))
+	    {
+	      set_x_call(cdar(p), all_x_eval(sc, cdar(p), sc->envir, let_star_symbol_is_safe));
+	      add_symbol_to_list(sc, caar(p));
+	    }
 	}
+      /* TODO: also if car(expr) is optimized safe_c_func/safe_closure?, symbol_id==0, in trailers, -- use has_all_x in eval etc 
+       *   also (f 0) where f is known sequence?
+       */
     }
   return(sc->code);
 }
@@ -64372,7 +64422,7 @@ static bool opt_dotimes(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool saf
 	  return(false);
     }
   else return(false);
-  /* TODO: here and in opt_do_let, generalize the body exprs */
+  /* TODO: here and in do_let, generalize the body exprs */
 
   end = denominator(slot_value(sc->args));
   if (safe_step)
@@ -64415,7 +64465,7 @@ static bool opt_dotimes(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool saf
 }
  
 
-static int opt_do_let(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool safe_case)
+static int do_let(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool safe_case)
 {
   s7_pointer let_body, p = NULL, let_vars, let_code;
   bool let_star;
@@ -64540,7 +64590,7 @@ static bool dotimes(s7_scheme *sc, s7_pointer code, bool safe_case)
        (typesflag(car(body)) == SYNTACTIC_TYPE)) &&
       ((symbol_syntax_op(car(body)) == OP_LET) ||
        (symbol_syntax_op(car(body)) == OP_LET_STAR)))
-    return(opt_do_let(sc, sc->args, code, safe_case) == goto_SAFE_DO_END_CLAUSES);
+    return(do_let(sc, sc->args, code, safe_case) == goto_SAFE_DO_END_CLAUSES);
 
   return(opt_dotimes(sc, cddr(code), code, safe_case));
 }
@@ -64584,7 +64634,7 @@ static int safe_dotimes_ex(s7_scheme *sc)
 
 	  /* safe_dotimes: if null (or constant) body, set step=end and quit (here end is (= step lim) so nothing can happen)
 	   *   TODO: break out this case in check_do
-	   *   if 1-expr body look for syntactic case, if let(*) goto opt_do_let, else opt_dotimes
+	   *   if 1-expr body look for syntactic case, if let(*) goto do_let, else opt_dotimes
 	   *       if they are unhappy, got safe_dotimes_step_p
 	   *   TODO: another case for check_do
 	   *   else goto opt_dotimes then safe_dotimes_step_o
@@ -67330,7 +67380,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->pc = 0;
 		    sc->opts[0]->v7.fp(sc->opts[0]);
 		    update_steppers(sc);
-		    /* TODO: get the stepper and handle direct in more than just +1 (opt_do_let|dotimes) */
+		    /* TODO: get the stepper and handle direct in more than just +1 (do_let|dotimes) */
 		    do_all_x_end(end);
 		  }
 	      }
@@ -72843,15 +72893,43 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* -------------------------------- LET* -------------------------------- */
 	case OP_LET_STAR_ALL_X:
 	  {
-	    s7_pointer p;
+	    s7_pointer p, e = NULL;
 	    for (p = car(sc->code); is_pair(p); p = cdr(p))
 	      {
 		s7_pointer arg;
 		arg = cdar(p);
 		arg = c_call(arg)(sc, car(arg));
-		new_frame_with_slot(sc, sc->envir, sc->envir, caar(p), arg);
+		/* since each value is all_x safe, there are no internal closures over the on-going stack of lets here (so use one frame) */
+		if (e)
+		  make_slot_1(sc, e, caar(p), arg);
+		else
+		  {
+		    new_frame_with_slot(sc, sc->envir, e, caar(p), arg);
+		    sc->envir = e;
+		  }
 	      }
 	    sc->code = _TPair(cdr(sc->code));
+	    goto BEGIN1;
+	  }
+	  
+	case OP_LET_STAR_A2:
+	  push_stack(sc, OP_LET_STAR_A, sc->code, car(sc->code));
+	  sc->code = opt_con2(sc->code);
+	  goto EVAL;
+
+	case OP_LET_STAR_A:
+	  {
+	    s7_pointer p, old_code;
+	    old_code = sc->args;
+	    new_frame_with_slot(sc, sc->envir, sc->envir, caar(sc->code), sc->value);
+	    for (p = cdr(sc->code); is_pair(p); p = cdr(p))
+	      {
+		s7_pointer arg;
+		arg = cdar(p);
+		arg = c_call(arg)(sc, car(arg));
+		make_slot_1(sc, sc->envir, caar(p), arg);
+	      }
+	    sc->code = _TPair(cdr(old_code));
 	    goto BEGIN1;
 	  }
 	  
@@ -79827,6 +79905,7 @@ s7_scheme *s7_init(void)
   sc->let_all_s_symbol =             assign_internal_syntax(sc, "let",         OP_LET_ALL_S);
   sc->let_all_x_symbol =             assign_internal_syntax(sc, "let",         OP_LET_ALL_X);
   sc->let_star_all_x_symbol =        assign_internal_syntax(sc, "let*",        OP_LET_STAR_ALL_X);
+  sc->let_star_a2_symbol =           assign_internal_syntax(sc, "let*",        OP_LET_STAR_A2);
   sc->let_opcq_symbol =              assign_internal_syntax(sc, "let",         OP_LET_opCq);
   sc->let_opssq_symbol =             assign_internal_syntax(sc, "let",         OP_LET_opSSq);
   sc->let_opssq_e_symbol =           assign_internal_syntax(sc, "let",         OP_LET_opSSq_E);
@@ -81379,7 +81458,7 @@ int main(int argc, char **argv)
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * ruby version crashes in test 4|8 -- file_copy?
  *
- * opt_do_let and opt_dotimes can be combined, at least from opt_do_let's view
+ * do_let and opt_dotimes can be combined, at least from do_let's view
  *   maybe split these at a lower level
  * ip for pi cases (b_ip, but it doesn't appear to happen much)
  * snd-test: if envelope-interp set! frample->file file->sample[d_p|vii] et al array-interp
@@ -81395,50 +81474,49 @@ int main(int argc, char **argv)
  * s7_macroexpand of multiple-value-set!? maybe disable values?
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
  * see g_float_vector_ref -- 3mil univects! [call/all] [opt_p_cf_ss in call?]
- * tref p_pip_ssf+p_p_f, let_a|s|one|c_a, int_opt check in new do(dox_ex) needs access to do-let
- * let*->let: maybe frame-opt let* in do? or if names are unique we're safe: letz (not let_star2)
- *    so check_let_star looks for symbol_id==0 -- can this work? id==0 does happen
+ * int_opt check in new do(dox_ex) needs access to do-let
  * macro expanded in func (optimize_lambda) -- since we have local macros, this requires a smart walker, or handling during evaluation
  *    so macro encountered in body, eval as now, but splice result into body (how to optimize spliced result? what if body removed from heap?)
+ *    how to know we're in a function body?
  * need tests for cond/case in opt_dotimes_2
  * do steppers (and many others) aren't marked local usually [tsort -- most loops are op_do!]
- * arg list consed up in lambda_check can be freed or not created at all
- * for-each with c-func of int|float-vect could surely use mutable arg, but this never happens?
  * tform vector_a_ex -- local symbol here?
  *   catch/call-with-exit maybe be stack-unsafe, but we should ignore that for setting locals (if body is safe)
  *   pending-unsafe for catch/call-with-exit etc -- needs lambda walker 
- * sort and|or_bb1?
  * even if body is unsafe, constants can be marked local
  * opt overhead: after optimize, fill one array with opt_infos, then march through it -- no opt* call, cur_sc->pc = index into array
  *   an array of functions, but what form
- * combine opts to reduce overhead?, d_vid_ssf+same, opt_do_let d_dd_f2->d_vid_ssf, d_vd_o1+d_dd_ff_o3
+ * combine opts to reduce overhead?, d_vid_ssf+same(d_dd_ff_o1), do_let d_dd_f2->d_vid_ssf, d_vd_o1+d_dd_ff_o3
  *   maybe d_dd_ff_o1+d_vd_o1
  *   perhaps combine all wrappers into one temp?
  * all_x_c_opsq_opsq where it is (* (env ) (oscil )) -> (make_real * mus_env mus_oscil)??
+ * clang: #pragma clang loop vectorize(enable) just before the loop
+ * permanent mutable numbers for temps in all_x calcs etc
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6
  * tmac          |      |      |      || 9043 |  602   263   263
- * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127  1080  1078
- * tref          |      |      | 2372 || 2083 | 1289  1145  1144
+ * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127  1080  1061
+ * tref          |      |      | 2372 || 2083 | 1289  1145  1122
  * teq           |      |      | 6612 || 2787 | 2210  1990  1990
  * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643  2346  2340
  * tlet     5318 | 3701 | 3712 | 3700 || 4004 | 3641  2483  2483
  * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032  2747  2746
- * lint          |      |      |      || 4029 | 3308  3021  3020 [144.1]
+ * lint          |      |      |      || 4029 | 3308  3021  3020 
+ * lg            |      |      |      ||      | 177   144   144.1
  * tmap          |      |      |  9.3 || 4300 | 3716  3069  3063
  * tcopy         |      |      | 13.6 || 3185 | 3342  3158  3130
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248  3200  3203
- * tform         |      |      | 6816 || 3850 | 3627  3374  3349
+ * tform         |      |      | 6816 || 3850 | 3627  3374  3345
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4920  3989  3989
- * tsort         |      |      |      || 9186 | 5403  4705  4706
+ * tsort         |      |      |      || 9186 | 5403  4705  4703
  * titer         |      |      |      || 5964 | 5234  4714  4708
  * thash         |      |      | 50.7 || 8926 | 8651  7910  7878
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4  12.6  12.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1  18.0  18.0
  * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5  41.1  40.4 
- *                                    || 143.8| 134.8 131.5 127.3
+ *                                    || 144  | 135   132   127.3
  * 
  * --------------------------------------------------------------------
  */

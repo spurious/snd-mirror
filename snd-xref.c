@@ -1748,7 +1748,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11596] = {
+static const char *snd_names[11598] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -5112,6 +5112,7 @@ static const char *snd_names[11596] = {
     "gsl_multifit_linear_lcorner2", "libgsl.scm",
     "gsl_multifit_linear_lcurve", "libgsl.scm",
     "gsl_multifit_linear_lreg", "libgsl.scm",
+    "gsl_multifit_linear_rank", "libgsl.scm",
     "gsl_multifit_linear_rcond", "libgsl.scm",
     "gsl_multifit_linear_residuals", "libgsl.scm",
     "gsl_multifit_linear_solve", "libgsl.scm",
@@ -7551,7 +7552,7 @@ static const char *snd_names[11596] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5798);
+  s7_autoload_set_names(sc, snd_names, 5799);
 }
 #endif
 

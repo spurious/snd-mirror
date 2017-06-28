@@ -11206,24 +11206,9 @@ static void flush_buffers(rdout *gen)
 	  for (j = 0; j < gen->chans; j++)
 	    {
 	      mus_float_t *adder, *vals;
-	      mus_long_t add4;
 	      adder = addbufs[j];
 	      vals = gen->obufs[j];
-	      add4 = framples_to_add - 4;
-	      i = 0;
-	      while (i <= add4)
-		{
-		  adder[i] += vals[i];
-		  i++;
-		  adder[i] += vals[i];
-		  i++;
-		  adder[i] += vals[i];
-		  i++;
-		  adder[i] += vals[i];
-		  i++;
-		}
-	      for (; i <= framples_to_add; i++)
-		adder[i] += vals[i];
+	      mus_add_floats(adder, vals, framples_to_add + 1);
 	    }
 	  
 	  mus_file_seek_frample(fd, gen->data_start);
@@ -13951,8 +13936,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	else new_len = spd->grain_len;
 	if (new_len > spd->out_data_len) /* can be off-by-one here if hop is just barely greater then 0.0 (user is screwing around...) */
 	  new_len = spd->out_data_len;
-	for (i = 0; i < new_len; i++)
-	  spd->out_data[i] += spd->grain[i];
+	mus_add_floats(spd->out_data, spd->grain, new_len);
       }
       
       /* set location of next grain calculation */
@@ -15297,11 +15281,10 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
     {
       mus_long_t i, N;
       N = gen->fftsize2;
-
       if (input) {gen->feeder = input; gen->block_feeder = NULL;}
+
       mus_clear_floats(gen->rl2, N * 2);
       mus_copy_floats(gen->rl2, gen->filter, gen->filtersize);
-
       mus_copy_floats(gen->buf, gen->buf + N, N);
       mus_clear_floats(gen->buf + N, N);
       mus_clear_floats(gen->rl1 + N, N);
@@ -15318,12 +15301,7 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
 	}
 
       mus_convolution(gen->rl1, gen->rl2, gen->fftsize);
-
-      for (i = 0; i < N;)
-	{
-	  gen->buf[i] += gen->rl1[i]; i++;
-	  gen->buf[i] += gen->rl1[i]; i++;
-	}
+      mus_add_floats(gen->buf, gen->rl1, N);
       mus_copy_floats(gen->buf + N, gen->rl1 + N, N);
       gen->ctr = 0;
     }

@@ -6,7 +6,7 @@ static void mix_set_file_name(int id, int chans, const char *name);
 static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *origin)
 {
   mus_float_t *data, *vdata;
-  int i, len;
+  int len;
   snd_fd *sf;
   bool result = false;
 
@@ -16,7 +16,7 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
   samples_to_vct_with_reader(len, data, sf);
-  for (i = 0; i < len; i++) data[i] += vdata[i];
+  mus_add_floats(data, vdata, len);
   free_snd_fd(sf);
 
   result = change_samples(beg, len, data, cp, origin, cp->edit_ctr, -1.0); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */

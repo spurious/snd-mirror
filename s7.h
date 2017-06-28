@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "5.3"
-#define S7_DATE "22-May-17"
+#define S7_VERSION "5.4"
+#define S7_DATE "27-June-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -225,6 +225,7 @@ bool s7_is_string(s7_pointer p);                                             /* 
 const char *s7_string(s7_pointer p);                                         /* Scheme string -> C string (do not free the string) */
 s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* C string -> Scheme string (str is copied) */
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len);  /* same as s7_make_string, but provides strlen */
+s7_pointer s7_make_string_wrapper(s7_scheme *sc, const char *str);
 s7_pointer s7_make_permanent_string(const char *str);                        /* make a string that will never be GC'd */
 unsigned int s7_string_length(s7_pointer str);                               /* (string-length str) */
 
@@ -415,7 +416,7 @@ s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e);                         /* (
 bool s7_is_openlet(s7_pointer e);                                           /* (openlet? e) */
 s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
 
-s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
+s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);               /* name's value in the current environment (after turning name into a symbol) */
 s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val);
@@ -848,6 +849,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 27-June:   s7_make_string_wrapper.
  * 22-May:    lambda* keyword arg handling changed slightly. 
  * 9-May:     s7_history, s7_add_to_history.
  * 20-Apr:    s7_tree_memq (for Snd), s7_type_of, many changes for new clm optimizer.

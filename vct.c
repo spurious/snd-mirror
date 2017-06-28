@@ -161,6 +161,7 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
   #define VCT_PRINT_LENGTH 10
 #endif
 
+
 #if WITH_VECTORIZE
 void mus_clear_floats(mus_float_t *dst, mus_long_t len)
 {
@@ -173,7 +174,14 @@ void mus_copy_floats(mus_float_t *dst, mus_float_t *src, mus_long_t len)
   mus_long_t k;
   for (k = 0; k < len; k++) dst[k] = src[k];
 }
+
+void mus_add_floats(mus_float_t *dst, mus_float_t *src, mus_long_t len)
+{
+  mus_long_t k;
+  for (k = 0; k < len; k++) dst[k] += src[k];
+}
 #endif
+
 
 static int vct_print_length = VCT_PRINT_LENGTH;
 
@@ -617,8 +625,11 @@ static Xen g_vct_multiply(Xen obj1, Xen obj2)
 
 #if WITH_VECTORIZE
 static void vct_add(mus_float_t *d1, mus_float_t *d2, mus_long_t lim) __attribute__((optimize("tree-vectorize")));
-#endif
-
+static void vct_add(mus_float_t *d1, mus_float_t *d2, mus_long_t lim)
+{
+  mus_add_floats(d1, d2, lim);
+}
+#else
 static void vct_add(mus_float_t *d1, mus_float_t *d2, mus_long_t lim)
 {
   mus_long_t i, lim8;
@@ -646,6 +657,7 @@ static void vct_add(mus_float_t *d1, mus_float_t *d2, mus_long_t lim)
   for (; i < lim; i++) 
     d1[i] += d2[i];
 }
+#endif
 
 static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
 {
