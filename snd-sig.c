@@ -4645,7 +4645,7 @@ static mus_float_t *load_mus_float_ts(Xen scalers, int *result_len, const char *
   
   scls = (mus_float_t *)calloc(len, sizeof(mus_float_t));
   if (v)
-    copy_floats(scls, mus_vct_data(v), len);
+    mus_copy_floats(scls, mus_vct_data(v), len);
   else
     {
       if (Xen_is_list(scalers))
@@ -5133,16 +5133,16 @@ If sign is -1, perform inverse fft.  Incoming data is in " S_vct "s."
       rl = (mus_float_t *)calloc(n2, sizeof(mus_float_t));
       im = (mus_float_t *)calloc(n2, sizeof(mus_float_t));
       need_free = true;
-      copy_floats(rl, mus_vct_data(v1), n);
-      copy_floats(im, mus_vct_data(v2), n);
+      mus_copy_floats(rl, mus_vct_data(v1), n);
+      mus_copy_floats(im, mus_vct_data(v2), n);
     }
 
   mus_fft(rl, im, n2, isign);
 
   if (need_free)
     {
-      copy_floats(mus_vct_data(v1), rl, n);
-      copy_floats(mus_vct_data(v2), im, n);
+      mus_copy_floats(mus_vct_data(v1), rl, n);
+      mus_copy_floats(mus_vct_data(v2), im, n);
       free(rl);
       free(im);
     }
@@ -5193,7 +5193,7 @@ magnitude spectrum of data (a " S_vct "), in data if in-place, using fft-window 
       rdat = (mus_float_t *)malloc(n * sizeof(mus_float_t));
       if (n < mus_vct_length(v))
 	for (i = 0; i < n; i++) rdat[i] = vdata[i];
-      else copy_floats(rdat, vdata, mus_vct_length(v));
+      else mus_copy_floats(rdat, vdata, mus_vct_length(v));
     }
   else rdat = mus_vct_data(v);
 
@@ -5990,8 +5990,8 @@ static mus_float_t get_peak(int choice, int fft_size, int n, mus_float_t *phases
   mus_float_t pi2, mx_sin, mx_cos;
   
   pi2 = M_PI / 2.0;
-  clear_floats(rl, fft_size);
-  clear_floats(im, fft_size);
+  mus_clear_floats(rl, fft_size);
+  mus_clear_floats(im, fft_size);
   
   for (m = 0; m < n; m++)
     {

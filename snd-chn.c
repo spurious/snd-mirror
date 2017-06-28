@@ -2341,7 +2341,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, 
 	      mus_long_t size;
 	      size = hisamp - losamp + 1;
 	      fft_phases = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-	      copy_floats(fft_phases, &(fp->phases[losamp]), size);
+	      mus_copy_floats(fft_phases, &(fp->phases[losamp]), size);
 	      free_phases = true;
 	    }
 	}
@@ -9465,7 +9465,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	      lg->data[graph] = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	      lg->len[graph] = len;
 	    }
-	  copy_floats(lg->data[graph], mus_vct_data(v), len);
+	  mus_copy_floats(lg->data[graph], mus_vct_data(v), len);
 	  if (ymin > ymax)
 	    {
 	      for (i = 0; i < len; i++)

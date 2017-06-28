@@ -3008,7 +3008,7 @@ snd_info *sound_is_silence(snd_info *sp)
 {
   if (sp)
     {
-      int i;
+      unsigned int i;
       for (i = 0; i < sp->nchans; i++)
 	{
 	  chan_info *cp;
@@ -3657,7 +3657,7 @@ bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, fi
 	    ncp = sp->chans[0];
 	  else ncp = any_selected_channel(sp);
 	  first_chan = ncp->chan;
-	  for (i = first_chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
+	  for (i = first_chan, j = 0; (j < nc) && (i < (int)sp->nchans); i++, j++)
 	    {
 	      char *origin;
 	      ncp = sp->chans[i];
@@ -5527,7 +5527,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   ofile = snd_tempnam(); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
 
-  for (i = 0; i < sp->nchans; i++)
+  for (i = 0; i < (int)sp->nchans; i++)
     {
       chan_info *ncp;
       ncp = sp->chans[i];
@@ -5542,7 +5542,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
     {
       vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
       times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
-      for (i = 0; i < sp->nchans; i++)
+      for (i = 0; i < (int)sp->nchans; i++)
 	{
 	  chan_info *ncp;
 	  ncp = sp->chans[i];
@@ -5552,7 +5552,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
     }
   
   sf = (snd_fd **)calloc(sp->nchans, sizeof(snd_fd *));
-  for (i = 0; i < sp->nchans; i++)
+  for (i = 0; i < (int)sp->nchans; i++)
     {
       sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
       if (!sf[i])
@@ -5570,7 +5570,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   
   /* write the new file */
   io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, true);
-  for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
+  for (i = 0; i < (int)sp->nchans; i++) free_snd_fd(sf[i]);
   free(sf);
   sf = NULL;
   if (io_err != IO_NO_ERROR)
@@ -5589,7 +5589,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   sphdr->samples = samples * sp->nchans;
   ms = (void *)sound_store_marks(sp);
   old_cursors = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
-  for (i = 0; i < sp->nchans; i++)
+  for (i = 0; i < (int)sp->nchans; i++)
     {
       chan_info *cp;
       cp = sp->chans[i];
@@ -5643,7 +5643,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   restore_axes_data(sp, sa, mus_sound_duration(sp->filename), true);
   sound_restore_marks(sp, ms);
   free_axes_data(sa);
-  for (i = 0; i < sp->nchans; i++)
+  for (i = 0; i < (int)sp->nchans; i++)
     cursor_sample(sp->chans[i]) = old_cursors[i];
   free(old_cursors);
   reflect_file_revert_in_label(sp);
@@ -5687,7 +5687,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_he
   else hdr->comment = NULL;
   hdr->data_location = 0; /* in case comment changes it */
 
-  for (i = 0; i < sp->nchans; i++)
+  for (i = 0; i < (int)sp->nchans; i++)
     {
       chan_info *ncp;
       ncp = sp->chans[i];
@@ -5702,7 +5702,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_he
     {
       vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
       times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
-      for (i = 0; i < sp->nchans; i++)
+      for (i = 0; i < (int)sp->nchans; i++)
 	{
 	  chan_info *ncp;
 	  ncp = sp->chans[i];
@@ -5712,7 +5712,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_he
     }
 
   sf = (snd_fd **)malloc(sp->nchans * sizeof(snd_fd *));
-  for (i = 0; i < sp->nchans; i++) 
+  for (i = 0; i < (int)sp->nchans; i++) 
     {
       chan_info *cp;
       int local_pos;
@@ -5722,7 +5722,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_he
       sf[i] = init_sample_read_any(0, cp, READ_FORWARD, local_pos); 
       if (!sf[i])
 	{
-	  int k;
+	  unsigned int k;
 	  /* this should not (cannot?) happen since we've supposedly checked before getting here... */
 	  for (k = 0; k < sp->nchans; k++) 
 	    sf[k] = free_snd_fd(sf[k]);
@@ -5747,7 +5747,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_he
       free(times);
     }
 
-  for (i = 0; i < sp->nchans; i++) 
+  for (i = 0; i < (int)sp->nchans; i++) 
     free_snd_fd(sf[i]);
   free(sf);
   free_file_info(hdr);
@@ -5802,7 +5802,7 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
 
 bool has_unsaved_edits(snd_info *sp)
 {
-  int i;
+  unsigned int i;
   for (i = 0; i < sp->nchans; i++)
     if (sp->chans[i]->edit_ctr > 0)
       return(true);
@@ -7103,7 +7103,7 @@ snd can be a filename, a mix, a region, or a sound index number."
       else return(snd_no_such_file_error(S_make_sampler, snd));
       if (Xen_is_integer(chn)) chan = Xen_integer_to_C_int(chn);
       if ((chan < 0) || 
-	  (chan >= loc_sp->nchans))
+	  (chan >= (int)loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
 	  return(snd_no_such_channel_error(S_make_sampler, snd, chn));	
@@ -7338,7 +7338,7 @@ static Xen g_save_edit_history(Xen filename, Xen snd, Xen chn)
 	    {
 	      sp = get_sp(snd);
 	      if (sp)
-		for (i = 0; i < sp->nchans; i++)
+		for (i = 0; i < (int)sp->nchans; i++)
 		  edit_history_to_file(fd, sp->chans[i], false);
 	    }
 	  else
@@ -7346,7 +7346,7 @@ static Xen g_save_edit_history(Xen filename, Xen snd, Xen chn)
 	      
 	      for (i = 0; i < ss->max_sounds; i++)
 		{
-		  int j;
+		  unsigned int j;
 		  sp = ss->sounds[i];
 		  if ((sp) && (sp->inuse == SOUND_NORMAL))
 		    for (j = 0; j < sp->nchans; j++)
@@ -7926,7 +7926,7 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
       beg = beg_to_sample(samp_n, S_sample);
       loc = snd_protect(lst);
       
-      for (i = 0; i < sp->nchans; i++)
+      for (i = 0; i < (int)sp->nchans; i++)
 	{
 	  if (pos > sp->chans[i]->edit_ctr)
 	    lst = Xen_cons(C_double_to_Xen_real(chn_sample(beg, sp->chans[i], sp->chans[i]->edit_ctr)), lst);
@@ -8296,7 +8296,7 @@ vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_
 
 	  if (sf->runf == next_sample_value_unscaled)
 	    {
-	      copy_floats(fvals + i, sf->data + sf->loc, dur);
+	      mus_copy_floats(fvals + i, sf->data + sf->loc, dur);
 	      i += dur;
 	    }
 	  else
@@ -8305,7 +8305,7 @@ vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_
 		{
 		  mus_float_t scl;
 		  scl = sf->fscaler;
-		  copy_floats(fvals + i, sf->data + sf->loc, dur);
+		  mus_copy_floats(fvals + i, sf->data + sf->loc, dur);
 		  left = i + dur;
 		  for (; i < left; i++) fvals[i] *= scl;
 		}
@@ -8643,7 +8643,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
       int i;
       snd_info *sp;
       sp = cp->sound;
-      if (sp->nchans < nc) nc = sp->nchans;
+      if ((int)sp->nchans < nc) nc = sp->nchans;
       for (i = 0; i < nc; i++)
 	{
 #if HAVE_FORTH

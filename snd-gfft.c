@@ -150,9 +150,9 @@ static void get_fft_window_data(void)
   mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, 
 				  fft_window_beta(ss) * fft_beta_max(fft_window(ss)), 
 				  fft_window_alpha(ss), graph_data);
-  clear_floats(graph_fftr, GRAPH_SIZE * 2);
-  clear_floats(graph_ffti, GRAPH_SIZE * 2);
-  copy_floats(graph_fftr, graph_data, GRAPH_SIZE);
+  mus_clear_floats(graph_fftr, GRAPH_SIZE * 2);
+  mus_clear_floats(graph_ffti, GRAPH_SIZE * 2);
+  mus_copy_floats(graph_fftr, graph_data, GRAPH_SIZE);
   mus_spectrum(graph_fftr, graph_ffti, NULL, GRAPH_SIZE * 2, MUS_SPECTRUM_IN_DB);
   for (i = 0; i < GRAPH_SIZE; i++)
     graph_fftr[i] = (graph_fftr[i] + 80.0) / 80.0; /* min dB -80.0 */

@@ -11,6 +11,29 @@ typedef struct vct vct;
 extern "C" {
 #endif
 
+#if (defined(__GNUC__) && __GNUC__ >= 5)
+MUS_EXPORT void mus_clear_floats(mus_float_t *arr, mus_long_t len) __attribute__ ((optimize("tree-vectorize")));
+MUS_EXPORT void mus_copy_floats(mus_float_t *dst, mus_float_t *src, mus_long_t len) __attribute__ ((optimize("tree-vectorize")));
+#else
+#define mus_clear_floats(Arr, Len)			\
+  do {						\
+    mus_long_t K;				\
+    mus_float_t *dst;				\
+    dst = Arr;					\
+    for (K = Len; K > 0; K--)			\
+      *dst++ = 0.0;				\
+  } while (0)
+#define mus_copy_floats(Dst, Src, Len)		\
+  do {						\
+    mus_long_t K;				\
+    mus_float_t *dst, *src;			\
+    dst = Dst;					\
+    src = Src;					\
+    for (K = Len; K > 0; K--)			\
+      *dst++ = *src++;				\
+    } while (0)
+#endif
+
 MUS_EXPORT void mus_vct_init(void);
 MUS_EXPORT int mus_vct_print_length(void);
 MUS_EXPORT void mus_vct_set_print_length(int len);

@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 24
-#define SNDLIB_REVISION 4
-#define SNDLIB_DATE "1-Sep-15"
+#define SNDLIB_REVISION 5
+#define SNDLIB_DATE "27-Jun-17"
 
 #include <stdio.h>
 #include <time.h>

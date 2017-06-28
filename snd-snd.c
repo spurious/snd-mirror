@@ -931,8 +931,8 @@ peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
 	}
       else
 	{
-	  copy_floats(new_ep->data_min, old_ep->data_min, new_ep->peak_env_size);
-	  copy_floats(new_ep->data_max, old_ep->data_max, new_ep->peak_env_size);
+	  mus_copy_floats(new_ep->data_min, old_ep->data_min, new_ep->peak_env_size);
+	  mus_copy_floats(new_ep->data_max, old_ep->data_max, new_ep->peak_env_size);
 	}
 
       new_ep->completed = true;
@@ -1125,8 +1125,8 @@ void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int po
 	  i = (int)ceil(end / new_ep->samps_per_bin);
 	  bins = new_ep->peak_env_size - i;
 	  if (old_ep->peak_env_size < bins) bins = old_ep->peak_env_size;
-	  copy_floats(&(new_ep->data_min[i]), old_ep->data_min, bins);
-	  copy_floats(&(new_ep->data_max[i]), old_ep->data_max, bins);
+	  mus_copy_floats(&(new_ep->data_min[i]), old_ep->data_min, bins);
+	  mus_copy_floats(&(new_ep->data_max[i]), old_ep->data_max, bins);
 	}
       else
 	{
@@ -1135,16 +1135,16 @@ void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int po
 	      /* copy start */
 	      bins = (int)floor(beg / old_ep->samps_per_bin);
 	      if (bins > old_ep->peak_env_size) bins = old_ep->peak_env_size;
-	      copy_floats(new_ep->data_min, old_ep->data_min, bins);
-	      copy_floats(new_ep->data_max, old_ep->data_max, bins);
+	      mus_copy_floats(new_ep->data_min, old_ep->data_min, bins);
+	      mus_copy_floats(new_ep->data_max, old_ep->data_max, bins);
 	    }
 	  else
 	    {
 	      i = (int)floor(beg / old_ep->samps_per_bin);
 	      if (i > 0)
 		{
-		  copy_floats(new_ep->data_min, old_ep->data_min, i);
-		  copy_floats(new_ep->data_max, old_ep->data_max, i);
+		  mus_copy_floats(new_ep->data_min, old_ep->data_min, i);
+		  mus_copy_floats(new_ep->data_max, old_ep->data_max, i);
 		}
 	      if (i < new_ep->peak_env_size)
 		{
@@ -1162,8 +1162,8 @@ void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int po
 		  bins = new_ep->peak_env_size - j;
 		  if ((i + bins) >= old_ep->peak_env_size)
 		    bins = old_ep->peak_env_size - i;
-		  copy_floats(&(new_ep->data_min[j]), &(old_ep->data_min[i]), bins);
-		  copy_floats(&(new_ep->data_max[j]), &(old_ep->data_max[i]), bins);
+		  mus_copy_floats(&(new_ep->data_min[j]), &(old_ep->data_min[i]), bins);
+		  mus_copy_floats(&(new_ep->data_max[j]), &(old_ep->data_max[i]), bins);
 		}
 	    }
 	}

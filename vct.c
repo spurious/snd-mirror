@@ -161,6 +161,20 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
   #define VCT_PRINT_LENGTH 10
 #endif
 
+#if WITH_VECTORIZE
+void mus_clear_floats(mus_float_t *dst, mus_long_t len)
+{
+  mus_long_t k;
+  for (k = 0; k < len; k++) dst[k] = 0.0;
+}
+
+void mus_copy_floats(mus_float_t *dst, mus_float_t *src, mus_long_t len)
+{
+  mus_long_t k;
+  for (k = 0; k < len; k++) dst[k] = src[k];
+}
+#endif
+
 static int vct_print_length = VCT_PRINT_LENGTH;
 
 void mus_vct_set_print_length(int len) 
@@ -449,7 +463,7 @@ static Xen g_vct_copy(Xen obj)
   if (len > 0)
     {
       copied_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-      copy_floats(copied_data, mus_vct_data(v), len);
+      mus_copy_floats(copied_data, mus_vct_data(v), len);
     }
   return(xen_make_vct(len, copied_data));
 }
@@ -773,7 +787,7 @@ static void vct_scale(mus_float_t *d, mus_float_t scl, mus_long_t len) __attribu
 static void vct_scale(mus_float_t *d, mus_float_t scl, mus_long_t len)
 {
   if (scl == 0.0)
-    clear_floats(d, len);
+    mus_clear_floats(d, len);
   else
     {
       if (scl != 1.0)
@@ -911,7 +925,7 @@ static Xen g_vct_fill(Xen obj1, Xen obj2)
 
   scl = Xen_real_to_C_double(obj2);
   if (scl == 0.0)
-    clear_floats(d, mus_vct_length(v1));
+    mus_clear_floats(d, mus_vct_length(v1));
   else 
     {
       mus_long_t lim8;

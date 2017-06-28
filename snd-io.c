@@ -683,7 +683,7 @@ snd_data *make_snd_data_buffer(mus_float_t *data, int len, int ctr)
    *   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value 
    */
 
-  copy_floats(sf->buffered_data, data, len);
+  mus_copy_floats(sf->buffered_data, data, len);
   sf->buffered_data[len] = 0.0;
   sf->edit_ctr = ctr;
   sf->copy = false;

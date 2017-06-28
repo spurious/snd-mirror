@@ -1115,7 +1115,7 @@
 	       (ctr 0)
 	       (offset (ceiling (/ n cols)))
 	       (i 0 (+ i 1)))
-	      ((>= row offset))
+	      ((= row offset))
 	    (let ((x (+ row (* ctr offset))))
 	      (if (>= x n)
 		  (format ofil "~%")

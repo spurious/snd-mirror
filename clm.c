@@ -861,7 +861,7 @@ static bool clm_arrays_are_equal(mus_float_t *arr1, mus_float_t *arr2, mus_long_
   return(mus_arrays_are_equal(arr1, arr2, float_equal_fudge_factor, len));
 }
 
-static mus_float_t dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size)
+mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size)
 {
   mus_long_t i, size4;
   mus_float_t sum = 0.0;
@@ -881,11 +881,6 @@ static mus_float_t dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_
   for (; i < size; i++) 
     sum += (data1[i] * data2[i]);
   return(sum);
-}
-
-mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size)
-{
-  return(dot_product(data1, data2, size));
 }
 
 
@@ -1408,7 +1403,7 @@ static mus_any *ob_copy(mus_any *ptr)
   /* we have to make a new phases array -- otherwise the original and copy step on each other */
   g->free_phases = true;
   g->phases = (mus_float_t *)malloc(g->size * sizeof(mus_float_t));
-  copy_floats(g->phases, p->phases, g->size);
+  mus_copy_floats(g->phases, p->phases, g->size);
   return((mus_any *)g);
 }
 
@@ -1445,7 +1440,7 @@ static void oscil_bank_reset(mus_any *ptr)
 {
   ob *p = (ob *)ptr;
   p->size = p->orig_size;
-  clear_floats(p->phases, p->orig_size);
+  mus_clear_floats(p->phases, p->orig_size);
 }
 
 
@@ -2798,7 +2793,7 @@ mus_float_t *mus_partials_to_wave(mus_float_t *partial_data, int partials, mus_f
 {
   int partial, k;
   if (!table) return(NULL);
-  clear_floats(table, table_size);
+  mus_clear_floats(table, table_size);
   for (partial = 0, k = 1; partial < partials; partial++, k += 2)
     {
       mus_float_t amp;
@@ -2822,7 +2817,7 @@ mus_float_t *mus_phase_partials_to_wave(mus_float_t *partial_data, int partials,
 {
   int partial, k, n;
   if (!table) return(NULL);
-  clear_floats(table, table_size);
+  mus_clear_floats(table, table_size);
   for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
     {
       mus_float_t amp;
@@ -3013,7 +3008,7 @@ static mus_any *tbl_copy(mus_any *ptr)
   memcpy((void *)g, (void *)ptr, sizeof(tbl));
 
   g->table = (mus_float_t *)malloc(g->table_size * sizeof(mus_float_t));
-  copy_floats(g->table, p->table, g->table_size);
+  mus_copy_floats(g->table, p->table, g->table_size);
   g->table_allocated = true;
 
   return((mus_any *)g);
@@ -4112,7 +4107,7 @@ static mus_any *wt_copy(mus_any *ptr)
   g = (wt *)malloc(sizeof(wt));
   memcpy((void *)g, (void *)ptr, sizeof(wt));
   g->out_data = (mus_float_t *)malloc(g->out_data_size * sizeof(mus_float_t));
-  copy_floats(g->out_data, p->out_data, g->out_data_size);
+  mus_copy_floats(g->out_data, p->out_data, g->out_data_size);
   /* g->wave is caller's data */
   return((mus_any *)g);
 }
@@ -4171,9 +4166,9 @@ static mus_float_t mus_wave_train_any(mus_any *ptr, mus_float_t fm)
 	  mus_long_t good_samps;
 	  good_samps = gen->out_data_size - gen->out_pos;
 	  memmove((void *)out_data, (void *)(out_data + gen->out_pos), good_samps * sizeof(mus_float_t));
-	  clear_floats(out_data + good_samps, gen->out_pos);
+	  mus_clear_floats(out_data + good_samps, gen->out_pos);
 	}
-      else clear_floats(out_data, gen->out_data_size);
+      else mus_clear_floats(out_data, gen->out_data_size);
       if (gen->interp_type == MUS_INTERP_LINEAR)
 	{
 	  /* gen->phase doesn't change, and i is an int, so we can precalculate the fractional part, etc
@@ -4261,7 +4256,7 @@ static void wt_reset(mus_any *ptr)
 {
   wt *gen = (wt *)ptr;
   gen->phase = 0.0;
-  clear_floats(gen->out_data, gen->out_data_size);
+  mus_clear_floats(gen->out_data, gen->out_data_size);
   gen->out_pos = gen->out_data_size;
   gen->next_wave_time = 0.0;
   gen->first_time = true;
@@ -4486,7 +4481,7 @@ static mus_any *dly_copy(mus_any *ptr)
   memcpy((void *)g, (void *)ptr, sizeof(dly));
 
   g->line = (mus_float_t *)malloc(g->size * sizeof(mus_float_t));
-  copy_floats(g->line, p->line, g->size);
+  mus_copy_floats(g->line, p->line, g->size);
   g->line_allocated = true;
 
   if (p->filt)
@@ -4599,7 +4594,7 @@ static void delay_reset(mus_any *ptr)
   gen->loc = 0;
   gen->zloc = 0;
   gen->yn1 = 0.0;
-  clear_floats(gen->line, gen->zsize);
+  mus_clear_floats(gen->line, gen->zsize);
 }
 
 
@@ -7492,24 +7487,24 @@ static mus_any *frm_bank_copy(mus_any *ptr)
   bytes = g->size * sizeof(mus_float_t);
 
   g->x0 = (mus_float_t *)malloc(bytes);
-  copy_floats(g->x0, p->x0, g->size);
+  mus_copy_floats(g->x0, p->x0, g->size);
   g->x1 = (mus_float_t *)malloc(bytes);
-  copy_floats(g->x1, p->x1, g->size);
+  mus_copy_floats(g->x1, p->x1, g->size);
   g->x2 = (mus_float_t *)malloc(bytes);
-  copy_floats(g->x2, p->x2, g->size);
+  mus_copy_floats(g->x2, p->x2, g->size);
   g->y0 = (mus_float_t *)malloc(bytes);
-  copy_floats(g->y0, p->y0, g->size);
+  mus_copy_floats(g->y0, p->y0, g->size);
   g->y1 = (mus_float_t *)malloc(bytes);
-  copy_floats(g->y1, p->y1, g->size);
+  mus_copy_floats(g->y1, p->y1, g->size);
   g->y2 = (mus_float_t *)malloc(bytes);
-  copy_floats(g->y2, p->y2, g->size);
+  mus_copy_floats(g->y2, p->y2, g->size);
 
   g->rr = (mus_float_t *)malloc(bytes);
-  copy_floats(g->rr, p->rr, g->size);
+  mus_copy_floats(g->rr, p->rr, g->size);
   g->fdbk = (mus_float_t *)malloc(bytes);
-  copy_floats(g->fdbk, p->fdbk, g->size);
+  mus_copy_floats(g->fdbk, p->fdbk, g->size);
   g->gain = (mus_float_t *)malloc(bytes);
-  copy_floats(g->gain, p->gain, g->size);
+  mus_copy_floats(g->gain, p->gain, g->size);
 
   return((mus_any *)g);
 }
@@ -7529,12 +7524,12 @@ static mus_long_t formant_bank_length(mus_any *ptr)
 static void formant_bank_reset(mus_any *ptr)
 {
   frm_bank *f = (frm_bank *)ptr;
-  clear_floats((f->x0), f->size);
-  clear_floats((f->x1), f->size);
-  clear_floats((f->x2), f->size);
-  clear_floats((f->y0), f->size);
-  clear_floats((f->y1), f->size);
-  clear_floats((f->y2), f->size);
+  mus_clear_floats((f->x0), f->size);
+  mus_clear_floats((f->x1), f->size);
+  mus_clear_floats((f->x2), f->size);
+  mus_clear_floats((f->y0), f->size);
+  mus_clear_floats((f->y1), f->size);
+  mus_clear_floats((f->y2), f->size);
 }
 
 
@@ -8570,7 +8565,6 @@ mus_float_t mus_fir_filter(mus_any *ptr, mus_float_t input)
   return((((flt *)ptr)->filtw)(ptr, input));
 }
 
-
 static mus_float_t fir_n(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
@@ -8682,7 +8676,10 @@ static mus_float_t iir_n(mus_any *ptr, mus_float_t input)
 }
 
 
-static mus_float_t run_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return((((flt *)ptr)->filtw)(ptr, input));}
+static mus_float_t run_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) 
+{
+  return((((flt *)ptr)->filtw)(ptr, input));
+}
 
 bool mus_is_filter(mus_any *ptr) 
 {
@@ -8837,7 +8834,7 @@ static mus_any *flt_copy(mus_any *ptr)
   /* we have to make a new state array -- otherwise the original and copy step on each other */
   g->state_allocated = true;
   g->state = (mus_float_t *)malloc(p->order * 2 * sizeof(mus_float_t));
-  copy_floats(g->state, p->state, p->order * 2);
+  mus_copy_floats(g->state, p->state, p->order * 2);
   return((mus_any *)g);
 }
 
@@ -8910,7 +8907,7 @@ static char *describe_iir_filter(mus_any *ptr)
 static void filter_reset(mus_any *ptr)
 {
   flt *gen = (flt *)ptr;
-  clear_floats(gen->state, gen->allocated_size * 2);
+  mus_clear_floats(gen->state, gen->allocated_size * 2);
 }
 
 
@@ -9155,7 +9152,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
       rl = (mus_float_t *)calloc(fsize, sizeof(mus_float_t));
       im = (mus_float_t *)calloc(fsize, sizeof(mus_float_t));
       lim = order / 2;
-      copy_floats(rl, envl, lim);
+      mus_copy_floats(rl, envl, lim);
 
       mus_fft(rl, im, fsize, 1);
 
@@ -9207,9 +9204,9 @@ static mus_any *onepall_copy(mus_any *ptr)
 
   bytes = g->size * sizeof(mus_float_t);
   g->x = (mus_float_t *)malloc(bytes);
-  copy_floats(g->x, p->x, g->size);
+  mus_copy_floats(g->x, p->x, g->size);
   g->y = (mus_float_t *)malloc(bytes);
-  copy_floats(g->y, p->y, g->size);
+  mus_copy_floats(g->y, p->y, g->size);
 
   return((mus_any *)g);
 }
@@ -9230,8 +9227,8 @@ static mus_long_t onepall_length(mus_any *ptr)
 static void onepall_reset(mus_any *ptr)
 {
   onepall *f = (onepall *)ptr;
-  clear_floats(f->x, f->size);
-  clear_floats(f->y, f->size);
+  mus_clear_floats(f->x, f->size);
+  mus_clear_floats(f->y, f->size);
 }
 
 
@@ -9745,7 +9742,7 @@ static mus_any *seg_copy(mus_any *ptr)
 	{
 	  int bytes;
 	  e->rates = (mus_float_t *)malloc(p->size * sizeof(mus_float_t));
-	  copy_floats(e->rates, p->rates, p->size);
+	  mus_copy_floats(e->rates, p->rates, p->size);
 
 	  bytes = (p->size + 1) * sizeof(mus_long_t);
 	  e->locs = (mus_long_t *)malloc(bytes);
@@ -9760,7 +9757,7 @@ static mus_any *seg_copy(mus_any *ptr)
 
       bytes = p->size * sizeof(mus_float_t);
       r = e->rates;
-      copy_floats(r, p->rates, p->size);
+      mus_copy_floats(r, p->rates, p->size);
 
       bytes = (p->size + 1) * sizeof(mus_long_t);
       l = e->locs;
@@ -10394,7 +10391,7 @@ static mus_any *rdin_copy(mus_any *ptr)
       mus_long_t len;
       len = make_ibufs(g);
       for (i = 0; i < g->chans; i++)
-	copy_floats(g->ibufs[i], p->ibufs[i], len);
+	mus_copy_floats(g->ibufs[i], p->ibufs[i], len);
     }
   return((mus_any *)g);
 }
@@ -10959,7 +10956,7 @@ static mus_any *rdout_copy(mus_any *ptr)
       for (i = 0; i < g->chans; i++)
 	{
 	  g->obufs[i] = (mus_float_t *)malloc(clm_file_buffer_size * sizeof(mus_float_t));
-	  copy_floats(g->obufs[i], p->obufs[i], clm_file_buffer_size);
+	  mus_copy_floats(g->obufs[i], p->obufs[i], clm_file_buffer_size);
 	}
       g->obuf0 = g->obufs[0];
       if (g->chans > 1)
@@ -11265,7 +11262,7 @@ mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2)
       mus_long_t i;
       for (i = 0; i < min_framples; i++)
 	dest->obufs[chn][i] += in_coming->obufs[chn][i];
-      clear_floats(in_coming->obufs[chn], min_framples);
+      mus_clear_floats(in_coming->obufs[chn], min_framples);
     }
 
   if (min_framples > dest->out_end)
@@ -11296,7 +11293,7 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
       if (samp < 0) return(val);
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
-	clear_floats(gen->obufs[j], clm_file_buffer_size);
+	mus_clear_floats(gen->obufs[j], clm_file_buffer_size);
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
       gen->obufs[chan][0] += val;
@@ -11326,7 +11323,7 @@ static void mus_out_chans_to_file(rdout *gen, mus_long_t samp, int chans, mus_fl
       if (samp < 0) return;
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
-	clear_floats(gen->obufs[j], clm_file_buffer_size);
+	mus_clear_floats(gen->obufs[j], clm_file_buffer_size);
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
       for (i = 0; i < chans; i++)
@@ -11357,7 +11354,7 @@ static mus_float_t mus_outa_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
       if (samp < 0) return(val);
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
-	clear_floats(gen->obufs[j], clm_file_buffer_size);
+	mus_clear_floats(gen->obufs[j], clm_file_buffer_size);
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
       gen->obuf0[0] += val;
@@ -11388,7 +11385,7 @@ static mus_float_t mus_outb_to_file(mus_any *ptr, mus_long_t samp, mus_float_t v
       if (samp < 0) return(val);
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
-	clear_floats(gen->obufs[j], clm_file_buffer_size);
+	mus_clear_floats(gen->obufs[j], clm_file_buffer_size);
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
       gen->obuf1[0] += val;
@@ -11558,7 +11555,7 @@ mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan,
       if (samp < 0) return(val);
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
-	clear_floats(gen->obufs[j], clm_file_buffer_size);
+	mus_clear_floats(gen->obufs[j], clm_file_buffer_size);
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
       gen->obufs[chan][0] += val;
@@ -11814,23 +11811,23 @@ static mus_any *locs_copy(mus_any *ptr)
   if (p->outn)
     {
       g->outn = (mus_float_t *)malloc(bytes);
-      copy_floats(g->outn, p->outn, g->chans);
+      mus_copy_floats(g->outn, p->outn, g->chans);
     }
   if (p->outf)
     {
       g->outf = (mus_float_t *)malloc(bytes);
-      copy_floats(g->outf, p->outf, g->chans);
+      mus_copy_floats(g->outf, p->outf, g->chans);
     }
   bytes = g->rev_chans * sizeof(mus_float_t);
   if (p->revn)
     {
       g->revn = (mus_float_t *)malloc(bytes);
-      copy_floats(g->revn, p->revn, g->rev_chans);
+      mus_copy_floats(g->revn, p->revn, g->rev_chans);
     }
   if (p->revf)
     {
       g->revf = (mus_float_t *)malloc(bytes);
-      copy_floats(g->revf, p->revf, g->rev_chans);
+      mus_copy_floats(g->revf, p->revf, g->rev_chans);
     }
   return((mus_any *)g);
 }
@@ -11859,8 +11856,8 @@ void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t
 static void locsig_reset(mus_any *ptr)
 {
   locs *gen = (locs *)ptr;
-  if (gen->outn) clear_floats(gen->outn, gen->chans);
-  if (gen->revn) clear_floats(gen->revn, gen->rev_chans);
+  if (gen->outn) mus_clear_floats(gen->outn, gen->chans);
+  if (gen->revn) mus_clear_floats(gen->revn, gen->rev_chans);
 }
 
 
@@ -12175,7 +12172,6 @@ static void mus_locsig_safe_mono(mus_any *ptr, mus_long_t loc, mus_float_t val)
   else mus_outa_to_file((mus_any *)writer, loc, val * gen->revn[0]);
 }
 
-
 static void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
@@ -12467,11 +12463,11 @@ void mus_move_locsig(mus_any *ptr, mus_float_t degree, mus_float_t distance)
   if (gen->rev_chans > 0)
     {
       if (gen->rev_chans > 2)
-	clear_floats(gen->revn, gen->rev_chans);
+	mus_clear_floats(gen->revn, gen->rev_chans);
       mus_locsig_fill(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
     }
   if (gen->chans > 2)
-    clear_floats(gen->outn, gen->chans);
+    mus_clear_floats(gen->outn, gen->chans);
   mus_locsig_fill(gen->outn, gen->chans, degree, dist, gen->type);
 }
 
@@ -12609,13 +12605,13 @@ static mus_any *dloc_copy(mus_any *ptr)
     {
       bytes = p->out_channels * sizeof(mus_float_t);
       g->outf = (mus_float_t *)malloc(bytes);
-      copy_floats(g->outf, p->outf, p->out_channels);
+      mus_copy_floats(g->outf, p->outf, p->out_channels);
     }
   if (p->revf)
     {
       bytes = p->rev_channels * sizeof(mus_float_t);
       g->revf = (mus_float_t *)malloc(bytes);
-      copy_floats(g->revf, p->revf, p->rev_channels);
+      mus_copy_floats(g->revf, p->revf, p->rev_channels);
     }
 
   g->free_arrays = true;
@@ -13001,13 +12997,13 @@ static mus_any *sr_copy(mus_any *ptr)
 
   bytes = (2 * g->lim + 1) * sizeof(mus_float_t);
   g->data = (mus_float_t *)malloc(bytes);
-  copy_floats(g->data, p->data, 2 * g->lim + 1);
+  mus_copy_floats(g->data, p->data, 2 * g->lim + 1);
   
   if (p->coeffs)
     {
       bytes = p->lim * sizeof(mus_float_t);
       g->coeffs = (mus_float_t *)malloc(bytes);
-      copy_floats(g->coeffs, p->coeffs, p->lim);
+      mus_copy_floats(g->coeffs, p->coeffs, p->lim);
     }
   return((mus_any *)g);
 }
@@ -13041,7 +13037,7 @@ static mus_float_t *src_sinc_table(mus_any *rd) {return(((sr *)rd)->sinc_table);
 static void src_reset(mus_any *ptr)
 {
   sr *gen = (sr *)ptr;
-  clear_floats(gen->data, gen->lim + 1);
+  mus_clear_floats(gen->data, gen->lim + 1);
   gen->x = 0.0;
   /* center the data if possible */
   if (gen->feeder)
@@ -13626,13 +13622,13 @@ static mus_any *grn_info_copy(mus_any *ptr)
 
   bytes = g->out_data_len * sizeof(mus_float_t);
   g->out_data = (mus_float_t *)malloc(bytes);
-  copy_floats(g->out_data, p->out_data, g->out_data_len);
+  mus_copy_floats(g->out_data, p->out_data, g->out_data_len);
 
   bytes = g->in_data_len * sizeof(mus_float_t);
   g->in_data = (mus_float_t *)malloc(bytes);
-  copy_floats(g->in_data, p->in_data, g->in_data_len);
+  mus_copy_floats(g->in_data, p->in_data, g->in_data_len);
   g->grain = (mus_float_t *)malloc(bytes);
-  copy_floats(g->grain, p->grain, g->in_data_len);
+  mus_copy_floats(g->grain, p->grain, g->in_data_len);
   
   return((mus_any *)g);
 }
@@ -13697,9 +13693,9 @@ static void grn_reset(mus_any *ptr)
   grn_info *gen = (grn_info *)ptr; 
   gen->cur_out = 0;
   gen->ctr = 0;
-  clear_floats(gen->out_data, gen->out_data_len);
-  clear_floats(gen->in_data, gen->in_data_len);
-  clear_floats(gen->grain, gen->in_data_len);
+  mus_clear_floats(gen->out_data, gen->out_data_len);
+  mus_clear_floats(gen->in_data, gen->in_data_len);
+  mus_clear_floats(gen->grain, gen->in_data_len);
   gen->first_samp = true;
 }
 
@@ -13847,7 +13843,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	  if (spd->cur_out >= spd->out_data_len)
 	    {
 	      /* entire buffer has been output, and in fact we've been sending 0's for awhile to fill out hop */
-	      clear_floats(spd->out_data, spd->out_data_len); /* so zero the entire thing (it's all old) */
+	      mus_clear_floats(spd->out_data, spd->out_data_len); /* so zero the entire thing (it's all old) */
 	    }
 	  else 
 	    {
@@ -13855,7 +13851,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	      int good_samps;
 	      good_samps = (spd->out_data_len - spd->cur_out);
 	      memmove((void *)(spd->out_data), (void *)(spd->out_data + spd->cur_out), good_samps * sizeof(mus_float_t));
-	      clear_floats(spd->out_data + good_samps, spd->cur_out); /* must be cur_out trailing samples to 0 */
+	      mus_clear_floats(spd->out_data + good_samps, spd->cur_out); /* must be cur_out trailing samples to 0 */
 	    }
 
 	  /* align input buffer */
@@ -13901,7 +13897,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	else
 	  {
 	    if (lim < spd->grain_len)
-	      clear_floats(spd->grain, spd->grain_len - lim);
+	      mus_clear_floats(spd->grain, spd->grain_len - lim);
 	  }
 	if (spd->rmp > 0)
 	  {
@@ -13929,7 +13925,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
 	  {
 	    /* ramp is 0.0, so just scale the input buffer by the current amp */
 	    if (spd->amp == 1.0)
-	      copy_floats(spd->grain, spd->in_data + curstart, lim);
+	      mus_copy_floats(spd->grain, spd->in_data + curstart, lim);
 	    else
 	      {
 		for (i = 0, j = curstart; i < lim; i++, j++)
@@ -14885,7 +14881,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	  }
 	else
 	  {
-	    copy_floats(window, rl, size);
+	    mus_copy_floats(window, rl, size);
 	  }
 
 	free(rl);
@@ -14955,7 +14951,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	  }
 	else
 	  {
-	    copy_floats(window, rl, size);
+	    mus_copy_floats(window, rl, size);
 	  }
 	free(rl);
 	free(im);
@@ -15013,7 +15009,7 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
       for (i = 0; i < n; i++) 
 	rdat[i] *= window[i];
     }
-  clear_floats(idat, n);
+  mus_clear_floats(idat, n);
   mus_fft(rdat, idat, n, 1);
 
   lowest = 0.000001;
@@ -15065,7 +15061,7 @@ mus_float_t *mus_autocorrelate(mus_float_t *data, mus_long_t n)
   mus_fft(data, im, n, 1);
   for (i = 0; i < n; i++)
     data[i] = data[i] * data[i] + im[i] * im[i];
-  clear_floats(im, n);
+  mus_clear_floats(im, n);
 
   mus_fft(data, im, n, -1);
   for (i = 0; i <= n2; i++) 
@@ -15124,7 +15120,7 @@ mus_float_t *mus_cepstrum(mus_float_t *data, mus_long_t n)
 
   rl = (mus_float_t *)malloc(n * sizeof(mus_float_t));
   im = (mus_float_t *)calloc(n, sizeof(mus_float_t));
-  copy_floats(rl, data, n);
+  mus_copy_floats(rl, data, n);
 
   mus_fft(rl, im, n, 1);
 
@@ -15135,7 +15131,7 @@ mus_float_t *mus_cepstrum(mus_float_t *data, mus_long_t n)
 	rl[i] = -10.0;
       else rl[i] = log(sqrt(rl[i]));
     }
-  clear_floats(im, n);
+  mus_clear_floats(im, n);
 
   mus_fft(rl, im, n, -1);
 
@@ -15243,11 +15239,11 @@ static mus_any *conv_copy(mus_any *ptr)
   memcpy((void *)g, (void *)ptr, sizeof(conv));
   bytes = g->fftsize * sizeof(mus_float_t);
   g->rl1 = (mus_float_t *)malloc(bytes);
-  copy_floats(g->rl1, p->rl1, g->fftsize);
+  mus_copy_floats(g->rl1, p->rl1, g->fftsize);
   g->rl2 = (mus_float_t *)malloc(bytes);
-  copy_floats(g->rl2, p->rl2, g->fftsize);
+  mus_copy_floats(g->rl2, p->rl2, g->fftsize);
   g->buf = (mus_float_t *)malloc(bytes);
-  copy_floats(g->buf, p->buf, g->fftsize);
+  mus_copy_floats(g->buf, p->buf, g->fftsize);
   return((mus_any *)g);
 }
 
@@ -15262,9 +15258,9 @@ static void convolve_reset(mus_any *ptr)
 {
   conv *gen = (conv *)ptr;
   gen->ctr = gen->fftsize2;
-  clear_floats(gen->rl1, gen->fftsize);
-  clear_floats(gen->rl2, gen->fftsize);
-  clear_floats(gen->buf, gen->fftsize);
+  mus_clear_floats(gen->rl1, gen->fftsize);
+  mus_clear_floats(gen->rl2, gen->fftsize);
+  mus_clear_floats(gen->buf, gen->fftsize);
 }
 
 
@@ -15303,12 +15299,12 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
       N = gen->fftsize2;
 
       if (input) {gen->feeder = input; gen->block_feeder = NULL;}
-      clear_floats(gen->rl2, N * 2);
-      copy_floats(gen->rl2, gen->filter, gen->filtersize);
+      mus_clear_floats(gen->rl2, N * 2);
+      mus_copy_floats(gen->rl2, gen->filter, gen->filtersize);
 
-      copy_floats(gen->buf, gen->buf + N, N);
-      clear_floats(gen->buf + N, N);
-      clear_floats(gen->rl1 + N, N);
+      mus_copy_floats(gen->buf, gen->buf + N, N);
+      mus_clear_floats(gen->buf + N, N);
+      mus_clear_floats(gen->rl1 + N, N);
 
       if (gen->block_feeder)
 	gen->block_feeder(gen->closure, 1, gen->rl1, 0, N);
@@ -15328,7 +15324,7 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
 	  gen->buf[i] += gen->rl1[i]; i++;
 	  gen->buf[i] += gen->rl1[i]; i++;
 	}
-      copy_floats(gen->buf + N, gen->rl1 + N, N);
+      mus_copy_floats(gen->buf + N, gen->rl1 + N, N);
       gen->ctr = 0;
     }
   result = gen->buf[gen->ctr];
@@ -15457,8 +15453,8 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
 	  c2++; 
 	  if (c2 >= file2_chans) c2 = 0;
 
-	  clear_floats(data1, fftlen);
-	  clear_floats(data2, fftlen);
+	  mus_clear_floats(data1, fftlen);
+	  mus_clear_floats(data2, fftlen);
 	}
 
       for (i = 0; i < totallen; i++) 
@@ -15569,26 +15565,26 @@ static mus_any *pv_info_copy(mus_any *ptr)
 
   bytes = p->N * sizeof(mus_float_t);
   g->freqs = (mus_float_t *)malloc(bytes);
-  copy_floats(g->freqs, p->freqs, p->N);
+  mus_copy_floats(g->freqs, p->freqs, p->N);
   g->ampinc = (mus_float_t *)malloc(bytes);
-  copy_floats(g->ampinc, p->ampinc, p->N);
+  mus_copy_floats(g->ampinc, p->ampinc, p->N);
   g->win = (mus_float_t *)malloc(bytes);
-  copy_floats(g->win, p->win, p->N);
+  mus_copy_floats(g->win, p->win, p->N);
   if (p->in_data)
     {
       g->in_data = (mus_float_t *)malloc(bytes);
-      copy_floats(g->in_data, p->in_data, p->N);
+      mus_copy_floats(g->in_data, p->in_data, p->N);
     }
 
   bytes = (p->N / 2) * sizeof(mus_float_t);
   g->amps = (mus_float_t *)malloc(bytes);
-  copy_floats(g->amps, p->amps, p->N / 2);
+  mus_copy_floats(g->amps, p->amps, p->N / 2);
   g->phases = (mus_float_t *)malloc(bytes);
-  copy_floats(g->phases, p->phases, p->N / 2);
+  mus_copy_floats(g->phases, p->phases, p->N / 2);
   g->lastphase = (mus_float_t *)malloc(bytes);
-  copy_floats(g->lastphase, p->lastphase, p->N / 2);
+  mus_copy_floats(g->lastphase, p->lastphase, p->N / 2);
   g->phaseinc = (mus_float_t *)malloc(bytes);
-  copy_floats(g->phaseinc, p->phaseinc, p->N / 2);
+  mus_copy_floats(g->phaseinc, p->phaseinc, p->N / 2);
 
 #if HAVE_SINCOS
   bytes = (p->N / 2) * sizeof(int);
@@ -15644,12 +15640,12 @@ static void pv_reset(mus_any *ptr)
   gen->in_data = NULL;
   gen->outctr = gen->interp;
   gen->filptr = 0;
-  clear_floats(gen->ampinc, gen->N);
-  clear_floats(gen->freqs, gen->N);
-  clear_floats(gen->amps, gen->N / 2);
-  clear_floats(gen->phases, gen->N / 2);
-  clear_floats(gen->lastphase, gen->N / 2);
-  clear_floats(gen->phaseinc, gen->N / 2);
+  mus_clear_floats(gen->ampinc, gen->N);
+  mus_clear_floats(gen->freqs, gen->N);
+  mus_clear_floats(gen->amps, gen->N / 2);
+  mus_clear_floats(gen->phases, gen->N / 2);
+  mus_clear_floats(gen->lastphase, gen->N / 2);
+  mus_clear_floats(gen->phaseinc, gen->N / 2);
 }
 
 
@@ -15732,7 +15728,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   if ((fftsize == pv_last_fftsize) && (pv_last_window))
     {
       pv->win = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
-      copy_floats(pv->win, pv_last_window, fftsize);
+      mus_copy_floats(pv->win, pv_last_window, fftsize);
     }
   else
     {
@@ -15745,7 +15741,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
       scl = 2.0 / (0.54 * (mus_float_t)fftsize);
       for (i = 0; i < fftsize; i++) 
 	pv->win[i] *= scl;
-      copy_floats(pv_last_window, pv->win, fftsize);
+      mus_copy_floats(pv_last_window, pv->win, fftsize);
     }
 
 #if HAVE_SINCOS
@@ -15791,7 +15787,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	  ((*pv_analyze)(pv->closure, pv->input)))
 	{
 	  int buf;
-	  clear_floats(pv->freqs, pv->N);
+	  mus_clear_floats(pv->freqs, pv->N);
 	  if (!pv->in_data)
 	    {
 	      pv->in_data = (mus_float_t *)malloc(pv->N * sizeof(mus_float_t));
@@ -16211,7 +16207,7 @@ static mus_any *ssbam_copy(mus_any *ptr)
 
   bytes = p->size * sizeof(mus_float_t);
   g->coeffs = (mus_float_t *)malloc(bytes);
-  copy_floats(g->coeffs, p->coeffs, p->size);
+  mus_copy_floats(g->coeffs, p->coeffs, p->size);
 
   return((mus_any *)g);
 }
@@ -16407,7 +16403,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
   if ((flen == ssb_am_last_flen) && (ssb_am_last_coeffs))
     {
       gen->coeffs = (mus_float_t *)malloc(flen * sizeof(mus_float_t));
-      copy_floats(gen->coeffs, ssb_am_last_coeffs, flen);
+      mus_copy_floats(gen->coeffs, ssb_am_last_coeffs, flen);
     }
   else
     {
@@ -16428,7 +16424,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
       if (ssb_am_last_coeffs) free(ssb_am_last_coeffs);
       ssb_am_last_flen = flen;
       ssb_am_last_coeffs = (mus_float_t *)malloc(flen * sizeof(mus_float_t));
-      copy_floats(ssb_am_last_coeffs, gen->coeffs, flen);
+      mus_copy_floats(ssb_am_last_coeffs, gen->coeffs, flen);
     }
 
   gen->hilbert = mus_make_fir_filter(flen, gen->coeffs, NULL);

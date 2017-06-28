@@ -1578,10 +1578,10 @@ static int fill_dac_buffers(int write_ok)
   framples = snd_dacp->framples;
   /* clear buffers */
   for (i = 0; i < snd_dacp->channels; i++) 
-    clear_floats(dac_buffers[i], framples);
+    mus_clear_floats(dac_buffers[i], framples);
   if (global_rev)
     for (i = 0; i < snd_dacp->channels; i++) 
-      clear_floats(rev_ins[i], framples);
+      mus_clear_floats(rev_ins[i], framples);
 
   if (dac_pausing) 
     cursor_change = false;

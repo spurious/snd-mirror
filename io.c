@@ -1094,9 +1094,9 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	      buffer = (mus_float_t *)(bufs[0]);
 	      if (buffer)
 		{
-		  copy_floats(buffer, fd->saved_data[0] + beg, lim);
+		  mus_copy_floats(buffer, fd->saved_data[0] + beg, lim);
 		  if (lim < nints)
-		    clear_floats(buffer + lim, nints - lim);
+		    mus_clear_floats(buffer + lim, nints - lim);
 		}
 	    }
 	  else
@@ -1107,9 +1107,9 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		    buffer = (mus_float_t *)(bufs[k]);
 		    if (buffer)
 		      {
-			copy_floats(buffer, fd->saved_data[k] + beg, lim);
+			mus_copy_floats(buffer, fd->saved_data[k] + beg, lim);
 			if (lim < nints)
-			  clear_floats(buffer + lim, nints - lim);
+			  mus_clear_floats(buffer + lim, nints - lim);
 		      }
 		  }
 	    }
@@ -1171,7 +1171,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		    {
 		      mus_float_t *p;
 		      p = bufs[k];
-		      clear_floats(p + loc, nints - loc);
+		      mus_clear_floats(p + loc, nints - loc);
 		    }
 	      return(total_read);
 	    }
@@ -1726,7 +1726,7 @@ mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t num, int chans, mus
 	  buffer = bufs[k];
 	  /* this happens routinely in mus_outa + initial write (reads ahead in effect) */
 	  /* fprintf(stderr, "clear from %lld for %lld\n", rtn, num-rtn); */
-	  clear_floats(buffer + rtn, num - rtn);
+	  mus_clear_floats(buffer + rtn, num - rtn);
 	}
     }
   return(num);
@@ -1749,7 +1749,7 @@ mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t num, int chan
 	  {
 	    mus_float_t *buffer;
 	    buffer = bufs[k];
-	    clear_floats(buffer + rtn, num - rtn);
+	    mus_clear_floats(buffer + rtn, num - rtn);
 	  }
     }
 

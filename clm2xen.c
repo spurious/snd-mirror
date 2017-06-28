@@ -167,13 +167,13 @@ static Xen clm_mus_error(int type, const char *msg, const char *caller)
 
 
 #if HAVE_SCHEME
-static s7_pointer mus_error_symbol, clm_error_info;
+static s7_pointer mus_error_symbol, clm_error_info, clm_err1, clm_err2, clm_err3;
 #define CLM_ERROR mus_error_symbol
 static void clm_error(const char *caller, const char *msg, Xen val)
 {
-  s7_list_set(s7, clm_error_info, 1, s7_make_string(s7, caller));
-  s7_list_set(s7, clm_error_info, 2, s7_make_string(s7, msg));
-  s7_list_set(s7, clm_error_info, 3, val);
+  s7_set_car(clm_err1, s7_make_string_wrapper(s7, caller));
+  s7_set_car(clm_err2, s7_make_string_wrapper(s7, msg));
+  s7_set_car(clm_err3, val);
   s7_error(s7, mus_error_symbol, clm_error_info);
 }
 #else
@@ -227,9 +227,9 @@ int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, i
 	  if (arg_ctr >= nkeys) /* we aren't handling a keyword arg, so the underlying args should only take nkeys args */
 #if HAVE_SCHEME
 	    {
-	      s7_list_set(s7, clm_error_info, 1, s7_make_string(s7, caller));
-	      s7_list_set(s7, clm_error_info, 2, extra_args_string);
-	      s7_list_set(s7, clm_error_info, 3, key);
+	      s7_set_car(clm_err1, s7_make_string_wrapper(s7, caller));
+	      s7_set_car(clm_err2, extra_args_string);
+	      s7_set_car(clm_err3, key);
 	      s7_error(s7, mus_error_symbol, clm_error_info);
 	    }
 #else
@@ -2757,7 +2757,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	  for (i = 0; i < max_size; i++) 
 	    line[i] = initial_element;
 	}
-      else clear_floats(line, max_size);
+      else mus_clear_floats(line, max_size);
     }
   else
     {
@@ -2985,7 +2985,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, const char *caller, Xen argli
 	    line[i] = initial_element;
 	  sum = initial_element * size;
 	}
-      else clear_floats(line, size);
+      else mus_clear_floats(line, size);
     }
   else
     {
@@ -9919,6 +9919,9 @@ static void init_choosers(s7_scheme *sc)
   sym_feedforward = s7_make_symbol(sc, S_mus_feedforward);
   sym_feedback = s7_make_symbol(sc, S_mus_feedback);
 
+  mus_copy_symbol = s7_make_symbol(sc, "mus-copy");
+  copy_function = s7_name_to_value(sc, "copy");
+
 #if (!WITH_GMP)
   s7_set_d_function(s7_name_to_value(sc, S_mus_srate), mus_srate);
   s7_set_d_function(s7_name_to_value(sc, S_mus_float_equal_fudge_factor), mus_float_equal_fudge_factor);
@@ -10611,6 +10614,9 @@ static void mus_xen_init(void)
   mus_error_symbol = s7_make_symbol(s7, "mus-error");
   clm_error_info = s7_list(s7, 4, s7_make_string(s7, "~A: ~A ~A"), s7_nil(s7), s7_nil(s7), s7_nil(s7));
   s7_gc_protect(s7, clm_error_info);
+  clm_err1 = s7_cdr(clm_error_info);
+  clm_err2 = s7_cddr(clm_error_info);
+  clm_err3 = s7_cdddr(clm_error_info);
 
   extra_args_string = s7_make_string(s7, "extra trailing args?");
   s7_gc_protect(s7, extra_args_string);

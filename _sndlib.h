@@ -21,29 +21,6 @@
 
 #define is_power_of_2(x)	((((x) - 1) & (x)) == 0)
 
-#if 0
-#define clear_floats(Arr, Len) memset((void *)(Arr), 0, (Len) * sizeof(mus_float_t))
-#define copy_floats(Dst, Src, Len) memcpy((void *)(Dst), (void *)(Src), (Len) * sizeof(mus_float_t))
-#else
-#define clear_floats(Arr, Len)			\
-  do {						\
-    mus_long_t K;				\
-    mus_float_t *dst;				\
-    dst = Arr;				\
-    for (K = Len; K > 0; K--)		\
-      *dst++ = 0.0;			\
-  } while (0)
-#define copy_floats(Dst, Src, Len)		\
-  do {						\
-    mus_long_t K;				\
-    mus_float_t *dst, *src;			\
-    dst = Dst;					\
-    src = Src;					\
-    for (K = Len; K > 0; K--)			\
-      *dst++ = *src++;				\
-    } while (0)
-#endif
-
 #define MUS_MAX_MALLOC_DEFAULT (1 << 26)
 #define MUS_MAX_TABLE_SIZE_DEFAULT (1024 * 1024 * 20) /* delay line allocation etc */
 
