@@ -180,6 +180,12 @@ void mus_add_floats(mus_float_t *dst, mus_float_t *src, mus_long_t len)
   mus_long_t k;
   for (k = 0; k < len; k++) dst[k] += src[k];
 }
+
+void mus_abs_floats(mus_float_t *dst, mus_long_t len)
+{
+  mus_long_t k;
+  for (k = 0; k < len; k++) dst[k] = fabs(dst[k]);
+}
 #endif
 
 
@@ -735,7 +741,7 @@ static Xen g_vct_subtract(Xen obj1, Xen obj2)
 static Xen g_vct_abs(Xen obj)
 {
   #define H_vct_absB "(" S_vct_abs " v): v[i] = abs(v[i]), return v."
-  mus_long_t i, lim;
+  mus_long_t lim;
   vct *v;
   mus_float_t *d;
 
@@ -744,7 +750,7 @@ static Xen g_vct_abs(Xen obj)
   v = Xen_to_vct(obj);
   d = mus_vct_data(v);
   lim = mus_vct_length(v);
-  for (i = 0; i < lim; i++) d[i] = fabs(d[i]);
+  mus_abs_floats(d, lim);
   return(obj);
 }
 
@@ -845,6 +851,7 @@ static Xen g_vct_offset(Xen obj1, Xen obj2)
   vct *v1;
   mus_float_t scl;
   mus_float_t *d;
+  mus_long_t len;
 
   Xen_check_type(mus_is_vct(obj1), obj1, 1, S_vct_offset, A_VCT);
   Xen_check_type(Xen_is_number(obj2), obj2, 2, S_vct_offset, "a number");
@@ -852,12 +859,13 @@ static Xen g_vct_offset(Xen obj1, Xen obj2)
   v1 = Xen_to_vct(obj1);
   if (mus_vct_length(v1) == 0) return(obj1);
   d = mus_vct_data(v1);
+  len = mus_vct_length(v1);
 
   scl = Xen_real_to_C_double(obj2);
   if (scl != 0.0)
     {
       mus_long_t i;
-      for (i = 0; i < mus_vct_length(v1); i++) 
+      for (i = 0; i < len; i++) 
 	d[i] += scl;
     }
   return(obj1);
@@ -923,7 +931,7 @@ index0 and index1 interpolating between x2 and x1 by incrementing x0 by dx"
 static Xen g_vct_fill(Xen obj1, Xen obj2)
 {
   #define H_vct_fillB "(" S_vct_fill " v val): set each element of v to val: v[i] = val, returns v"
-  mus_long_t i; /* unsigned int is much slower */
+  mus_long_t i, len; /* unsigned int is much slower */
   vct *v1;
   mus_float_t scl;
   mus_float_t *d;
@@ -932,16 +940,17 @@ static Xen g_vct_fill(Xen obj1, Xen obj2)
   Xen_check_type(Xen_is_number(obj2), obj2, 2, S_vct_fill, "a number");
 
   v1 = Xen_to_vct(obj1);
-  if (mus_vct_length(v1) == 0) return(obj1);
+  len = mus_vct_length(v1);
+  if (len == 0) return(obj1);
   d = mus_vct_data(v1);
 
   scl = Xen_real_to_C_double(obj2);
   if (scl == 0.0)
-    mus_clear_floats(d, mus_vct_length(v1));
+    mus_clear_floats(d, len);
   else 
     {
       mus_long_t lim8;
-      lim8 = mus_vct_length(v1) - 8;
+      lim8 = len - 8;
       i = 0;
       while (i <= lim8)
 	{
@@ -954,7 +963,7 @@ static Xen g_vct_fill(Xen obj1, Xen obj2)
 	  d[i++] = scl;
 	  d[i++] = scl;
 	}
-      for (; i < mus_vct_length(v1); i++) 
+      for (; i < len; i++) 
 	d[i] = scl;
     }
   return(obj1);
@@ -963,35 +972,16 @@ static Xen g_vct_fill(Xen obj1, Xen obj2)
 
 double mus_vct_peak(vct *v)
 {
-  mus_float_t val = 0.0, absv;
+  mus_float_t val = 0.0;
   mus_float_t *d;
-  mus_long_t i, lim4, len;
+  mus_long_t i, len;
 
   len = mus_vct_length(v);
-
   if (len == 0) return(0.0);
-  lim4 = len - 4;
-  i = 1;
   d = mus_vct_data(v);
-  val = fabs(d[0]);
 
-  while (i <= lim4)
-    {
-      absv = fabs(d[i++]);
-      if (absv > val) val = absv;
-      absv = fabs(d[i++]);
-      if (absv > val) val = absv;
-      absv = fabs(d[i++]);
-      if (absv > val) val = absv;
-      absv = fabs(d[i++]);
-      if (absv > val) val = absv;
-    }
-
-  for (; i < len; i++)
-    {
-      absv = fabs(d[i]);
-      if (absv > val) val = absv;
-    }
+  for (i = 0; i < len; i++)
+    val = (fabs(d[i]) > val) ? fabs(d[i]) : val;
   return(val);
 }
 
@@ -1010,19 +1000,21 @@ Xen g_vct_peak(Xen obj)
 #define S_vct_peak_and_location "vct-peak-and-location"
 #endif
 
+
 static Xen g_vct_peak_and_location(Xen obj)
 {
   #define H_vct_peak_and_location "(" S_vct_peak_and_location " v): max of abs of elements of v and its position in v"
   mus_float_t val = 0.0;
-  mus_long_t i, loc = 0;
+  mus_long_t i, loc = 0, len;
   vct *v;
   mus_float_t *d;
 
   Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_peak_and_location, "a " S_vct);
   v = Xen_to_vct(obj);
   d = mus_vct_data(v);
+  len = mus_vct_length(v);
 
-  for (i = 0; i < mus_vct_length(v); i++)
+  for (i = 0; i < len; i++)
     {
       mus_float_t absv;
       absv = fabs(d[i]);

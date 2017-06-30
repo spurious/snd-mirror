@@ -15,8 +15,9 @@ extern "C" {
 MUS_EXPORT void mus_clear_floats(mus_float_t *arr, mus_long_t len) __attribute__ ((optimize("tree-vectorize")));
 MUS_EXPORT void mus_copy_floats(mus_float_t *dst, mus_float_t *src, mus_long_t len) __attribute__ ((optimize("tree-vectorize")));
 MUS_EXPORT void mus_add_floats(mus_float_t *dst, mus_float_t *src, mus_long_t len) __attribute__ ((optimize("tree-vectorize")));
+MUS_EXPORT void mus_abs_floats(mus_float_t *dst, mus_long_t len) __attribute__ ((optimize("tree-vectorize")));
 #else
-#define mus_clear_floats(Arr, Len)			\
+#define mus_clear_floats(Arr, Len)		\
   do {						\
     mus_long_t K;				\
     mus_float_t *dst;				\
@@ -41,6 +42,14 @@ MUS_EXPORT void mus_add_floats(mus_float_t *dst, mus_float_t *src, mus_long_t le
     src = Src;					\
     for (K = Len; K > 0; K--)			\
       *dst++ += *src++;				\
+    } while (0)
+#define mus_abs_floats(Dst, Len)		\
+  do {						\
+    mus_long_t K;				\
+    mus_float_t *dst;				\
+    dst = Dst;					\
+    for (K = Len; K > 0; K--)			\
+      dst[K] = fabs(dst[K]);			\
     } while (0)
 #endif
 

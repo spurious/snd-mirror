@@ -3472,8 +3472,8 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 
   body = s7_closure_body(s7, proc);
   if ((s7_is_pair(body)) &&
-      (s7_is_pair(s7_closure_args(s7, proc))) &&
-      (!s7_tree_memq(s7, s7_make_symbol(s7, "set!"), body)))
+      (s7_is_pair(s7_closure_args(s7, proc))))
+    /* (!s7_tree_memq(s7, s7_make_symbol(s7, "set!"), body))) why this? */
     {
       s7_pointer arg;
       if (s7_is_null(s7, s7_cdr(body)))
@@ -3546,7 +3546,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      free_snd_fd(sf);
 	      return(res);
 	    }
-
+	  /* I suppose if the body is (sin y) or the like, we could use tree-vectorize: mus_sin_floats in vct.c */
 	  {
 	    /* try s7_float_optimize */
 	    s7_pointer e, yp, old_e;
@@ -3600,7 +3600,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
     }
   else
     {
-      /* presumably "proc" is something like abs */
       arg_list = Xen_list_1(Xen_false);
       gc_loc = s7_gc_protect(s7, arg_list);
       use_apply = true;
@@ -3875,8 +3874,8 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 
   body = s7_closure_body(s7, proc);
   if ((s7_is_pair(body)) &&
-      (s7_is_pair(s7_closure_args(s7, proc))) &&
-      (!s7_tree_memq(s7, s7_make_symbol(s7, "set!"), body)))
+      (s7_is_pair(s7_closure_args(s7, proc))))
+      /* (!s7_tree_memq(s7, s7_make_symbol(s7, "set!"), body))) */
     {
       s7_pointer arg, expr;
 
@@ -3942,9 +3941,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
       use_apply = false;
 
       if (s7_is_null(s7, s7_cdr(body)))
-	{
-	  body = s7_car(body);
-	}
+	body = s7_car(body);
       else
 	{
 	  body = s7_cons(s7, s7_make_symbol(s7, "begin"), body);
@@ -5987,7 +5984,7 @@ static mus_float_t saved_min(int ch, int nn)
 static mus_float_t get_peak(int choice, int fft_size, int n, mus_float_t *phases, mus_float_t *rl, mus_float_t *im)
 {
   int i, m;
-  mus_float_t pi2, mx_sin, mx_cos;
+  mus_float_t pi2, mx_sin;
   
   pi2 = M_PI / 2.0;
   mus_clear_floats(rl, fft_size);
@@ -6019,51 +6016,17 @@ static mus_float_t get_peak(int choice, int fft_size, int n, mus_float_t *phases
     }
   
   mus_fft(rl, im, fft_size, -1);
-  /* real part is sine reconstruction, imaginary part is cosine, we're interested in both! */
+  /* real part is sine reconstruction, imaginary part is cosine, we were originally interested in both */
   /*   we could also add and subtract the 2 to get 2 more cases "for free", amp sqrt(2), phase asin(cos(0)/sqrt(2)) */
   /*   and repeat this with a shift (rotation from i) for 2n other cases */
   /*   resultant amp is between 0 and 2 (cosine) */
   
-  mx_sin = fabs(rl[0]);
-  mx_cos = fabs(im[0]);
+  mus_abs_floats(rl, fft_size);
+  mx_sin = rl[0];
   for (i = 1; i < fft_size; i++)
-    {
-      mus_float_t mxtemp;
-      mxtemp = fabs(rl[i]);
-      if (mxtemp > mx_sin)
-	mx_sin = mxtemp;
-      mxtemp = fabs(im[i]);
-      if (mxtemp > mx_cos)
-	mx_cos = mxtemp;
-    }
-  
-  if (mx_sin <= mx_cos)
-    return(mx_sin);
-  
-  /* use the cosine case, but make it sine-based with 0.0 initial phase for the fundamental */
-  for (m = 1; m < n; m++)
-    {
-      int bin;
-      if (choice == ALL)
-	bin = m + 1;
-      else
-	{
-	  if (choice == ODD)
-	    bin = (m * 2) + 1;
-	  else 
-	    {
-	      if (choice == EVEN)
-		{
-		  bin = m * 2;
-		  if (bin == 0) bin = 1;
-		}
-	      else bin = primes[m];
-	    }
-	}
-      phases[m] += (0.5 * (bin - 1));
-    }
-  
-  return(mx_cos);
+    mx_sin = (rl[i] > mx_sin) ? rl[i] : mx_sin;
+
+  return(mx_sin);
 }
   
 

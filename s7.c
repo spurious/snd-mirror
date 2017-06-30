@@ -133,7 +133,14 @@
  * -march=native -fomit-frame-pointer -m64 -funroll-loops gains about .1%
  * -ffast-math makes a mess of NaNs, and does not appear to be faster
  * for timing tests, I use: -O2 -DINITIAL_HEAP_SIZE=1024000 -march=native -fomit-frame-pointer -funroll-loops
+ * according to callgrind, clang is normally about 10% slower than gcc, and vectorization either doesn't work or is much worse than gcc's
  */
+
+#if (defined(__GNUC__) || defined(__clang__))
+  #define WITH_GCC 1
+#else
+  #define WITH_GCC 0
+#endif
 
 
 /* ---------------- initial sizes ---------------- */
@@ -217,7 +224,7 @@
 #endif
 
 #ifndef WITH_C_LOADER
-  #if (defined(__GNUC__) || defined(__clang__))
+  #if WITH_GCC
     #define WITH_C_LOADER 1
   /* (load file.so [e]) looks for (e 'init_func) and if found, calls it
    *   as the shared object init function.  If WITH_SYSTEM_EXTRAS is 0, the caller
@@ -241,12 +248,6 @@
 #ifndef WITH_PROFILE
   #define WITH_PROFILE 0
   /* this includes profiling data collection accessible from scheme via the hash-table (*s7* 'profile-info) */
-#endif
-
-#if (defined(__GNUC__) || defined(__clang__))
-  #define WITH_GCC 1
-#else
-  #define WITH_GCC 0
 #endif
 
 /* in case mus-config.h forgets these */
@@ -3175,7 +3176,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
 
       OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, OP_GOTO_A, HOP_GOTO_A,
       OP_ITERATE, HOP_ITERATE,
-      OP_VECTOR_A, HOP_VECTOR_A, OP_STRING_A, HOP_STRING_A,
+      OP_VECTOR_A, HOP_VECTOR_A, OP_CVECTOR_A, HOP_CVECTOR_A, 
+      OP_STRING_A, HOP_STRING_A,
       OP_C_OBJECT_A, HOP_C_OBJECT_A, OP_PAIR_A, HOP_PAIR_A, OP_HASH_TABLE_A, HOP_HASH_TABLE_A,
       OP_ENVIRONMENT_Q, HOP_ENVIRONMENT_Q, OP_ENVIRONMENT_A, HOP_ENVIRONMENT_A,
 
@@ -3390,7 +3392,8 @@ static const char* opt_names[OPT_MAX_DEFINED] =
 
       "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", "goto_a", "h_goto_a",
       "iterate", "h_iterate",
-      "vector_a", "h_vector_a", "string_a", "h_string_a",
+      "vector_a", "h_vector_a", "cvector_a", "h_cvector_a", 
+      "string_a", "h_string_a",
       "c_object_a", "h_c_object_a", "pair_a", "h_pair_a", "hash_table_a", "h_hash_table_a",
       "environment_q", "h_environment_q", "environment_a", "h_environment_a",
 
@@ -5822,13 +5825,13 @@ static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
    *    (for-each-symbol (lambda (sym) (gensym) 1))
    */
 
-  for (i = 0; i < vector_length(sc->symbol_table); i++)
+  for (i = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       syms++;
   sc->w = make_vector_1(sc, syms, NOT_FILLED, T_VECTOR);
   els = vector_elements(sc->w);
 
-  for (i = 0, j = 0; i < vector_length(sc->symbol_table); i++)
+  for (i = 0, j = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       els[j++] = car(x);
 
@@ -5844,7 +5847,7 @@ bool s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
   int i;
   s7_pointer x;
 
-  for (i = 0; i < vector_length(sc->symbol_table); i++)
+  for (i = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       if (symbol_func(symbol_name(car(x)), data))
 	return(true);
@@ -5864,7 +5867,7 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
   int i;
   s7_pointer x;
 
-  for (i = 0; i < vector_length(sc->symbol_table); i++)
+  for (i = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       if (symbol_func(symbol_name(car(x)), cdr(x), data))
 	return(true);
@@ -6597,10 +6600,11 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       vector_element(ge, sc->rootlet_entries++) = slot;
       if (sc->rootlet_entries >= vector_length(ge))
 	{
-	  int i;
+	  int i, len;
 	  vector_length(ge) *= 2;
-	  vector_elements(ge) = (s7_pointer *)realloc(vector_elements(ge), vector_length(ge) * sizeof(s7_pointer));
-	  for (i = sc->rootlet_entries; i < vector_length(ge); i++)
+	  len = vector_length(ge);
+	  vector_elements(ge) = (s7_pointer *)realloc(vector_elements(ge), len * sizeof(s7_pointer));
+	  for (i = sc->rootlet_entries; i < len; i++)
 	    vector_element(ge, i) = sc->nil;
 	}
       set_global_slot(symbol, slot);
@@ -6670,7 +6674,7 @@ static void save_unlet(s7_scheme *sc)
   s7_vector_fill(sc, sc->unlet, sc->nil);
   unheap(sc->unlet);
 
-  for (i = 0; i < vector_length(sc->symbol_table); i++)
+  for (i = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       {
 	s7_pointer sym;
@@ -35025,8 +35029,12 @@ static s7_pointer g_float_multivector(s7_scheme *sc, s7_int dims, s7_pointer dat
   return(s7_copy(sc, set_plist_2(sc, sc->value, sc->args)));
 }
 
-
+#if WITH_VECTORIZE
+static s7_pointer s7_vector_copy_1(s7_scheme *sc, s7_pointer old_vect) __attribute__((optimize("tree-vectorize")));
+static s7_pointer s7_vector_copy_1(s7_scheme *sc, s7_pointer old_vect)
+#else
 s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
+#endif
 {
   s7_int i, len;
   s7_pointer new_vect;
@@ -35073,6 +35081,9 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
   return(new_vect);
 }
 
+#if WITH_VECTORIZE
+s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect) {return(s7_vector_copy_1(sc, old_vect));}
+#endif
 
 static s7_pointer univect_ref(s7_scheme *sc, s7_pointer args, bool flt)
 {
@@ -43296,7 +43307,7 @@ static s7_pointer read_error_1(s7_scheme *sc, const char *errmsg, bool string_er
       if (is_string_port(sc->input_port))
 	{
           #define QUOTE_SIZE 40
-	  unsigned int i, j, start = 0, end, slen;
+	  unsigned int i, j, start = 0, end, slen, size;
 	  char *recent_input = NULL;
 
 	  /* we can run off the end in cases like (eval-string "(. . ,.)") or (eval-string " (@ . ,.)") */
@@ -43312,7 +43323,8 @@ static s7_pointer read_error_1(s7_scheme *sc, const char *errmsg, bool string_er
 	  start = i;
 
 	  /* start at current position and look ahead a few chars */
-	  for (i = port_position(pt), j = 0; (i < port_data_size(pt)) && (j < QUOTE_SIZE); i++, j++)
+	  size = port_data_size(pt);
+	  for (i = port_position(pt), j = 0; (i < size) && (j < QUOTE_SIZE); i++, j++)
 	    if ((port_data(pt)[i] == '\0') ||
 		(port_data(pt)[i] == '\n') ||
 		(port_data(pt)[i] == '\r'))
@@ -43521,12 +43533,13 @@ static char *current_input_string(s7_scheme *sc, s7_pointer pt)
     {
       const unsigned char *str;
       char *msg;
-      int i, j, start;
-      start = (int)port_position(pt) - 40;
+      int i, j, start, pos;
+      pos = (int)port_position(pt);
+      start = pos - 40;
       if (start < 0) start = 0;
       msg = (char *)malloc(64 * sizeof(char));
       str = (const unsigned char *)port_data(pt);
-      for (i = start, j = 0; i < (int)port_position(pt); i++, j++)
+      for (i = start, j = 0; i < pos; i++, j++)
 	msg[j] = str[i];
       msg[j] = '\0';
       return(msg);
@@ -44532,6 +44545,14 @@ static s7_pointer all_x_c_sss(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->t3_1));
 }
 
+static s7_pointer local_x_c_sss(s7_scheme *sc, s7_pointer arg)
+{
+  set_car(sc->t3_1, local_symbol_value(cadr(arg)));
+  set_car(sc->t3_2, local_symbol_value(caddr(arg)));
+  set_car(sc->t3_3, local_symbol_value(cadddr(arg)));
+  return(c_call(arg)(sc, sc->t3_1));
+}
+
 static s7_pointer all_x_c_scs(s7_scheme *sc, s7_pointer arg)
 {
   set_car(sc->t3_1, find_symbol_unchecked(sc, cadr(arg)));
@@ -45485,7 +45506,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	    case HOP_SAFE_C_S:
 	      {
 		bool is_local;
-		is_local = is_local_symbol(cdr(arg));
+		is_local = (is_local_symbol(cdr(arg)) || (is_immutable(cadr(arg))));
 		if (car(arg) == sc->cdr_symbol) return((is_local) ? local_x_cdr_s : all_x_cdr_s);
 		if (car(arg) == sc->car_symbol) return((is_local) ? local_x_car_s : all_x_car_s);
 		if (car(arg) == sc->cadr_symbol) return((is_local) ? local_x_cadr_s : all_x_cadr_s);
@@ -45532,6 +45553,13 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	      if (is_local_symbol(cdr(arg)))
 		return(all_x_c_ls);
 	      return(all_x_c_ss);
+	      
+	    case HOP_SAFE_C_SSS:
+	      if ((is_local_symbol(cdr(arg))) &&
+		  (is_local_symbol(cddr(arg))) &&
+		  (is_local_symbol(cdddr(arg))))
+		return(local_x_c_sss);
+	      return(all_x_c_sss);
 	      
 	    case HOP_SAFE_C_opSSq:
 	      if (car(arg) == sc->not_symbol)
@@ -47507,6 +47535,14 @@ static s7_double opt_d_dd_fff(void *p)
   return(o->v3.d_dd_f(x1, x2));
 }
 
+static s7_double opt_d_dd_ff_o4(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  s7_double x1;
+  x1 = o->v2.d_v_f(o->v1.obj);
+  return(o->v3.d_dd_f(x1, o->v8.d_vd_f(o->v5.obj, o->v4.d_v_f(o->v6.obj))));
+}
+
 static bool d_dd_ff_combinable(s7_scheme *sc, int start)
 {
   opt_info *opc, *o1;
@@ -47519,7 +47555,6 @@ static bool d_dd_ff_combinable(s7_scheme *sc, int start)
       if ((o2->v7.fd == opt_d_v) &&
 	  (sc->pc == start + 2))
 	{
-	  opc->v6.p = o1->v1.p;
 	  opc->v1.obj = o1->v5.obj;
 	  opc->v4.d_v_f = o1->v3.d_v_f;
 	  opc->v2.obj = o2->v5.obj;
@@ -47543,10 +47578,24 @@ static bool d_dd_ff_combinable(s7_scheme *sc, int start)
 	    }
 	  else 
 	    {
-	      opc->v5.p = o1->v1.p;
-	      opc->v1.obj = o1->v5.obj;
-	      opc->v2.d_v_f = o1->v3.d_v_f;
-	      opc->v7.fd = opt_d_dd_ff_o1;
+	      if ((o2->v7.fd == opt_d_vd_o) &&
+		  (sc->pc == start + 2))
+		{
+		  opc->v1.obj = o1->v5.obj;
+		  opc->v2.d_v_f = o1->v3.d_v_f;
+		  opc->v8.d_vd_f = o2->v3.d_vd_f;
+		  opc->v4.d_v_f = o2->v4.d_v_f;
+		  opc->v5.obj = o2->v5.obj;
+		  opc->v6.obj = o2->v6.obj;
+		  opc->v7.fd = opt_d_dd_ff_o4;
+		  sc->pc -= 2;
+		}
+	      else
+		{
+		  opc->v1.obj = o1->v5.obj;
+		  opc->v2.d_v_f = o1->v3.d_v_f;
+		  opc->v7.fd = opt_d_dd_ff_o1;
+		}
 	    }
 	}
       return(true);
@@ -57631,7 +57680,11 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
   if ((s7_is_vector(func)) &&
       (is_all_x_safe(sc, arg1)))
     {
-      set_unsafe_optimize_op(expr, hop + OP_VECTOR_A);
+      if ((is_immutable_symbol(car(expr))) &&
+	  (vector_rank(func) == 1) &&
+	  (is_normal_vector(func)))
+	set_unsafe_optimize_op(expr, hop + OP_CVECTOR_A);
+      else set_unsafe_optimize_op(expr, hop + OP_VECTOR_A);
       annotate_arg(sc, cdr(expr), e);
       set_arglist_length(expr, small_int(1));
       return(OPT_T);
@@ -58195,6 +58248,8 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
       if (closure_arity_to_int(sc, func) != 2)
 	return(OPT_F);
       if (is_immutable(func)) hop = 1;
+
+      /* safe_closures with 1-expr c_c h-optimized body with hop=1 happen only in tgen (and not enough there to warrant any effort) */
 
       if ((pairs == 0) &&
 	  (symbols >= 1))
@@ -61097,9 +61152,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	      add_symbol_to_list(sc, caar(p));
 	    }
 	}
-      /* TODO: also if car(expr) is optimized safe_c_func/safe_closure?, symbol_id==0, in trailers, -- use has_all_x in eval etc 
-       *   also (f 0) where f is known sequence?
-       */
+      /* most optimized cases here not caught via all_x* are safe_closure calls etc */
     }
   return(sc->code);
 }
@@ -65776,6 +65829,28 @@ static int vector_a_ex(s7_scheme *sc)
 	}
     }
   sc->value = vector_ref_1(sc, v, cons(sc, x, sc->nil));
+  return(goto_START);
+}
+
+static int cvector_a_ex(s7_scheme *sc)
+{
+  s7_pointer v, x, code;
+
+  code = sc->code;
+  v = local_symbol_value(car(code));
+  x = c_call(cdr(code))(sc, cadr(code));
+  if (s7_is_integer(x))
+    {
+      s7_int index;
+      index = s7_integer(x);
+      if ((index < vector_length(v)) &&
+	  (index >= 0))
+	{
+	  sc->value = vector_element(v, index);
+	  return(goto_START);
+	}
+    }
+  sc->value = vector_ref_1(sc, v, set_plist_1(sc, x));
   return(goto_START);
 }
 
@@ -70683,6 +70758,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_VECTOR_A:
 		case HOP_VECTOR_A:
 		  if (vector_a_ex(sc) == goto_START) goto START;
+		  if (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL;
+		  break;
+
+		case OP_CVECTOR_A:
+		case HOP_CVECTOR_A:
+		  if (cvector_a_ex(sc) == goto_START) goto START;
 		  if (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL;
 		  break;
 
@@ -78895,7 +78976,7 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
   }
   fprintf(stderr, "permanent cells: %d (%" LL_D " bytes)\n", permanent_cells, (s7_int)(permanent_cells * sizeof(s7_cell)));
 
-  for (i = 0; i < vector_length(sc->symbol_table); i++)
+  for (i = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       syms++;
   fprintf(stderr, "symbol table: %d (%d symbols, %" LL_D " bytes)\n", SYMBOL_TABLE_SIZE, syms, 
@@ -79293,7 +79374,7 @@ static bool is_decodable(s7_scheme *sc, s7_pointer p)
     return(true);
 
   /* check symbol-table */
-  for (i = 0; i < vector_length(sc->symbol_table); i++)
+  for (i = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       {
 	s7_pointer sym;
@@ -79663,9 +79744,12 @@ s7_scheme *s7_init(void)
       string_temp_true_length(p) = INITIAL_TMP_STR_SIZE;
     }
 
-  sc->opts[0] = (opt_info *)calloc(1, sizeof(opt_info));
-  for (i = 1; i < OPTS_SIZE; i++)
-    sc->opts[i] = (opt_info *)calloc(1, sizeof(opt_info));
+  {
+    opt_info *os;
+    os = (opt_info *)calloc(OPTS_SIZE, sizeof(opt_info));
+    for (i = 0; i < OPTS_SIZE; i++)
+      sc->opts[i] = &os[i];
+  }
   sc->funcalls = 0;
   sc->unwraps = 0;
       
@@ -81458,8 +81542,6 @@ int main(int argc, char **argv)
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * ruby version crashes in test 4|8 -- file_copy?
  *
- * do_let and opt_dotimes can be combined, at least from do_let's view
- *   maybe split these at a lower level
  * ip for pi cases (b_ip, but it doesn't appear to happen much)
  * snd-test: if envelope-interp set! frample->file file->sample[d_p|vii] et al array-interp
  * finish the t563.scm bugs: a couple number type problems 31905 30802 
@@ -81473,8 +81555,7 @@ int main(int argc, char **argv)
  *   perhaps save sc->envir, make sure it is ok if optimize fails
  * s7_macroexpand of multiple-value-set!? maybe disable values?
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
- * see g_float_vector_ref -- 3mil univects! [call/all] [opt_p_cf_ss in call?]
- * int_opt check in new do(dox_ex) needs access to do-let
+ * see g_float_vector_ref -- 3mil univects! [call/all] [all_x_c_ss and various all_x combinations]
  * macro expanded in func (optimize_lambda) -- since we have local macros, this requires a smart walker, or handling during evaluation
  *    so macro encountered in body, eval as now, but splice result into body (how to optimize spliced result? what if body removed from heap?)
  *    how to know we're in a function body?
@@ -81483,15 +81564,20 @@ int main(int argc, char **argv)
  * tform vector_a_ex -- local symbol here?
  *   catch/call-with-exit maybe be stack-unsafe, but we should ignore that for setting locals (if body is safe)
  *   pending-unsafe for catch/call-with-exit etc -- needs lambda walker 
- * even if body is unsafe, constants can be marked local
+ *   the vector is a constant, so type check, vector_rank check and getter are unneeded, and lookup!
  * opt overhead: after optimize, fill one array with opt_infos, then march through it -- no opt* call, cur_sc->pc = index into array
  *   an array of functions, but what form
- * combine opts to reduce overhead?, d_vid_ssf+same(d_dd_ff_o1), do_let d_dd_f2->d_vid_ssf, d_vd_o1+d_dd_ff_o3
- *   maybe d_dd_ff_o1+d_vd_o1
- *   perhaps combine all wrappers into one temp?
- * all_x_c_opsq_opsq where it is (* (env ) (oscil )) -> (make_real * mus_env mus_oscil)??
- * clang: #pragma clang loop vectorize(enable) just before the loop
+ * combine opts to reduce overhead?, d_vid_ssf+same(d_dd_ff_o1)[800000]
  * permanent mutable numbers for temps in all_x calcs etc
+ * all_x_c_opsq_opsq where it is (* (env ) (oscil )) -> (make_real * mus_env mus_oscil)??
+ *   local (all_x style) use of (say) float_optimize:
+ *   if successful, we have a list of functions and arguments that directly handle the expr
+ *   can that be used to tune up the all_x choices?
+ *   all_x_opt gets location of permanent opt_info list, the latter in the gc sweep cache if holder not removed from heap
+ *   if holder freed, explicitly free opt_info
+ *   this requires sc->opt_info be saved/reset across the call, or a parallel set of evaluators, or explicit pass of list
+ *   sc->opts now passed as arg? or saved in opt_info itself? or assume list allocated in order, or a next pointer?
+ *   cur_pc then is relative to the current?
  *
  * --------------------------------------------------------------------
  *
@@ -81499,23 +81585,23 @@ int main(int argc, char **argv)
  * tmac          |      |      |      || 9043 |  602   263   263
  * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127  1080  1061
  * tref          |      |      | 2372 || 2083 | 1289  1145  1122
- * teq           |      |      | 6612 || 2787 | 2210  1990  1990
+ * teq           |      |      | 6612 || 2787 | 2210  1990  1998
  * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643  2346  2340
  * tlet     5318 | 3701 | 3712 | 3700 || 4004 | 3641  2483  2483
- * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032  2747  2746
+ * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032  2747  2740
  * lint          |      |      |      || 4029 | 3308  3021  3020 
  * lg            |      |      |      ||      | 177   144   144.1
- * tmap          |      |      |  9.3 || 4300 | 3716  3069  3063
+ * tmap          |      |      |  9.3 || 4300 | 3716  3069  3057
  * tcopy         |      |      | 13.6 || 3185 | 3342  3158  3130
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248  3200  3203
- * tform         |      |      | 6816 || 3850 | 3627  3374  3345
+ * tform         |      |      | 6816 || 3850 | 3627  3374  3322
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4920  3989  3989
- * tsort         |      |      |      || 9186 | 5403  4705  4703
+ * tsort         |      |      |      || 9186 | 5403  4705  4696
  * titer         |      |      |      || 5964 | 5234  4714  4708
- * thash         |      |      | 50.7 || 8926 | 8651  7910  7878
+ * thash         |      |      | 50.7 || 8926 | 8651  7910  7841
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4  12.6  12.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1  18.0  18.0
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5  41.1  40.4 
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5  41.1  40.3
  *                                    || 144  | 135   132   127.3
  * 
  * --------------------------------------------------------------------
