@@ -8565,7 +8565,7 @@ mus_float_t mus_fir_filter(mus_any *ptr, mus_float_t input)
   return((((flt *)ptr)->filtw)(ptr, input));
 }
 
-static mus_float_t fir_n(mus_any *ptr, mus_float_t input)
+static inline mus_float_t fir_n(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
   flt *gen = (flt *)ptr;
@@ -8597,6 +8597,75 @@ static mus_float_t fir_n(mus_any *ptr, mus_float_t input)
   return(xout + ((*ts) * (*x)));
 }
  
+
+static inline mus_float_t fir_3(mus_any *ptr, mus_float_t input)
+{
+  mus_float_t xout;
+  flt *gen = (flt *)ptr;
+  mus_float_t *state, *ts, *x;
+
+  x = (mus_float_t *)(gen->x);
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + 4); /* gen->order == 4 in this case */
+
+  /* gen->loc = (gen->loc == 3) ? 0 : (gen->loc + 1); */
+  gen->loc = (gen->loc + 1) & 0x3;
+  (*state) = input;
+  (*ts) = input;
+
+  xout = (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  return(xout + ((*ts) * (*x)));
+}
+
+static inline mus_float_t fir_4(mus_any *ptr, mus_float_t input)
+{
+  mus_float_t xout;
+  flt *gen = (flt *)ptr;
+  mus_float_t *state, *ts, *x;
+
+  x = (mus_float_t *)(gen->x);
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + 5);
+
+  gen->loc = (gen->loc == 4) ? 0 : (gen->loc + 1);
+  (*state) = input;
+  (*ts) = input;
+
+  xout = (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  return(xout + ((*ts) * (*x)));
+}
+ 
+static inline mus_float_t fir_9(mus_any *ptr, mus_float_t input)
+{
+  mus_float_t xout;
+  flt *gen = (flt *)ptr;
+  mus_float_t *state, *ts, *x;
+
+  x = (mus_float_t *)(gen->x);
+  state = (mus_float_t *)(gen->state + gen->loc);
+  ts = (mus_float_t *)(state + 10);
+
+  gen->loc = (gen->loc == 9) ? 0 : (gen->loc + 1);
+  (*state) = input;
+  (*ts) = input;
+
+  xout = (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  xout += (*ts--) * (*x++);
+  return(xout + ((*ts) * (*x)));
+}
+
 
 static mus_float_t fir_ge_20(mus_any *ptr, mus_float_t input)
 {
@@ -8638,7 +8707,7 @@ static mus_float_t fir_ge_20(mus_any *ptr, mus_float_t input)
     }
   while (ts > state)
     xout += (*ts--) * (*x++);
-  
+
   gen->loc++;
   if (gen->loc == gen->order)
     gen->loc = 0;
@@ -9011,9 +9080,7 @@ static void set_filter_function(flt *gen)
 		  if (order >= 10)
 		    gen->filtw = filter_ge_10;
 		  else gen->filtw = filter_lt_10;
-		}
-	    }
-	}
+		}}}
     }
   else
     {
@@ -9021,8 +9088,20 @@ static void set_filter_function(flt *gen)
 	{
 	  if (order >= 20)
 	    gen->filtw = fir_ge_20;
-	  else gen->filtw = fir_n;
-	}
+	  else 
+	    {
+	      if (order == 3)
+		gen->filtw = fir_3;
+	      else
+		{
+		  if (order == 4)
+		    gen->filtw = fir_4;
+		  else
+		    {
+		      if (order == 9)
+			gen->filtw = fir_9;
+		      else gen->filtw = fir_n;
+		      }}}}
       else gen->filtw = iir_n;
     }
 }

@@ -27,6 +27,9 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
 }
 
 
+mus_float_t next_sample_value_unscaled(snd_fd *sf);
+mus_float_t next_sound(snd_fd *sf);
+
 static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, mus_long_t beg, mus_long_t num, file_delete_t auto_delete, const char *origin)
 {
   file_info *ihdr, *ohdr;
@@ -100,19 +103,26 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
   lseek(ofd, ohdr->data_location, SEEK_SET);
   lseek(ifd, ihdr->data_location, SEEK_SET);
   mus_file_read_chans(ifd, 0, size, in_chans, data, data);
-  for (i = 0, j = 0; i < num; i++)
+
+  for (i = 0; i < num; i += size)
     {
-      if (j == size)
+      mus_long_t kdur;
+      kdur = num - i;
+      if (kdur > size) kdur = size;
+      if (sf->runf == next_sample_value_unscaled)
 	{
-	  err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
-	  mus_file_read_chans(ifd, i, size, in_chans, data, data);
-	  j = 0;
-	  if (err != MUS_NO_ERROR) break;
+	  for (j = 0; j < kdur; j++)
+	    chandata[j] += (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++];
 	}
-      chandata[j] += read_sample(sf);
-      j++;
+      else
+	{
+	  for (j = 0; j < kdur; j++)
+	    chandata[j] += read_sample(sf);
+	}
+      err = mus_file_write(ofd, 0, kdur - 1, 1, &chandata);
+      mus_file_read_chans(ifd, i, size, in_chans, data, data);
+      if (err != MUS_NO_ERROR) break;
     }
-  if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
   
   close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->sample_type));
   mus_file_close(ifd);

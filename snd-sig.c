@@ -1965,6 +1965,8 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
   return(NULL);
 }
 
+mus_float_t next_sample_value_unscaled(snd_fd *sf);
+mus_float_t next_sound(snd_fd *sf);
 
 static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_long_t beg, mus_long_t dur, 
 			   const char *origin, bool truncate,
@@ -2056,29 +2058,46 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 
   if (!temp_file)
     {
-      for (j = 0; j < dur; j++)
-	idata[j] = runf(g, read_sample(sf), 0.0);
+      if (sf->runf == next_sample_value_unscaled)
+	{
+	  for (j = 0; j < dur; j++)
+	    idata[j] = runf(g, (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++], 0.0);
+	}
+      else
+	{
+	  for (j = 0; j < dur; j++)
+	    idata[j] = runf(g, read_sample(sf), 0.0);
+	}
     }
   else
     {
-      for (offk = 0; offk < dur; offk++)
+      for (offk = 0; offk < dur; offk += MAX_BUFFER_SIZE)
 	{
-	  idata[j] = runf(g, read_sample(sf), 0.0);
-	  j++;
-	  if (j == MAX_BUFFER_SIZE)
+	  mus_long_t kdur;
+	  kdur = dur - offk;
+	  if (kdur > MAX_BUFFER_SIZE) kdur = MAX_BUFFER_SIZE;
+
+	  if (sf->runf == next_sample_value_unscaled)
 	    {
-	      err = mus_file_write(ofd, 0, j - 1, 1, data);
-	      j = 0;
-	      if (err != MUS_NO_ERROR) break;
-	      if (reporting) 
+	      for (j = 0; j < kdur; j++)
+		idata[j] = runf(g, (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++], 0.0);
+	    }
+	  else
+	    {
+	      for (j = 0; j < kdur; j++)
+		idata[j] = runf(g, read_sample(sf), 0.0);
+	    }
+
+	  err = mus_file_write(ofd, 0, j - 1, 1, data);
+	  if (err != MUS_NO_ERROR) break;
+	  if (reporting) 
+	    {
+	      progress_report(cp, (mus_float_t)((double)offk / (double)dur));
+	      if (ss->stopped_explicitly) return(NULL);
+	      if (!(sp->active))
 		{
-		  progress_report(cp, (mus_float_t)((double)offk / (double)dur));
-		  if (ss->stopped_explicitly) return(NULL);
-		  if (!(sp->active))
-		    {
-		      ss->stopped_explicitly = true;
-		      break;
-		    }
+		  ss->stopped_explicitly = true;
+		  break;
 		}
 	    }
 	}
@@ -2191,7 +2210,8 @@ static char *filter_channel(chan_info *cp, int order, env *e, mus_long_t beg, mu
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
 
   if ((!over_selection) &&
-      ((order == 0) || (order >= 128)))
+      ((order == 0) || 
+       (order >= 128)))
     errstr = convolution_filter(cp, order, e, sf, beg, dur, origin, coeffs);
   else  errstr = direct_filter(cp, order, e, sf, beg, dur, origin, truncate, over_selection, NULL, coeffs);
 

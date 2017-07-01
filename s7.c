@@ -48111,9 +48111,9 @@ static s7_double opt_d_vid_ssf(void *p)
   return(o->v4.d_vid_f(o->v5.obj, integer(slot_value(o->v2.p)), o1->v7.fd(o1)));
 }
 
-/* d_vid_ssf -> d_dd_ff_o1 -> d_vd_o1 -> d_dd_ff_o3 */
-static s7_double opt_fmv(void *p)
+static inline s7_double opt_fmv(void *p)
 {
+  /* d_vid_ssf -> d_dd_ff_o1 -> d_vd_o1 -> d_dd_ff_o3 */
   opt_info *o = (opt_info *)p;
   opt_info *o1, *o2, *o3;
   s7_double amp_env, index_env, vib;
@@ -48125,8 +48125,7 @@ static s7_double opt_fmv(void *p)
   o3 = cur_sc->opts[cur_sc->pc];
   index_env = o3->v5.d_v_f(o3->v1.obj);
   vib = real(slot_value(o2->v2.p));
-  /* increment pc? */
-  
+
   return(o->v4.d_vid_f(o->v5.obj, 
 		       integer(slot_value(o->v2.p)),
 		       o1->v3.d_dd_f(amp_env,
@@ -64595,13 +64594,27 @@ static int do_let(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool safe
 	  second = sc->opts[pc2];
 	  f2 = second->v7.fd;
 	  f2(second);
-	  for (k = numerator(stepper) + 1; k < end; k++)
+	  if (f2 == opt_fmv)
 	    {
-	      integer(ip) = k;
-	      sc->pc = 0;
-	      set_real(xp, f1(first));
-	      sc->pc = pc2;
-	      f2(second);
+	      for (k = numerator(stepper) + 1; k < end; k++)
+		{
+		  integer(ip) = k;
+		  sc->pc = 0;
+		  set_real(xp, f1(first));
+		  sc->pc = pc2;
+		  opt_fmv(second);
+		}
+	    }
+	  else
+	    {
+	      for (k = numerator(stepper) + 1; k < end; k++)
+		{
+		  integer(ip) = k;
+		  sc->pc = 0;
+		  set_real(xp, f1(first));
+		  sc->pc = pc2;
+		  f2(second);
+		}
 	    }
 	}
       else
@@ -66093,8 +66106,11 @@ static int apply_pair(s7_scheme *sc)                              /* -------- li
       /* car of values can be anything, so conjure up a new expression, and apply again */
       sc->x = multiple_value(sc->code);                             /* ((values + 1 2) 3) */
       sc->code = car(sc->x);
+#if 0
+      /* this can't happen? */
       if (!is_proper_list(sc, cdr(sc->x)))
 	s7_error(sc, sc->syntax_error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "values arglist is a dotted list: ~A"), sc->x));
+#endif
       sc->args = s7_append(sc, cdr(sc->x), sc->args);
       sc->x = sc->nil;
       return(goto_APPLY);
@@ -81561,10 +81577,8 @@ int main(int argc, char **argv)
  *    how to know we're in a function body?
  * need tests for cond/case in opt_dotimes_2
  * do steppers (and many others) aren't marked local usually [tsort -- most loops are op_do!]
- * tform vector_a_ex -- local symbol here?
- *   catch/call-with-exit maybe be stack-unsafe, but we should ignore that for setting locals (if body is safe)
+ * catch/call-with-exit maybe be stack-unsafe, but we should ignore that for setting locals (if body is safe)
  *   pending-unsafe for catch/call-with-exit etc -- needs lambda walker 
- *   the vector is a constant, so type check, vector_rank check and getter are unneeded, and lookup!
  * opt overhead: after optimize, fill one array with opt_infos, then march through it -- no opt* call, cur_sc->pc = index into array
  *   an array of functions, but what form
  * combine opts to reduce overhead?, d_vid_ssf+same(d_dd_ff_o1)[800000]
@@ -81578,6 +81592,10 @@ int main(int argc, char **argv)
  *   this requires sc->opt_info be saved/reset across the call, or a parallel set of evaluators, or explicit pass of list
  *   sc->opts now passed as arg? or saved in opt_info itself? or assume list allocated in order, or a next pointer?
  *   cur_pc then is relative to the current?
+ *   all_x+opt needs actual symbol lookups in opt not assumed slots -- mode arg?
+ *     but this also cancels most the type-related opts (like env obj)
+ *   so... need direct chooser instead: multiply in this case sees f1 f2 direct->float (d_v) and calls mul_dv_dv or something
+ *   another is c_opsq, s_opssq (fvref) etc
  *
  * --------------------------------------------------------------------
  *
@@ -81600,9 +81618,9 @@ int main(int argc, char **argv)
  * titer         |      |      |      || 5964 | 5234  4714  4708
  * thash         |      |      | 50.7 || 8926 | 8651  7910  7841
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4  12.6  12.6
- * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1  18.0  18.0
+ * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1  18.0  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5  41.1  40.3
- *                                    || 144  | 135   132   127.3
+ *                                    || 144  | 135   132   99.9
  * 
  * --------------------------------------------------------------------
  */
