@@ -597,7 +597,7 @@ static mus_float_t previous_xramp_ramp_value(snd_fd *sf)
 
 
 static mus_float_t previous_sound(snd_fd *sf);
-static mus_float_t next_sound(snd_fd *sf);
+mus_float_t next_sound(snd_fd *sf);
 
 
 static mus_float_t end_sample_value(snd_fd *ignore) {return(0.0);}
@@ -639,7 +639,8 @@ mus_float_t previous_sample_value_unchecked(snd_fd *sf)
 }
 
 
-static mus_float_t next_sample_value_unscaled(snd_fd *sf) 
+mus_float_t next_sample_value_unscaled(snd_fd *sf);
+mus_float_t next_sample_value_unscaled(snd_fd *sf) 
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
@@ -5394,7 +5395,7 @@ static void next_sound_1(snd_fd *sf)
 }
 
 
-static mus_float_t next_sound(snd_fd *sf)
+mus_float_t next_sound(snd_fd *sf)
 {
   next_sound_1(sf);
   return(read_sample(sf));

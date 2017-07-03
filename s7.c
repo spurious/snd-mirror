@@ -6193,9 +6193,9 @@ static s7_pointer add_symbol_to_list(s7_scheme *sc, s7_pointer sym)
       set_outlet(_x_, Old_Env);			      \
       New_Env = _x_;				      \
   } while (0)
+/* this macro is noticeably faster than using the equivalent inlined new_frame_in_env function below */
 
-
-static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
+static inline s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 {
   /* return(cons(sc, sc->nil, old_env)); */
   s7_pointer x;
@@ -6207,7 +6207,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 }
 
 
-static s7_pointer make_simple_let(s7_scheme *sc)
+static inline s7_pointer make_simple_let(s7_scheme *sc)
 {
   s7_pointer frame;
   new_cell(sc, frame, T_LET | T_SAFE_PROCEDURE);
@@ -81756,37 +81756,42 @@ int main(int argc, char **argv)
  * all_x_c_opsq_opsq continued: c_opsq, s_opssq (fvref) etc -- s_opssq has .5mil filters (as base), 1/4 as mul
  *   so where to choose if base as p_pd?
  * let* could be divided into zones of all_x
+ *
  * let in safe do/tc func etc could be saved across calls as hidden slots in the outer let
  *   reused via op_let that gets its frame from that slot
  *   but how to recognize this situation -- second pass?
+ *   see old/olet-s7.c -- once again the problem is the GC (copy/remove from heap etc)
+ *   olet as optlist-like syntax with env in call, symbol as gensym with has_env so it's marked until removal
+ *   remove could make the env permanent?
+ *   set_olet in opt_lam, is_olet in check_let, changes car to new-let-sym+olet-syn+new-frame
+ *   op_olet: uses stored env
+ *
  * unknowns: macro like quasiquote hook-function, [let-temp bindings?? (target-line-length 120) in lt] also (code (+ i 1)) (quit) (lastref 1) etc
  *   also ((lambda (x)...)...) -- the (x)!!
- * inline make-counter or free_list+gc-cache, also make-catch? maybe inline new_frame_in_env and functionalize+inline others
- *    perhaps replace new_frame with new_e = new_frame_in_env inlined?
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6
  * tmac          |      |      |      || 9043 |  602   263   263
- * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127  1080  1061
+ * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127  1080  1060
  * tref          |      |      | 2372 || 2083 | 1289  1145  1122
  * teq           |      |      | 6612 || 2787 | 2210  1990  1998
  * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643  2346  2340
  * tlet     5318 | 3701 | 3712 | 3700 || 4004 | 3641  2483  2483
  * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032  2747  2739
- * lint          |      |      |      || 4029 | 3308  3021  3018
- * lg            |      |      |      ||      | 177   144   144.1
+ * lint          |      |      |      || 4029 | 3308  3021  3010
+ * lg            |      |      |      ||      | 177   144   143.5
  * tmap          |      |      |  9.3 || 4300 | 3716  3069  3057
  * tcopy         |      |      | 13.6 || 3185 | 3342  3158  3123
- * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248  3200  3196
- * tform         |      |      | 6816 || 3850 | 3627  3374  3313
+ * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248  3200  3193
+ * tform         |      |      | 6816 || 3850 | 3627  3374  3312
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4920  3989  3989
- * tsort         |      |      |      || 9186 | 5403  4705  4699
+ * tsort         |      |      |      || 9186 | 5403  4705  4697
  * titer         |      |      |      || 5964 | 5234  4714  4708
- * thash         |      |      | 50.7 || 8926 | 8651  7910  7841
+ * thash         |      |      | 50.7 || 8926 | 8651  7910  7840
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4  12.6  12.5
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1  18.0  17.8
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5  41.1  40.1
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5  41.1  40.0
  *                                    || 144  | 135   132   99.1
  * 
  * --------------------------------------------------------------------
