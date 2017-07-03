@@ -4010,7 +4010,7 @@ open file assuming the data matches the attributes indicated unless the file act
     Xen_out_of_range_error(S_open_raw_sound, 0, arglist, "too many arguments");
 
   for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  vals = mus_optkey_unscramble(S_open_raw_sound, 4, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_open_raw_sound, arglist_len, 4, keys, args, orig_arg);
 
   if (vals > 0)
     {
@@ -4139,7 +4139,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     Xen_out_of_range_error(S_save_sound_as, 0, arglist, "too many arguments");
 
   for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  vals = mus_optkey_unscramble(S_save_sound_as, 8, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_save_sound_as, arglist_len, 8, keys, args, orig_arg);
 
   if (vals > 0)
     {
@@ -4322,7 +4322,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
     Xen_out_of_range_error(S_open_raw_sound, 0, arglist, "too many arguments");
 
   for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-  vals = mus_optkey_unscramble(S_new_sound, 7, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_new_sound, arglist_len, 7, keys, args, orig_arg);
 
   ht = default_output_header_type(ss);
   df = default_output_sample_type(ss);

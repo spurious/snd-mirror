@@ -197,7 +197,7 @@ static void clm_error(const char *caller, const char *msg, Xen val)
   static s7_pointer extra_args_string;
 #endif
 
-int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, int *orig)
+int mus_optkey_unscramble(const char *caller, int num_args, int nkeys, Xen *keys, Xen *args, int *orig)
 {
   /* implement the &optional-key notion in CLM */
   /* "keys" holds the keywords the calling function accepts, 
@@ -208,13 +208,11 @@ int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, i
    * "orig" should be of size nkeys, and will contain upon return the 1-based location of the original keyword value argument
    *  (it is intended for error reports)
    */
-  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, nargs, nargs_end;
+  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, end;
   bool keying = false, key_found = false;
-  nargs = nkeys * 2;
-  nargs_end = nargs - 1;
+  end = num_args - 1;
 
-  while ((arg_ctr < nargs) && 
-	 (Xen_is_bound(args[arg_ctr])))
+  while (arg_ctr < num_args)
     {
       Xen key;
       key = args[arg_ctr];
@@ -245,11 +243,10 @@ int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, i
 	{
 	  int i;
 	  Xen val;
-	  val = args[arg_ctr + 1];
-	  if ((arg_ctr == nargs_end) ||
-	      (!(Xen_is_bound(val))))
+	  if (arg_ctr >= end)
 	    clm_error(caller, "keyword without value?", key);
 
+	  val = args[arg_ctr + 1];
 	  if (Xen_is_keyword(val))
 	    clm_error(caller, "two keywords in a row?", key);
 
@@ -2440,6 +2437,7 @@ I_METHOD(hop)
 #endif
 
 
+#define Aok(a) Xen_is_bound(a) 
 
 /* ---------------- oscil ---------------- */
 
@@ -2461,15 +2459,15 @@ static Xen g_make_oscil(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 	}
       else
 	{
-	  int vals;
+	  int vals, pr = 0;
 	  Xen args[4]; 
 	  Xen keys[2];
 	  int orig_arg[2] = {0, 0};
 	  keys[0] = kw_frequency;
 	  keys[1] = kw_initial_phase;
 
-	  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; 
-	  vals = mus_optkey_unscramble(S_make_oscil, 2, keys, args, orig_arg);
+	  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; if (Aok(arg4)) {args[pr++] = arg4;}}}}
+	  vals = mus_optkey_unscramble(S_make_oscil, pr, 2, keys, args, orig_arg);
 	  if (vals > 0)
 	    {
 	      freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_oscil, orig_arg[0], freq);
@@ -2615,10 +2613,8 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > a2) clm_error(caller, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < a2; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(caller, arglist_len, argn, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
 
   if (vals > 0)
     {
@@ -2905,8 +2901,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, const char *caller, Xen argli
   arglist_len = Xen_list_length(arglist);
   if (arglist_len > 8) clm_error(caller, "too many arguments!", arglist);
   for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-  for (i = arglist_len; i < argn * 2; i++) args[i] = Xen_undefined;
-  vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(caller, arglist_len, argn, keys, args, orig_arg);
 
   if (vals > 0)
     {
@@ -3446,16 +3441,16 @@ return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosine
   Xen args[4]; 
   Xen keys[2];
   int orig_arg[2] = {0, 0};
-  int vals, n = 1;
+  int vals, n = 1, pr = 0;
   mus_float_t freq;
 
   freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_n;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
 
-  vals = mus_optkey_unscramble(S_make_ncos, 2, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; if (Aok(arg4)) {args[pr++] = arg4;}}}}
+  vals = mus_optkey_unscramble(S_make_ncos, pr, 2, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_ncos, orig_arg[0], freq);
@@ -3507,16 +3502,16 @@ return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
   Xen args[4]; 
   Xen keys[2];
   int orig_arg[2] = {0, 0};
-  int vals, n = 1;
+  int vals, n = 1, pr = 0;
   mus_float_t freq;
 
   freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_n;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
 
-  vals = mus_optkey_unscramble(S_make_nsin, 2, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; if (Aok(arg4)) {args[pr++] = arg4;}}}}
+  vals = mus_optkey_unscramble(S_make_nsin, pr, 2, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_nsin, orig_arg[0], freq);
@@ -3658,10 +3653,9 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(caller, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(caller, arglist_len, 5, keys, args, orig_arg);
   }
 
-  vals = mus_optkey_unscramble(caller, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], caller, orig_arg[0], freq);
@@ -4045,10 +4039,8 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_table_lookup, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_table_lookup, arglist_len, 5, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_table_lookup, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       vct *v = NULL;
@@ -4121,7 +4113,7 @@ static Xen g_make_sw(xclm_wave_t type, mus_float_t def_phase, Xen arg1, Xen arg2
   Xen args[6]; 
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
-  int vals;
+  int vals, pr = 0;
   mus_float_t freq, base = 1.0, phase;
 
   freq = clm_default_frequency;
@@ -4138,9 +4130,10 @@ static Xen g_make_sw(xclm_wave_t type, mus_float_t def_phase, Xen arg1, Xen arg2
   keys[0] = kw_frequency;
   keys[1] = kw_amplitude;
   keys[2] = kw_initial_phase;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
 
-  vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; 
+	if (Aok(arg4)) {args[pr++] = arg4; if (Aok(arg5)) {args[pr++] = arg5; if (Aok(arg6)) {args[pr++] = arg6; }}}}}}
+  vals = mus_optkey_unscramble(caller, pr, 3, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], caller, orig_arg[0], freq);
@@ -4295,7 +4288,7 @@ return a new " S_asymmetric_fm " generator."
   Xen args[8]; 
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
-  int vals;
+  int vals, pr = 0;
   mus_float_t freq, phase = 0.0, r = 1.0, ratio = 1.0;
 
   freq = clm_default_frequency;
@@ -4304,9 +4297,11 @@ return a new " S_asymmetric_fm " generator."
   keys[1] = kw_initial_phase;
   keys[2] = kw_r;
   keys[3] = kw_ratio;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
 
-  vals = mus_optkey_unscramble(S_make_asymmetric_fm, 4, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; 
+	if (Aok(arg4)) {args[pr++] = arg4; if (Aok(arg5)) {args[pr++] = arg5; if (Aok(arg6)) {args[pr++] = arg6;
+	      if (Aok(arg7)) {args[pr++] = arg7; if (Aok(arg8)) {args[pr++] = arg8;}}}}}}}}
+  vals = mus_optkey_unscramble(S_make_asymmetric_fm, pr, 4, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_asymmetric_fm, orig_arg[0], freq);
@@ -4363,7 +4358,7 @@ static Xen g_make_smpflt_1(xclm_filter_t choice, Xen arg1, Xen arg2, Xen arg3, X
   Xen args[4]; 
   Xen keys[2];
   int orig_arg[2] = {0, 0};
-  int vals;
+  int vals, pr = 0;
   mus_float_t a0 = 0.0;
   mus_float_t a1 = 0.0;
 
@@ -4374,8 +4369,8 @@ static Xen g_make_smpflt_1(xclm_filter_t choice, Xen arg1, Xen arg2, Xen arg3, X
     default:         keys[0] = kw_frequency; keys[1] = kw_radius; break;
     }
 
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
-  vals = mus_optkey_unscramble(smpflts[choice], 2, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; if (Aok(arg4)) {args[pr++] = arg4;}}}}
+  vals = mus_optkey_unscramble(smpflts[choice], pr, 2, keys, args, orig_arg);
   if (vals > 0)
     {
       a0 = mus_optkey_to_float(keys[0], smpflts[choice], orig_arg[0], a0);
@@ -4415,7 +4410,7 @@ static Xen g_make_smpflt_2(xclm_filter_t choice, Xen arg1, Xen arg2, Xen arg3, X
   Xen args[6]; 
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
-  int vals;
+  int vals, pr = 0;
   mus_float_t a0 = 0.0;
   mus_float_t a1 = 0.0;
   mus_float_t a2 = 0.0;
@@ -4431,8 +4426,10 @@ static Xen g_make_smpflt_2(xclm_filter_t choice, Xen arg1, Xen arg2, Xen arg3, X
       keys[1] = kw_b1;
       keys[2] = kw_b2;
     }
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
-  vals = mus_optkey_unscramble(smpflts[choice], 3, keys, args, orig_arg);
+
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; 
+	if (Aok(arg4)) {args[pr++] = arg4; if (Aok(arg5)) {args[pr++] = arg5; if (Aok(arg6)) {args[pr++] = arg6; }}}}}}
+  vals = mus_optkey_unscramble(smpflts[choice], pr, 3, keys, args, orig_arg);
   if (vals > 0)
     {
       a0 = Xen_optkey_to_float(kw_a0, keys[0], smpflts[choice], orig_arg[0], a0);
@@ -4594,7 +4591,7 @@ static Xen g_is_two_pole(Xen obj)
 static Xen g_make_frm(bool formant_case, const char *caller, Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   mus_any *ge;
-  int vals;
+  int vals, pr = 0;
   Xen args[4]; 
   Xen keys[2];
   int orig_arg[2] = {0, 0};
@@ -4602,9 +4599,9 @@ static Xen g_make_frm(bool formant_case, const char *caller, Xen arg1, Xen arg2,
 
   keys[0] = kw_frequency;
   keys[1] = kw_radius;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
 
-  vals = mus_optkey_unscramble(caller, 2, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; if (Aok(arg4)) {args[pr++] = arg4;}}}}
+  vals = mus_optkey_unscramble(caller, pr, 2, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], caller, orig_arg[0], freq);
@@ -5037,10 +5034,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_wave_train, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_wave_train, arglist_len, 5, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_wave_train, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       vct *v = NULL;
@@ -5573,10 +5568,8 @@ is the same in effect as " S_make_oscil
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_polyshape, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_polyshape, arglist_len, 5, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_polyshape, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       vct *v = NULL;
@@ -5700,10 +5693,8 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_polywave, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_polywave, arglist_len, 5, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_polywave, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       vct *v;
@@ -5858,10 +5849,8 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 8) clm_error(caller, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 8; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(caller, arglist_len, 4, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(caller, 4, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], caller, orig_arg[0], freq);
@@ -5972,10 +5961,8 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 6) clm_error(caller, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 6; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(caller, arglist_len, 3, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(caller, 3, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], caller, orig_arg[0], freq);
@@ -6110,7 +6097,7 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   vct *x = NULL, *y = NULL;
-  int vals, order = 0;
+  int vals, order = 0, pr = 0;
   const char *caller;
   if (choice == G_FILTER) caller = S_make_filter; else if (choice == G_FIR_FILTER) caller = S_make_fir_filter; else caller = S_make_iir_filter;
 
@@ -6118,9 +6105,10 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
   keys[1] = kw_x_coeffs;
   keys[2] = kw_y_coeffs;
   keys[3] = kw_coeffs;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = Xen_undefined; args[7] = Xen_undefined;
 
-  vals = mus_optkey_unscramble(caller, 4, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; 
+	if (Aok(arg4)) {args[pr++] = arg4; if (Aok(arg5)) {args[pr++] = arg5; if (Aok(arg6)) {args[pr++] = arg6;}}}}}}
+  vals = mus_optkey_unscramble(caller, pr, 4, keys, args, orig_arg);
   if (vals > 0)
     {
       if (!(Xen_is_keyword(keys[0])))
@@ -6307,10 +6295,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 14) clm_error(S_make_env, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 14; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_env, arglist_len, 7, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_env, 7, keys, args, orig_arg);
   if (vals > 0)
     {
       scaler = Xen_optkey_to_float(kw_scaler, keys[1], S_make_env, orig_arg[1], 1.0);
@@ -7428,10 +7414,8 @@ return a new readin (file input) generator reading the sound file 'file' startin
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 10) clm_error(S_make_readin, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_readin, arglist_len, 5, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_readin, 5, keys, args, orig_arg);
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_make_readin, orig_arg[0], NULL); /* not copied */
@@ -7724,10 +7708,8 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 14) clm_error(S_make_locsig, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 14; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_locsig, arglist_len, 7, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_locsig, 7, keys, args, orig_arg);
   if (vals > 0)
     {
       degree = Xen_optkey_to_float(kw_degree, keys[0], S_make_locsig, orig_arg[0], degree);
@@ -8346,7 +8328,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   Xen in_obj = Xen_undefined;
   mus_xen *gn;
   mus_any *ge = NULL;
-  int vals, wid = 0; /* 0 here picks up the current default width in clm.c */
+  int vals, pr = 0, wid = 0; /* 0 here picks up the current default width in clm.c */
   Xen args[6]; 
   Xen keys[3];
   int orig_arg[3] = {0, 0, 0};
@@ -8355,9 +8337,10 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   keys[0] = kw_input;
   keys[1] = kw_srate;
   keys[2] = kw_width;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
 
-  vals = mus_optkey_unscramble(S_make_src, 3, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; 
+	if (Aok(arg4)) {args[pr++] = arg4; if (Aok(arg5)) {args[pr++] = arg5; if (Aok(arg6)) {args[pr++] = arg6; }}}}}}
+  vals = mus_optkey_unscramble(S_make_src, pr, 3, keys, args, orig_arg);
   if (vals > 0)
     {
       in_obj = mus_optkey_to_input_procedure(keys[0], S_make_src, orig_arg[0], Xen_undefined, 1, "src input procedure takes 1 arg");
@@ -8503,10 +8486,8 @@ The edit function, if any, should return the length in samples of the grain, or 
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 18) clm_error(S_make_granulate, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 18; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_granulate, arglist_len, 9, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_granulate, 9, keys, args, orig_arg);
   if (vals > 0)
     {
       in_obj = mus_optkey_to_input_procedure(keys[0], S_make_granulate, orig_arg[0], Xen_undefined, 1, "granulate input procedure takes 1 arg");
@@ -8636,10 +8617,8 @@ return a new convolution generator which convolves its input with the impulse re
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 6) clm_error(S_make_convolve, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 6; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_convolve, arglist_len, 3, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_convolve, 3, keys, args, orig_arg);
   if (vals > 0)
     {
       in_obj = mus_optkey_to_input_procedure(keys[0], S_make_convolve, orig_arg[0], Xen_undefined, 1, "convolve input procedure takes 1 arg");
@@ -8887,10 +8866,8 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
     arglist_len = Xen_list_length(arglist);
     if (arglist_len > 16) clm_error(S_make_phase_vocoder, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < 16; i++) args[i] = Xen_undefined;
+    vals = mus_optkey_unscramble(S_make_phase_vocoder, arglist_len, 8, keys, args, orig_arg);
   }
-
-  vals = mus_optkey_unscramble(S_make_phase_vocoder, 8, keys, args, orig_arg);
   if (vals > 0)
     {
       in_obj = mus_optkey_to_input_procedure(keys[0], S_make_phase_vocoder, orig_arg[0], Xen_undefined, 1, S_phase_vocoder " input procedure takes 1 arg");
@@ -9053,7 +9030,7 @@ return a new " S_ssb_am " generator."
   Xen args[4]; 
   Xen keys[2];
   int orig_arg[2] = {0, 0};
-  int vals;
+  int vals, pr = 0;
   int order = 40;
   mus_float_t freq;
 
@@ -9061,9 +9038,9 @@ return a new " S_ssb_am " generator."
 
   keys[0] = kw_frequency;
   keys[1] = kw_order;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
 
-  vals = mus_optkey_unscramble(S_make_ssb_am, 2, keys, args, orig_arg);
+  if (Aok(arg1)) {args[pr++] = arg1; if (Aok(arg2)) {args[pr++] = arg2; if (Aok(arg3)) {args[pr++] = arg3; if (Aok(arg4)) {args[pr++] = arg4;}}}}
+  vals = mus_optkey_unscramble(S_make_ssb_am, pr, 2, keys, args, orig_arg);
   if (vals > 0)
     {
       freq = Xen_optkey_to_float(kw_frequency, keys[0], S_make_ssb_am, orig_arg[0], freq);
@@ -9901,6 +9878,8 @@ DF_1(radians_to_degrees)
 DF_1(degrees_to_radians)
 DF_1(random)
 
+static s7_double mus_hz_to_radians_d_p(s7_pointer x) {return((s7_double)mus_hz_to_radians(s7_number_to_real(s7, x)));}
+
 DF_2(contrast_enhancement)
 DF_2(odd_multiple)
 DF_2(even_multiple)
@@ -10134,6 +10113,7 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_d_function(s7_name_to_value(sc, S_odd_weight), mus_odd_weight_d);
   s7_set_d_d_function(s7_name_to_value(sc, S_even_weight), mus_even_weight_d);
   s7_set_d_d_function(s7_name_to_value(sc, S_hz_to_radians), mus_hz_to_radians_d);
+  s7_set_d_p_function(s7_name_to_value(sc, S_hz_to_radians), mus_hz_to_radians_d_p);
   s7_set_d_d_function(s7_name_to_value(sc, S_radians_to_hz), mus_radians_to_hz_d);
   s7_set_d_d_function(s7_name_to_value(sc, S_db_to_linear), mus_db_to_linear_d);
   s7_set_d_d_function(s7_name_to_value(sc, S_linear_to_db), mus_linear_to_db_d);

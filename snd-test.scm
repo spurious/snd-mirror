@@ -42,7 +42,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #t)
+(define all-args #f)
 (define test-at-random 0)
 (define hooked #f)
 (define base-length 1000)

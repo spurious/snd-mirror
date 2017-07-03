@@ -1956,7 +1956,7 @@ using sample-type (default depends on machine byte order), header-type (" S_mus_
 
   char *name = NULL;
   const char *file = NULL, *com = NULL;
-  int rg;
+  int rg, true_args;
   mus_sample_t sample_type = MUS_OUT_SAMPLE_TYPE;
   mus_header_t header_type = MUS_NEXT;
   Xen args[8]; 
@@ -1969,14 +1969,16 @@ using sample-type (default depends on machine byte order), header-type (" S_mus_
   keys[2] = kw_header_type;
   keys[3] = kw_comment;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
-
+  for (true_args = 0; true_args < 8; true_args++)
+    if (!Xen_is_bound(args[true_args]))
+      break;
   Xen_check_type(xen_is_region(n), n, 1, S_save_region, "a region id");
 
   rg = Xen_region_to_C_int(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_save_region, n));
 
-  vals = mus_optkey_unscramble(S_save_region, 4, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_save_region, true_args, 4, keys, args, orig_arg);
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_save_region, orig_arg[0], NULL);

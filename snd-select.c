@@ -1695,7 +1695,7 @@ save the current selection in file using the indicated file attributes.  If chan
     Xen_out_of_range_error(S_save_selection, 0, arglist, "too many arguments");
   for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
 
-  vals = mus_optkey_unscramble(S_save_selection, 6, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_save_selection, arglist_len, 6, keys, args, orig_arg);
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_save_selection, orig_arg[0], NULL);

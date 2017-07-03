@@ -24,7 +24,7 @@ MUS_EXPORT const char *mus_fft_window_xen_name(mus_fft_window_t i);
 MUS_EXPORT Xen mus_xen_to_object(mus_xen *gn);
 MUS_EXPORT Xen mus_xen_to_object_with_vct(mus_xen *gn, Xen v);
 MUS_EXPORT mus_any *mus_optkey_to_mus_any(Xen key, const char *caller, int n, mus_any *def);
-MUS_EXPORT int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, int *orig);
+MUS_EXPORT int mus_optkey_unscramble(const char *caller, int num_args, int nkeys, Xen *keys, Xen *args, int *orig);
 MUS_EXPORT mus_float_t mus_optkey_to_float(Xen key, const char *caller, int n, mus_float_t def);
 MUS_EXPORT int mus_optkey_to_int(Xen key, const char *caller, int n, int def);
 MUS_EXPORT bool mus_optkey_to_bool(Xen key, const char *caller, int n, bool def);

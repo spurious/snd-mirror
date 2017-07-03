@@ -860,7 +860,7 @@ c_make_fcomb(Xen args)
 		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = Xen_list_ref(args, i);
-	vals = mus_optkey_unscramble(S_make_fcomb, argn, keys, kargs, orig_arg);
+	vals = mus_optkey_unscramble(S_make_fcomb, lst_len, argn, keys, kargs, orig_arg);
 	if (vals > 0) {
 		keyn = 0;
 		scaler = mus_optkey_to_float(keys[keyn], S_make_fcomb,
@@ -1752,7 +1752,7 @@ c_fm_violin(Xen args)
 		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = Xen_list_ref(args, i);
-	vals = mus_optkey_unscramble(S_fm_violin, V_LAST_KEY, keys, kargs,
+	vals = mus_optkey_unscramble(S_fm_violin, lst_len, V_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
 		i = 0;
@@ -2013,7 +2013,7 @@ c_jc_reverb(Xen args)
 		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = Xen_list_ref(args, i);
-	vals = mus_optkey_unscramble(S_jc_reverb, JC_LAST_KEY, keys, kargs,
+	vals = mus_optkey_unscramble(S_jc_reverb, lst_len, JC_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
 		i = 0;
@@ -2135,7 +2135,7 @@ c_nrev(Xen args)
 		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = Xen_list_ref(args, i);
-	vals = mus_optkey_unscramble(S_nrev, N_LAST_KEY, keys, kargs, orig_arg);
+	vals = mus_optkey_unscramble(S_nrev, let_len, N_LAST_KEY, keys, kargs, orig_arg);
 	if (vals > 0) {
 		i = 0;
 		reverb_factor = mus_optkey_to_float(keys[i], S_nrev,
@@ -2270,7 +2270,7 @@ c_freeverb(Xen args)
 		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
 		kargs[i] = Xen_list_ref(args, i);
-	vals = mus_optkey_unscramble(S_freeverb, F_LAST_KEY, keys, kargs,
+	vals = mus_optkey_unscramble(S_freeverb, let_len, F_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
 		i = 0;

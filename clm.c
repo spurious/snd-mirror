@@ -16010,7 +16010,6 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
        * If the amp zero phase is off (incorrectly incremented above), the effect is a sort of low-pass filter??
        *   Are we getting cancellation from the overlap?
        */
-      
 #if HAVE_SINCOS
       for (j = 0; j < topN; j++)
 	{

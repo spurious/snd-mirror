@@ -2898,7 +2898,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 	Xen_out_of_range_error(S_play, 0, arglist, "too many arguments");
 
       for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
-      vals = mus_optkey_unscramble(S_play, NARGS, keys, args, orig_arg);
+      vals = mus_optkey_unscramble(S_play, arglist_len, NARGS, keys, args, orig_arg);
 
       if (vals > 0)
 	{
