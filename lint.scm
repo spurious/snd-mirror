@@ -16466,6 +16466,7 @@
 				      (new-result (if (and has-else
 							   (= i (- lim 1))
 							   (null? (cddadr p))
+							   (pair? (cdr (caddr p))) ;(else)
 							   (null? (cddr (caddr p))))
 						      (list 'if (caadr p) (cadadr p) (cadr (caddr p)))
 						      (cons 'cond (cdr p)))))
@@ -21322,13 +21323,12 @@
 		  ;; save any references to vars in their var-history (type checked later)
 		  ;;   this can be fooled by macros, as everywhere else
 		  (for-each (lambda (arg)
-			      (if (symbol? arg)
-				  (let ((v (var-member arg env)))
-				    (if (and v
+			      (when (symbol? arg)
+				(let ((v (var-member arg env)))
+				  (when (and v
 					     (not (memq form (var-history v))))
-					(begin
-					  (set! (var-history v) (cons form (var-history v)))
-					  (set! (var-refenv v) env))))))
+				    (set! (var-history v) (cons form (var-history v)))
+				    (set! (var-refenv v) env)))))
 			    form)
 		  
 		  (if (set!? form env)

@@ -132,7 +132,7 @@
  * -O3 is often slower, sometimes faster (at least according to callgrind), similarly for -finline-functions and -ftree-vectorize
  * -march=native -fomit-frame-pointer -m64 -funroll-loops gains about .1%
  * -ffast-math makes a mess of NaNs, and does not appear to be faster
- * for timing tests, I use: -O2 -DINITIAL_HEAP_SIZE=1024000 -march=native -fomit-frame-pointer -funroll-loops
+ * for timing tests, I use: -O2 -march=native -fomit-frame-pointer -funroll-loops
  * according to callgrind, clang is normally about 10% slower than gcc, and vectorization either doesn't work or is much worse than gcc's
  */
 
@@ -902,6 +902,11 @@ typedef struct gc_obj {
   struct gc_obj *nxt;
 } gc_obj;
 
+typedef struct {
+  s7_pointer *list;
+  unsigned int size, loc;
+} gc_list;
+
 
 static s7_pointer *small_ints, *chars;
 static s7_pointer real_zero, real_NaN, real_pi, real_one, arity_not_set, max_arity, real_infinity, real_minus_infinity, minus_one, minus_two;
@@ -1035,14 +1040,9 @@ struct s7_scheme {
   format_data **fdats;
   int num_fdats;
   s7_pointer elist_1, elist_2, elist_3, elist_4, elist_5, plist_1, plist_2, plist_3, qlist_2;
-
-  s7_pointer *strings, *strings1, *vectors, *input_ports, *output_ports, *continuations;
-  s7_pointer *c_objects, *hash_tables, *gensyms, *setters, *optlists;
-  unsigned int strings_size, strings1_size, vectors_size, input_ports_size, output_ports_size;
-  unsigned int continuations_size, c_objects_size, hash_tables_size, gensyms_size, setters_size, optlists_size;
-  unsigned int strings_loc, strings1_loc, vectors_loc, input_ports_loc, output_ports_loc;
-  unsigned int continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc, optlists_loc;
-
+  gc_list *strings, *strings1, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms, *optlists;
+  s7_pointer *setters;
+  unsigned int setters_size, setters_loc;
   char ***string_lists;
   int *string_locs, *string_sizes, *string_max_sizes;
 
@@ -1196,9 +1196,7 @@ struct s7_scheme {
 
 #if WITH_GMP
   s7_pointer bignum_symbol, is_bignum_symbol;
-  s7_pointer *bigints, *bigratios, *bigreals, *bignumbers;
-  unsigned int bigints_size, bigratios_size, bigreals_size, bignumbers_size;
-  unsigned int bigints_loc, bigratios_loc, bigreals_loc, bignumbers_loc;
+  gc_list *bigints, *bigratios, *bigreals, *bignumbers;
 #endif
 
 #if WITH_SYSTEM_EXTRAS
@@ -3976,13 +3974,15 @@ static void sweep(s7_scheme *sc)
 {
   unsigned int i, j;
   s7_pointer s1;
-
-  if (sc->strings_loc > 0)
+  gc_list *gp;
+  
+  gp = sc->strings;
+  if (gp->loc > 0)
     {
       /* unrolling this loop is not an improvement */
-      for (i = 0, j = 0; i < sc->strings_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->strings[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      if (string_needs_free(s1))
@@ -3995,73 +3995,78 @@ static void sweep(s7_scheme *sc)
 	       *   forever, slowing down the loop. 
 	       */
 	      if (in_heap(s1)) /* this costs more than it saves */
-		sc->strings[j++] = s1;
+		gp->list[j++] = s1;
 	    }
 	}
-      sc->strings_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->strings1_loc > 0)
+  gp = sc->strings1;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->strings1_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->strings1[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      if (string_needs_free(s1))
 		free(string_value(s1));
 	    }
-	  else sc->strings1[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->strings1_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->gensyms_loc > 0)
+  gp = sc->gensyms;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->gensyms_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->gensyms[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      remove_gensym_from_symbol_table(sc, s1); /* this uses symbol_name_cell data */
 	      free(symbol_name(s1));
 	      free(symbol_name_cell(s1));
 	    }
-	  else sc->gensyms[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->gensyms_loc = j;
+      gp->loc = j;
       if (j == 0) mark_function[T_SYMBOL] = mark_noop;
     }
 
-  if (sc->c_objects_loc > 0)
+  gp = sc->c_objects;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->c_objects_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->c_objects[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    free_object(s1);
-	  else sc->c_objects[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->c_objects_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->optlists_loc > 0)
+  gp = sc->optlists;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->optlists_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->optlists[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    free_optlist(sc, s1);
-	  else sc->optlists[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->optlists_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->vectors_loc > 0)
+  gp = sc->vectors;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->vectors_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->vectors[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      /* a multidimensional empty vector can have dimension info, wrapped vectors always have dimension info */
@@ -4083,31 +4088,33 @@ static void sweep(s7_scheme *sc)
 		    free(vector_elements(s1));
 		}
 	    }
-	  else sc->vectors[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->vectors_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->hash_tables_loc > 0)
+  gp = sc->hash_tables;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->hash_tables_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->hash_tables[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      if (hash_table_mask(s1) > 0)
 		free_hash_table(s1);
 	    }
-	  else sc->hash_tables[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->hash_tables_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->input_ports_loc > 0)
+  gp = sc->input_ports;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->input_ports_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->input_ports[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      if (port_needs_free(s1))
@@ -4128,31 +4135,33 @@ static void sweep(s7_scheme *sc)
 		}
 	      free_port(sc, port_port(s1));
 	    }
-	  else sc->input_ports[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->input_ports_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->output_ports_loc > 0)
+  gp = sc->output_ports;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->output_ports_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->output_ports[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      close_output_port(sc, s1); /* needed for free filename, etc */
 	      free_port(sc, port_port(s1));
 	    }
-	  else sc->output_ports[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->output_ports_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->continuations_loc > 0)
+  gp = sc->continuations;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->continuations_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
-	  s1 = sc->continuations[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      if (continuation_op_stack(s1))
@@ -4162,248 +4171,134 @@ static void sweep(s7_scheme *sc)
 		}
 	      free(continuation_data(s1));
 	    }
-	  else sc->continuations[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->continuations_loc = j;
+      gp->loc = j;
     }
 
 #if WITH_GMP
-  if (sc->bigints_loc > 0)
+  gp = sc->bigints;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->bigints_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
 	  s7_pointer s1;
-	  s1 = sc->bigints[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    mpz_clear(big_integer(s1));
-	  else sc->bigints[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->bigints_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->bigratios_loc > 0)
+  gp = sc->bigratios;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->bigratios_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
 	  s7_pointer s1;
-	  s1 = sc->bigratios[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    mpq_clear(big_ratio(s1));
-	  else sc->bigratios[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->bigratios_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->bigreals_loc > 0)
+  gp = sc->bigreals;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->bigreals_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
 	  s7_pointer s1;
-	  s1 = sc->bigreals[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    mpfr_clear(big_real(s1));
-	  else sc->bigreals[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->bigreals_loc = j;
+      gp->loc = j;
     }
 
-  if (sc->bignumbers_loc > 0)
+  gp = sc->bignumbers;
+  if (gp->loc > 0)
     {
-      for (i = 0, j = 0; i < sc->bignumbers_loc; i++)
+      for (i = 0, j = 0; i < gp->loc; i++)
 	{
 	  s7_pointer s1;
-	  s1 = sc->bignumbers[i];
+	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    mpc_clear(big_complex(s1));
-	  else sc->bignumbers[j++] = s1;
+	  else gp->list[j++] = s1;
 	}
-      sc->bignumbers_loc = j;
+      gp->loc = j;
     }
 #endif
 }
 
+static inline void add_to_gc_list(gc_list *gp, s7_pointer p)
+{
+  if (gp->loc == gp->size)
+    {
+      gp->size *= 2;
+      gp->list = (s7_pointer *)realloc(gp->list, gp->size * sizeof(s7_pointer));
+    }
+  gp->list[gp->loc++] = p;
+}
+
+static gc_list *make_gc_list(void)
+{
+  gc_list *gp;
+  #define INIT_GC_CACHE_SIZE 4
+  gp = (gc_list *)malloc(sizeof(gc_list));
+  gp->size = INIT_GC_CACHE_SIZE;
+  gp->loc = 0;
+  gp->list = (s7_pointer *)malloc(gp->size * sizeof(s7_pointer));
+  return(gp);			 
+}
 
 static void add_gensym(s7_scheme *sc, s7_pointer p)
 {
-  if (sc->gensyms_loc == sc->gensyms_size)
-    {
-      sc->gensyms_size *= 2;
-      sc->gensyms = (s7_pointer *)realloc(sc->gensyms, sc->gensyms_size * sizeof(s7_pointer));
-    }
-  sc->gensyms[sc->gensyms_loc++] = p;
+  add_to_gc_list(sc->gensyms, p);
   mark_function[T_SYMBOL] = mark_symbol;
 }
 
 
-static void add_c_object(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->c_objects_loc == sc->c_objects_size)
-    {
-      sc->c_objects_size *= 2;
-      sc->c_objects = (s7_pointer *)realloc(sc->c_objects, sc->c_objects_size * sizeof(s7_pointer));
-    }
-  sc->c_objects[sc->c_objects_loc++] = p;
-}
-
-
-static void add_optlist(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->optlists_loc == sc->optlists_size)
-    {
-      sc->optlists_size *= 2;
-      sc->optlists = (s7_pointer *)realloc(sc->optlists, sc->optlists_size * sizeof(s7_pointer));
-    }
-  sc->optlists[sc->optlists_loc++] = p;
-}
-
-
-static void add_hash_table(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->hash_tables_loc == sc->hash_tables_size)
-    {
-      sc->hash_tables_size *= 2;
-      sc->hash_tables = (s7_pointer *)realloc(sc->hash_tables, sc->hash_tables_size * sizeof(s7_pointer));
-    }
-  sc->hash_tables[sc->hash_tables_loc++] = p;
-}
-
-
-static void add_vector(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->vectors_loc == sc->vectors_size)
-    {
-      sc->vectors_size *= 2;
-      sc->vectors = (s7_pointer *)realloc(sc->vectors, sc->vectors_size * sizeof(s7_pointer));
-    }
-  sc->vectors[sc->vectors_loc++] = p;
-}
-
-#define Add_Vector(Vec) if (sc->vectors_loc == sc->vectors_size) add_vector(sc, Vec); else sc->vectors[sc->vectors_loc++] = Vec
-
-static void add_input_port(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->input_ports_loc == sc->input_ports_size)
-    {
-      sc->input_ports_size *= 2;
-      sc->input_ports = (s7_pointer *)realloc(sc->input_ports, sc->input_ports_size * sizeof(s7_pointer));
-    }
-  sc->input_ports[sc->input_ports_loc++] = p;
-}
-
-
-static void add_output_port(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->output_ports_loc == sc->output_ports_size)
-    {
-      sc->output_ports_size *= 2;
-      sc->output_ports = (s7_pointer *)realloc(sc->output_ports, sc->output_ports_size * sizeof(s7_pointer));
-    }
-  sc->output_ports[sc->output_ports_loc++] = p;
-}
-
-
-static void add_continuation(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->continuations_loc == sc->continuations_size)
-    {
-      sc->continuations_size *= 2;
-      sc->continuations = (s7_pointer *)realloc(sc->continuations, sc->continuations_size * sizeof(s7_pointer));
-    }
-  sc->continuations[sc->continuations_loc++] = p;
-}
+#define add_c_object(sc, p)     {add_to_gc_list(sc->c_objects, p);}
+#define add_optlist(sc, p)      {add_to_gc_list(sc->optlists, p);}
+#define add_hash_table(sc, p)   {add_to_gc_list(sc->hash_tables, p);}
+#define add_string(sc, p)       {add_to_gc_list(sc->strings, p);}
+#define add_string1(sc, p)      {add_to_gc_list(sc->strings1, p);}
+#define add_vector(sc, p)       {add_to_gc_list(sc->vectors, p);}
+#define add_input_port(sc, p)   {add_to_gc_list(sc->input_ports, p);}
+#define add_output_port(sc, p)  {add_to_gc_list(sc->output_ports, p);}
+#define add_continuation(sc, p) {add_to_gc_list(sc->continuations, p);}
 
 #if WITH_GMP
-static void add_bigint(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->bigints_loc == sc->bigints_size)
-    {
-      sc->bigints_size *= 2;
-      sc->bigints = (s7_pointer *)realloc(sc->bigints, sc->bigints_size * sizeof(s7_pointer));
-    }
-  sc->bigints[sc->bigints_loc++] = p;
-}
-
-
-static void add_bigratio(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->bigratios_loc == sc->bigratios_size)
-    {
-      sc->bigratios_size *= 2;
-      sc->bigratios = (s7_pointer *)realloc(sc->bigratios, sc->bigratios_size * sizeof(s7_pointer));
-    }
-  sc->bigratios[sc->bigratios_loc++] = p;
-}
-
-
-static void add_bigreal(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->bigreals_loc == sc->bigreals_size)
-    {
-      sc->bigreals_size *= 2;
-      sc->bigreals = (s7_pointer *)realloc(sc->bigreals, sc->bigreals_size * sizeof(s7_pointer));
-    }
-  sc->bigreals[sc->bigreals_loc++] = p;
-}
-
-
-static void add_bignumber(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->bignumbers_loc == sc->bignumbers_size)
-    {
-      sc->bignumbers_size *= 2;
-      sc->bignumbers = (s7_pointer *)realloc(sc->bignumbers, sc->bignumbers_size * sizeof(s7_pointer));
-    }
-  sc->bignumbers[sc->bignumbers_loc++] = p;
-}
+#define add_bigint(sc, p)    {add_to_gc_list(sc->bigints, p);}
+#define add_bigratio(sc, p)  {add_to_gc_list(sc->bigratios, p);}
+#define add_bigreal(sc, p)   {add_to_gc_list(sc->bigreals, p);}
+#define add_bignumber(sc, p) {add_to_gc_list(sc->bignumbers, p);}
 #endif
 
 
 #define INIT_GC_CACHE_SIZE 4
 static void init_gc_caches(s7_scheme *sc)
 {
-  sc->strings_size = INIT_GC_CACHE_SIZE;
-  sc->strings_loc = 0;
-  sc->strings = (s7_pointer *)malloc(sc->strings_size * sizeof(s7_pointer));
-  sc->strings1_size = INIT_GC_CACHE_SIZE;
-  sc->strings1_loc = 0;
-  sc->strings1 = (s7_pointer *)malloc(sc->strings1_size * sizeof(s7_pointer));
-  sc->gensyms_size = INIT_GC_CACHE_SIZE;
-  sc->gensyms_loc = 0;
-  sc->gensyms = (s7_pointer *)malloc(sc->gensyms_size * sizeof(s7_pointer));
-  sc->vectors_size = INIT_GC_CACHE_SIZE;
-  sc->vectors_loc = 0;
-  sc->vectors = (s7_pointer *)malloc(sc->vectors_size * sizeof(s7_pointer));
-  sc->hash_tables_size = INIT_GC_CACHE_SIZE;
-  sc->hash_tables_loc = 0;
-  sc->hash_tables = (s7_pointer *)malloc(sc->hash_tables_size * sizeof(s7_pointer));
-  sc->input_ports_size = INIT_GC_CACHE_SIZE;
-  sc->input_ports_loc = 0;
-  sc->input_ports = (s7_pointer *)malloc(sc->input_ports_size * sizeof(s7_pointer));
-  sc->output_ports_size = INIT_GC_CACHE_SIZE;
-  sc->output_ports_loc = 0;
-  sc->output_ports = (s7_pointer *)malloc(sc->output_ports_size * sizeof(s7_pointer));
-  sc->continuations_size = INIT_GC_CACHE_SIZE;
-  sc->continuations_loc = 0;
-  sc->continuations = (s7_pointer *)malloc(sc->continuations_size * sizeof(s7_pointer));
-  sc->c_objects_size = INIT_GC_CACHE_SIZE;
-  sc->c_objects_loc = 0;
-  sc->c_objects = (s7_pointer *)malloc(sc->c_objects_size * sizeof(s7_pointer));
-  sc->optlists_size = INIT_GC_CACHE_SIZE;
-  sc->optlists_loc = 0;
-  sc->optlists = (s7_pointer *)malloc(sc->optlists_size * sizeof(s7_pointer));
+  sc->strings = make_gc_list();
+  sc->strings1 = make_gc_list();
+  sc->gensyms = make_gc_list();
+  sc->vectors = make_gc_list();
+  sc->hash_tables = make_gc_list();
+  sc->input_ports = make_gc_list();
+  sc->output_ports = make_gc_list();
+  sc->continuations = make_gc_list();
+  sc->c_objects = make_gc_list();
+  sc->optlists = make_gc_list();
 #if WITH_GMP
-  sc->bigints_size = INIT_GC_CACHE_SIZE;
-  sc->bigints_loc = 0;
-  sc->bigints = (s7_pointer *)malloc(sc->bigints_size * sizeof(s7_pointer));
-  sc->bigratios_size = INIT_GC_CACHE_SIZE;
-  sc->bigratios_loc = 0;
-  sc->bigratios = (s7_pointer *)malloc(sc->bigratios_size * sizeof(s7_pointer));
-  sc->bigreals_size = INIT_GC_CACHE_SIZE;
-  sc->bigreals_loc = 0;
-  sc->bigreals = (s7_pointer *)malloc(sc->bigreals_size * sizeof(s7_pointer));
-  sc->bignumbers_size = INIT_GC_CACHE_SIZE;
-  sc->bignumbers_loc = 0;
-  sc->bignumbers = (s7_pointer *)malloc(sc->bignumbers_size * sizeof(s7_pointer));
+  sc->bigints = make_gc_list();
+  sc->bigratios = make_gc_list();
+  sc->bigreals = make_gc_list();
+  sc->bignumbers = make_gc_list();
 #endif
 
   /* slightly unrelated... */
@@ -5361,6 +5256,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       if (is_gensym(x))
 	{
 	  unsigned int i;
+	  gc_list *gp;
 	  sc->heap[loc] = alloc_pointer();
 	  free_cell(sc, sc->heap[loc]);
 	  heap_location(sc->heap[loc]) = loc;
@@ -5371,15 +5267,16 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	   *   continues to be valid.  symbol_hmap is abs(heap_location), and the possible overlap with other not-in-heap
 	   *   ints is not problematic (they'll just hash to the same location).
 	   */
-	  for (i = 0; i < sc->gensyms_loc; i++) /* sc->gensyms reaches size 512 during s7test, but this search is called 3 times and costs nothing */
-	    if (sc->gensyms[i] == x)
+	  gp = sc->gensyms;
+	  for (i = 0; i < gp->loc; i++) /* sc->gensyms reaches size 512 during s7test, but this search is called 3 times and costs nothing */
+	    if (gp->list[i] == x)
 	      {
 		unsigned int j;
-		for (j = i + 1; i < sc->gensyms_loc - 1; i++, j++)
-		  sc->gensyms[i] = sc->gensyms[j];
-		sc->gensyms[i] = NULL;
-		sc->gensyms_loc--;
-		if (sc->gensyms_loc == 0) mark_function[T_SYMBOL] = mark_noop;
+		for (j = i + 1; i < gp->loc - 1; i++, j++)
+		  gp->list[i] = gp->list[j];
+		gp->list[i] = NULL;
+		gp->loc--;
+		if (gp->loc == 0) mark_function[T_SYMBOL] = mark_noop;
 		break;
 	      }
 	}
@@ -20877,13 +20774,6 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- strings -------------------------------- */
 
-static void resize_strings(s7_scheme *sc)
-{
-  sc->strings_size *= 2;
-  sc->strings = (s7_pointer *)realloc(sc->strings, sc->strings_size * sizeof(s7_pointer));
-}
-
-
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
@@ -20895,8 +20785,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   string_length(x) = len;
   string_hash(x) = 0;
   string_needs_free(x) = true;
-  if (sc->strings_loc == sc->strings_size) resize_strings(sc); 
-  sc->strings[sc->strings_loc++] = x;
+  add_string(sc, x);
   return(x);
 }
 
@@ -20909,12 +20798,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
   string_length(x) = len;
   string_hash(x) = 0;
   string_needs_free(x) = true;
-  if (sc->strings1_loc == sc->strings1_size)
-    {
-      sc->strings1_size *= 2;
-      sc->strings1 = (s7_pointer *)realloc(sc->strings1, sc->strings1_size * sizeof(s7_pointer));
-    }
-  sc->strings1[sc->strings1_loc++] = x;
+  add_string1(sc, x);
   return(x);
 }
 
@@ -20948,8 +20832,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   string_hash(x) = 0;
   string_length(x) = len;
   string_needs_free(x) = true;
-  if (sc->strings_loc == sc->strings_size) resize_strings(sc); 
-  sc->strings[sc->strings_loc++] = x;
+  add_string(sc, x);
   return(x);
 }
 
@@ -27711,7 +27594,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   /* bit 6 */
 	   ((full_typ & T_EXPANSION) != 0) ?      " expansion" : "",
 	   /* bit 7 */
-	   ((full_typ & T_MULTIPLE_VALUE) != 0) ? " values-or-matched" : "",
+	   ((full_typ & T_MULTIPLE_VALUE) != 0) ? " values|matched" : "",
 	   /* bit 8 */
 	   ((full_typ & T_GLOBAL) != 0) ?         ((is_pair(obj)) ? " unsafe-do" : 
 						   ((is_symbol(obj)) ? " global" :
@@ -27738,13 +27621,13 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   /* bit 15 */
 	   ((full_typ & T_UNSAFE) != 0) ?         ((is_symbol(obj)) ? " clean-symbol" : 
 						   ((is_slot(obj)) ? " has-stepper" : 
-						    ((is_pair(obj)) ? " unsafe-or-no-float-opt" :
+						    ((is_pair(obj)) ? " unsafe|no-float-opt" :
 						     " ?15?"))) : "",
 	   /* bit 16 */
 	   ((full_typ & T_IMMUTABLE) != 0) ?      " immutable" : "",
 	   /* bit 17 */
 	   ((full_typ & T_SETTER) != 0) ?         ((is_symbol(obj)) ? " setter" :
-						   ((is_pair(obj)) ? " allow-other-keys-or-has-all-x-or-no-int-opt" :
+						   ((is_pair(obj)) ? " allow-other-keys|has-all-x|no-int-opt" :
 						    ((is_closure(obj)) ? " has-optlist" :
 						     (((is_hash_table(obj)) || (is_let(obj))) ? " removed" :
 						      " ?17?")))) : "",
@@ -27770,7 +27653,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 						    "?20?")) : "",
 	   /* bit 21 */
 	   ((full_typ & T_GENSYM) != 0) ?         ((is_let(obj)) ? " funclet" : 
-						   ((is_pair(obj)) ? " list-in-use-or-simple-arg-defaults" :
+						   ((is_pair(obj)) ? " list-in-use|simple-arg-defaults" :
 						    ((is_symbol(obj)) ? " gensym" :
 						     ((is_string(obj)) ? " documented-symbol" :
 						      " ?21?")))) : "",
@@ -30925,7 +30808,7 @@ static s7_int tree_count(s7_scheme *sc, s7_pointer x, s7_pointer p, s7_int count
   return(tree_count(sc, x, cdr(p), tree_count(sc, x, car(p), count)));
 }
 
-static s7_int tree_count_at_least(s7_scheme *sc, s7_pointer x, s7_pointer p, s7_int count, s7_int top)
+static inline s7_int tree_count_at_least(s7_scheme *sc, s7_pointer x, s7_pointer p, s7_int count, s7_int top)
 {
   if (p == x)
     return(count + 1);
@@ -33370,7 +33253,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_int len, bool filled, unsigned
 	}
     }
 
-  Add_Vector(x);
+  add_vector(sc, x);
   return(x);
 }
 
@@ -33471,7 +33354,7 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_int len, s7_double *da
       else vector_dimension_info(x) = NULL;
     }
   else vector_dimension_info(x) = make_vdims(sc, free_data, dims, dim_info);
-  Add_Vector(x);
+  add_vector(sc, x);
   return(x);
 }
 
@@ -57833,7 +57716,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 static bool let_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
 {
   s7_pointer x;
-  /* fprintf(stderr, "%s in %s\n", DISPLAY(symbol), DISPLAY(symbols)); */
   for (x = symbols; is_pair(x); x = cdr(x))
     {
       if (car(x) == symbol)
@@ -57851,12 +57733,13 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7
       (let_memq(sc, symbol, e)))   /* it's probably a local variable reference */
     return(sc->nil);
 
+  if (is_global(symbol))
+    return(global_slot(symbol));
+
+  /* why this?? */
   if ((has_keyword(symbol)) &&
       (symbol_is_in_list(sc, s7_make_keyword(sc, symbol_name(symbol)))))
     return(sc->nil);
-
-  if (is_global(symbol))
-    return(global_slot(symbol));
 
   id = symbol_id(symbol);
   for (x = sc->envir; id < let_id(x); x = outlet(x));
@@ -60109,7 +59992,7 @@ static slist *split_slist(slist *top, slist *main_args)
 
 
 static body_t body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, slist *main_args, bool at_end);
-static void set_all_locals(s7_scheme *sc, s7_pointer tree, slist *args)
+static inline void set_all_locals(s7_scheme *sc, s7_pointer tree, slist *args)
 {
   s7_pointer p;
 #if WITH_SYMS_PRINT
@@ -60535,7 +60418,6 @@ static body_t body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, slis
   return(result);
 }
 
-
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body)
 {
   int len;
@@ -60619,7 +60501,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	    }
 	  if (result != UNSAFE_BODY)
 	    set_safe_closure(body);
-	  /* else fprintf(stderr, "unsafe: %s\n", DISPLAY(body)); */
 	  /* this bit is set on the function itself in make_closure and friends */
 	}
       /* else fprintf(stderr, "rest: %d %s\n", result, DISPLAY(body)); */
@@ -60881,7 +60762,6 @@ static s7_pointer check_case(s7_scheme *sc)
   return(sc->code);
 }
 
-
 static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 {
   s7_pointer binding;
@@ -60902,7 +60782,8 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 	      if ((is_h_safe_c_s(cadr(binding))) &&
 		  (is_pair(cadr(sc->code))))             /* one body expr is a pair */
 		{
-		  pair_set_syntax_symbol(sc->code, sc->let_opsq_p_symbol);
+ 		  pair_set_syntax_symbol(sc->code, sc->let_opsq_p_symbol);
+
 		  set_opt_sym2(sc->code, cadadr(binding));
 		  if ((!is_optimized(cadr(sc->code))) &&
 		      (is_syntactic_symbol(caadr(sc->code))))
@@ -79135,6 +79016,7 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
    */
   int i, syms = 0, len;
   s7_pointer x;
+  gc_list *gp;
 
 #ifdef __linux__
   struct rusage info;
@@ -79168,11 +79050,14 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
   fprintf(stderr, "c_functions: %d (%d bytes)\n", c_functions, (int)(c_functions * sizeof(c_proc_t)));
 
   len = 0;
-  for (i = 0; i < (int)(sc->strings_loc); i++)
-    len += string_length(sc->strings[i]);
-  for (i = 0; i < (int)(sc->strings1_loc); i++)
-    len += string_length(sc->strings1[i]);
-  fprintf(stderr, "strings: %u, %d bytes\n", sc->strings_loc + sc->strings1_loc, len); /* also doc strings, permanent strings, etc */
+  gp = sc->strings;
+  for (i = 0; i < (int)(gp->loc); i++)
+    len += string_length(gp->list[i]);
+  syms = gp->loc;
+  gp = sc->strings1;
+  for (i = 0; i < (int)(gp->loc); i++)
+    len += string_length(gp->list[i]);
+  fprintf(stderr, "strings: %u, %d bytes\n", syms + gp->loc, len); /* also doc strings, permanent strings, etc */
 
   {
     int hs;
@@ -79180,10 +79065,11 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
     for (hs = 0, p = hash_free_list; p; p = (hash_entry_t *)(p->next), hs++);
 
     len = 0;
-    for (i = 0; i < (int)(sc->hash_tables_loc); i++)
-      len += (hash_table_mask(sc->hash_tables[i]) + 1);
+    gp = sc->hash_tables;
+    for (i = 0; i < (int)(gp->loc); i++)
+      len += (hash_table_mask(gp->list[i]) + 1);
     
-    fprintf(stderr, "hash tables: %d (entries in use: %d, free: %d), ", (int)(sc->hash_tables_loc), len, hs);
+    fprintf(stderr, "hash tables: %d (entries in use: %d, free: %d), ", (int)(gp->loc), len, hs);
   }
 
   {
@@ -79191,13 +79077,15 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
     unsigned int cc_stacks;
     port_t *p;
     for (fs = 0, p = sc->port_heap; p; p = (port_t *)(p->next), fs++);
-    for (i = 0, cc_stacks = 0; i < (int)sc->continuations_loc; i++)
-      if (is_continuation(sc->continuations[i]))
-	cc_stacks += continuation_stack_size(sc->continuations[i]);
+    gp = sc->continuations;
+    for (i = 0, cc_stacks = 0; i < (int)gp->loc; i++)
+      if (is_continuation(gp->list[i]))
+	cc_stacks += continuation_stack_size(gp->list[i]);
+
     fprintf(stderr, "vectors: %u, input: %u, output: %u, free port: %d\ncontinuations: %u (total stack: %u), c_objects: %u, gensyms: %u, setters: %u, optlists: %u\n",
-	    sc->vectors_loc, sc->input_ports_loc, sc->output_ports_loc, fs, 
-	    sc->continuations_loc, cc_stacks,
-	    sc->c_objects_loc, sc->gensyms_loc, sc->setters_loc, sc->optlists_loc);
+	    sc->vectors->loc, sc->input_ports->loc, sc->output_ports->loc, fs, 
+	    gp->loc, cc_stacks,
+	    sc->c_objects->loc, sc->gensyms->loc, sc->setters_loc, sc->optlists->loc);
   }
   return(sc->F);
 }
@@ -79281,21 +79169,21 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, sc->initial_string_port_length));
 
   if (sym == sc->input_ports_symbol)                                     /* input-ports */
-    return(make_vector_wrapper(sc, sc->input_ports_loc, sc->input_ports));
+    return(make_vector_wrapper(sc, sc->input_ports->loc, sc->input_ports->list));
   if (sym == sc->output_ports_symbol)                                    /* output-ports */
-    return(make_vector_wrapper(sc, sc->output_ports_loc, sc->output_ports));
+    return(make_vector_wrapper(sc, sc->output_ports->loc, sc->output_ports->list));
   if (sym == sc->strings_symbol)                                         /* strings */
-    return(make_vector_wrapper(sc, sc->strings_loc, sc->strings));
+    return(make_vector_wrapper(sc, sc->strings->loc, sc->strings->list));
   if (sym == sc->gensyms_symbol)                                         /* gensyms */
-    return(make_vector_wrapper(sc, sc->gensyms_loc, sc->gensyms));
+    return(make_vector_wrapper(sc, sc->gensyms->loc, sc->gensyms->list));
   if (sym == sc->vectors_symbol)                                         /* vectors */
-    return(make_vector_wrapper(sc, sc->vectors_loc, sc->vectors));
+    return(make_vector_wrapper(sc, sc->vectors->loc, sc->vectors->list));
   if (sym == sc->hash_tables_symbol)                                     /* hash-tables */
-    return(make_vector_wrapper(sc, sc->hash_tables_loc, sc->hash_tables));
+    return(make_vector_wrapper(sc, sc->hash_tables->loc, sc->hash_tables->list));
   if (sym == sc->continuations_symbol)                                   /* continuations */
-    return(make_vector_wrapper(sc, sc->continuations_loc, sc->continuations));
+    return(make_vector_wrapper(sc, sc->continuations->loc, sc->continuations->list));
   if (sym == sc->c_objects_symbol)                                       /* c-objects */
-    return(make_vector_wrapper(sc, sc->c_objects_loc, sc->c_objects));
+    return(make_vector_wrapper(sc, sc->c_objects->loc, sc->c_objects->list));
 
   if (sym == sc->file_names_symbol)                                      /* file-names (loaded files) */
     return(make_vector_wrapper(sc, sc->file_names_top, sc->file_names));
@@ -81702,6 +81590,7 @@ int main(int argc, char **argv)
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
  * perhaps add various version numbers etc to *features* (snd-help) or (*s7* 'version-info)?
+ * settable heap-size (or at least increasable)
  *
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func
@@ -81747,8 +81636,7 @@ int main(int argc, char **argv)
  *   apply macro is apply_lambda with unevaled args
  *   could op_macro et al be like op_iterate? since the args are unevalled, all cases are the same
  * need tests for cond/case in opt_dotimes_2
- * do steppers (and many others) aren't marked local usually [tsort -- most loops are op_do!]
- * catch/call-with-exit maybe be stack-unsafe, but we should ignore that for setting locals (if body is safe)
+ * catch/call-with-exit may be stack-unsafe, but we should ignore that for setting locals (if body is safe)
  *   pending-unsafe for catch/call-with-exit etc -- needs lambda walker 
  * opt overhead: after optimize, fill one array with opt_infos, then march through it -- no opt* call, cur_sc->pc = index into array
  *   an array of functions, but what form
@@ -81756,15 +81644,7 @@ int main(int argc, char **argv)
  * all_x_c_opsq_opsq continued: c_opsq, s_opssq (fvref) etc -- s_opssq has .5mil filters (as base), 1/4 as mul
  *   so where to choose if base as p_pd?
  * let* could be divided into zones of all_x
- *
- * let in safe do/tc func etc could be saved across calls as hidden slots in the outer let
- *   reused via op_let that gets its frame from that slot
- *   but how to recognize this situation -- second pass?
- *   see old/olet-s7.c -- once again the problem is the GC (copy/remove from heap etc)
- *   olet as optlist-like syntax with env in call, symbol as gensym with has_env so it's marked until removal
- *   remove could make the env permanent?
- *   set_olet in opt_lam, is_olet in check_let, changes car to new-let-sym+olet-syn+new-frame
- *   op_olet: uses stored env
+ * titer needs an iter loop
  *
  * unknowns: macro like quasiquote hook-function, [let-temp bindings?? (target-line-length 120) in lt] also (code (+ i 1)) (quit) (lastref 1) etc
  *   also ((lambda (x)...)...) -- the (x)!!
@@ -81772,27 +81652,28 @@ int main(int argc, char **argv)
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6
- * tmac          |      |      |      || 9043 |  602   263   263
- * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127  1080  1060
- * tref          |      |      | 2372 || 2083 | 1289  1145  1122
- * teq           |      |      | 6612 || 2787 | 2210  1990  1998
- * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643  2346  2340
- * tlet     5318 | 3701 | 3712 | 3700 || 4004 | 3641  2483  2483
- * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032  2747  2739
- * lint          |      |      |      || 4029 | 3308  3021  3010
- * lg            |      |      |      ||      | 177   144   143.5
- * tmap          |      |      |  9.3 || 4300 | 3716  3069  3057
- * tcopy         |      |      | 13.6 || 3185 | 3342  3158  3123
- * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248  3200  3193
- * tform         |      |      | 6816 || 3850 | 3627  3374  3312
- * tfft          |      | 15.5 | 16.4 || 17.3 | 4920  3989  3989
- * tsort         |      |      |      || 9186 | 5403  4705  4697
- * titer         |      |      |      || 5964 | 5234  4714  4708
- * thash         |      |      | 50.7 || 8926 | 8651  7910  7840
- * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4  12.6  12.5
- * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1  18.0  17.8
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5  41.1  40.0
- *                                    || 144  | 135   132   99.1
+ * tmac          |      |      |      || 9052 |  615   259   261
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1066
+ * tref          |      |      | 2372 || 2125 | 1375  1231  1125
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1997
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2323
+ * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2497
+ * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2844
+ * lint          |      |      |      || 4041 | 3376  3114  3052
+ * lg            |      |      |      ||      | 161   149   144.3
+ * tmap          |      |      |  9.3 || 4365 | 3750  3104  3055
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3123
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3199
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3289
+ * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3984
+ * tsort         |      |      |      || 8584 | 4869  4080  4054
+ * titer         |      |      |      || 5971 | 5224  4768  4719
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7970
+ * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.3
+ * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  40.4
+ *                                    || 145  | 135   132   99.1
  * 
  * --------------------------------------------------------------------
+ * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.
  */

@@ -4153,8 +4153,6 @@ on a good day.
 <p>mus-clipping is the default low-level clipping choice while accessing sound data.
 Its default is #f which makes clipping very obvious (it will cause wrap-around).
 If you're using the standard Snd file accessors, you probably want to use <a href="#clipping">clipping</a>, not this function.
-This function refers to <a href="#mussoundopenoutput">mus-sound-open-output</a> and friends; the file-local version
-is <a href="#musfileclipping">mus-file-clipping</a> &mdash; surely we could make this more confusing!
 See also <a href="#cliphook">clip-hook</a>.
 </p>
 <div class="spacer"></div>
@@ -4193,8 +4191,7 @@ and whatever else seems appropriate.
 <em class=def id="musfileclipping">mus-file-clipping</em> fd
 </pre>
 
-<p>This is the clipping choice for the file referred to by 'fd' 
-(a file identifier as returned by <a href="#mussoundopeninput">mus-sound-open-input</a>).
+<p>This is the clipping choice for the file referred to by 'fd.
 The default is #f which makes clipping very obvious (it will cause wrap-around).
 See also <a href="#cliphook">clip-hook</a>.
 </p>
@@ -4320,34 +4317,6 @@ whose header claims it has 43 channels, but we know it only has 2:
 </pre>
 
 <p>tells Snd that it has 2 channels no matter what the header says.
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-sound-close-input -->
-<pre class="indented">
-<em class=def id="mussoundcloseinput">mus-sound-close-input</em> fd
-</pre>
-
-<p>This closes the sound file referred to by 'fd'; 'fd' is an integer returned by <a href="#mussoundopeninput">mus-sound-open-input</a>.
-These mus-sound-* file functions refer to a direct path to read and write sound files.  Any such operation is beneath the
-notice, so to speak, of Snd.  
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-sound-close-output -->
-<pre class="indented">
-<em class=def id="mussoundcloseoutput">mus-sound-close-output</em> fd bytes
-</pre>
-
-<p>This function closes the sound file 'fd', and updates its length indication, if any to be 'bytes' bytes.
-If you didn't specify a sample-type to <a href="#mussoundopenoutput">mus-sound-open-output</a>,
-it defaulted to mus-out-format.
-mus-out-format can
-currently be either ints, floats, or doubles, depending on how you've configured Snd, so it's safest
-to use (<a href="#musbytespersample">mus-bytes-per-sample</a> mus-out-format) 
-for the number of bytes per sample.
 </p>
 <div class="spacer"></div>
 
@@ -4537,28 +4506,6 @@ in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read
 <div class="spacer"></div>
 
 
-<!-- mus-sound-open-input -->
-<pre class="indented">
-<em class=def id="mussoundopeninput">mus-sound-open-input</em> filename
-</pre>
-
-<p>mus-sound-open-input opens the sound file 'filename' and returns an integer for use with 
-<a href="#mussoundread">mus-sound-read</a> and <a href="#mussoundcloseinput">mus-sound-close-input</a>.
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-sound-open-output -->
-<pre class="indented">
-<em class=def id="mussoundopenoutput">mus-sound-open-output</em> filename (srate 44100) (chans 1) sample-type header-type comment
-</pre>
-
-<p>mus-sound-open-output creates a new sound file with the indicated attributes, and returns an integer 
-for use with <a href="#mussoundwrite">mus-sound-write</a> and <a href="#mussoundcloseoutput">mus-sound-close-output</a>.
-</p>
-<div class="spacer"></div>
-
-
 <!-- mus-sound-preload -->
 <pre class="indented">
 <em class=def id="mussoundpreload">mus-sound-preload</em> filename
@@ -4576,27 +4523,6 @@ stored in some odd format, and you use that file a lot, this can save some time.
 </pre>
 
 <p>mus-sound-prune removes all defunct (non-existent) files from the sound cache.  This is primarily intended for internal testing (snd-test.scm).
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-sound-read -->
-<pre class="indented">
-<em class=def id="mussoundread">mus-sound-read</em> fd beg-in-file num-to-read chans sd
-</pre>
-
-<p>mus-sound-read reads data from the sound file 'fd', starting at frample 'beg-in-file' (frample 0 is the first),
-loading num-to-read samples into the float-vector 'sd' starting from 0 in that vector.
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-sound-reopen-output -->
-<pre class="indented">
-<em class=def id="mussoundreopenoutput">mus-sound-reopen-output</em> filename (chans 1) sample-type header-type data-location
-</pre>
-
-<p>mus-sound-reopen-output reopens the sound file 'filename', ready to continue writing output.
 </p>
 <div class="spacer"></div>
 
@@ -4641,16 +4567,6 @@ loading num-to-read samples into the float-vector 'sd' starting from 0 in that v
 <div class="spacer"></div>
 
 
-<!-- mus-sound-seek-frample -->
-<pre class="indented">
-<em class=def id="mussoundseekframple">mus-sound-seek-frample</em> fd frample
-</pre>
-
-<p>mus-sound-seek-frample moves the input or output reading point to 'frample' in the sound file 'fd'.
-</p>
-<div class="spacer"></div>
-
-
 <!-- mus-sound-srate -->
 <pre class="indented">
 <em class=def id="mussoundsrate">mus-sound-srate</em> filename
@@ -4667,16 +4583,6 @@ loading num-to-read samples into the float-vector 'sd' starting from 0 in that v
 </pre>
 
 <p>This is the original type indication of 'filename'.  This is only useful in internal testing.
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-sound-write -->
-<pre class="indented">
-<em class=def id="mussoundwrite">mus-sound-write</em> fd beg end chans sd
-</pre>
-
-<p>mus-sound-write writes data from the float-vector 'sd' to the sound file 'fd'.
 </p>
 <div class="spacer"></div>
 
@@ -8185,8 +8091,7 @@ file ok:
 <p>There are
 other ways to get at sound file data: <a class=quiet href="#makesampler">make-sampler</a> can be given a filename,
 rather than a sound; file-&gt;float-vector in examp.scm; 
-<a class=quiet href="#mussoundopeninput">mus-sound-open-input</a> and
-there are a variety of CLM-based functions such as
+and a variety of CLM-based functions such as
 <a class=quiet href="sndclm.html#filetosample">file-&gt;sample</a> and
 <a class=quiet href="sndclm.html#filetoarray">file-&gt;array</a>.
 </p>
