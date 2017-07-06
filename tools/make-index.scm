@@ -1015,6 +1015,21 @@
 	  ((= i n))
         (set! (tnames ctr)
 	      (clean-and-downcase-first-char (names i) capitalized (files i)))
+#|	
+	;; catch forgotten stuff
+	(let ((old-name (ind-sortby (tnames i))))
+	  (when (not (char-position " ,(" old-name))
+	    (let ((&pos (char-position #\& old-name)))
+	      (when &pos
+		(set! old-name (string-append (substring old-name 0 &pos) (string #\>) (substring old-name (+ &pos 4)))))
+	      (set! old-name (string->symbol old-name))
+	      (unless (or (memq old-name '(list->float-vector float-vector-fill! float-vector-length float-vector-reverse! float-vector->list ;vct.c but not s7
+					   min-db filter-control-in-db enved-in-db ; -dB in s7
+					   init-ladspa list-ladspa analyse-ladspa ladspa-descriptor apply-ladspa
+					   bignum? bignum))
+			  (defined? old-name))
+		  (format *stderr* "??: ~A~%" old-name)))))
+|#
 	(if (positive? (length (ind-sortby (tnames ctr))))
 	    (set! ctr (+ ctr 1))))
 

@@ -932,9 +932,11 @@ struct s7_scheme {
   int gc_freed;
   /* "int" or "unsigned int" seems safe here:
    *      sizeof(s7_cell) = 48 bytes
-   *      so to get more than 2^32 actual objects would require ca 206 GBytes RAM
+   *      so to get more than 2^32 actual objects would require ca 200 GBytes RAM
    *      vectors might be full of the same object (sc->nil for example), so there
    *      we need ca 38 GBytes RAM (8 bytes per pointer).
+   * But currently s7_cell hloc (heap_location) is a signed int using the sign to
+   *  indicate "not-in-heap", so this is really limited to 2^31.
    */
 
 #if WITH_HISTORY
@@ -3196,6 +3198,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, OP_SAFE_C_AP, HOP_SAFE_C_AP,
       OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, OP_SAFE_C_PQ, HOP_SAFE_C_PQ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
+      
+      OP_S_S, HOP_S_S, OP_S_A, HOP_S_A,
       OPT_MAX_DEFINED
 };
 
@@ -3413,6 +3417,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap",
       "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", "safe_c_pq", "h_safe_c_pq",
       "safe_c_ssp", "h_safe_c_ssp",
+      "s_s", "h_s_s", "s_a", "h_s_a",
 };
 #endif
 
@@ -5013,7 +5018,7 @@ static bool for_any_other_reason(s7_scheme *sc, int line)
 #endif
 
 
-static void resize_heap(s7_scheme *sc)
+static void resize_heap_to(s7_scheme *sc, unsigned int size)
 {
   /* alloc more heap */
   unsigned int old_size, old_free, k;
@@ -5023,9 +5028,17 @@ static void resize_heap(s7_scheme *sc)
   old_size = sc->heap_size;
   old_free = sc->free_heap_top - sc->free_heap;
 
-  if (sc->heap_size < 512000)
-    sc->heap_size *= 2;
-  else sc->heap_size += 512000;
+  if (size == 0)
+    {
+      if (sc->heap_size < 512000)
+	sc->heap_size *= 2;
+      else sc->heap_size += 512000;
+    }
+  else
+    {
+      if (size > sc->heap_size)
+	while (sc->heap_size < size) sc->heap_size *= 2;
+    }
 
   sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
   if (!(sc->heap))
@@ -5069,6 +5082,8 @@ static void resize_heap(s7_scheme *sc)
 #endif
     }
 }
+
+#define resize_heap(Sc) resize_heap_to(Sc, 0)
 
 static void try_to_call_gc(s7_scheme *sc)
 {
@@ -8520,6 +8535,11 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- symbol->keyword -------------------------------- */
+static s7_pointer symbol_to_keyword(s7_scheme *sc, s7_pointer sym)
+{
+  return(s7_make_keyword(sc, symbol_name(sym)));
+}
+
 static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_keyword "(symbol->keyword sym) returns a keyword with the same name as sym, but with a colon prepended"
@@ -8527,7 +8547,7 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
 
   if (!is_symbol(car(args)))
     method_or_bust_one_arg(sc, car(args), sc->symbol_to_keyword_symbol, args, T_SYMBOL);
-  return(s7_make_keyword(sc, symbol_name(car(args))));
+  return(symbol_to_keyword(sc, car(args)));
 }
 
 
@@ -37805,7 +37825,7 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
       arg = car(p);
       if (is_pair(arg))
 	{
-	  names[i] = s7_make_keyword(sc, symbol_name(car(arg)));
+	  names[i] = symbol_to_keyword(sc, car(arg));
 	  defaults[i] = cadr(arg);
 	  s7_remove_from_heap(sc, cadr(arg));
 	  if ((is_symbol(defaults[i])) ||
@@ -37817,7 +37837,7 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
 	}
       else
 	{
-	  names[i] = s7_make_keyword(sc, symbol_name(arg));
+	  names[i] = symbol_to_keyword(sc, arg);
 	  defaults[i] = sc->F;
 	}
     }
@@ -57724,6 +57744,7 @@ static bool let_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
   return(false);
 }
 
+
 static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 {
   s7_pointer x;
@@ -57736,9 +57757,12 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7
   if (is_global(symbol))
     return(global_slot(symbol));
 
-  /* why this?? */
+  /* see 59108 (OP_DEFINE_* in optimize_syntax) -- keyword version of name is used if a definition is
+   *   contingent on some run-time decision, so we're looking here for local defines that might not happen.
+   *   s7test.scm has a test case using acos.
+   */
   if ((has_keyword(symbol)) &&
-      (symbol_is_in_list(sc, s7_make_keyword(sc, symbol_name(symbol)))))
+      (symbol_is_in_list(sc, symbol_to_keyword(sc, symbol))))
     return(sc->nil);
 
   id = symbol_id(symbol);
@@ -59114,7 +59138,7 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 		  {
 		    if (car(e) != sc->key_rest_symbol)
 		      set_cdr(e, cons(sc, car(name_args), cdr(e))); /* export it */
-		    else add_symbol_to_list(sc, s7_make_keyword(sc, symbol_name(car(name_args))));
+		    else add_symbol_to_list(sc, symbol_to_keyword(sc, car(name_args)));
 		  }
 		else e = cons(sc, car(name_args), e);
 	      }
@@ -59140,7 +59164,7 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 		  {
 		    if (car(e) != sc->key_rest_symbol)
 		      set_cdr(e, cons(sc, name_args, cdr(e)));     /* export it */
-		    else add_symbol_to_list(sc, s7_make_keyword(sc, symbol_name(name_args)));
+		    else add_symbol_to_list(sc, symbol_to_keyword(sc, name_args));
 		  }
 		else e = cons(sc, name_args, e);
 		return(OPT_F);
@@ -60007,14 +60031,11 @@ static inline void set_all_locals(s7_scheme *sc, s7_pointer tree, slist *args)
       if (is_symbol(cp))
 	{
 	  if ((memq_sym(sc, cp, args)) || 
-	      ((is_immutable(cp)) &&         /* immutable (by itself) would work except for tricky cases like with-let (no local_slot!) */
-	       (is_slot(local_slot(cp))) &&
+	      ((is_immutable(cp)) &&                         /* immutable (by itself) would work except for tricky cases like with-let (no local_slot!) */
+	       (unchecked_type(local_slot(cp)) == T_SLOT) && /* local_slot might be a free cell (so debugging free cell check is annoying) */
 	       ((is_number(slot_value(local_slot(cp)))) ||
 		(is_sequence(slot_value(local_slot(cp)))))))
-	    {
-	      /* fprintf(stderr, "    set local %s\n", DISPLAY(p)); */
-	      set_local_symbol(p);
-	    }
+	    set_local_symbol(p);
 	}
       else 
 	{
@@ -68186,21 +68207,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START;
 
 		case OP_SAFE_C_S:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_SAFE_C_S:
 		  set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(code)));
 		  sc->value = c_call(code)(sc, sc->t1_1);
 		  goto START;
 		  
 		case OP_SAFE_C_L:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_SAFE_C_L:
 		  set_car(sc->t1_1, local_symbol_value(cadr(code)));
 		  sc->value = c_call(code)(sc, sc->t1_1);
 		  goto START;
 		  
 		case OP_SAFE_CAR_S:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_SAFE_CAR_S:
 		  {
 		    s7_pointer val;
@@ -68210,7 +68231,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		  
 		case OP_SAFE_CDR_S:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_SAFE_CDR_S:
 		  {
 		    s7_pointer val;
@@ -68220,7 +68241,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		  
 		case OP_SAFE_CADR_S:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_SAFE_CADR_S:
 		  {
 		    s7_pointer val;
@@ -68230,7 +68251,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		  
 		case OP_SAFE_IS_PAIR_S:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_SAFE_IS_PAIR_S:
 		  {
 		    s7_pointer val;
@@ -68240,7 +68261,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		case OP_SAFE_IS_NULL_S:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_SAFE_IS_NULL_S:
 		  {
 		    s7_pointer val;
@@ -68250,7 +68271,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		case OP_SAFE_IS_SYMBOL_S:  
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_SAFE_IS_SYMBOL_S:
 		  {
 		    s7_pointer val;
@@ -68644,11 +68665,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_A:
 		  if (!c_function_is_ok(sc, code)) 
 		    {
-		      s7_pointer new_func;
-		      /* need unknown_all_x|s etc
-		       * need to be sure all all_x unknowns are pre-annotated
-		       */
-		      if (unknown_a_ex(sc, new_func = find_symbol_checked(sc, car(code))) == goto_OPT_EVAL)
+		      if (unknown_a_ex(sc, find_symbol_checked(sc, car(code))) == goto_OPT_EVAL)
 			{
 			  if (op_no_hop(sc->code) == OP_SAFE_C_A)
 			    {
@@ -68656,9 +68673,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      sc->value = c_call(code)(sc, sc->a1_1);
 			      goto START;
 			    }
-			  goto OPT_EVAL;
 			}
-		      break;
+		      else set_optimize_op(code, OP_S_A);
+		      goto OPT_EVAL;
 		    }
 		case HOP_SAFE_C_A:
 		  set_car(sc->a1_1, c_call(cdr(code))(sc, cadr(code)));
@@ -69801,34 +69818,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  /* -------------------------------------------------------------------------------- */
 		case OP_C_S:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_C_S:
 		  sc->args = list_1(sc, find_symbol_unchecked(sc, cadr(code)));
 		  sc->value = c_call(code)(sc, sc->args);
 		  goto START;
 		  
 		case OP_READ_S:
-		  if (!c_function_is_ok(sc, code)) break;
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_S); goto OPT_EVAL;}
 		case HOP_READ_S:
 		  read_s_ex(sc);
 		  goto START;
 
 		case OP_C_A:
-		  if (!c_function_is_ok(sc, code)) 
-		    {
-		      s7_pointer new_func;
-		      if (unknown_a_ex(sc, new_func = find_symbol_checked(sc, car(code))) == goto_OPT_EVAL)
-			{
-			  if (op_no_hop(sc->code) == OP_C_A)
-			    {
-			      sc->args = list_1(sc, c_call(cdr(code))(sc, cadr(code)));
-			      sc->value = c_call(code)(sc, sc->args);
-			      goto START;
-			    }
-			  goto OPT_EVAL;
-			}
-		      break;
-		    }
+		  if (!c_function_is_ok(sc, code)) {set_optimize_op(code, OP_S_A); goto OPT_EVAL;}
 		case HOP_C_A:
 		  sc->args = list_1(sc, c_call(cdr(code))(sc, cadr(code)));
 		  sc->value = c_call(code)(sc, sc->args);
@@ -69890,7 +69893,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_APPLY_SS:
 		  sc->code = find_symbol_unchecked(sc, cadr(code)); /* global search here was slower */
-		  sc->args = find_symbol_unchecked(sc, opt_sym2(code));
+		  sc->args = find_symbol_unchecked(sc, opt_sym2(code));  /* is this right if code=macro? */
 		  if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
 		    return(apply_list_error(sc, sc->args));
 		  if (needs_copied_args(sc->code))
@@ -70042,8 +70045,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->code = _TPair(car(opt_pair1(cdr(code))));
 		    goto OPT_EVAL_CHECKED;
 		  }
-		  
-		  
+
+
+		  /* -------------------------------------------------------------------------------- */
+		  /* unknown* could fallback on these
+		   */
+		case OP_S_S:
+		case HOP_S_S:
+		  sc->code = find_symbol_unchecked(sc, car(code));
+		  if (dont_eval_args(sc->code))
+		    sc->args = cdr(code);
+		  else 
+		    {
+		      sc->args = sc->t1_1;
+		      set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(code)));
+		    }
+		  if (needs_copied_args(sc->code))
+		    sc->args = copy_list(sc, sc->args);
+		  goto APPLY;
+	      
+		case OP_S_A:
+		case HOP_S_A:
+		  /* fprintf(stderr, "s_a: %s\n", DISPLAY(code)); */
+		  sc->code = find_symbol_unchecked(sc, car(code));
+		  if (dont_eval_args(sc->code))
+		    sc->args = cdr(code);
+		  else 
+		    {
+		      set_car(sc->a1_1, c_call(cdr(code))(sc, cadr(code)));
+		      sc->args = sc->a1_1;
+		    }
+		  if (needs_copied_args(sc->code))
+		    sc->args = copy_list(sc, sc->args);
+		  goto APPLY;
+	      
+
 		  /* -------------------------------------------------------------------------------- */
 		case OP_THUNK:
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 0)) {if (unknown_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
@@ -70933,6 +70969,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* else cancel all the optimization info -- someone stepped on our symbol */
 	      /* there is a problem with this -- if the caller still insists on goto OPT_EVAL, for example,
 	       *   we get here over and over.  (let ((x (list (car y))))...) where list is redefined away.
+	       */
+	      /* if (is_optimized(code)) fprintf(stderr, "trail: %s %s\n", opt_names[optimize_op(code)], DISPLAY_80(code)); */
+	      /* unknown_g (if _s), closure_s ->s_s
+	       * unknown -> s
+	       * gg/ss -> ss etc
+	       * have a translation table, only c_c looks like trouble -- needs to be unwound
+	       * op_macro_any?
+	       *
+	       * some things are never opt'd?
+	       *   (* (expt (polywave osc fm) k) norm) ??? this is tgen...
+	       *   (fm-violin (* i 0.001) 0.01 440 0.001) tall
+	       *   (hash-table '(car . 1) '(cdr . 2) ... and each arg separately! lt -- not in func?
+	       *   clm defins are using car(body)=string as documentation!
+	       *   all list-values, define 
 	       */
 	      clear_all_optimizations(sc, code);
 	      /* and fall into the normal evaluator */
@@ -79325,6 +79375,21 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
 
+  if (sym == sc->heap_size_symbol)
+    {
+      if (s7_is_integer(val)) 
+	{
+	  s7_int size;
+	  size = s7_integer(val);
+	  if (size > S7_LONG_MAX)
+	    return(simple_out_of_range(sc, sym, val, s7_make_string_wrapper(sc, "should be less than 2^31")));
+	  if (size >= sc->heap_size * 2)
+	    resize_heap_to(sc, size);
+	  return(val);
+	}
+      return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
+    }
+
   if (sym == sc->autoloading_symbol)
     {
       if (s7_is_boolean(val)) {sc->is_autoloading = s7_boolean(sc, val); return(val);}
@@ -79388,12 +79453,10 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
       return(val);
     }
 
-  if ((sym == sc->cpu_time_symbol) || 
-      (sym == sc->heap_size_symbol) || (sym == sc->free_heap_size_symbol) ||
-      (sym == sc->gc_freed_symbol) || (sym == sc->gc_protected_objects_symbol) ||
+  if ((sym == sc->cpu_time_symbol) || (sym == sc->profile_info_symbol) ||
+      (sym == sc->free_heap_size_symbol) || (sym == sc->gc_freed_symbol) || (sym == sc->gc_protected_objects_symbol) ||
       (sym == sc->file_names_symbol) || (sym == sc->c_types_symbol) || (sym == sc->catches_symbol) || (sym == sc->exits_symbol) || 
-      (sym == sc->rootlet_size_symbol) || (sym == sc->profile_info_symbol) ||
-      (sym == sc->stack_top_symbol) || (sym == sc->stack_size_symbol))
+      (sym == sc->rootlet_size_symbol) || (sym == sc->stack_top_symbol) || (sym == sc->stack_size_symbol))
     return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set (*s7* '~S)"), sym)));
       
   return(sc->undefined);
@@ -81644,7 +81707,7 @@ int main(int argc, char **argv)
  * all_x_c_opsq_opsq continued: c_opsq, s_opssq (fvref) etc -- s_opssq has .5mil filters (as base), 1/4 as mul
  *   so where to choose if base as p_pd?
  * let* could be divided into zones of all_x
- * titer needs an iter loop
+ * extend op_s_s business throughout (no trailers!) -- where are the most breaks? count clears in trailers?
  *
  * unknowns: macro like quasiquote hook-function, [let-temp bindings?? (target-line-length 120) in lt] also (code (+ i 1)) (quit) (lastref 1) etc
  *   also ((lambda (x)...)...) -- the (x)!!
@@ -81658,18 +81721,18 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2777 | 2129  1978  1997
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2323
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2497
- * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2844
- * lint          |      |      |      || 4041 | 3376  3114  3052
- * lg            |      |      |      ||      | 161   149   144.3
+ * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2733
+ * lint          |      |      |      || 4041 | 3376  3114  3004
+ * lg            |      |      |      ||      | 161   149   144.4
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3032
  * tmap          |      |      |  9.3 || 4365 | 3750  3104  3055
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3123
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3199
- * tform         |      |      | 6816 || 3714 | 3530  3361  3289
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3279
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3984
  * tsort         |      |      |      || 8584 | 4869  4080  4054
  * titer         |      |      |      || 5971 | 5224  4768  4719
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7970
- * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.3
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7836
+ * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  40.4
  *                                    || 145  | 135   132   99.1

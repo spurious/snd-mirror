@@ -7,10 +7,9 @@
 
 (define (make-method f accessor)
   (lambda args
-    (apply f
-           (if (let? (car args))
-               (values (accessor (car args)) (cdr args))
-               (values (car args) (accessor (cadr args)) (cddr args))))))
+    (if (let? (car args))
+	(apply f (accessor (car args)) (cdr args))
+	(apply f (car args) (accessor (cadr args)) (cddr args)))))
 
 (define (make-object . args)
   (openlet

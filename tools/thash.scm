@@ -1,3 +1,4 @@
+(set! (*s7* 'heap-size) 1024000)
 ;(set! (*s7* 'gc-stats) 6)
 ;heap ca 30*size!
 
@@ -185,6 +186,22 @@
 ;;; ----------------------------------------
 
 ;(gc)
+
+#|
+(load "write.scm")
+(for-each (lambda (func)
+	    (let ((source (procedure-source func)))
+	      (let walker ((tree source))
+		(when (pair? tree)
+		  (if (symbol? (car tree))
+		      (if (local-symbol? tree)
+			  (set-car! tree (symbol "[" (symbol->string (car tree)) "]")))
+		      (walker (car tree)))
+		  (walker (cdr tree))))
+	      (pretty-print source))
+	    (newline))
+	  (list reader test1 test2 test3 test4 test5 test6 test7 test8 test9 test10))
+|#
 
 (s7-version)
 (exit)

@@ -180,21 +180,17 @@
 (define-constant F (make-env (float-vector 0.0 .1 1.0 1.0) :length 100))
 (define-constant K (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0))
 (define-constant V (make-float-vector 10))
+(define (Z) (mus-copy F))
+
+(define G #f)
+(define I #f)
+(define (O) (vector #f (mus-copy I) #f))
+(define (Q) (mus-copy G))
 
 (define (try1 form gen)
   (let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
     (let ((body
      `(let ()
-	(define G (,make-gen 1000)) 
-	(define I (,make-gen 500)) 
-	(define (O) (vector #f (mus-copy I) #f))
-	(define (Q) (mus-copy G))
-	(define (Z) (mus-copy F))
-
-	(let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
-	  (do ((i 0 (+ i 1))) ((= i 10))
-	    (set! (V i) ,form)))
-	
 	(define (tester-1)
 	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
@@ -243,6 +239,13 @@
 	      (let ((x (,gen o)))
 		(outa i ,form)))))
 
+	(set! G (,make-gen 1000)) 
+	(set! I (,make-gen 500)) 
+
+	(let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
+	  (do ((i 0 (+ i 1))) ((= i 10))
+	    (set! (V i) ,form)))
+	
 	(checkout-1 ',form V (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) (tester-11) (tester-12))
 	)))
       (define the-body (apply lambda () (list (copy body :readable))))
@@ -252,16 +255,6 @@
   (let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
     (let ((body
      `(let ()
-	(define G (,make-gen 1000)) 
-	(define I (,make-gen 500)) 
-	(define (O) (vector #f (mus-copy I) #f))
-	(define (Q) (mus-copy G))
-	(define (Z) (mus-copy F))
-
-	(let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
-	  (do ((i 0 (+ i 1))) ((= i 10))
-	    (set! (V i) ,form)))
-	
 	(define (tester-1)
 	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
@@ -336,6 +329,13 @@
 	      (let ((x (,gen o)))
 		(outa i ,form)))))
 
+	(set! G (,make-gen 1000)) 
+	(set! I (,make-gen 500)) 
+
+	(let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
+	  (do ((i 0 (+ i 1))) ((= i 10))
+	    (set! (V i) ,form)))
+	
 	(checkout ',form V
 		  (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) 
 		  (tester-7) (tester-8) (tester-9) (tester-10) (tester-11) (tester-12))
@@ -347,16 +347,6 @@
   (let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
     (let ((body
      `(let ()
-	(define G (,make-gen 1000)) 
-	(define I (,make-gen 500)) 
-	(define (O) (vector #f (mus-copy I) #f))
-	(define (Q) (mus-copy G))
-	(define (Z) (mus-copy F))
-
-	(let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1))
-	  (do ((i 0 (+ i 1))) ((= i 10))
-	    (float-vector-set! V i ,form)))
-	
 	(define (tester-1)
 	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1) (v (make-float-vector 10)))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
@@ -431,6 +421,13 @@
 	      (let ((x (,gen o)))
 		(outa i ,form)))))
 
+	(set! G (,make-gen 1000)) 
+	(set! I (,make-gen 500)) 
+
+	(let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1))
+	  (do ((i 0 (+ i 1))) ((= i 10))
+	    (float-vector-set! V i ,form)))
+	
 	(if (= args 1)
 	    (checkout-1 ',form V (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) (tester-11) (tester-12))
 	    (checkout ',form V
