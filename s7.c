@@ -2509,7 +2509,7 @@ static int not_heap = -1;
 #define is_continuation(p)            (type(p) == T_CONTINUATION)
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
-/* #define is_bacro(p)                (type(p) == T_BACRO) */
+#define is_bacro(p)                   (type(p) == T_BACRO)
 #define is_macro_star(p)              (type(p) == T_MACRO_STAR)
 #define is_bacro_star(p)              (type(p) == T_BACRO_STAR)
 
@@ -3163,7 +3163,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, OP_SAFE_LCLOSURE_L, HOP_SAFE_LCLOSURE_L, 
       OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_P, HOP_SAFE_CLOSURE_P, 
       OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS,
-      OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, OP_SAFE_LCLOSURE_A, HOP_SAFE_LCLOSURE_A, 
+      OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, OP_SAFE_LCLOSURE_A, HOP_SAFE_LCLOSURE_A, OP_SAFE_LCLOSURE_A_P, HOP_SAFE_LCLOSURE_A_P, 
       OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
       OP_SAFE_CLOSURE_S_P, HOP_SAFE_CLOSURE_S_P, OP_SAFE_LCLOSURE_L_P, HOP_SAFE_LCLOSURE_L_P, 
       OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, OP_SAFE_CLOSURE_S_C, HOP_SAFE_CLOSURE_S_C,
@@ -3184,7 +3184,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_C_FA, HOP_C_FA, OP_C_AA, HOP_C_AA,
 
       OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, OP_GOTO_A, HOP_GOTO_A,
-      OP_ITERATE, HOP_ITERATE,
+      OP_ITERATE, HOP_ITERATE, 
+      OP_CONTINUATION_A, HOP_CONTINUATION_A,
       OP_VECTOR_A, HOP_VECTOR_A, OP_CVECTOR_A, HOP_CVECTOR_A, 
       OP_STRING_A, HOP_STRING_A,
       OP_C_OBJECT_A, HOP_C_OBJECT_A, OP_PAIR_A, HOP_PAIR_A, OP_HASH_TABLE_A, HOP_HASH_TABLE_A,
@@ -3199,7 +3200,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, OP_SAFE_C_PQ, HOP_SAFE_C_PQ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
       
-      OP_S_S, HOP_S_S, OP_S_A, HOP_S_A,
+      OP_S, HOP_S, OP_S_S, HOP_S_S, OP_S_C, HOP_S_C, OP_S_A, HOP_S_A,
       OPT_MAX_DEFINED
 };
 
@@ -3383,7 +3384,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_closure_s", "h_safe_closure_s", "safe_lclosure_l", "h_safe_lclosure_l", 
       "safe_closure_c", "h_safe_closure_c", "safe_closure_p", "h_safe_closure_p", 
       "safe_closure_ss", "h_safe_closure_ss", "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs",
-      "safe_closure_a", "h_safe_closure_a", "safe_lclosure_a", "h_safe_lclosure_a", 
+      "safe_closure_a", "h_safe_closure_a", "safe_lclosure_a", "h_safe_lclosure_a", "safe_lclosure_a_p", "h_safe_lclosure_a_p", 
       "safe_closure_sa", "h_safe_closure_sa", 
       "safe_closure_s_p", "h_safe_closure_s_p", "safe_lclosure_l_p", "h_safe_lclosure_l_p", 
       "safe_closure_saa", "h_safe_closure_saa", "safe_closure_s_c", "h_safe_closure_s_c",
@@ -3404,6 +3405,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
 
       "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", "goto_a", "h_goto_a",
       "iterate", "h_iterate",
+      "continuation_a", "h_continuation_a", 
       "vector_a", "h_vector_a", "cvector_a", "h_cvector_a", 
       "string_a", "h_string_a",
       "c_object_a", "h_c_object_a", "pair_a", "h_pair_a", "hash_table_a", "h_hash_table_a",
@@ -3417,7 +3419,8 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap",
       "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", "safe_c_pq", "h_safe_c_pq",
       "safe_c_ssp", "h_safe_c_ssp",
-      "s_s", "h_s_s", "s_a", "h_s_a",
+      
+      "s", "h_s", "s_s", "h_s_s", "s_c", "h_s_c", "s_a", "h_s_a",
 };
 #endif
 
@@ -44145,6 +44148,15 @@ static s7_pointer local_x_c_add1(s7_scheme *sc, s7_pointer arg)
   return(g_add_s1_1(sc, x, cdr(arg))); /* arg=(+ x 1) */
 }
 
+static s7_pointer local_x_c_sub1(s7_scheme *sc, s7_pointer arg)  
+{
+  s7_pointer x;
+  x = local_symbol_value(cadr(arg));
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) - 1));
+  return(minus_c1(sc, x));
+}
+
 static s7_pointer all_x_c_addi(s7_scheme *sc, s7_pointer arg)  
 {
   s7_pointer x;
@@ -45427,6 +45439,8 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 		return(all_x_c_add1);
 	      if (c_call(arg) == g_add_cl1)
 		return(local_x_c_add1);
+	      if (c_call(arg) == g_subtract_cl1)
+		return(local_x_c_sub1);
 	      if (c_call(arg) == g_if_x2)
 		return(all_x_if_x2);
 	      if (c_call(arg) == g_and_2)
@@ -65187,14 +65201,11 @@ static int unknown_ex(s7_scheme *sc, s7_pointer f)
        */
       break;
       
-    case T_GOTO:
-      return(fixup_unknown_op(sc, code, f, hop + OP_GOTO));
-
-    case T_ITERATOR:
-      return(fixup_unknown_op(sc, code, f, hop + OP_ITERATE));
+    case T_GOTO:     return(fixup_unknown_op(sc, code, f, hop + OP_GOTO));
+    case T_ITERATOR: return(fixup_unknown_op(sc, code, f, hop + OP_ITERATE));
 
     default:
-      break;
+      return(fixup_unknown_op(sc, code, f, OP_S));
     }
   return(fall_through);
 }
@@ -65332,11 +65343,15 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
     case T_HASH_TABLE:
       annotate_arg(sc, cdr(code), sc->envir);
       return(fixup_unknown_op(sc, code, f, hop + OP_HASH_TABLE_A));
+
+    case T_CONTINUATION:
+      annotate_arg(sc, cdr(code), sc->envir);
+      return(fixup_unknown_op(sc, code, f, hop + OP_CONTINUATION_A));
       
     default:
       break;
     }
-  return(fall_through);
+  return(fixup_unknown_op(sc, code, f, (sym_case) ? OP_S_S : OP_S_C));
 }
 		  
 static int unknown_gg_ex(s7_scheme *sc, s7_pointer f)
@@ -65518,7 +65533,7 @@ static int unknown_a_ex(s7_scheme *sc, s7_pointer f)
       if ((c_function_required_args(f) > 1) ||
 	  (c_function_all_args(f) == 0))
 	break;
-      
+
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
       set_optimize_op(code, hop + ((is_safe_procedure(f)) ? OP_SAFE_C_A : OP_C_A));
@@ -65531,7 +65546,7 @@ static int unknown_a_ex(s7_scheme *sc, s7_pointer f)
 	  (closure_arity_to_int(sc, f) == 1))
 	{
 	  if (is_safe_closure(f))
-	    set_optimize_op(code, hop + (OP_SAFE_CLOSURE_A + ((is_local_symbol(code)) ? 2 : 0)));
+	    set_optimize_op(code, hop + (OP_SAFE_CLOSURE_A + ((is_local_symbol(code)) ? ((is_null(cdr(closure_body(f)))) ? 4 : 2) : 0)));
 	  else 
 	    {
 	      set_optimize_op(code, hop + OP_CLOSURE_A);
@@ -65577,9 +65592,11 @@ static int unknown_a_ex(s7_scheme *sc, s7_pointer f)
     case T_GOTO:       return(fixup_unknown_op(sc, code, f, hop + OP_GOTO_A));
       
     default:
+      /* macro, continuation */
       break;
     }
-  return(fall_through);
+  return(fixup_unknown_op(sc, code, f, OP_S_A)); /* closure with methods etc */
+  /* return(fall_through); */
 }
 
 static int unknown_aa_ex(s7_scheme *sc, s7_pointer f)
@@ -66566,7 +66583,7 @@ static int apply_lambda_star(s7_scheme *sc) 	                  /* -------- defin
 }
 
 
-static void apply_continuation(s7_scheme *sc)	                  /* -------- continuation ("call/cc") -------- */
+static inline void apply_continuation(s7_scheme *sc)               /* -------- continuation ("call/cc") -------- */
 {
   if (!call_with_current_continuation(sc))
     {
@@ -68179,7 +68196,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START;
 		  
 		case OP_SAFE_C_C:
-		  if (!c_function_is_ok(sc, code)) break;  /* break = fall into the "trailers" section where optimizations are cleared */
+		  if (!c_function_is_ok(sc, code)) {if (is_null(cddr(code))) {set_optimize_op(code, OP_S_C); goto OPT_EVAL;} break;}
+		  /* break = fall into the "trailers" section where optimizations are cleared */
 		case HOP_SAFE_C_C:
 		  sc->value = c_call(code)(sc, cdr(code)); /* this includes all safe calls where all args are constants */
 		  goto START;
@@ -70048,8 +70066,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		  /* -------------------------------------------------------------------------------- */
-		  /* unknown* could fallback on these
+		  /* unknown* fallback on these
 		   */
+		case OP_S:
+		case HOP_S:
+		  sc->code = find_symbol_unchecked(sc, car(code));
+		  sc->args = sc->nil;
+		  goto APPLY;
+
+		case OP_S_C:
+		case HOP_S_C:
+		  sc->code = find_symbol_unchecked(sc, car(code));
+		  if (dont_eval_args(sc->code))
+		    sc->args = cdr(code);
+		  else 
+		    {
+		      sc->args = sc->t1_1;
+		      set_car(sc->t1_1, cadr(code));
+		    }
+		  if (needs_copied_args(sc->code))
+		    sc->args = copy_list(sc, sc->args);
+		  goto APPLY;
+	      
 		case OP_S_S:
 		case HOP_S_S:
 		  sc->code = find_symbol_unchecked(sc, car(code));
@@ -70078,7 +70116,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (needs_copied_args(sc->code))
 		    sc->args = copy_list(sc, sc->args);
 		  goto APPLY;
-	      
+
 
 		  /* -------------------------------------------------------------------------------- */
 		case OP_THUNK:
@@ -70205,6 +70243,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), c_call(cdr(code))(sc, cadr(code)));
 		  sc->code = _TPair(closure_body(opt_lambda(code)));
 		  goto BEGIN1;
+
+		case OP_SAFE_LCLOSURE_A_P:
+		  set_opt_lambda(code, slot_value(local_slot(car(code))));
+		case HOP_SAFE_LCLOSURE_A_P:
+		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), c_call(cdr(code))(sc, cadr(code)));
+		  sc->code = car(closure_body(opt_lambda(code)));
+		  goto EVAL;
 
 		case OP_SAFE_CLOSURE_A_C:
 		  if (!closure_is_equal(sc, code)) {if (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
@@ -70541,7 +70586,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto EVAL;
 		  
 		case OP_CLOSURE_A:
-		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1)) {if (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
+		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1)) {if (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; fprintf(stderr, "closure_a gives up\n"); break;}		  
 		case HOP_CLOSURE_A:
 		  sc->value = c_call(cdr(code))(sc, cadr(code));
 		  check_stack_size(sc);
@@ -70886,6 +70931,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto START;
 		  }
 		  
+		case OP_CONTINUATION_A:
+		case HOP_CONTINUATION_A:
+		  {
+		    s7_pointer s;
+		    s = find_symbol_unchecked(sc, car(code));
+		    if (!is_continuation(s)) 
+		      {
+			if (unknown_a_ex(sc, s) == goto_OPT_EVAL) goto OPT_EVAL;
+			break;
+		      }
+		    sc->code = s;
+		    sc->args = set_plist_1(sc, c_call(cdr(code))(sc, cadr(code)));
+		    apply_continuation(sc);
+		    goto START;
+		  }
+		  
 		case OP_ITERATE:
 		case HOP_ITERATE:
 		  {
@@ -70970,12 +71031,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* there is a problem with this -- if the caller still insists on goto OPT_EVAL, for example,
 	       *   we get here over and over.  (let ((x (list (car y))))...) where list is redefined away.
 	       */
-	      /* if (is_optimized(code)) fprintf(stderr, "trail: %s %s\n", opt_names[optimize_op(code)], DISPLAY_80(code)); */
+#if 0
+	      if ((is_optimized(code)) &&
+		  (is_symbol(car(code))))
+		{
+		  s7_pointer val;
+		  val = find_symbol_unchecked(sc, car(code));
+		  if (val)
+		    fprintf(stderr, "trail: %s %s %s\n", opt_names[optimize_op(code)], type_name(sc, val, NO_ARTICLE), DISPLAY_80(code)); 
+		}
+#endif
 	      /* unknown_g (if _s), closure_s ->s_s
 	       * unknown -> s
 	       * gg/ss -> ss etc
 	       * have a translation table, only c_c looks like trouble -- needs to be unwound
-	       * op_macro_any?
 	       *
 	       * some things are never opt'd?
 	       *   (* (expt (polywave osc fm) k) norm) ??? this is tgen...
@@ -81669,6 +81738,8 @@ int main(int argc, char **argv)
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
  *
+ * lint: as in random-gen, move internally created but unchanged sequences (lists) out of the body
+ *
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
@@ -81693,11 +81764,6 @@ int main(int argc, char **argv)
  * macro expanded in func (optimize_lambda) -- since we have local macros, this requires a smart walker, or handling during evaluation
  *    so macro encountered in body, eval as now, but splice result into body (how to optimize spliced result? what if body removed from heap?)
  *    how to know we're in a function body?
- * op_safe_macro [quasiquote], op_macro -- to avoid trailers->apply macro, need timing cases
- *   but quasiquote called explicitly is stupid and never happens
- *   require is the real case, but rarely happens in an optimized context
- *   apply macro is apply_lambda with unevaled args
- *   could op_macro et al be like op_iterate? since the args are unevalled, all cases are the same
  * need tests for cond/case in opt_dotimes_2
  * catch/call-with-exit may be stack-unsafe, but we should ignore that for setting locals (if body is safe)
  *   pending-unsafe for catch/call-with-exit etc -- needs lambda walker 
@@ -81719,12 +81785,12 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1066
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
  * teq           |      |      | 6612 || 2777 | 2129  1978  1997
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2323
- * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2497
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2318
+ * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437
  * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2733
  * lint          |      |      |      || 4041 | 3376  3114  3004
  * lg            |      |      |      ||      | 161   149   144.4
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3032
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3020
  * tmap          |      |      |  9.3 || 4365 | 3750  3104  3055
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3123
  * tform         |      |      | 6816 || 3714 | 3530  3361  3279
@@ -81734,8 +81800,8 @@ int main(int argc, char **argv)
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7836
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
- * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  40.4
- *                                    || 145  | 135   132   99.1
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  40.1
+ *                                    || 145  | 135   132   97.7
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.

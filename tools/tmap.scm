@@ -247,7 +247,6 @@
       (if (not (= (ht i) i)) (display "oops")))))
 
 
-
 (define (test-it)
   (for-each
    (lambda (b p)
