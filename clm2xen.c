@@ -218,10 +218,6 @@ int mus_optkey_unscramble(const char *caller, int num_args, int nkeys, Xen *keys
       key = args[arg_ctr];
       if (!(Xen_is_keyword(key)))
 	{
-	  if (keying) 
-	    clm_error(caller, "unmatched value within keyword section?", key);
-	  /* type checking on the actual values has to be the caller's problem */
-
 	  if (arg_ctr >= nkeys) /* we aren't handling a keyword arg, so the underlying args should only take nkeys args */
 #if HAVE_SCHEME
 	    {
@@ -233,6 +229,10 @@ int mus_optkey_unscramble(const char *caller, int num_args, int nkeys, Xen *keys
 #else
 	    clm_error(caller, "extra trailing args?", key);
 #endif
+	  if (keying) 
+	    clm_error(caller, "unmatched value within keyword section?", key);
+	  /* type checking on the actual values has to be the caller's problem */
+
 	  keys[arg_ctr] = key;
 	  orig[arg_ctr] = arg_ctr + 1;
 	  arg_ctr++;

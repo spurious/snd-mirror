@@ -1,38 +1,39 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [374]
-;;;  test 1: defaults                           [1029]
-;;;  test 2: headers                            [1396]
-;;;  test 3: variables                          [1710]
-;;;  test 4: sndlib                             [2263]
-;;;  test 5: simple overall checks              [3994]
-;;;  test 6: float-vectors                      [8610]
-;;;  test 7: colors                             [8870]
-;;;  test 8: clm                                [9342]
+;;;  test 0: constants                          [375]
+;;;  test 1: defaults                           [1022]
+;;;  test 2: headers                            [1375]
+;;;  test 3: variables                          [1689]
+;;;  test 4: sndlib                             [2240]
+;;;  test 5: simple overall checks              [3972]
+;;;  test 6: float-vectors                      [8584]
+;;;  test 7: colors                             [8844]
+;;;  test 8: clm                                [9319]
 ;;;  test 9: mix                                [20981]
-;;;  test 10: marks                             [22699]
+;;;  test 10: marks                             [22700]
 ;;;  test 11: dialogs                           [23617]
-;;;  test 12: extensions                        [23778]
-;;;  test 13: menus, edit lists, hooks, etc     [24023]
-;;;  test 14: all together now                  [25328]
-;;;  test 15: chan-local vars                   [26129]
-;;;  test 16: regularized funcs                 [27788]
-;;;  test 17: dialogs and graphics              [31291]
-;;;  test 18: save and restore                  [31397]
-;;;  test 19: transforms                        [33038]
-;;;  test 20: new stuff                         [35086]
-;;;  test 21: optimizer                         [36261]
+;;;  test 12: extensions                        [23776]
+;;;  test 13: menus, edit lists, hooks, etc     [24013]
+;;;  test 14: all together now                  [25318]
+;;;  test 15: chan-local vars                   [26122]
+;;;  test 16: regularized funcs                 [27784]
+;;;  test 17: dialogs and graphics              [31280]
+;;;  test 18: save and restore                  [31385]
+;;;  test 19: transforms                        [33015]
+;;;  test 20: new stuff                         [35064]
+;;;  test 21: optimizer                         [36238]
 ;;;  test 22: with-sound                        [38591]
-;;;  test 23: X/Xt/Xm                           [41356]
-;;;  test 24: GL                                [44849]
-;;;  test 25: errors                            [44970]
-;;;  test 26: s7                                [46361]
-;;;  test all done                              [46497]
-;;;  test the end                               [46669]
+;;;  test 23: X/Xt/Xm                           [41354]
+;;;  test 24: GL                                [44850]
+;;;  test 25: errors                            [44971]
+;;;  test 26: s7                                [46367]
+;;;  test all done                              [46503]
+;;;  test the end                               [46664]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
 ;(set! (*s7* 'gc-stats) #t)
+(set! (*s7* 'heap-size) 1024000)
 
 (when (provided? 'pure-s7)
   (define (make-polar mag ang)
@@ -19875,119 +19876,141 @@ EDITS: 2
 	 make-procs gen-procs func-names))
       
       (when (and all-args (= clmtest 0))
-	(for-each
-	 (lambda (make runp)
-	   (catch #t 
-	     (lambda ()
-	       (let ((gen (make)))
-		 ;; run args
-		 (for-each 
-		  (lambda (arg1)
-		    ;; how did this ever work??
-		    (catch #t (lambda () (runp gen arg1)) (lambda args (car args)))
-		    (for-each
-		     (lambda (arg2)
-		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
-		     (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #i(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			   (lambda () #t) (curlet) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 (vector 0 2)
-			   () 3 4 2 8 16 32 64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			   )))
-		  (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #i(0 1) 3/4 'mus-error 0+i (make-delay 32)
+	(let ((a1 (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #i(0 1) 3/4 'mus-error 0+i (make-delay 32)
+			(lambda () #t) (curlet) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 (vector 0 2)
+			() 3 4 2 8 16 32 64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)))
+	      (a2 (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #i(0 1) 3/4 'mus-error 0+i (make-delay 32)
 			(lambda () #t) (curlet) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 (vector 0 1)
-			() 3 4 2 8 16 32 64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			))
-		 
-		 ;; generic args
-		 (for-each
-		  (lambda (func name)
-		    (catch #t
-		      (lambda ()
-			(let ((default-value (func gen)))
-			  (for-each
-			   (lambda (arg1)
-			     (catch #t
-			       (lambda ()
-				 (func gen)
-				 (set! (func gen) arg1))
-			       (lambda args #f)))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 3/4 'mus-error 0+i
-				 (lambda () #t) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-				 () 3 4 64 -64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-				 (lambda (a) a)))
-			  (if (not (equal? (func gen) default-value))
-			      (catch #t
-				(lambda ()
-				  (set! (func gen) default-value))
-				(lambda args #f)))))
-		      (lambda args #f)))
-		  generic-procs generic-names)
-		 (mus-reset gen)))
-	     (lambda args (car args))))
-	 make-procs gen-procs)
-	
-	(let-temporarily ((*clm-srate* 100))
+			() 3 4 2 8 16 32 64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)))
+	      (a3 (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 3/4 'mus-error 0+i
+			(lambda () #t) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			() 3 4 64 -64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			(lambda (a) a))))
 	  (for-each
-	   (lambda (n)
-	     (set! *clm-srate* n)
-	     (for-each 
-	      (lambda (g name)
-		(let ((tag (catch #t (lambda () (g :frequency 440.0)) (lambda args (car args)))))
-		  (if (not (memq tag '(wrong-type-arg out-of-range)))
-		      (snd-display "key-check ~A: ~A -> ~A" n name tag))))
-	      (list make-oscil make-asymmetric-fm 
-		    make-triangle-wave make-square-wave make-pulse-train make-sawtooth-wave
-		    make-rand make-rand-interp)
-	      '(oscil asymmetric-fm 
-		triangle-wave square-wave pusle-train sawtooth-wave
-		rand rand-interp)))
-	   '(100 1)))
-	
-	(let ((random-args (vector
-			    (expt 2.0 21.5) (expt 2.0 -18.0)
-			    1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .1 .2 .3)  #i(0 1) 3/4 0+i (make-delay 32)
-			    (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2))))
-	  (define (random-gen args)
-	    (let ((gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-moving-norm
-					make-table-lookup make-triangle-wave
-					make-comb ;make-convolve
-					make-delay make-env make-fft-window
-					make-filter make-filtered-comb make-fir-filter make-formant
-					make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
-					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
-					make-square-wave ;make-src
-					make-two-pole make-two-zero make-wave-train
-					make-ssb-am)))
-	      (for-each
-	       (lambda (n)
-		 (let ((gen (catch #t
-			      (lambda () (apply n args))
-			      (lambda args (car args)))))
-		   (if (mus-generator? gen)
-		       (for-each
-			(lambda (arg)
-			  (catch #t
-			    (lambda () (gen arg))
-			    (lambda args (car args))))
-			random-args))))
-	       gen-make-procs)))
-	  
-	  (random-gen ())
-	  (for-each
-	   (lambda (arg1)
-	     (random-gen (list arg1))
-	     (for-each 
-	      (lambda (arg2)
-		(random-gen (list arg1 arg2))
-		(for-each 
-		 (lambda (arg3)
-		   (random-gen (list arg1 arg2 arg3))
+	   (lambda (make runp)
+	     (catch #t 
+	       (lambda ()
+		 (let ((gen (make)))
+		   ;; run args
 		   (for-each 
-		    (lambda (arg4)
-		      (random-gen (list arg1 arg2 arg3 arg4)))
+		    (lambda (arg1)
+		      ;; how did this ever work??
+		      (catch #t (lambda () (runp gen arg1)) (lambda args (car args)))
+		      (for-each
+		       (lambda (arg2)
+			 (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
+		       a1))
+		    a2)
+		   
+		   ;; generic args
+		   (for-each
+		    (lambda (func name)
+		      (catch #t
+			(lambda ()
+			  (let ((default-value (func gen)))
+			    (for-each
+			     (lambda (arg1)
+			       (catch #t
+				 (lambda ()
+				   (func gen)
+				   (set! (func gen) arg1))
+				 (lambda args #f)))
+			     a3)
+			    (if (not (equal? (func gen) default-value))
+				(catch #t
+				  (lambda ()
+				    (set! (func gen) default-value))
+				  (lambda args #f)))))
+			(lambda args #f)))
+		    generic-procs generic-names)
+		   (mus-reset gen)))
+	       (lambda args (car args))))
+	   make-procs gen-procs)
+	
+	  (let-temporarily ((*clm-srate* 100))
+	    (for-each
+	     (lambda (n)
+	       (set! *clm-srate* n)
+	       (for-each 
+		(lambda (g name)
+		  (let ((tag (catch #t (lambda () (g :frequency 440.0)) (lambda args (car args)))))
+		    (if (not (memq tag '(wrong-type-arg out-of-range)))
+			(snd-display "key-check ~A: ~A -> ~A" n name tag))))
+		(list make-oscil make-asymmetric-fm 
+		      make-triangle-wave make-square-wave make-pulse-train make-sawtooth-wave
+		      make-rand make-rand-interp)
+		'(oscil asymmetric-fm 
+			triangle-wave square-wave pusle-train sawtooth-wave
+			rand rand-interp)))
+	     '(100 1)))
+	  
+	  (let ((random-args (vector
+			      (expt 2.0 21.5) (expt 2.0 -18.0)
+			      1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .1 .2 .3)  #i(0 1) 3/4 0+i (make-delay 32)
+			      (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2))))
+	    (define random-gen
+	      (let ((gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-moving-norm
+					  make-table-lookup make-triangle-wave
+					  make-comb ;make-convolve
+					  make-delay make-env make-fft-window
+					  make-filter make-filtered-comb make-fir-filter make-formant
+					  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
+					  make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
+					  make-square-wave ;make-src
+					  make-two-pole make-two-zero make-wave-train
+					  make-ssb-am)))
+		(lambda (args)
+		  (for-each
+		   (lambda (n)
+		     (let ((gen (catch #t
+				  (lambda () (apply n args))
+				  (lambda args (car args)))))
+		       (if (mus-generator? gen)
+			   (for-each
+			    (lambda (arg)
+			      (catch #t
+				(lambda () (gen arg))
+				(lambda args (car args))))
+			    random-args))))
+		   gen-make-procs))))
+	    
+	    (random-gen ())
+	    (let ((a1 (list #f))
+		  (a2 (list #f #f))
+		  (a3 (list #f #f #f))
+		  (a4 (list #f #f #f #f)))
+	      (let ((a22 (cdr a2))
+		    (a32 (cdr a3))
+		    (a42 (cdr a4))
+		    (a33 (cddr a3))
+		    (a43 (cddr a4))
+		    (a44 (cdddr a4)))
+		(for-each
+		 (lambda (arg1)
+		   (set-car! a1 arg1)
+		   (set-car! a2 arg1)
+		   (set-car! a3 arg1)
+		   (set-car! a4 arg1)
+		   (random-gen a1)
+		   (for-each 
+		    (lambda (arg2)
+		      (set-car! a22 arg2)
+		      (set-car! a32 arg2)
+		      (set-car! a42 arg2)
+		      (random-gen a2)
+		      (for-each 
+		       (lambda (arg3)
+			 (set-car! a33 arg3)
+			 (set-car! a43 arg3)
+			 (random-gen a3)
+			 (for-each 
+			  (lambda (arg4)
+			    (set-car! a44 arg4)
+			    (random-gen a4))
+			  random-args))
+		       random-args))
 		    random-args))
-		 random-args))
-	      random-args))
-	   random-args))))
+		 random-args)))))))
       
     (do ((ov (make-float-vector 10))
 	 (tv #r(.1 .1 .2 .2 1.5 1.5 1.5 1.5 0.1 0.01))
@@ -38162,10 +38185,6 @@ EDITS: 1
     (let-temporarily ((*clm-file-buffer-size* 16)
 		      (*clm-table-size* 16)
 		      (*clm-clipped* #f))
-      (define M (float-vector 0 0 1 10))
-      (define P (float-vector 0 0 1 1))
-      (set! (*s7* 'initial-string-port-length) 8192)
-      
       (define (vequal v1 v2)
 	(or (morally-equal? v1 v2)
 	    (float-vector-equal? v1 v2 1e-5))) ; "relative" equality: diff/mx
@@ -38193,21 +38212,17 @@ EDITS: 1
       (define F (make-env (float-vector 0.0 .1 1.0 1.0) :length 100))
       (define K (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0))
       (define V (make-float-vector 10))
+      (define (Z) (mus-copy F))
+
+      (define G #f)
+      (define I #f)
+      (define (O) (vector #f (mus-copy I) #f))
+      (define (Q) (mus-copy G))
       
       (define (try1 form gen)
 	(let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
 	  (let ((body
 		 `(let ()
-		    (define G (,make-gen 1000)) 
-		    (define I (,make-gen 500)) 
-		    (define (O) (vector #f (mus-copy I) #f))
-		    (define (Q) (mus-copy G))
-		    (define (Z) (mus-copy F))
-		    
-		    (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
-		      (do ((i 0 (+ i 1))) ((= i 10))
-			(set! (V i) ,form)))
-		    
 		    (define (tester-1)
 		      (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
 			(do ((i 0 (+ i 1))) ((= i 10) v)
@@ -38256,6 +38271,13 @@ EDITS: 1
 			  (let ((x (,gen o)))
 			    (outa i ,form)))))
 		    
+		    (set! G (,make-gen 1000)) 
+		    (set! I (,make-gen 500)) 
+		    
+		    (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
+		      (do ((i 0 (+ i 1))) ((= i 10))
+			(set! (V i) ,form)))
+		    
 		    (checkout-1 ',form V (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) (tester-11) (tester-12))
 		    )))
 	    (define the-body (apply lambda () (list (copy body :readable))))
@@ -38265,16 +38287,6 @@ EDITS: 1
 	(let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
 	  (let ((body
 		 `(let ()
-		    (define G (,make-gen 1000)) 
-		    (define I (,make-gen 500)) 
-		    (define (O) (vector #f (mus-copy I) #f))
-		    (define (Q) (mus-copy G))
-		    (define (Z) (mus-copy F))
-		    
-		    (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
-		      (do ((i 0 (+ i 1))) ((= i 10))
-			(set! (V i) ,form)))
-		    
 		    (define (tester-1)
 		      (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
 			(do ((i 0 (+ i 1))) ((= i 10) v)
@@ -38349,6 +38361,13 @@ EDITS: 1
 			  (let ((x (,gen o)))
 			    (outa i ,form)))))
 		    
+		    (set! G (,make-gen 1000)) 
+		    (set! I (,make-gen 500)) 
+		    
+		    (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
+		      (do ((i 0 (+ i 1))) ((= i 10))
+			(set! (V i) ,form)))
+		    
 		    (checkout ',form V
 			      (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) 
 			      (tester-7) (tester-8) (tester-9) (tester-10) (tester-11) (tester-12))
@@ -38360,16 +38379,6 @@ EDITS: 1
 	(let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
 	  (let ((body
 		 `(let ()
-		    (define G (,make-gen 1000)) 
-		    (define I (,make-gen 500)) 
-		    (define (O) (vector #f (mus-copy I) #f))
-		    (define (Q) (mus-copy G))
-		    (define (Z) (mus-copy F))
-		    
-		    (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1))
-		      (do ((i 0 (+ i 1))) ((= i 10))
-			(float-vector-set! V i ,form)))
-		    
 		    (define (tester-1)
 		      (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1) (v (make-float-vector 10)))
 			(do ((i 0 (+ i 1))) ((= i 10) v)
@@ -38443,6 +38452,13 @@ EDITS: 1
 			(do ((i 0 (+ i 1))) ((= i 10) *output*)
 			  (let ((x (,gen o)))
 			    (outa i ,form)))))
+		    
+		    (set! G (,make-gen 1000)) 
+		    (set! I (,make-gen 500)) 
+		    
+		    (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1))
+		      (do ((i 0 (+ i 1))) ((= i 10))
+			(float-vector-set! V i ,form)))
 		    
 		    (checkout ',form V
 			      (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) 
@@ -44726,6 +44742,12 @@ EDITS: 1
 	
 	(when all-args
 	  ;; ---------------- 3 Args
+	  (let ((a1 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
+			  :start -1 0 #f #t () #()))
+		(a2 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
+			  :phase -1 0 #f #t () #()))
+		(a3 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
+			  :channels -1 0 #f #t () #())))
 	  (for-each 
 	   (lambda (arg1)
 	     (for-each 
@@ -44738,12 +44760,9 @@ EDITS: 1
 			(lambda () (n arg1 arg2 arg3))
 			(lambda args (car args))))
 		    xm-procs3))
-		 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
-		       :start -1 0 #f #t () #())))
-	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
-		    :phase -1 0 #f #t () #())))
-	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
-		 :channels -1 0 #f #t () #())))
+		 a1))
+	      a2))
+	   a3)))
 	
 	(let ((struct-accessors #(.pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
 			          .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
@@ -46167,54 +46186,59 @@ EDITS: 1
 		   '(widget-position widget-size widget-text hide-widget show-widget focus-widget)))
 	      
 	      ;; ---------------- key args
-	      (for-each
-	       (lambda (arg1)
-		 (for-each 
-		  (lambda (arg2)
-		    (for-each 
-		     (lambda (n)
-		       (catch #t
-			 (lambda () (n arg1 arg2))
-			 (lambda args (car args))))
-		     make-procs))
-		  (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
-	       keyargs)
+	      (let ((a1 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+		(for-each
+		 (lambda (arg1)
+		   (for-each 
+		    (lambda (arg2)
+		      (for-each 
+		       (lambda (n)
+			 (catch #t
+			   (lambda () (n arg1 arg2))
+			   (lambda args (car args))))
+		       make-procs))
+		    a1))
+		 keyargs))
 	      
 	      (when (and all-args (= test-errors 0))
-		(for-each
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (n)
-			    (catch #t
-			      (lambda () (n arg1 arg2 arg3))
-			      (lambda args (car args))))
-			  make-procs))
-		       (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
-		    keyargs))
-		 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32))
+		(let ((a1 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32))
+		      (a2 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+		  (for-each
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (n)
+			      (catch #t
+				(lambda () (n arg1 arg2 arg3))
+				(lambda args (car args))))
+			    make-procs))
+			 a1))
+		      keyargs))
+		   a2))
 		
-		(for-each
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each 
-			     (lambda (n)
-			       (catch #t
-				 (lambda () (n arg1 arg2 arg3 arg4))
-				 (lambda args (car args))))
-			     make-procs))
-			  keyargs))
-		       (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
-		    keyargs))
-		 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+		(let ((a1 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32))
+		      (a2 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+		  (for-each
+		   (lambda (arg1)
+		     (for-each 
+		      (lambda (arg2)
+			(for-each 
+			 (lambda (arg3)
+			   (for-each 
+			    (lambda (arg4)
+			      (for-each 
+			       (lambda (n)
+				 (catch #t
+				   (lambda () (n arg1 arg2 arg3 arg4))
+				   (lambda args (car args))))
+			       make-procs))
+			    keyargs))
+			 a1))
+		      keyargs))
+		   a2)))
 	      
 	      ;; ---------------- 0 Args
 	      (for-each 

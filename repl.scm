@@ -550,29 +550,29 @@
 	    (define keymap (dilambda
 			    (lambda (c)
 			      (cond ((char? c) 
-				     (keymap-functions (char->integer c)))
+				     (vector-ref keymap-functions (char->integer c)))
 				    ((integer? c) 
-				     (keymap-functions c))
+				     (vector-ref keymap-functions c))
 				    ((not (string? c))
 				     (error 'wrong-type-arg "keymap takes a character or string argument"))
 				    ((= (length c) 1) 
-				     (keymap-functions (char->integer (c 0))))
+				     (vector-ref keymap-functions (char->integer (c 0))))
 				    ((and (= (length c) 2)
 					  (char=? (c 0) #\escape))
-				     (meta-keymap-functions (char->integer (c 1))))
+				     (vector-ref meta-keymap-functions (char->integer (c 1))))
 				    (else (lambda (c) #t))))
 			    (lambda (c f)
 			      (cond ((char? c) 
-				     (set! (keymap-functions (char->integer c)) f))
+				     (vector-set! keymap-functions (char->integer c) f))
 				    ((integer? c) 
-				     (set! (keymap-functions c) f))
+				     (vector-set! keymap-functions c f))
 				    ((not (string? c))
 				     (error 'wrong-type-arg "set! keymap takes a character or string first argument"))
 				    ((= (length c) 1)
-				     (set! (keymap-functions (char->integer (c 0))) f))
+				     (vector-set! keymap-functions (char->integer (c 0)) f))
 				    ((and (= (length c) 2)
 					  (char=? (c 0) #\escape))
-				     (set! (meta-keymap-functions (char->integer (c 1))) f))))))
+				     (vector-set! meta-keymap-functions (char->integer (c 1)) f))))))
 	    
 	    (define C-a 1)     ; #\x01 etc
 	    (define C-b 2)
@@ -645,15 +645,15 @@
 	      
 	      (do ((i 0 (+ i 1)))
 		  ((= i 32))
-		(set! (keymap-functions i) no-op-keyfunc))
+		(vector-set! keymap-functions i no-op-keyfunc))
 	      
 	      (do ((i 32 (+ i 1)))
 		  ((= i 256))
-		(set! (keymap-functions i) main-keyfunc))
+		(vector-set! keymap-functions i main-keyfunc))
 	      
 	      (do ((i 0 (+ i 1)))
 		  ((= i 256))
-		(set! (meta-keymap-functions i) no-op-keyfunc)))
+		(vector-set! meta-keymap-functions i no-op-keyfunc)))
 	    
 	    
 	    ;; -------- cursor movement 

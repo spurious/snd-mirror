@@ -16,7 +16,7 @@
 (define *report-one-armed-if* 90)                         ; if -> when/unless, can be #f/#t; if an integer, sets tree length which triggers revision (80 is too small)
 (define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 (define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
-(define *report-doc-strings* #f)                          ; old-style (CL) doc strings
+(define *report-doc-strings* #f)                          ; old-style (CL) doc strings (definstrument ignores this switch -- see ws.scm)
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says...
 
 (define *report-ridiculous-variable-names* 50)            ; max length of var name 
@@ -4435,37 +4435,35 @@
 	(define numerics-table
 	  (let ((h (make-hash-table)))
 	    
-	    (let ()
+	    (let ((coeffs (make-vector 4 0)))
 	      (define (horners-rule form)
 		(and (pair? form)
 		     (call-with-exit 
 		      (lambda (return)
+			(fill! coeffs 0)
 			(do ((p form (cdr p))
-			     (coeffs #f)
 			     (top 0)
 			     (sym #f))
 			    ((not (pair? p))
 			     (do ((x (- top 1) (- x 1))
-				  (result (coeffs top)))
+				  (result (vector-ref coeffs top)))
 				 ((< x 0)
 				  result)
 			       (set! result 
-				     (if (zero? (coeffs x))
+				     (if (zero? (vector-ref coeffs x))
 					 (list '* sym result)
-					 `(+ ,(coeffs x) (* ,sym ,result))))))
+					 `(+ ,(vector-ref coeffs x) (* ,sym ,result))))))
 			  (let ((cx (car p)))
 			    (cond ((number? cx)
-				   (if (not coeffs) (set! coeffs (make-vector 4 0)))
-				   (set! (coeffs 0) (+ (coeffs 0) cx)))
+				   (vector-set! coeffs 0 (+ (vector-ref coeffs 0) cx)))
 				  
 				  ((symbol? cx)
 				   (if (not sym)
 				       (set! sym cx)
 				       (if (not (eq? sym cx))
 					   (return #f)))
-				   (if (not coeffs) (set! coeffs (make-vector 4 0)))
 				   (set! top (max top 1))
-				   (set! (coeffs 1) (+ (coeffs 1) 1)))
+				   (vector-set! coeffs 1 (+ (vector-ref coeffs 1) 1)))
 				  
 				  ((not (and (pair? cx)
 					     (eq? (car cx) '*)))
@@ -4487,11 +4485,10 @@
 							 (set! ax (* ax qx))
 							 (return #f))))
 					       (cdr cx))
-				     (if (not coeffs) (set! coeffs (make-vector 4 0)))
 				     (if (>= ctr (length coeffs))
 					 (set! coeffs (copy coeffs (make-vector (* ctr 2) 0))))
 				     (set! top (max top ctr))
-				     (set! (coeffs ctr) (+ (coeffs ctr) ax)))))))))))
+				     (vector-set! coeffs ctr (+ (vector-ref coeffs ctr) ax)))))))))))
 	      
 	      (define (num+ args form env)
 		(case (length args)
@@ -13137,21 +13134,24 @@
 	 vars)
 	(set! lint-function-name #f)))
 
+    (define (report-doc-string definer function-name args body)
+      (lint-format "old-style doc string: ~S, in s7 use 'documentation:~%~NC~A" function-name
+		   (car body) (+ lint-left-margin 4) #\space
+		   (lint-pp `(define ,function-name
+			       (let ((documentation ,(car body)))
+				 (,(case definer 
+				     ((define) 'lambda)
+				     ((define*) 'lambda*)
+				     (else))
+				  ,args
+				  ,@(cdr body)))))))
+
     (define (lint-walk-function-body definer function-name args body env)
       ;; walk function body, with possible doc string at the start
       (when (and (len>1? body)
 		 (string? (car body)))
 	(if *report-doc-strings*
-	    (lint-format "old-style doc string: ~S, in s7 use 'documentation:~%~NC~A" function-name
-			 (car body) (+ lint-left-margin 4) #\space
-			 (lint-pp `(define ,function-name
-				     (let ((documentation ,(car body)))
-				       (,(case definer 
-					   ((define) 'lambda)
-					   ((define*) 'lambda*)
-					   (else))
-					,args
-					,@(cdr body)))))))
+	    (report-doc-string definer function-name args body))
 	(set! body (cdr body))) ; ignore old-style doc-string
       ;; (set! arg ...) never happens as last in body
 
@@ -13187,11 +13187,10 @@
     (define (lint-walk-function definer function-name args body form env)
       ;; check out function arguments (adding them to the current env), then walk its body
       ;; first check for (define (hi...) (ho...)) where ho has no opt args (and try to ignore possible string constant doc string)
-      
       (when (eq? definer 'define)
-	(let ((bval (if (and (pair? body)
+	(let ((bval (if (and (len>1? body)
 			     (string? (car body)))
-			(cdr body)          ; strip away the (old-style) documentation string
+			(cdr body)                   ; strip away the (old-style) documentation string
 			body)))
 	  
 	  (cond ((not (and (len=1? bval)             ; not (define (hi a) . 1)!

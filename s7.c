@@ -1189,6 +1189,7 @@ struct s7_scheme {
              set_pair_symbol, set_dilambda_symbol, set_dilambda_z_symbol, set_pair_z_symbol, set_pair_za_symbol, 
              set_pws_symbol, set_symbol_a_symbol, set_symbol_c_symbol,
              set_symbol_opcq_symbol, set_symbol_opsq_symbol, set_symbol_opssq_symbol, set_symbol_opsssq_symbol, set_symbol_p_symbol,
+             set_symbol_oplq_symbol, set_symbol_opllq_symbol, 
              set_symbol_q_symbol, set_symbol_s_symbol, set_symbol_l_symbol, set_symbol_z_symbol, set_unchecked_symbol, 
              simple_do_symbol, unless_s_symbol, unless_a_symbol, unless_unchecked_symbol, 
              when_s_symbol, when_a_symbol, when_p_symbol, when_unchecked_symbol, 
@@ -3019,6 +3020,7 @@ enum {OP_NO_OP, OP_GC_PROTECT,
 
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_L, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_A,
       OP_SET_SYMBOL_opSq, OP_SET_SYMBOL_opCq, OP_SET_SYMBOL_opSSq, OP_SET_SYMBOL_opSSSq, 
+      OP_SET_SYMBOL_opLq, OP_SET_SYMBOL_opLLq, 
       OP_SET_NORMAL, OP_SET_PAIR, OP_SET_DILAMBDA, OP_SET_DILAMBDA_Z, OP_SET_DILAMBDA_Z_1, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA,
       OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_LET_S, OP_SET_LET_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE,
@@ -3149,7 +3151,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_P, HOP_CLOSURE_P, 
       OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SS_P, HOP_CLOSURE_SS_P, 
       OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS,
-      OP_CLOSURE_A, HOP_CLOSURE_A, OP_CLOSURE_AA, HOP_CLOSURE_AA, OP_CLOSURE_A_P, HOP_CLOSURE_A_P,
+      OP_CLOSURE_A, HOP_CLOSURE_A, OP_CLOSURE_AA, HOP_CLOSURE_AA, OP_CLOSURE_A_P, HOP_CLOSURE_A_P, OP_CLOSURE_AA_P, HOP_CLOSURE_AA_P,
       OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, OP_CLOSURE_ALL_S_P, HOP_CLOSURE_ALL_S_P,
       OP_CLOSURE_FA, HOP_CLOSURE_FA,
       OP_CLOSURE_AP, HOP_CLOSURE_AP, OP_CLOSURE_PA, HOP_CLOSURE_PA, 
@@ -3242,6 +3244,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
 
       "set_unchecked", "set_symbol_c", "set_symbol_l", "set_symbol_s", "set_symbol_q", "set_symbol_p", "set_symbol_z", "set_symbol_a",
       "set_symbol_opsq", "set_symbol_opcq", "set_symbol_opssq", "set_symbol_opsssq", 
+      "set_symbol_oplq", "set_symbol_opllq", 
       "set_normal", "set_pair", "set_dilambda", "set_dilambda_z", "set_dilambda_z_1",
       "set_pair_z", "set_pair_a", "set_pair_p", "set_pair_za",
       "set_pair_p_1", "set_with_accessor", "set_pws", "set_let_s", "set_let_all_x",
@@ -3371,7 +3374,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "closure_s", "h_closure_s", "closure_c", "h_closure_c", "closure_p", "h_closure_p", 
       "closure_ss", "h_closure_ss", "closure_ss_p", "h_closure_ss_p", 
       "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs",
-      "closure_a", "h_closure_a", "closure_aa", "h_closure_aa", "closure_a_p", "h_closure_a_p",
+      "closure_a", "h_closure_a", "closure_aa", "h_closure_aa", "closure_a_p", "h_closure_a_p", "closure_aa_p", "h_closure_aa_p",
       "closure_all_x", "h_closure_all_x", "closure_all_s", "h_closure_all_s", "closure_all_s_p", "h_closure_all_s_p",
       "closure_fa", "h_closure_fa",
       "closure_ap", "h_closure_ap", "closure_pa", "h_closure_pa", 
@@ -46097,6 +46100,7 @@ static s7_int opt_i_pi_sf(void *p)
 static bool i_pi_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer car_x)
 {
   s7_i_pi_t pfunc;
+
   pfunc = s7_i_pi_function(s_func);
   if (pfunc)
     {
@@ -46109,7 +46113,7 @@ static bool i_pi_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 	  start = sc->pc;
 	  arg1 = cadr(car_x);
 	  arg2 = caddr(car_x);
-	  
+
 	  if ((is_symbol(cadr(sig))) &&
 	      (is_symbol(arg1)))
 	    {
@@ -49527,7 +49531,6 @@ static bool p_pi_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 		opc->v3.p_pi_f = s7_p_pi_direct_function(s_func);
 	    }
 	}
-      
       if (is_symbol(caddr(car_x)))
 	{
 	  s7_pointer slot;
@@ -50787,7 +50790,6 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 	  
 	  opc->v1.p = settee;
 	  stype = s7_type_of(slot_value(settee));
-	  
 	  if (stype == sc->is_integer_symbol)
 	    {
 	      if (is_symbol(caddr(car_x)))
@@ -53513,12 +53515,12 @@ s7_function s7_optimize_1(s7_scheme *sc, s7_pointer expr, bool nr)
 	  pc_fallback(sc, 0);
 	  set_no_int_opt(expr);
 	}
-      if (!no_bool_opt(expr))
+      if (!no_float_opt(expr))
 	{
 	  if (float_optimize(sc, expr))
 	    return((nr) ? opt_float_any_nr : opt_wrap_float);
 	  pc_fallback(sc, 0);
-	  set_no_bool_opt(expr);
+	  set_no_float_opt(expr);
 	}
       if (!no_bool_opt(expr))
 	{
@@ -57848,7 +57850,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	      (!arglist_has_rest(sc, closure_args(func))))
 	    {
 	      set_unsafely_optimized(expr);
-	      set_optimize_op(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_AA : OP_CLOSURE_AA));
+	      set_optimize_op(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_AA : ((is_null(cdr(closure_body(func)))) ? OP_CLOSURE_AA_P : OP_CLOSURE_AA)));
 	      set_opt_lambda(expr, func);
 	      return(OPT_F);
 	    }
@@ -58344,7 +58346,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 		set_optimize_op(expr, hop + OP_SAFE_CLOSURE_SA);
 	      else set_optimize_op(expr, hop + OP_SAFE_CLOSURE_AA);
 	    }
-	  else set_optimize_op(expr, hop + OP_CLOSURE_AA);
+	  else set_optimize_op(expr, hop + ((is_null(cdr(closure_body(func)))) ? OP_CLOSURE_AA_P : OP_CLOSURE_AA));
 	  annotate_args(sc, cdr(expr), e);
 	  set_opt_lambda(expr, func);
 	  set_arglist_length(expr, small_int(2));
@@ -62392,7 +62394,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			  pair_set_syntax_symbol(sc->code, sc->set_symbol_p_symbol);
 			  if (is_h_safe_c_s(value))
 			    {
-			      pair_set_syntax_symbol(sc->code, sc->set_symbol_opsq_symbol);
+			      pair_set_syntax_symbol(sc->code, (is_local_symbol(cdr(value))) ? sc->set_symbol_oplq_symbol : sc->set_symbol_opsq_symbol);
 			      set_opt_sym2(sc->code, cadr(value));
 			    }
 			  else
@@ -62411,9 +62413,11 @@ static s7_pointer check_set(s7_scheme *sc)
 				      /* most of these special cases probably don't matter */
 				      if (optimize_op(value) == HOP_SAFE_C_SS)
 					{
+					  bool locals;
+					  locals = ((is_local_symbol(cdr(value))) && (is_local_symbol(cddr(value))));
 					  if (settee == cadr(value))
 					    pair_set_syntax_symbol(sc->code, sc->increment_ss_symbol);
-					  else pair_set_syntax_symbol(sc->code, sc->set_symbol_opssq_symbol);
+					  else pair_set_syntax_symbol(sc->code, (locals) ? sc->set_symbol_opllq_symbol : sc->set_symbol_opssq_symbol);
 					  set_opt_pair2(sc->code, cdr(value));
 					}
 				      else
@@ -65629,7 +65633,7 @@ static int unknown_aa_ex(s7_scheme *sc, s7_pointer f)
       if ((!has_methods(f)) &&
 	  (closure_arity_to_int(sc, f) == 2))
 	{
-	  set_optimize_op(code, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_AA : OP_CLOSURE_AA));
+	  set_optimize_op(code, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_AA : ((is_null(cdr(closure_body(f)))) ? OP_CLOSURE_AA_P : OP_CLOSURE_AA)));
 	  set_opt_lambda(code, f);
 	  return(goto_OPT_EVAL);
 	}
@@ -66769,17 +66773,6 @@ static s7_pointer g_profile_filename(s7_scheme *sc, s7_pointer args)
   return(remembered_file_name(integer(car(args))));
 }
 #endif
-
-
-#define unsafe_closure_2(Sc, Arg1, Arg2) \
-{ \
-  s7_pointer Code, Args, A1, A2; A1 = Arg1; A2 = Arg2; \
-  check_stack_size(Sc); \
-  Code = opt_lambda(Sc->code); \
-  Args = closure_args(Code); \
-  new_frame_with_two_slots(Sc, closure_let(Code), Sc->envir, car(Args), A1, cadr(Args), A2); \
-  Sc->code = closure_body(Code); \
-}
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -68128,7 +68121,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = sc->nil;
 	      goto START;
 	    }
-	  
+
+	  /* lt   1: 2645935 2: 746242 3: 102531 4: 155259
+	   * snd    15002510   3280896   1545202    659699
+	   * b       5751838    441240      7969      8443 but 6: 186868?
+	   */
+
+	  /* main 1 cases: [about 5 per]
+	   * lt   74310[case e_g else_case_2] 67361[for_each_1] 73599[cond1] 67215[map_1] 
+	   *         70814[closure_all_x] 70706[closure_aa] 68099[do_end_1] 73207[let1] 73672[cond_all_x] 70639[closure_a]
+	   * snd  70706 71734[apply closure*?] 72968[let_one_1] 67361
+	   * b    70706 73651[cond_all_x?] 73672 71734 70220[safe_closure_s] 70334[safe_closure_ss] 73697[cond_all_x_2] 73207 70639 70375 68060
+	   * lg   67361 73599 74310 67215 70814 73672 70334 70706 73207 72968 71734 68099 71983 70639 70661 73035 70391 70031
+	   */
+
 	case OP_BEGIN1:
 	  if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F);
 	BEGIN1:
@@ -69997,7 +70003,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		     *    code is (catch #t (lambda () ....) (lambda args ....))
 		     */
 		    s7_pointer p, f, args, tag;
-		    
 		    args = cddr(code);
 		    
 		    /* defer making the error lambda */
@@ -70620,8 +70625,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_CLOSURE_SS:
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
 		case HOP_CLOSURE_SS:
-		  unsafe_closure_2(sc, find_symbol_unchecked(sc, cadr(code)), find_symbol_unchecked(sc, opt_sym2(code)));
-		  goto BEGIN1;
+		  {
+		    s7_pointer f, args;
+		    check_stack_size(sc);
+		    f = opt_lambda(sc->code);
+		    args = closure_args(f);
+		    new_frame_with_two_slots(sc, closure_let(f), sc->envir, 
+					     car(args), find_symbol_unchecked(sc, cadr(code)),
+					     cadr(args), find_symbol_unchecked(sc, opt_sym2(code)));
+		    sc->code = closure_body(f);
+		    goto BEGIN1;
+		  }
 
 		case OP_CLOSURE_SS_P:
 		  if (!closure_is_equal(sc, code)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
@@ -70641,26 +70655,61 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_CLOSURE_SC:
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
 		case HOP_CLOSURE_SC:
-		  unsafe_closure_2(sc, find_symbol_unchecked(sc, cadr(code)), opt_con2(code));
-		  goto BEGIN1;
+		  {
+		    s7_pointer f, args;
+		    check_stack_size(sc);
+		    f = opt_lambda(sc->code);
+		    args = closure_args(f);
+		    new_frame_with_two_slots(sc, closure_let(f), sc->envir, car(args), find_symbol_unchecked(sc, cadr(code)), cadr(args), opt_con2(code));
+		    sc->code = closure_body(f);
+		    goto BEGIN1;
+		  }
 		  
 		case OP_CLOSURE_CS:
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
 		case HOP_CLOSURE_CS:
-		  unsafe_closure_2(sc, cadr(code), find_symbol_unchecked(sc, opt_sym2(code)));
-		  goto BEGIN1;
+		  {
+		    s7_pointer f, args;
+		    check_stack_size(sc);
+		    f = opt_lambda(sc->code);
+		    args = closure_args(f);
+		    new_frame_with_two_slots(sc, closure_let(f), sc->envir, car(args), cadr(code), cadr(args), find_symbol_unchecked(sc, opt_sym2(code)));
+		    sc->code = closure_body(f);
+		    goto BEGIN1;
+		  }
 		  
 		case OP_CLOSURE_AA:
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2)) {if (unknown_aa_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
 		case HOP_CLOSURE_AA:
 		  {
-		    s7_pointer args;
+		    s7_pointer f, args, a_args;
 		    int tx;
+		    check_stack_size(sc);
 		    tx = next_tx(sc);
-		    args = cdr(code);
-		    sc->t_temps[tx] = c_call(args)(sc, car(args));
-		    unsafe_closure_2(sc, sc->t_temps[tx], c_call(cdr(args))(sc, cadr(args)));
+		    a_args = cdr(code);
+		    sc->t_temps[tx] = c_call(a_args)(sc, car(a_args));
+		    f = opt_lambda(sc->code);
+		    args = closure_args(f);
+		    new_frame_with_two_slots(sc, closure_let(f), sc->envir, car(args), sc->t_temps[tx], cadr(args), c_call(cdr(a_args))(sc, cadr(a_args)));
+		    sc->code = closure_body(f);
 		    goto BEGIN1;
+		  }
+
+		case OP_CLOSURE_AA_P:
+		  if (!closure_is_equal(sc, code)) {if (unknown_aa_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
+		case HOP_CLOSURE_AA_P:
+		  {
+		    s7_pointer f, args, a_args;
+		    int tx;
+		    check_stack_size(sc);
+		    tx = next_tx(sc);
+		    a_args = cdr(code);
+		    sc->t_temps[tx] = c_call(a_args)(sc, car(a_args));
+		    f = opt_lambda(sc->code);
+		    args = closure_args(f);
+		    new_frame_with_two_slots(sc, closure_let(f), sc->envir, car(args), sc->t_temps[tx], cadr(args), c_call(cdr(a_args))(sc, cadr(a_args)));
+		    sc->code = car(closure_body(f));
+		    goto EVAL;
 		  }
 
 		case OP_CLOSURE_AP:
@@ -71038,36 +71087,46 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  s7_pointer val;
 		  val = find_symbol_unchecked(sc, car(code));
 		  if (val)
-		    fprintf(stderr, "trail: %s %s %s\n", opt_names[optimize_op(code)], type_name(sc, val, NO_ARTICLE), DISPLAY_80(code)); 
+		    fprintf(stderr, "opt trail: %s %s %s\n", opt_names[optimize_op(code)], type_name(sc, val, NO_ARTICLE), DISPLAY_80(code)); 
 		}
 #endif
-	      /* unknown_g (if _s), closure_s ->s_s
-	       * unknown -> s
-	       * gg/ss -> ss etc
+	      /* gg/ss -> ss etc
 	       * have a translation table, only c_c looks like trouble -- needs to be unwound
 	       *
 	       * some things are never opt'd?
 	       *   (* (expt (polywave osc fm) k) norm) ??? this is tgen...
 	       *   (fm-violin (* i 0.001) 0.01 440 0.001) tall
-	       *   (hash-table '(car . 1) '(cdr . 2) ... and each arg separately! lt -- not in func?
 	       *   clm defins are using car(body)=string as documentation!
 	       *   all list-values, define 
+	       * lg:
+	       *  trail: safe_c_aa c-function (fnc (car lst) (cdr lst))
+	       *  trail: unknown_gg function (letstar outer-vars inner-vars)
+	       *  trail: unknown_all_s function (letstar outer-vars inner-vars inner1-vars)
+	       *  trail: unknown_all_s function (letstar outer-vars inner-vars inner1-vars inner2-vars)
+	       *  trail: safe_closure_all_x function (f args form env)
+	       * letstar is (f . x) -- need support for dotted arg
 	       */
 	      clear_all_optimizations(sc, code);
 	      /* and fall into the normal evaluator */
 	    }
 	  
-	  /* fprintf(stderr, "trail: %s\n", DISPLAY(sc->code)); */
 	  {
 	    s7_pointer code, carc;
 	    code = sc->code;
 	    
+	    /* lint: p 81272    s 319845 r ~100000
+	     * b:      651000     321000   ~700000
+	     * sndf: 50187717    1298152   ~350000
+	     */
+
 	    if (is_pair(code))
 	      {
 #if WITH_PROFILE
 		if (sc->code != profile_at_start)
 		  profile(sc, code);
 #endif
+		/* fprintf(stderr, "trail: %s\n", DISPLAY(sc->code)); */
+
 		set_current_code(sc, code);
 		carc = car(code);
 		
@@ -72032,11 +72091,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		       set_car(sc->t1_1, find_symbol_unchecked(sc, opt_sym2(sc->code))); \
 		       slot_set_value(lx, c_call(cadr(sc->code))(sc, sc->t1_1)); \
 		     } while (0))
+	    SET_CASE(OP_SET_SYMBOL_opLq,
+		     do {						\
+		       set_car(sc->t1_1, local_symbol_value(opt_sym2(sc->code))); \
+		       slot_set_value(lx, c_call(cadr(sc->code))(sc, sc->t1_1)); \
+		     } while (0))
 	    
 	    SET_CASE(OP_SET_SYMBOL_opSSq,
 		     do {						\
 		       set_car(sc->t2_1, find_symbol_unchecked(sc, car(opt_pair2(sc->code)))); \
 		       set_car(sc->t2_2, find_symbol_unchecked(sc, cadr(opt_pair2(sc->code)))); \
+		       slot_set_value(lx, c_call(cadr(sc->code))(sc, sc->t2_1)); \
+		     } while (0))
+	    SET_CASE(OP_SET_SYMBOL_opLLq,
+		     do {						\
+		       set_car(sc->t2_1, local_symbol_value(car(opt_pair2(sc->code)))); \
+		       set_car(sc->t2_2, local_symbol_value(cadr(opt_pair2(sc->code)))); \
 		       slot_set_value(lx, c_call(cadr(sc->code))(sc, sc->t2_1)); \
 		     } while (0))
 	    
@@ -73078,7 +73148,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   *    (let hiho ((hiho 4)) hiho) -- I guess hiho is 4
 		   * it's possible to package the entire named-let in all_x_* (see rc-a-s7.c), but
 		   *    it's complicated code, and gains about 1/4 total compute time.  The overhead
-		   *    is in eval -- goto BEGIN1, all the eval switches, etc -- probably 500 of the 700
+		   *    is in eval -- goto BEGIN1;, all the eval switches, etc -- probably 500 of the 700
 		   *    can be regained directly.
 		   */
 		  s7_pointer let_name;
@@ -73614,7 +73684,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->code = _TLst(cdar(p));
 		    if (is_null(sc->code))
 		      goto START;
-		    goto BEGIN1;
+		    goto BEGIN1; 
 		  }
 	      }
 	    sc->value = sc->unspecified; 
@@ -80236,7 +80306,9 @@ s7_scheme *s7_init(void)
   sc->set_symbol_s_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_S);
   sc->set_symbol_q_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Q);
   sc->set_symbol_opsq_symbol =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSq);
+  sc->set_symbol_oplq_symbol =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opLq);
   sc->set_symbol_opssq_symbol =      assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSSq);
+  sc->set_symbol_opllq_symbol =      assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opLLq);
   sc->set_symbol_opsssq_symbol =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSSSq);
   sc->set_symbol_opcq_symbol =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opCq);
   sc->set_symbol_p_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_P);
@@ -81772,9 +81844,7 @@ int main(int argc, char **argv)
  * combine opts to reduce overhead?, d_vid_ssf+same(d_dd_ff_o1)[800000]
  * all_x_c_opsq_opsq continued: c_opsq, s_opssq (fvref) etc -- s_opssq has .5mil filters (as base), 1/4 as mul
  *   so where to choose if base as p_pd?
- * let* could be divided into zones of all_x
  * extend op_s_s business throughout (no trailers!) -- where are the most breaks? count clears in trailers?
- *
  * unknowns: macro like quasiquote hook-function, [let-temp bindings?? (target-line-length 120) in lt] also (code (+ i 1)) (quit) (lastref 1) etc
  *   also ((lambda (x)...)...) -- the (x)!!
  *
@@ -81782,26 +81852,26 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6
  * tmac          |      |      |      || 9052 |  615   259   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1066
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1064
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
  * teq           |      |      | 6612 || 2777 | 2129  1978  1997
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2318
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437
  * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2733
  * lint          |      |      |      || 4041 | 3376  3114  3004
- * lg            |      |      |      ||      | 161   149   144.4
+ * lg            |      |      |      || 211  | 161   149   144.4
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3020
  * tmap          |      |      |  9.3 || 4365 | 3750  3104  3055
- * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3123
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3104
  * tform         |      |      | 6816 || 3714 | 3530  3361  3279
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3984
- * tsort         |      |      |      || 8584 | 4869  4080  4054
+ * tsort         |      |      |      || 8584 | 4869  4080  4012
  * titer         |      |      |      || 5971 | 5224  4768  4719
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7836
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7834
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
- * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  40.1
- *                                    || 145  | 135   132   97.7
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.9
+ *                                    || 145  | 135   132   97.6
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.
