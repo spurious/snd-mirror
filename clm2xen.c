@@ -2441,6 +2441,24 @@ I_METHOD(hop)
 
 /* ---------------- oscil ---------------- */
 
+#if HAVE_SCHEME
+static s7_pointer g_make_oscil(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_oscil "(" S_make_oscil " (frequency *clm-default-frequency*) (initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
+  mus_any *ge;
+  mus_float_t freq, phase;
+  
+  freq = Xen_real_to_C_double(s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_oscil, 1, s7_car(args), "freq > srate/2?");
+
+  phase = Xen_real_to_C_double(s7_cadr(args));
+
+  ge = mus_make_oscil(freq, phase);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+#else
 static Xen g_make_oscil(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_make_oscil "(" S_make_oscil " (frequency *clm-default-frequency*) (initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
@@ -2482,7 +2500,7 @@ static Xen g_make_oscil(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(Xen_false);
 }
-
+#endif
 
 static Xen g_oscil(Xen osc, Xen fm, Xen pm)
 {
@@ -9020,10 +9038,33 @@ static Xen g_is_ssb_am(Xen obj)
 }
 
 
+#if HAVE_SCHEME
+static s7_pointer g_make_ssb_am(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_ssb_am "(" S_make_ssb_am " (frequency *clm-default-frequency*) (order 40)): return a new " S_ssb_am " generator."
+  #define MUS_MAX_SSB_ORDER 65536
+  mus_any *ge;
+  int order;
+  mus_float_t freq;
+
+  freq = Xen_real_to_C_double(s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_ssb_am, 1, s7_car(args), "freq > srate/2?");
+  
+  order = Xen_integer_to_C_int(s7_cadr(args));
+  if (order <= 0)
+    Xen_out_of_range_error(S_make_ssb_am, 2, s7_cadr(args), "order <= 0?");
+  if (order > MUS_MAX_SSB_ORDER)
+    Xen_out_of_range_error(S_make_ssb_am, 2, s7_cadr(args), "order too large?");
+
+  ge = mus_make_ssb_am(freq, order);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+#else
 static Xen g_make_ssb_am(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
-  #define H_make_ssb_am "(" S_make_ssb_am " (frequency *clm-default-frequency*) (order 40)): \
-return a new " S_ssb_am " generator."
+  #define H_make_ssb_am "(" S_make_ssb_am " (frequency *clm-default-frequency*) (order 40)): return a new " S_ssb_am " generator."
   #define MUS_MAX_SSB_ORDER 65536
 
   mus_any *ge;
@@ -9058,7 +9099,7 @@ return a new " S_ssb_am " generator."
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(Xen_false);
 }
-
+#endif
 
 static Xen g_ssb_am(Xen obj, Xen insig, Xen fm)
 {
@@ -10513,7 +10554,6 @@ Xen_wrap_1_arg(g_phase_vocoder_phases_w, g_phase_vocoder_phases)
 Xen_wrap_1_arg(g_phase_vocoder_phase_increments_w, g_phase_vocoder_phase_increments)
 Xen_wrap_1_arg(g_mus_hop_w, g_mus_hop)
 Xen_wrap_2_args(g_mus_set_hop_w, g_mus_set_hop)
-Xen_wrap_4_optional_args(g_make_ssb_am_w, g_make_ssb_am)
 Xen_wrap_3_optional_args(g_ssb_am_w, g_ssb_am)
 Xen_wrap_1_arg(g_is_ssb_am_w, g_is_ssb_am)
 Xen_wrap_no_args(g_clm_table_size_w, g_clm_table_size)
@@ -10523,7 +10563,10 @@ Xen_wrap_1_arg(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
 Xen_wrap_1_arg(g_is_mus_generator_w, g_is_mus_generator)
 Xen_wrap_1_arg(g_mus_frandom_w, g_mus_frandom)
 Xen_wrap_1_arg(g_mus_irandom_w, g_mus_irandom)
+#if (!HAVE_SCHEME)
 Xen_wrap_4_optional_args(g_make_oscil_w, g_make_oscil)
+Xen_wrap_4_optional_args(g_make_ssb_am_w, g_make_ssb_am)
+#endif
 Xen_wrap_4_optional_args(g_make_ncos_w, g_make_ncos)
 Xen_wrap_4_optional_args(g_make_oscil_bank_w, g_make_oscil_bank)
 Xen_wrap_4_optional_args(g_make_nsin_w, g_make_nsin)
@@ -10546,18 +10589,14 @@ Xen_wrap_3_args(g_out_bank_w, g_out_bank)
 Xen_wrap_2_args(g_piano_noise_w, g_piano_noise)
 Xen_wrap_6_args(g_singer_filter_w, g_singer_filter)
 Xen_wrap_5_args(g_singer_nose_filter_w, g_singer_nose_filter)
-#endif
 
-#if HAVE_SCHEME
-  static s7_pointer acc_clm_srate(s7_scheme *sc, s7_pointer args) {return(g_mus_set_srate(s7_cadr(args)));}  
-  static s7_pointer acc_clm_default_frequency(s7_scheme *sc, s7_pointer args) {return(g_set_clm_default_frequency(s7_cadr(args)));}  
-  static s7_pointer acc_clm_table_size(s7_scheme *sc, s7_pointer args) {return(g_set_clm_table_size(s7_cadr(args)));}  
-  static s7_pointer acc_mus_file_buffer_size(s7_scheme *sc, s7_pointer args) {return(g_mus_set_file_buffer_size(s7_cadr(args)));}  
-  static s7_pointer acc_mus_float_equal_fudge_factor(s7_scheme *sc, s7_pointer args) {return(g_mus_set_float_equal_fudge_factor(s7_cadr(args)));}  
-  static s7_pointer acc_mus_array_print_length(s7_scheme *sc, s7_pointer args) {return(g_mus_set_array_print_length(s7_cadr(args)));}  
-#endif
+static s7_pointer acc_clm_srate(s7_scheme *sc, s7_pointer args) {return(g_mus_set_srate(s7_cadr(args)));}  
+static s7_pointer acc_clm_default_frequency(s7_scheme *sc, s7_pointer args) {return(g_set_clm_default_frequency(s7_cadr(args)));}  
+static s7_pointer acc_clm_table_size(s7_scheme *sc, s7_pointer args) {return(g_set_clm_table_size(s7_cadr(args)));}  
+static s7_pointer acc_mus_file_buffer_size(s7_scheme *sc, s7_pointer args) {return(g_mus_set_file_buffer_size(s7_cadr(args)));}  
+static s7_pointer acc_mus_float_equal_fudge_factor(s7_scheme *sc, s7_pointer args) {return(g_mus_set_float_equal_fudge_factor(s7_cadr(args)));}  
+static s7_pointer acc_mus_array_print_length(s7_scheme *sc, s7_pointer args) {return(g_mus_set_array_print_length(s7_cadr(args)));}  
 
-#if HAVE_SCHEME
 static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
 {
   char *str;
@@ -11273,8 +11312,6 @@ static void mus_xen_init(void)
   Xen_define_typed_dilambda(S_mus_hop, g_mus_hop_w, H_mus_hop, 
 			    S_set S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
-  Xen_define_typed_procedure(S_make_ssb_am,		g_make_ssb_am_w,           0, 4, 0, H_make_ssb_am,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ssb_am), t)); 
   Xen_define_typed_procedure(S_ssb_am,			g_ssb_am_w,                1, 2, 0, H_ssb_am,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_ssb_am), r));
   Xen_define_typed_procedure(S_is_ssb_am,		g_is_ssb_am_w,             1, 0, 0, H_is_ssb_am,		pl_bt);
@@ -11309,10 +11346,16 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_piano_noise,		g_piano_noise_w,            2, 0, 0, H_piano_noise,		pl_djr);
   Xen_define_typed_procedure(S_singer_filter,		g_singer_filter_w,          6, 0, 0, H_singer_filter,		pl_riirfff);
   Xen_define_typed_procedure(S_singer_nose_filter,	g_singer_nose_filter_w,     5, 0, 0, H_singer_nose_filter,	pl_rirfff);
-#endif
-
+  s7_define_typed_function_star(s7, S_make_oscil, g_make_oscil, "(frequency *clm-default-frequency*) (initial-phase 0.0)", H_make_oscil,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil), t));
+  s7_define_typed_function_star(s7, S_make_ssb_am, g_make_ssb_am, "(frequency *clm-default-frequency*) (order 40)", H_make_ssb_am,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ssb_am), t)); 
+#else
   Xen_define_typed_procedure(S_make_oscil,		g_make_oscil_w,             0, 4, 0, H_make_oscil,              
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil), t));
+  Xen_define_typed_procedure(S_make_ssb_am,		g_make_ssb_am_w,           0, 4, 0, H_make_ssb_am,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ssb_am), t)); 
+#endif
   Xen_define_typed_procedure(S_make_ncos,		g_make_ncos_w,              0, 4, 0, H_make_ncos,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ncos), t)); 
   Xen_define_typed_procedure(S_make_oscil_bank,		g_make_oscil_bank_w,        2, 2, 0, H_make_oscil_bank,		
