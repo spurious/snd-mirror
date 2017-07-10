@@ -2,7 +2,7 @@
 #define S7_H
 
 #define S7_VERSION "5.5"
-#define S7_DATE "8-July-17"
+#define S7_DATE "10-July-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -484,9 +484,11 @@ s7_pointer s7_define_unsafe_typed_function(s7_scheme *sc, const char *name, s7_f
 					   int required_args, int optional_args, bool rest_arg, 
 					   const char *doc, s7_pointer signature);
 
+s7_pointer s7_make_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_typed_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc, s7_pointer signature);
+s7_pointer s7_apply_function_star(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, 
 				    s7_function set_fnc, int req_args, int opt_args, const char *doc);
@@ -850,7 +852,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 8-July:    s7_define_typed_function_star.
+ * 8-July:    s7_define_typed_function_star, s7_make_function_star. s7_apply_function_star.
  * 27-June:   s7_make_string_wrapper.
  * 22-May:    lambda* keyword arg handling changed slightly. 
  * 9-May:     s7_history, s7_add_to_history.

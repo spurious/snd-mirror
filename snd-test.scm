@@ -46276,7 +46276,7 @@ EDITS: 1
 			(lambda () (n arg))
 			(lambda args 
 			  (if (eq? (car args) 'wrong-number-of-args)
-			      (snd-display "procs1 wna: ~A" (procedure-documentation n))))))
+			      (snd-display "procs1 wna: ~A ~A ~A" arg args (procedure-documentation n))))))
 		    procs1))
 		 main-args)
 		(for-each close-sound (sounds))
@@ -46292,7 +46292,7 @@ EDITS: 1
 			   (lambda () (n arg1 arg2))
 			   (lambda args 
 			     (if (eq? (car args) 'wrong-number-of-args)
-				 (snd-display "procs2: ~A" (procedure-documentation n))))))
+				 (snd-display "procs2: ~A ~A ~A ~A" arg1 arg2 args (procedure-documentation n))))))
 		       procs2))
 		    main-args))
 		 main-args)

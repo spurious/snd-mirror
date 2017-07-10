@@ -1211,7 +1211,6 @@ struct s7_scheme {
              apply_values_function, multivector_function, apply_function, vector_function, last_function;
 
   s7_pointer wrong_type_arg_info, out_of_range_info, simple_wrong_type_arg_info, simple_out_of_range_info;
-  s7_pointer wta1, wta2, wta3, wta4, wta5;
   s7_pointer err_wrap1, err_wrap2;
   s7_pointer too_many_arguments_string, not_enough_arguments_string, division_by_zero_error_string, missing_method_string;
   s7_pointer *syn_docs; /* prebuilt evaluator arg lists, syntax doc strings */
@@ -2511,7 +2510,7 @@ static int not_heap = -1;
 #define is_continuation(p)            (type(p) == T_CONTINUATION)
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
-#define is_bacro(p)                   (type(p) == T_BACRO)
+/* #define is_bacro(p)                (type(p) == T_BACRO) */
 #define is_macro_star(p)              (type(p) == T_MACRO_STAR)
 #define is_bacro_star(p)              (type(p) == T_BACRO_STAR)
 
@@ -2973,7 +2972,7 @@ static s7_pointer car_a_list_string, cdr_a_list_string, caar_a_list_string, cadr
                   a_normal_real_string, a_rational_string, a_boolean_string, a_number_string, a_let_string, 
                   a_procedure_string, a_proper_list_string, a_thunk_string, something_applicable_string, a_symbol_string, 
                   a_non_negative_integer_string, a_format_port_string, an_unsigned_byte_string, value_is_missing_string,
-                  a_non_constant_symbol_string, an_eq_func_string, a_sequence_string, its_too_small_string, 
+                  a_non_constant_symbol_string, an_eq_func_string, a_sequence_string, its_too_small_string, parameter_set_twice_string,
                   a_normal_procedure_string, its_too_large_string, its_negative_string, result_is_too_large_string, 
                   its_nan_string, its_infinite_string, too_many_indices_string, a_valid_radix_string, an_input_string_port_string, 
                   an_input_file_port_string, an_output_string_port_string, an_output_file_port_string, a_random_state_object_string;
@@ -31549,6 +31548,7 @@ static void init_car_a_list(void)
   its_infinite_string =           s7_make_permanent_string("it is infinite");
   too_many_indices_string =       s7_make_permanent_string("too many indices");
   value_is_missing_string =       s7_make_permanent_string("~A argument '~A's value is missing");
+  parameter_set_twice_string =    s7_make_permanent_string("parameter set twice, ~S in ~S");
 #if (!HAVE_COMPLEX_NUMBERS)
   no_complex_numbers_string =     s7_make_permanent_string("this version of s7 does not support complex numbers");
 #endif
@@ -37795,9 +37795,9 @@ static s7_pointer s7_macroexpand(s7_scheme *sc, s7_pointer mac, s7_pointer args)
 }
 
 
-static void define_function_star_1(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc, bool safe, s7_pointer signature)
+s7_pointer s7_make_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
 {
-  s7_pointer func, sym, local_args, p;
+  s7_pointer func, local_args, p;
   char *internal_arglist;
   int i, len, n_args;
   unsigned int gc_loc;
@@ -37812,16 +37812,10 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
   n_args = safe_list_length(sc, local_args);  /* currently rest arg not supported, and we don't notice :allow-other-keys etc */
 
   func = s7_make_function(sc, name, fnc, 0, n_args, false, doc);
-  if (safe)
-    set_type(func, T_C_FUNCTION_STAR | T_SAFE_PROCEDURE);
-  else set_type(func, T_C_FUNCTION_STAR);
-  if (signature) c_function_signature(func) = signature;
+  set_type(func, T_C_FUNCTION_STAR);
 
   c_function_call_args(func) = make_list(sc, n_args, sc->F);
   s7_remove_from_heap(sc, c_function_call_args(func));
-
-  sym = make_symbol(sc, name);
-  s7_define(sc, sc->nil, sym, func);
 
   names = (s7_pointer *)malloc(n_args * sizeof(s7_pointer));
   c_function_arg_names(func) = names;
@@ -37852,6 +37846,20 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
 	}
     }
   s7_gc_unprotect_at(sc, gc_loc);
+  return(func);
+}
+
+static void define_function_star_1(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc, bool safe, s7_pointer signature)
+{
+  s7_pointer func, sym;
+  func = s7_make_function_star(sc, name, fnc, arglist, doc);
+  sym = make_symbol(sc, name);
+  s7_define(sc, sc->nil, sym, func);
+
+  if (safe)
+    set_type(func, T_C_FUNCTION_STAR | T_SAFE_PROCEDURE);
+  
+  if (signature) c_function_signature(func) = signature;
 }
 
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
@@ -37877,7 +37885,7 @@ static s7_pointer set_c_function_star_args(s7_scheme *sc)
   s7_pointer *df;
 
   func = sc->code;
-  n_args = c_function_all_args(func);
+  n_args = c_function_all_args(func);     /* not counting keywords, I think */
   call_args = c_function_call_args(func);
 
   df = c_function_arg_defaults(func);
@@ -37893,7 +37901,7 @@ static s7_pointer set_c_function_star_args(s7_scheme *sc)
       if (!is_keyword(car(arg)))
 	{
 	  if (is_checked(par))
-	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, s7_make_string_wrapper(sc, "parameter set twice, ~S in ~S"), car(par), sc->args)));
+	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(par), sc->args)));
 	  set_checked(par);
 	  set_car(par, car(arg));
 	}
@@ -37906,7 +37914,9 @@ static s7_pointer set_c_function_star_args(s7_scheme *sc)
 	  if (j == n_args)
 	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "~A: not a parameter name?"), car(arg))));
 	  if (is_checked(p))
-	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, s7_make_string_wrapper(sc, "parameter set twice, ~S in ~S"), car(p), sc->args)));
+	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(p), sc->args)));
+	  if (!is_pair(cdr(arg)))
+	    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, value_is_missing_string, func, car(arg))));
 	  set_checked(p);
 	  arg = cdr(arg);
 	  set_car(p, car(arg));
@@ -42179,11 +42189,14 @@ static s7_pointer type_name_string(s7_scheme *sc, s7_pointer arg)
 static s7_pointer wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, s7_pointer typnam, s7_pointer descr)
 {
   /* info list is '(format_string caller arg_n arg type_name descr) */
-  set_car(sc->wta1, caller);
-  set_car(sc->wta2, arg_n); 
-  set_car(sc->wta3, arg); 
-  set_car(sc->wta4, (typnam == sc->gc_nil) ? prepackaged_type_name(sc, arg) : typnam);
-  set_car(sc->wta5, descr);
+  s7_pointer p;
+  p = cdr(sc->wrong_type_arg_info);  /* info list is '(format_string caller arg_n arg type_name descr) */
+  set_car(p, caller);  p = cdr(p);
+  set_car(p, arg_n);   p = cdr(p);
+  set_car(p, arg);     p = cdr(p);
+  set_car(p, (typnam == sc->gc_nil) ? prepackaged_type_name(sc, arg) : typnam);
+  p = cdr(p);
+  set_car(p, descr);
   return(s7_error(sc, sc->wrong_type_arg_symbol, sc->wrong_type_arg_info));
 }
 
@@ -43731,6 +43744,33 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
   /* we're limited in choices here -- the caller might be (say) car(sc->t1_1) = c_call(...) where the c_call
    *   happens to fallback on a method -- we can't just push OP_APPLY and drop back into the evaluator normally.
    */
+  return(sc->value);
+}
+
+
+s7_pointer s7_apply_function_star(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
+{
+  TRACK(sc);
+  if (sc->safety > NO_SAFETY)
+    set_current_code(sc, cons(sc, fnc, args));
+  else set_current_code(sc, fnc);
+
+  if (is_c_function_star(fnc))
+    {
+      s7_pointer val;
+      sc->w = sc->args;
+      sc->z = sc->code;
+      sc->args = args;
+      sc->code = fnc;
+      val = c_function_call(fnc)(sc, set_c_function_star_args(sc));
+      sc->args = sc->w;
+      sc->code = sc->z;
+      return(val);
+    }
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
+  sc->code = fnc;
+  sc->args = (needs_copied_args(sc->code)) ? copy_list(sc, args) : args;
+  eval(sc, OP_APPLY);
   return(sc->value);
 }
 
@@ -55363,6 +55403,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7
 
   set_global_slot(x, permanent_slot(x, syn));
   set_initial_slot(x, permanent_slot(x, syn));
+  set_local_slot(x, global_slot(x));
   typeflag(x) = SYNTACTIC_TYPE;  /* symbol syntactic etc */
   symbol_set_local(x, 0LL, sc->nil);
   symbol_set_ctr(x, 0;)
@@ -55396,6 +55437,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
 
   set_global_slot(x, permanent_slot(x, syn));
   set_initial_slot(x, permanent_slot(x, syn));
+  set_local_slot(x, global_slot(x));
   typeflag(x) = SYNTACTIC_TYPE;
   return(x);
 }
@@ -60094,7 +60136,7 @@ static inline void set_all_locals(s7_scheme *sc, s7_pointer tree, slist *args)
       if (is_symbol(cp))
 	{
 	  if ((memq_sym(sc, cp, args)) || 
-	      ((is_immutable(cp)) &&                         /* immutable (by itself) would work except for tricky cases like with-let (no local_slot!) */
+	      ((is_immutable(cp)) &&                         /* immutable (by itself) would work except for tricky cases like with-let (no local_slot! -- changed) */
 	       (unchecked_type(local_slot(cp)) == T_SLOT) && /* local_slot might be a free cell (so debugging free cell check is annoying) */
 	       ((is_number(slot_value(local_slot(cp)))) ||
 		(is_sequence(slot_value(local_slot(cp)))))))
@@ -60482,6 +60524,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 #if SAFE_FORM_PRINT
 			  fprintf(stderr, "scope_safe check %s\n", DISPLAY(car(p)));
 #endif
+			  if (!is_pair(cdar(p))) /* (lambda . /) */
+			    return(UNSAFE_BODY);
 			  largs = cadar(p);
 			  top = main_args;
 			  lbody = cddar(p);
@@ -63622,7 +63666,8 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			if (!do_is_safe(sc, cadr(expr), steppers, var_list, has_set))
 			  return(false);
 			for (cp = cddr(expr); is_pair(cp); cp = cdr(cp))
-			  if (!do_is_safe(sc, cdar(cp), steppers, var_list, has_set))
+			  if ((!is_pair(car(cp))) ||      /* (case x #(123)...) */
+			      (!do_is_safe(sc, cdar(cp), steppers, var_list, has_set)))
 			    return(false);
 			break;
 		      }
@@ -66416,8 +66461,7 @@ static s7_pointer lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, 
 	/* x is our binding (symbol . value) */
 	if (is_not_checked_slot(x))
 	  set_checked_slot(x); /* this is a special use of this bit, I think */
-	else return(s7_error(sc, sc->wrong_type_arg_symbol,
-			     set_elist_4(sc, s7_make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"), closure_name(sc, sc->code), sym, sc->args)));
+	else return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_4(sc, parameter_set_twice_string, closure_name(sc, sc->code), sym, sc->args)));
 	slot_set_value(x, val);
 	return(val);
       }
@@ -80571,11 +80615,6 @@ s7_scheme *s7_init(void)
   sc->err_wrap2 = make_permanent_string_wrapper();
   sc->wrong_type_arg_info = permanent_list(sc, 6);
   set_car(sc->wrong_type_arg_info, s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A"));
-  sc->wta1 = cdr(sc->wrong_type_arg_info);
-  sc->wta2 = cdr(sc->wta1);
-  sc->wta3 = cdr(sc->wta2);
-  sc->wta4 = cdr(sc->wta3);
-  sc->wta5 = cdr(sc->wta4);
 
   sc->simple_wrong_type_arg_info = permanent_list(sc, 5);
   set_car(sc->simple_wrong_type_arg_info, s7_make_permanent_string("~A argument, ~S, is ~A but should be ~A"));
@@ -81978,9 +82017,6 @@ int main(int argc, char **argv)
  * perhaps computed gotos for begin1/eval/opt_eval? or is switch just as fast?
  * make_sw et al using args, add closure_star_all_x_direct if none are kws/syms? set_c_function_star_args_direct+apply_lambda_star_direct
  *   there are uses of unscramble in region/snd/dac/select
- * set_e|plist_n could preset the set_car locs
- *   as_needed_input could use 2 lists, not set_car
- * could dtrace provide trace/profile?
  *
  * --------------------------------------------------------------------
  *
@@ -82005,7 +82041,7 @@ int main(int argc, char **argv)
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.9
- *                                    || 145  | 135   132   97.5
+ *                                    || 145  | 135   132   97.0
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.

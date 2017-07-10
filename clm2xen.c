@@ -81,7 +81,7 @@ struct mus_xen {
 };
 
 
-enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SAVED_FUNCTION,
+enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION,
       MUS_SELF_WRAPPER, MUS_INPUT_DATA, MUS_MAX_VCTS}; /* order matters, stuff before self_wrapper is GC marked */
 
 static mus_xen *mx_free_lists[9] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
@@ -2448,11 +2448,11 @@ static s7_pointer g_make_oscil(s7_scheme *sc, s7_pointer args)
   mus_any *ge;
   mus_float_t freq, phase;
   
-  freq = Xen_real_to_C_double(s7_car(args));
+  freq = s7_number_to_real(s7, s7_car(args));
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_oscil, 1, s7_car(args), "freq > srate/2?");
 
-  phase = Xen_real_to_C_double(s7_cadr(args));
+  phase = s7_number_to_real(s7, s7_cadr(args));
 
   ge = mus_make_oscil(freq, phase);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
@@ -3450,10 +3450,34 @@ static Xen g_is_ncos(Xen obj)
 			  (mus_is_ncos(Xen_to_mus_any(obj)))));
 }
 
+#if HAVE_SCHEME
+static s7_pointer g_make_ncos(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_ncos "(" S_make_ncos " (frequency *clm-default-frequency*) (n 1)): return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosines."
+  mus_any *ge;
+  mus_float_t freq;
+  int n;
+  s7_pointer un;
+
+  freq = s7_number_to_real(s7, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_ncos, 1, s7_car(args), "freq > srate/2?");
+
+  un = s7_cadr(args);
+  if (!s7_is_integer(un))
+    return(s7_wrong_type_arg_error(s7, S_make_ncos, 2, un, "an integer"));
+  n = s7_integer(un);
+  if (n <= 0)
+    Xen_out_of_range_error(S_make_ncos, 2, un, "n <= 0?");
+
+  ge = mus_make_ncos(freq, n);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+#else
 static Xen g_make_ncos(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
-  #define H_make_ncos "(" S_make_ncos " (frequency *clm-default-frequency*) (n 1)): \
-return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosines."
+  #define H_make_ncos "(" S_make_ncos " (frequency *clm-default-frequency*) (n 1)): return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosines."
 
   mus_any *ge;
   Xen args[4]; 
@@ -3484,6 +3508,7 @@ return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosine
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(Xen_false);
 }
+#endif
 
 static Xen g_ncos(Xen obj, Xen fm)
 {
@@ -3510,11 +3535,34 @@ static Xen g_is_nsin(Xen obj)
 			  (mus_is_nsin(Xen_to_mus_any(obj)))));
 }
 
+#if HAVE_SCHEME
+static s7_pointer g_make_nsin(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_nsin "(" S_make_nsin " (frequency *clm-default-frequency*) (n 1)): return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
+  mus_any *ge;
+  mus_float_t freq;
+  int n;
+  s7_pointer un;
 
+  freq = s7_number_to_real(s7, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_nsin, 1, s7_car(args), "freq > srate/2?");
+
+  un = s7_cadr(args);
+  if (!s7_is_integer(un))
+    return(s7_wrong_type_arg_error(s7, S_make_nsin, 2, un, "an integer"));
+  n = s7_integer(un);
+  if (n <= 0)
+    Xen_out_of_range_error(S_make_nsin, 2, un, "n <= 0?");
+
+  ge = mus_make_nsin(freq, n);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+#else
 static Xen g_make_nsin(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
-  #define H_make_nsin "(" S_make_nsin " (frequency *clm-default-frequency*) (n 1)): \
-return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
+  #define H_make_nsin "(" S_make_nsin " (frequency *clm-default-frequency*) (n 1)): return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
 
   mus_any *ge;
   Xen args[4]; 
@@ -3545,7 +3593,7 @@ return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(Xen_false);
 }
-
+#endif
 
 static Xen g_nsin(Xen obj, Xen fm)
 {
@@ -4297,6 +4345,35 @@ static Xen g_is_pulse_train(Xen obj)
 
 /* ---------------- asymmetric-fm ---------------- */
 
+#if HAVE_SCHEME
+static s7_pointer g_make_asymmetric_fm(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " (frequency *clm-default-frequency*) (initial-phase 0.0) (r 1.0) (ratio 1.0)): \
+return a new " S_asymmetric_fm " generator."
+  mus_any *ge;
+  mus_float_t freq, phase, r, ratio;
+  s7_pointer x;
+
+  x = s7_car(args);
+  freq = s7_number_to_real(s7, x);
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_asymmetric_fm, 1, x, "freq > srate/2?");
+
+  args = s7_cdr(args);
+  x = s7_car(args);
+  phase = s7_number_to_real(s7, x);
+
+  args = s7_cdr(args);
+  x = s7_car(args);
+  r = s7_number_to_real(s7, x);
+  x = s7_cadr(args);
+  ratio = s7_number_to_real(s7, x);
+  
+  ge = mus_make_asymmetric_fm(freq, phase, r, ratio);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+#else
 static Xen g_make_asymmetric_fm(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
   #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " (frequency *clm-default-frequency*) (initial-phase 0.0) (r 1.0) (ratio 1.0)): \
@@ -4337,7 +4414,7 @@ return a new " S_asymmetric_fm " generator."
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(Xen_false);
 }
-
+#endif
 
 
 static Xen g_asymmetric_fm(Xen obj, Xen index, Xen fm)
@@ -4364,6 +4441,146 @@ static Xen g_is_asymmetric_fm(Xen obj)
 
 
 /* ---------------- simple filters ---------------- */
+
+#if HAVE_SCHEME
+static s7_pointer g_make_one_zero(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_one_zero "(" S_make_one_zero " a0 a1): return a new " S_one_zero " filter;  a0*x(n) + a1*x(n-1)"
+  mus_any *gen;
+  mus_float_t a0, a1;
+  
+  a0 = s7_number_to_real(sc, s7_car(args));
+  a1 = s7_number_to_real(sc, s7_cadr(args));
+  gen = mus_make_one_zero(a0, a1);
+
+  if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_one_pole(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_one_pole "(" S_make_one_pole " a0 b1): return a new " S_one_pole " filter; a0*x(n) - b1*y(n-1)"
+  mus_any *gen;
+  mus_float_t a0, b1;
+
+  a0 = s7_number_to_real(sc, s7_car(args));
+  b1 = s7_number_to_real(sc, s7_cadr(args));
+  gen = mus_make_one_pole(a0, b1);
+
+  if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
+  return(Xen_false);
+}
+
+/* make-two-zero and make-two-pole are harder because they can accept two different sets of keyword arguments */
+static s7_pointer g_make_two_zero_a(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *gen;
+  mus_float_t a0, a1, a2;
+
+  a0 = s7_number_to_real(sc, s7_car(args));
+  args = s7_cdr(args);
+  a1 = s7_number_to_real(sc, s7_car(args));
+  if (a0 < 20.0)
+    {
+      a2 = s7_number_to_real(sc, s7_cadr(args));
+      gen = mus_make_two_zero(a0, a1, a2);
+    }
+  else gen = mus_make_two_zero_from_frequency_and_radius(a0, a1);
+
+  if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_two_zero_f(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *gen;
+  mus_float_t freq, radius;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  radius = s7_number_to_real(sc, s7_cadr(args));
+  gen = mus_make_two_zero_from_frequency_and_radius(freq, radius);
+
+  if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
+  return(Xen_false);
+}
+
+static s7_pointer make_two_zero_a, make_two_zero_f;
+static s7_pointer g_make_two_zero(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_two_zero "(" S_make_two_zero " a0 a1 a2) or (" S_make_two_zero " frequency radius): return a new " S_two_zero " filter; a0*x(n) + a1*x(n-1) + a2*x(n-2)"
+  int n;
+  s7_pointer p;
+  for (n = 0, p = args; s7_is_pair(p); n++, p = s7_cdr(p))
+    {
+      s7_pointer arg;
+      if (n > 2)
+	clm_error(S_make_two_zero, "too many arguments!", args);
+      arg = s7_car(p);
+      if (s7_is_keyword(arg))
+	{
+	  if ((s7_is_eq(arg, kw_frequency)) || (s7_is_eq(arg, kw_radius)))
+	    return(s7_apply_function_star(sc, make_two_zero_f, args));
+	  return(s7_apply_function_star(sc, make_two_zero_a, args));
+	}
+    }
+  return(s7_apply_function_star(sc, make_two_zero_a, args));
+}
+
+
+static s7_pointer g_make_two_pole_f(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *gen;
+  mus_float_t freq, radius;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  radius = s7_number_to_real(sc, s7_cadr(args));
+  gen = mus_make_two_pole_from_frequency_and_radius(freq, radius);
+
+  if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_two_pole_a(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *gen;
+  mus_float_t a0, b1, b2;
+
+  a0 = s7_number_to_real(sc, s7_car(args));
+  args = s7_cdr(args);
+  b1 = s7_number_to_real(sc, s7_car(args));
+  if (a0 < 2.0)
+    {
+      b2 = s7_number_to_real(sc, s7_cadr(args));
+      gen = mus_make_two_pole(a0, b1, b2);
+    }
+  else gen = mus_make_two_pole_from_frequency_and_radius(a0, b1);
+
+  if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
+  return(Xen_false);
+}
+
+static s7_pointer make_two_pole_a, make_two_pole_f;
+static s7_pointer g_make_two_pole(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_two_pole "(" S_make_two_pole " a0 b1 b2) or (" S_make_two_pole " frequency radius): return a new " S_two_pole " filter; a0*x(n) - b1*y(n-1) - b2*y(n-2)"
+  int n;
+  s7_pointer p;
+  for (n = 0, p = args; s7_is_pair(p); n++, p = s7_cdr(p))
+    {
+      s7_pointer arg;
+      if (n > 2)
+	clm_error(S_make_two_pole, "too many arguments!", args);
+      arg = s7_car(p);
+      if (s7_is_keyword(arg))
+	{
+	  if ((s7_is_eq(arg, kw_frequency)) || (s7_is_eq(arg, kw_radius)))
+	    return(s7_apply_function_star(sc, make_two_pole_f, args));
+	  return(s7_apply_function_star(sc, make_two_pole_a, args));
+	}
+    }
+  return(s7_apply_function_star(sc, make_two_pole_a, args));
+}
+#else
 
 typedef enum {G_ONE_POLE, G_ONE_ZERO, G_TWO_POLE, G_TWO_ZERO} xclm_filter_t;
 
@@ -4406,7 +4623,6 @@ static Xen g_make_smpflt_1(xclm_filter_t choice, Xen arg1, Xen arg2, Xen arg3, X
   if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
   return(Xen_false);
 }
-
 
 static Xen g_make_one_zero(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
@@ -4461,7 +4677,6 @@ static Xen g_make_smpflt_2(xclm_filter_t choice, Xen arg1, Xen arg2, Xen arg3, X
   return(Xen_false);
 }
 
-
 static bool found_polar_key(Xen arg)
 {
   return((Xen_is_keyword(arg)) && 
@@ -4476,7 +4691,6 @@ static bool found_coeff_key(Xen arg)
 	 (!(Xen_keyword_is_eq(arg, kw_radius))) &&
 	 (!(Xen_keyword_is_eq(arg, kw_frequency))));
 }
-
 
 static Xen g_make_two_zero(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6) 
 {
@@ -4516,6 +4730,7 @@ a0*x(n) - b1*y(n-1) - b2*y(n-2)"
 
   return(g_make_smpflt_2(G_TWO_POLE, arg1, arg2, arg3, arg4, arg5, arg6));
 }
+#endif
 
 
 static Xen g_one_zero(Xen obj, Xen fm)
@@ -4606,6 +4821,49 @@ static Xen g_is_two_pole(Xen obj)
 
 /* ---------------- formant ---------------- */
 
+#if HAVE_SCHEME
+static s7_pointer g_make_formant(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_formant "(" S_make_formant " frequency radius): \
+return a new formant generator (a resonator).  radius sets the pole radius (in terms of the 'unit circle'). \
+frequency sets the resonance center frequency (Hz)."
+
+  mus_any *ge;
+  mus_float_t freq, radius;
+  
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_formant, 1, s7_car(args), "freq > srate/2?");
+
+  radius = s7_number_to_real(sc, s7_cadr(args));
+
+  ge = mus_make_formant(freq, radius);
+  if (ge)
+    return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_firmant(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_firmant "(" S_make_firmant " frequency radius): \
+return a new firmant generator (a resonator).  radius sets the pole radius (in terms of the 'unit circle'). \
+frequency sets the resonance center frequency (Hz)."
+
+  mus_any *ge;
+  mus_float_t freq, radius;
+  
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_formant, 1, s7_car(args), "freq > srate/2?");
+
+  radius = s7_number_to_real(sc, s7_cadr(args));
+
+  ge = mus_make_firmant(freq, radius);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+#else
 static Xen g_make_frm(bool formant_case, const char *caller, Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   mus_any *ge;
@@ -4647,7 +4905,7 @@ static Xen g_make_frm(bool formant_case, const char *caller, Xen arg1, Xen arg2,
     }
   return(Xen_false);
 }
-
+#endif
 
 static Xen g_formant(Xen gen, Xen input, Xen freq)
 {
@@ -4665,7 +4923,7 @@ static Xen g_formant(Xen gen, Xen input, Xen freq)
   return(C_double_to_Xen_real(mus_formant(g, in1)));
 }
 
-
+#if (!HAVE_SCHEME)
 static Xen g_make_formant(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_make_formant "(" S_make_formant " frequency radius): \
@@ -4674,7 +4932,7 @@ frequency sets the resonance center frequency (Hz)."
 
   return(g_make_frm(true, S_make_formant, arg1, arg2, arg3, arg4));
 }
-
+#endif
 
 static Xen g_is_formant(Xen os) 
 {
@@ -4846,6 +5104,7 @@ static Xen g_one_pole_all_pass(Xen gen, Xen fm)
 
 /* ---------------- firmant ---------------- */
 
+#if (!HAVE_SCHEME)
 static Xen g_make_firmant(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_make_firmant "(" S_make_firmant " frequency radius): \
@@ -4854,7 +5113,7 @@ frequency sets the resonance center frequency (Hz)."
 
   return(g_make_frm(false, S_make_firmant, arg1, arg2, arg3, arg4));
 }
-
+#endif
 
 static Xen g_is_firmant(Xen os) 
 {
@@ -5843,7 +6102,53 @@ static Xen g_nrxycos(Xen obj, Xen fm)
   return(C_double_to_Xen_real(mus_nrxycos(g, fm1)));
 }
 
+#if HAVE_SCHEME
+static s7_pointer g_make_nrxy(s7_scheme *sc, s7_pointer args, bool sin_case, const char *caller)
+{
+  mus_any *ge;
+  mus_float_t freq, r, ratio;
+  int n;
+  s7_pointer un;
 
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(caller, 1, s7_car(args), "freq > srate/2?");
+
+  args = s7_cdr(args);
+  ratio = s7_number_to_real(sc, s7_car(args));
+
+  args = s7_cdr(args);
+  un = s7_car(args);
+  if (!s7_is_integer(un))
+    return(s7_wrong_type_arg_error(s7, caller, 3, un, "an integer"));
+  n = s7_integer(un);
+  if (n < 0)
+    Xen_out_of_range_error(caller, 3, un, "n (sidebands) < 0?");
+
+  r = s7_number_to_real(sc, s7_cadr(args));
+  if ((r >= 1.0) ||
+    (r <= -1.0))
+    Xen_out_of_range_error(caller, 4, s7_cadr(args), "r (sideband amp ratio) not within -1.0 to 1.0?");
+
+  if (sin_case)
+    ge = mus_make_nrxysin(freq, ratio, n, r);
+  else ge = mus_make_nrxycos(freq, ratio, n, r);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_nrxysin(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_nrxysin "(" S_make_nrxysin " (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5)): return a new nrxysin generator."
+  return(g_make_nrxy(sc, args, true, S_make_nrxysin));
+}
+
+static s7_pointer g_make_nrxycos(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_nrxycos "(" S_make_nrxycos " (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5)): return a new nrxycos generator."
+  return(g_make_nrxy(sc, args, false, S_make_nrxycos));
+}
+#else
 static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
 {
   mus_any *ge;
@@ -5897,20 +6202,18 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
 
 static Xen g_make_nrxysin(Xen arglist)
 {
-  #define H_make_nrxysin "(" S_make_nrxysin " (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5)): \
-return a new nrxysin generator."
+  #define H_make_nrxysin "(" S_make_nrxysin " (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5)): return a new nrxysin generator."
 
   return(g_make_nrxy(true, S_make_nrxysin, arglist));
 }
 
 static Xen g_make_nrxycos(Xen arglist)
 {
-  #define H_make_nrxycos "(" S_make_nrxycos " (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5)): \
-return a new nrxycos generator."
+  #define H_make_nrxycos "(" S_make_nrxycos " (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5)): return a new nrxycos generator."
 
   return(g_make_nrxy(false, S_make_nrxycos, arglist));
 }
-
+#endif
 
 
 /* ---------------- rxyksin and rxykcos ---------------- */
@@ -8079,7 +8382,7 @@ static Xen g_make_move_sound(Xen dloc_list, Xen outp, Xen revp)
 static Xen xen_one, xen_minus_one;
 
 #if HAVE_SCHEME
-static Xen as_needed_arglist;
+static Xen as_needed_arglist_one, as_needed_arglist_minus_one;
 
 static mus_float_t as_needed_input_float(void *ptr, int direction)
 {
@@ -8112,8 +8415,7 @@ static mus_float_t as_needed_block_input_float(void *ptr, int direction, mus_flo
 static mus_float_t as_needed_input_any(void *ptr, int direction)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
-  return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist)));
+  return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? as_needed_arglist_one : as_needed_arglist_minus_one)));
 }
 #endif
 
@@ -9046,16 +9348,20 @@ static s7_pointer g_make_ssb_am(s7_scheme *sc, s7_pointer args)
   mus_any *ge;
   int order;
   mus_float_t freq;
+  s7_pointer un;
 
-  freq = Xen_real_to_C_double(s7_car(args));
+  freq = s7_number_to_real(s7, s7_car(args));
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_ssb_am, 1, s7_car(args), "freq > srate/2?");
   
-  order = Xen_integer_to_C_int(s7_cadr(args));
+  un = s7_cadr(args);
+  if (!s7_is_integer(un))
+    return(s7_wrong_type_arg_error(s7, S_make_ssb_am, 2, un, "an integer"));
+  order = s7_integer(un);
   if (order <= 0)
-    Xen_out_of_range_error(S_make_ssb_am, 2, s7_cadr(args), "order <= 0?");
+    Xen_out_of_range_error(S_make_ssb_am, 2, un, "order <= 0?");
   if (order > MUS_MAX_SSB_ORDER)
-    Xen_out_of_range_error(S_make_ssb_am, 2, s7_cadr(args), "order too large?");
+    Xen_out_of_range_error(S_make_ssb_am, 2, un, "order too large?");
 
   ge = mus_make_ssb_am(freq, order);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
@@ -10390,21 +10696,16 @@ Xen_wrap_1_arg(g_is_pulsed_env_w, g_is_pulsed_env)
 
 Xen_wrap_3_optional_args(g_asymmetric_fm_w, g_asymmetric_fm)
 Xen_wrap_1_arg(g_is_asymmetric_fm_w, g_is_asymmetric_fm)
-Xen_wrap_4_optional_args(g_make_one_zero_w, g_make_one_zero)
 Xen_wrap_2_optional_args(g_one_zero_w, g_one_zero)
 Xen_wrap_1_arg(g_is_one_zero_w, g_is_one_zero)
-Xen_wrap_4_optional_args(g_make_one_pole_w, g_make_one_pole)
 Xen_wrap_2_optional_args(g_one_pole_w, g_one_pole)
 Xen_wrap_1_arg(g_is_one_pole_w, g_is_one_pole)
-Xen_wrap_6_optional_args(g_make_two_zero_w, g_make_two_zero)
 Xen_wrap_2_optional_args(g_two_zero_w, g_two_zero)
 Xen_wrap_1_arg(g_is_two_zero_w, g_is_two_zero)
-Xen_wrap_6_optional_args(g_make_two_pole_w, g_make_two_pole)
 Xen_wrap_2_optional_args(g_two_pole_w, g_two_pole)
 Xen_wrap_1_arg(g_is_two_pole_w, g_is_two_pole)
 
 Xen_wrap_1_arg(g_is_formant_w, g_is_formant)
-Xen_wrap_4_optional_args(g_make_formant_w, g_make_formant)
 Xen_wrap_3_optional_args(g_formant_w, g_formant)
 
 Xen_wrap_2_optional_args(g_formant_bank_w, g_formant_bank)
@@ -10412,7 +10713,6 @@ Xen_wrap_1_arg(g_is_formant_bank_w, g_is_formant_bank)
 Xen_wrap_2_optional_args(g_make_formant_bank_w, g_make_formant_bank)
 
 Xen_wrap_1_arg(g_is_firmant_w, g_is_firmant)
-Xen_wrap_4_optional_args(g_make_firmant_w, g_make_firmant)
 Xen_wrap_3_optional_args(g_firmant_w, g_firmant)
 
 Xen_wrap_1_arg(g_is_one_pole_all_pass_w, g_is_one_pole_all_pass)
@@ -10439,10 +10739,8 @@ Xen_wrap_any_args(g_make_polywave_w, g_make_polywave)
 Xen_wrap_2_optional_args(g_polywave_w, g_polywave)
 Xen_wrap_1_arg(g_is_polywave_w, g_is_polywave)
 
-Xen_wrap_any_args(g_make_nrxysin_w, g_make_nrxysin)
 Xen_wrap_2_optional_args(g_nrxysin_w, g_nrxysin)
 Xen_wrap_1_arg(g_is_nrxysin_w, g_is_nrxysin)
-Xen_wrap_any_args(g_make_nrxycos_w, g_make_nrxycos)
 Xen_wrap_2_optional_args(g_nrxycos_w, g_nrxycos)
 Xen_wrap_1_arg(g_is_nrxycos_w, g_is_nrxycos)
 
@@ -10566,11 +10864,20 @@ Xen_wrap_1_arg(g_mus_irandom_w, g_mus_irandom)
 #if (!HAVE_SCHEME)
 Xen_wrap_4_optional_args(g_make_oscil_w, g_make_oscil)
 Xen_wrap_4_optional_args(g_make_ssb_am_w, g_make_ssb_am)
-#endif
 Xen_wrap_4_optional_args(g_make_ncos_w, g_make_ncos)
-Xen_wrap_4_optional_args(g_make_oscil_bank_w, g_make_oscil_bank)
 Xen_wrap_4_optional_args(g_make_nsin_w, g_make_nsin)
 Xen_wrap_8_optional_args(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
+Xen_wrap_any_args(g_make_nrxysin_w, g_make_nrxysin)
+Xen_wrap_any_args(g_make_nrxycos_w, g_make_nrxycos)
+Xen_wrap_4_optional_args(g_make_one_pole_w, g_make_one_pole)
+Xen_wrap_4_optional_args(g_make_one_zero_w, g_make_one_zero)
+Xen_wrap_6_optional_args(g_make_two_zero_w, g_make_two_zero)
+Xen_wrap_6_optional_args(g_make_two_pole_w, g_make_two_pole)
+Xen_wrap_4_optional_args(g_make_formant_w, g_make_formant)
+Xen_wrap_4_optional_args(g_make_firmant_w, g_make_firmant)
+#endif
+
+Xen_wrap_4_optional_args(g_make_oscil_bank_w, g_make_oscil_bank)
 Xen_wrap_any_args(g_mus_file_mix_w, g_mus_file_mix)
 Xen_wrap_any_args(g_mus_file_mix_with_envs_w, g_mus_file_mix_with_envs)
 Xen_wrap_2_optional_args(g_comb_bank_w, g_comb_bank)
@@ -10626,8 +10933,6 @@ static void mus_xen_init(void)
 #if HAVE_SCHEME
   mus_xen_tag = s7_new_type_x(s7, "<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
 			      mus_xen_apply, NULL, s7_mus_length, s7_mus_copy, NULL, NULL);
-  as_needed_arglist = Xen_list_1(Xen_integer_zero);
-  Xen_GC_protect(as_needed_arglist);
   s7_set_object_print_readably(mus_xen_tag, mus_generator_to_readable_string);
 
   mus_error_symbol = s7_make_symbol(s7, "mus-error");
@@ -10714,6 +11019,13 @@ static void mus_xen_init(void)
   Xen_GC_protect(xen_minus_one);
   xen_float_zero = C_double_to_Xen_real(0.0);
   Xen_GC_protect(xen_float_zero);
+
+#if HAVE_SCHEME
+  as_needed_arglist_one = Xen_list_1(xen_one);
+  as_needed_arglist_minus_one = Xen_list_1(xen_minus_one);
+  Xen_GC_protect(as_needed_arglist_one);
+  Xen_GC_protect(as_needed_arglist_minus_one);
+#endif
 
 #if HAVE_FORTH
   fth_set_object_inspect(mus_xen_tag, print_mus_xen);
@@ -11064,24 +11376,15 @@ static void mus_xen_init(void)
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_asymmetric_fm), r));
   Xen_define_typed_procedure(S_is_asymmetric_fm,	g_is_asymmetric_fm_w,      1, 0, 0, H_is_asymmetric_fm,		pl_bt);
 
-
-  Xen_define_typed_procedure(S_make_one_zero,		g_make_one_zero_w,         0, 4, 0, H_make_one_zero,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_zero), t));
   Xen_define_typed_procedure(S_one_zero,		g_one_zero_w,              1, 1, 0, H_one_zero,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_one_zero), r));
   Xen_define_typed_procedure(S_is_one_zero,		g_is_one_zero_w,           1, 0, 0, H_is_one_zero,		pl_bt);
-  Xen_define_typed_procedure(S_make_one_pole,		g_make_one_pole_w,         0, 4, 0, H_make_one_pole,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_pole), t));
   Xen_define_typed_procedure(S_one_pole,		g_one_pole_w,              1, 1, 0, H_one_pole,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_one_pole), r));
   Xen_define_typed_procedure(S_is_one_pole,		g_is_one_pole_w,           1, 0, 0, H_is_one_pole,		pl_bt);
-  Xen_define_typed_procedure(S_make_two_zero,		g_make_two_zero_w,         0, 6, 0, H_make_two_zero,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_zero), t));
   Xen_define_typed_procedure(S_two_zero,		g_two_zero_w,              1, 1, 0, H_two_zero,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_two_zero), r));
   Xen_define_typed_procedure(S_is_two_zero,		g_is_two_zero_w,           1, 0, 0, H_is_two_zero,		pl_bt);
-  Xen_define_typed_procedure(S_make_two_pole,		g_make_two_pole_w,         0, 6, 0, H_make_two_pole,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_pole), t));
   Xen_define_typed_procedure(S_two_pole,		g_two_pole_w,              1, 1, 0, H_two_pole,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_two_pole), r));
   Xen_define_typed_procedure(S_is_two_pole,		g_is_two_pole_w,           1, 0, 0, H_is_two_pole,		pl_bt);
@@ -11093,8 +11396,6 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_wave_train,		g_is_wave_train_w,         1, 0, 0, H_is_wave_train,		pl_bt);
 
   Xen_define_typed_procedure(S_is_formant,		g_is_formant_w,            1, 0, 0, H_is_formant,		pl_bt);
-  Xen_define_typed_procedure(S_make_formant,		g_make_formant_w,          0, 4, 0, H_make_formant,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_formant), t));
   Xen_define_typed_procedure(S_formant,			g_formant_w,               1, 2, 0, H_formant,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_formant), r));
 
@@ -11105,8 +11406,6 @@ static void mus_xen_init(void)
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_formant_bank), t));
 
   Xen_define_typed_procedure(S_is_firmant,		g_is_firmant_w,            1, 0, 0, H_is_firmant,		pl_bt);
-  Xen_define_typed_procedure(S_make_firmant,		g_make_firmant_w,          0, 4, 0, H_make_firmant,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_firmant), t));
   Xen_define_typed_procedure(S_firmant,			g_firmant_w,               1, 2, 0, H_firmant,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_firmant), r));
 
@@ -11137,13 +11436,9 @@ static void mus_xen_init(void)
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_polywave), r));
   Xen_define_typed_procedure(S_is_polywave,		g_is_polywave_w,           1, 0, 0, H_is_polywave,		pl_bt);
 
-  Xen_define_typed_procedure(S_make_nrxysin,		g_make_nrxysin_w,          0, 0, 1, H_make_nrxysin,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxysin), t));
   Xen_define_typed_procedure(S_nrxysin,			g_nrxysin_w,               1, 1, 0, H_nrxysin,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_nrxysin), r));
   Xen_define_typed_procedure(S_is_nrxysin,		g_is_nrxysin_w,            1, 0, 0, H_is_nrxysin,		pl_bt);
-  Xen_define_typed_procedure(S_make_nrxycos,		g_make_nrxycos_w,          0, 0, 1, H_make_nrxycos,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxycos), t));
   Xen_define_typed_procedure(S_nrxycos,			g_nrxycos_w,               1, 1, 0, H_nrxycos,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_nrxycos), r));
   Xen_define_typed_procedure(S_is_nrxycos,		g_is_nrxycos_w,            1, 0, 0, H_is_nrxycos,		pl_bt);
@@ -11350,20 +11645,65 @@ static void mus_xen_init(void)
 				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil), t));
   s7_define_typed_function_star(s7, S_make_ssb_am, g_make_ssb_am, "(frequency *clm-default-frequency*) (order 40)", H_make_ssb_am,
 				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ssb_am), t)); 
+  s7_define_typed_function_star(s7, S_make_ncos, g_make_ncos, "(frequency *clm-default-frequency*) (n 1)", H_make_ncos,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ncos), t));
+  s7_define_typed_function_star(s7, S_make_nsin, g_make_nsin, "(frequency *clm-default-frequency*) (n 1)", H_make_nsin,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nsin), t));
+  s7_define_typed_function_star(s7, S_make_asymmetric_fm, g_make_asymmetric_fm, 
+				"(frequency *clm-default-frequency*) (initial-phase 0.0) (r 1.0) (ratio 1.0)",
+				H_make_asymmetric_fm, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_asymmetric_fm), t));
+  s7_define_typed_function_star(s7, S_make_nrxysin, g_make_nrxysin, "(frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5))", H_make_nrxysin,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxysin), t));
+  s7_define_typed_function_star(s7, S_make_nrxycos, g_make_nrxycos, "(frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5))", H_make_nrxycos,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxycos), t));
+  s7_define_typed_function_star(s7, S_make_one_zero, g_make_one_zero, "(a0 0.0) (a1 0.0)", H_make_one_zero,
+                                s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_zero), t));
+  s7_define_typed_function_star(s7, S_make_one_pole, g_make_one_pole, "(a0 0.0) (b1 0.0)", H_make_one_pole,
+                                s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_pole), t));
+
+  s7_define_typed_function(s7, S_make_two_zero, g_make_two_zero, 0, 6, 0, H_make_two_zero, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_zero), t));
+  make_two_zero_a = s7_make_function_star(s7, S_make_two_zero, g_make_two_zero_a, "(a0 0.0) (a1 0.0) (a2 0.0)", H_make_two_zero);
+  make_two_zero_f = s7_make_function_star(s7, S_make_two_zero, g_make_two_zero_f, "(frequency 0.0) (radius 0.0)", H_make_two_zero);
+
+  s7_define_typed_function(s7, S_make_two_pole, g_make_two_pole, 0, 6, 0, H_make_two_pole, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_pole), t));
+  make_two_pole_a = s7_make_function_star(s7, S_make_two_pole, g_make_two_pole_a, "(a0 0.0) (b1 0.0) (b2 0.0)", H_make_two_pole);
+  make_two_pole_f = s7_make_function_star(s7, S_make_two_pole, g_make_two_pole_f, "(frequency 0.0) (radius 0.0)", H_make_two_pole);
+
+  s7_define_typed_function_star(s7, S_make_formant, g_make_formant, "(frequency 0.0) (radius 0.0)", H_make_formant,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_formant), t));
+  s7_define_typed_function_star(s7, S_make_firmant, g_make_firmant, "(frequency 0.0) (radius 0.0)", H_make_firmant,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_firmant), t));
 #else
   Xen_define_typed_procedure(S_make_oscil,		g_make_oscil_w,             0, 4, 0, H_make_oscil,              
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil), t));
   Xen_define_typed_procedure(S_make_ssb_am,		g_make_ssb_am_w,           0, 4, 0, H_make_ssb_am,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ssb_am), t)); 
-#endif
   Xen_define_typed_procedure(S_make_ncos,		g_make_ncos_w,              0, 4, 0, H_make_ncos,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ncos), t)); 
-  Xen_define_typed_procedure(S_make_oscil_bank,		g_make_oscil_bank_w,        2, 2, 0, H_make_oscil_bank,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil_bank), t));
   Xen_define_typed_procedure(S_make_nsin,		g_make_nsin_w,              0, 4, 0, H_make_nsin,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nsin), t)); 
   Xen_define_typed_procedure(S_make_asymmetric_fm,	g_make_asymmetric_fm_w,     0, 8, 0, H_make_asymmetric_fm,	
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_asymmetric_fm), t));
+  Xen_define_typed_procedure(S_make_nrxysin,		g_make_nrxysin_w,          0, 0, 1, H_make_nrxysin,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxysin), t));
+  Xen_define_typed_procedure(S_make_nrxycos,		g_make_nrxycos_w,          0, 0, 1, H_make_nrxycos,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxycos), t));
+  Xen_define_typed_procedure(S_make_one_zero,		g_make_one_zero_w,         0, 4, 0, H_make_one_zero,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_zero), t));
+  Xen_define_typed_procedure(S_make_one_pole,		g_make_one_pole_w,         0, 4, 0, H_make_one_pole,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_pole), t));
+  Xen_define_typed_procedure(S_make_two_zero,		g_make_two_zero_w,         0, 6, 0, H_make_two_zero,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_zero), t));
+  Xen_define_typed_procedure(S_make_two_pole,		g_make_two_pole_w,         0, 6, 0, H_make_two_pole,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_pole), t));
+  Xen_define_typed_procedure(S_make_formant,		g_make_formant_w,          0, 4, 0, H_make_formant,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_formant), t));
+  Xen_define_typed_procedure(S_make_firmant,		g_make_firmant_w,          0, 4, 0, H_make_firmant,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_firmant), t));
+#endif
+
+  Xen_define_typed_procedure(S_make_oscil_bank,		g_make_oscil_bank_w,        2, 2, 0, H_make_oscil_bank,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil_bank), t));
 
   Xen_define_typed_procedure(S_mus_file_mix,		g_mus_file_mix_w,           0, 0, 1, H_mus_file_mix,		NULL);
   Xen_define_typed_procedure(S_mus_file_mix_with_envs,	g_mus_file_mix_with_envs_w, 0, 0, 1, H_mus_file_mix_with_envs,	NULL); /* actually 8 2 0 I think */
