@@ -2785,7 +2785,13 @@ static bool safe_strcmp(const char *s1, const char *s2)
 
 static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 {
-#if defined(__x86_64__) || defined(__i386__) /* unaligned accesses are safe on i386 hardware, sez everyone */
+#if S7_ALIGNED
+  return(strncmp(s1, s2, n) == 0);
+#else
+#if defined(__SIZEOF_INT__) && (__SIZEOF_INT__ != 4) /* sheesh... */
+  return(strncmp(s1, s2, n) == 0);
+#else
+#if (defined(__x86_64__) || defined(__i386__)) /* unaligned accesses are safe on i386 hardware, sez everyone */
   if (n >= 4)
     {
       int *is1, *is2;
@@ -2804,15 +2810,23 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
       n--;
     }
   return(true);
+#endif
+#endif
 }
 
 #define strings_are_equal_with_length(Str1, Str2, Len) (local_strncmp(Str1, Str2, Len))
 
 
- static void memclr(void *s, size_t n)
+static void memclr(void *s, size_t n)
 {
   unsigned char *s2;
-#if defined(__x86_64__) || defined(__i386__)
+#if S7_ALIGNED
+  s2 = (unsigned char *)s;
+#else    
+#if defined(__SIZEOF_INT__) && (__SIZEOF_INT__ != 4)
+  s2 = (unsigned char *)s;
+#else
+#if (defined(__x86_64__) || defined(__i386__))
   if (n >= 4)
     {
       int *s1 = (int *)s;
@@ -2824,6 +2838,8 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
   else s2 = (unsigned char *)s;
 #else
   s2 = (unsigned char *)s;
+#endif
+#endif
 #endif
   while (n > 0)
     {
@@ -2861,7 +2877,6 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 /* ---------------- forward decls ---------------- */
 
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice);
-static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
 static s7_pointer iterator_finished(s7_scheme *sc, s7_pointer iterator);
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer division_by_zero_error(s7_scheme *sc, s7_pointer caller, s7_pointer arg);
@@ -22091,7 +22106,7 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
   if (is_null(car(args)))
     return(s7_make_string_with_length(sc, "", 0));
 
-  if (!is_proper_list(sc, car(args)))
+  if (!s7_is_proper_list(sc, car(args)))
     method_or_bust_with_type_one_arg(sc, car(args), sc->list_to_string_symbol, args, s7_make_string_wrapper(sc, "a (proper, non-circular) list of characters"));
   return(g_string_1(sc, car(args), sc->list_to_string_symbol));
 }
@@ -29580,7 +29595,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			char *curly_str = NULL;                /* this is the local (nested) format control string */
 			s7_pointer orig_arg;
 
-			if (!is_proper_list(sc, curly_arg))
+			if (!s7_is_proper_list(sc, curly_arg))
 			  format_error(sc, "'{' directive argument should be a proper list or something we can turn into a list", str, args, fdat);
 			
 			fdat->curly_arg = curly_arg;
@@ -31147,7 +31162,7 @@ bool s7_is_list(s7_scheme *sc, s7_pointer p)
 static bool is_list_b(s7_pointer p) {return((is_pair(p)) || (type(p) == T_NIL));}
 
 
-static bool is_proper_list(s7_scheme *sc, s7_pointer lst)
+bool s7_is_proper_list(s7_scheme *sc, s7_pointer lst)
 {
   /* #t if () or undotted/non-circular pair */
   s7_pointer slow, fast;
@@ -33113,7 +33128,7 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	{
 	  if (is_pair(p))
 	    {
-	      if (!is_proper_list(sc, p))
+	      if (!s7_is_proper_list(sc, p))
 		{
 		  sc->y = sc->nil;
 		  return(wrong_type_argument_with_type(sc, sc->append_symbol, position_of(y, args), p, a_proper_list_string));
@@ -33999,7 +34014,7 @@ static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
   if (is_null(p))
     return(s7_make_vector(sc, 0));
 
-  if (!is_proper_list(sc, p))
+  if (!s7_is_proper_list(sc, p))
     method_or_bust_with_type_one_arg(sc, p, sc->list_to_vector_symbol, list_1(sc, p), a_proper_list_string);
 
   return(g_vector(sc, p));  
@@ -34118,7 +34133,7 @@ a vector that points to the same elements as the original-vector but with differ
   else
     {
       if ((is_null(dims)) ||
-	  (!is_proper_list(sc, dims)))
+	  (!s7_is_proper_list(sc, dims)))
 	method_or_bust(sc, dims, sc->make_shared_vector_symbol, args, T_PAIR, 2);
 
       for (y = dims; is_pair(y); y = cdr(y))
@@ -37813,9 +37828,7 @@ s7_pointer s7_make_function_star(s7_scheme *sc, const char *name, s7_function fn
 
   func = s7_make_function(sc, name, fnc, 0, n_args, false, doc);
   set_type(func, T_C_FUNCTION_STAR);
-
-  c_function_call_args(func) = make_list(sc, n_args, sc->F);
-  s7_remove_from_heap(sc, c_function_call_args(func));
+  c_function_call_args(func) = NULL;
 
   names = (s7_pointer *)malloc(n_args * sizeof(s7_pointer));
   c_function_arg_names(func) = names;
@@ -37849,16 +37862,24 @@ s7_pointer s7_make_function_star(s7_scheme *sc, const char *name, s7_function fn
   return(func);
 }
 
+s7_pointer s7_make_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
+{
+  s7_pointer func;
+  func = s7_make_function_star(sc, name, fnc, arglist, doc);
+  set_type(func, T_C_FUNCTION_STAR | T_SAFE_PROCEDURE);
+  c_function_call_args(func) = make_list(sc, c_function_optional_args(func), sc->F);
+  s7_remove_from_heap(sc, c_function_call_args(func));
+  return(func);
+}
+
 static void define_function_star_1(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc, bool safe, s7_pointer signature)
 {
   s7_pointer func, sym;
-  func = s7_make_function_star(sc, name, fnc, arglist, doc);
+  if (safe)
+    func = s7_make_safe_function_star(sc, name, fnc, arglist, doc);
+  else func = s7_make_function_star(sc, name, fnc, arglist, doc);
   sym = make_symbol(sc, name);
   s7_define(sc, sc->nil, sym, func);
-
-  if (safe)
-    set_type(func, T_C_FUNCTION_STAR | T_SAFE_PROCEDURE);
-  
   if (signature) c_function_signature(func) = signature;
 }
 
@@ -37878,6 +37899,13 @@ void s7_define_typed_function_star(s7_scheme *sc, const char *name, s7_function 
 }
 
 
+static int next_tx(s7_scheme *sc)
+{
+  sc->t_temp_ctr++;
+  if (sc->t_temp_ctr >= T_TEMPS_SIZE) sc->t_temp_ctr = 0;
+  return(sc->t_temp_ctr);
+}
+
 static s7_pointer set_c_function_star_args(s7_scheme *sc)
 {
   int i, j, n_args;
@@ -37886,58 +37914,116 @@ static s7_pointer set_c_function_star_args(s7_scheme *sc)
 
   func = sc->code;
   n_args = c_function_all_args(func);     /* not counting keywords, I think */
-  call_args = c_function_call_args(func);
-
-  df = c_function_arg_defaults(func);
-  for (i = 0, par = call_args; is_pair(par); i++, par = cdr(par))
+  if (is_safe_procedure(func))
+    call_args = c_function_call_args(func);
+  else 
     {
-      clear_checked(par);
-      set_car(par, df[i]);
+      int tx;
+      tx = next_tx(sc);
+      call_args = make_list(sc, c_function_optional_args(func), sc->F);
+      sc->t_temps[tx] = call_args;
     }
 
-  df = c_function_arg_names(func);
+  /* assume at the start that there are no keywords */
   for (i = 0, arg = sc->args, par = call_args; (i < n_args) && (is_pair(arg)); i++, arg = cdr(arg), par = cdr(par))
     {
       if (!is_keyword(car(arg)))
+	set_car(par, car(arg));
+      else
 	{
-	  if (is_checked(par))
-	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(par), sc->args)));
-	  set_checked(par);
-	  set_car(par, car(arg));
+	  s7_pointer kpar, karg;
+	  int ki;
+	  /* oops -- there are keywords, change scanners (much duplicated code...) */
+	  for (kpar = call_args; kpar != par; kpar = cdr(kpar))
+	    set_checked(kpar);
+	  for (; is_pair(kpar); kpar = cdr(kpar))
+	    clear_checked(kpar);
+	  df = c_function_arg_names(func);
+	  for (ki = i, karg = arg, kpar = par; (ki < n_args) && (is_pair(karg)); ki++, karg = cdr(karg), kpar = cdr(kpar))
+	    {
+	      if (!is_keyword(car(karg)))
+		{
+		  if (is_checked(kpar))
+		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(kpar), sc->args)));
+		  set_checked(kpar);
+		  set_car(kpar, car(karg));
+		}
+	      else
+		{
+		  s7_pointer p;
+		  for (j = 0, p = call_args; j < n_args; j++, p = cdr(p))
+		    if (df[j] == car(karg))
+		      break;
+		  if (j == n_args)
+		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "~A: not a parameter name?"), car(karg))));
+		  if (is_checked(p))
+		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(p), sc->args)));
+		  if (!is_pair(cdr(karg)))
+		    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, value_is_missing_string, func, car(karg))));
+		  set_checked(p);
+		  karg = cdr(karg);
+		  set_car(p, car(karg));
+		}
+	    }
+	  if (!is_null(karg))
+	    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, func, sc->args)));
+	  if (ki < n_args)
+	    {
+	      df = c_function_arg_defaults(func);
+	      if (has_simple_defaults(func))
+		{
+		  for (ki = i, kpar = par; ki < n_args; ki++, kpar = cdr(kpar))
+		    if (!is_checked(kpar))
+		      set_car(kpar, df[ki]);
+		}
+	      else
+		{
+		  for (ki = i, kpar = par; ki < n_args; ki++, kpar = cdr(kpar))
+		    if (!is_checked(kpar))
+		      {
+			s7_pointer defval;
+			defval = df[ki];
+			if (is_symbol(defval))
+			  set_car(kpar, find_symbol_checked(sc, defval));
+			else
+			  {
+			    if (is_pair(defval))
+			      set_car(kpar, s7_eval(sc, defval, sc->nil));
+			    else set_car(kpar, defval);
+			  }
+		      }
+		}
+	    }
+	  return(call_args);
+	}
+    }
+  if (!is_null(arg))
+    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, func, sc->args)));
+  if (i < n_args)
+    {
+      df = c_function_arg_defaults(func);
+      if (has_simple_defaults(func))
+	{
+	  for (; i < n_args; i++, par = cdr(par))
+	    set_car(par, df[i]);
 	}
       else
 	{
-	  s7_pointer p;
-	  for (j = 0, p = call_args; j < n_args; j++, p = cdr(p))
-	    if (df[j] == car(arg))
-	      break;
-	  if (j == n_args)
-	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "~A: not a parameter name?"), car(arg))));
-	  if (is_checked(p))
-	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(p), sc->args)));
-	  if (!is_pair(cdr(arg)))
-	    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, value_is_missing_string, func, car(arg))));
-	  set_checked(p);
-	  arg = cdr(arg);
-	  set_car(p, car(arg));
-	}
-    }
-
-  if (!is_null(arg))
-    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, func, sc->args)));
-
-  if (!has_simple_defaults(func))
-    for (i = 0, par = call_args; i < n_args; i++, par = cdr(par))
-      if (!is_checked(par))
-	{
-	  if (is_symbol(car(par)))
-	    set_car(par, find_symbol_checked(sc, car(par)));
-	  else
+	  for (; i < n_args; i++, par = cdr(par))
 	    {
-	      if (is_pair(car(par)))
-		set_car(par, s7_eval(sc, car(par), sc->nil));
+	      s7_pointer defval;
+	      defval = df[i];
+	      if (is_symbol(defval))
+		set_car(par, find_symbol_checked(sc, defval));
+	      else
+		{
+		  if (is_pair(defval))
+		    set_car(par, s7_eval(sc, defval, sc->nil));
+		  else set_car(par, defval);
+		}
 	    }
 	}
+    }
   return(call_args);
 }
 
@@ -43695,7 +43781,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
       for (q = args, p = cdr(args); is_not_null(cdr(p)); q = p, p = cdr(p));
       /* the last arg is supposed to be a list, it will be spliced onto the end of the previous arg list (if any) below */
       
-      if (!is_proper_list(sc, car(p)))        /* (apply + #f) etc */
+      if (!s7_is_proper_list(sc, car(p)))        /* (apply + #f) etc */
 	return(apply_list_error(sc, args));
       set_cdr(q, car(p));
       /* this would work: if (is_c_function(sc->code)) return(c_function_call(sc->code)(sc, cdr(args)));
@@ -43710,7 +43796,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
   if (is_null(cddr(args)))
     sc->args = cadr(args);
   else sc->args = apply_list_star(sc, cdr(args));
-  if (!is_proper_list(sc, sc->args)) 
+  if (!s7_is_proper_list(sc, sc->args)) 
     return(apply_list_error(sc, args));
   
   push_stack(sc, OP_APPLY, (needs_copied_args(sc->code)) ? copy_list(sc, sc->args) : sc->args, sc->code);
@@ -44387,7 +44473,7 @@ static s7_pointer all_x_is_proper_list_s(s7_scheme *sc, s7_pointer arg)
 {
     s7_pointer lst;
     lst = find_symbol_unchecked(sc, cadr(arg));
-    if (is_proper_list(sc, lst)) return(sc->T);
+    if (s7_is_proper_list(sc, lst)) return(sc->T);
     if (!has_methods(lst)) return(sc->F);
     return(apply_boolean_method(sc, lst, sc->is_proper_list_symbol));
 }
@@ -44605,13 +44691,6 @@ static s7_pointer all_x_c_opcq_c(s7_scheme *sc, s7_pointer arg)
   set_car(sc->t2_1, c_call(largs)(sc, cdr(largs)));
   set_car(sc->t2_2, caddr(arg));
   return(c_call(arg)(sc, sc->t2_1));
-}
-
-static int next_tx(s7_scheme *sc)
-{
-  sc->t_temp_ctr++;
-  if (sc->t_temp_ctr >= T_TEMPS_SIZE) sc->t_temp_ctr = 0;
-  return(sc->t_temp_ctr);
 }
 
 static s7_pointer safe_list_if_possible(s7_scheme *sc, int num_args)
@@ -51762,7 +51841,7 @@ static bool opt_cell_case(s7_scheme *sc, s7_pointer car_x)
 	    }
 	  else 
 	    {
-	      if (!is_proper_list(sc, car(clause)))
+	      if (!s7_is_proper_list(sc, car(clause)))
 		return(return_false(sc, clause, __func__, __LINE__));
 	      opc->v2.p = car(clause);
 	    }
@@ -52230,7 +52309,7 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
   if (len < 3)
     return(false);
   
-  if (!is_proper_list(sc, cadr(car_x)))
+  if (!s7_is_proper_list(sc, cadr(car_x)))
     return(return_false(sc, car_x, __func__, __LINE__));
   var_len = safe_list_length(sc, cadr(car_x));
   step_len = var_len;
@@ -54397,7 +54476,7 @@ static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
     x = car(args);
   else x = apply_list_star(sc, args);
 
-  if (!is_proper_list(sc, x))
+  if (!s7_is_proper_list(sc, x))
     return(apply_list_error(sc, args));
   if (is_null(x))
     {
@@ -60159,7 +60238,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 
   if (!is_pair(x)) return(result);
   sc->cycle_counter++;
-  if ((!is_proper_list(sc, x)) ||
+  if ((!s7_is_proper_list(sc, x)) ||
       (sc->cycle_counter > 5000))
     return(UNSAFE_BODY);
   
@@ -62407,7 +62486,7 @@ static s7_pointer check_set(s7_scheme *sc)
 	  if (!s7_is_list(sc, cdar(sc->code)))                          /* (set! ('(1 2) . 0) 1) */
 	    eval_error(sc, "improper list of args to set!: ~A", sc->code);
 	}
-      if (!is_proper_list(sc, car(sc->code)))                           /* (set! ("hi" . 1) #\a) or (set! (#(1 2) . 1) 0) */
+      if (!s7_is_proper_list(sc, car(sc->code)))                        /* (set! ("hi" . 1) #\a) or (set! (#(1 2) . 1) 0) */
 	eval_error(sc, "set! target is an improper list: (set! ~A ...)", car(sc->code));
     }
   else
@@ -66355,7 +66434,7 @@ static int apply_pair(s7_scheme *sc)                              /* -------- li
       sc->code = car(sc->x);
 #if 0
       /* this can't happen? */
-      if (!is_proper_list(sc, cdr(sc->x)))
+      if (!s7_is_proper_list(sc, cdr(sc->x)))
 	s7_error(sc, sc->syntax_error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "values arglist is a dotted list: ~A"), sc->x));
 #endif
       sc->args = s7_append(sc, cdr(sc->x), sc->args);
@@ -68269,7 +68348,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  /* -------------------------------- BEGIN -------------------------------- */
 	case OP_BEGIN:
-	  if (!is_proper_list(sc, sc->code))       /* proper list includes () */
+	  if (!s7_is_proper_list(sc, sc->code))    /* proper list includes () */
 	    eval_error(sc, "unexpected dot? ~A", sc->code);
 
 	  if ((!is_null(sc->code)) &&              /* so check for it here */
@@ -70081,7 +70160,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_APPLY_SS:
 		  sc->code = find_symbol_unchecked(sc, cadr(code)); /* global search here was slower */
 		  sc->args = find_symbol_unchecked(sc, opt_sym2(code));  /* is this right if code=macro? */
-		  if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
+		  if (!s7_is_proper_list(sc, sc->args))             /* (apply + #f) etc */
 		    return(apply_list_error(sc, sc->args));
 		  if (needs_copied_args(sc->code))
 		    sc->args = copy_list(sc, sc->args);
@@ -71927,7 +72006,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    eval_error(sc, "macroexpand argument is not a macro call: ~A", sc->code);
 	  if (!is_null(cdr(sc->code)))
 	    eval_error(sc, "macroexpand: too many arguments: ~A", sc->code);
-	  if (!is_proper_list(sc, car(sc->code)))
+	  if (!s7_is_proper_list(sc, car(sc->code)))
 	    eval_error(sc, "macroexpand: improper arg list: ~A", car(sc->code));
 	  /* this seems to happen when it should not? */
 	  
@@ -72382,7 +72461,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *   (let ((L '((1 2 3))) (index 1)) (set! ((L 0) index) 32) L)
 	       */
 	      
-	      if (!is_proper_list(sc, sc->args))                                 /* (set! ('(1 2) 1 . 2) 1) */
+	      if (!s7_is_proper_list(sc, sc->args))                              /* (set! ('(1 2) 1 . 2) 1) */
 		eval_error(sc, "set! target arguments are an improper list: ~A", sc->args);
 	      
 	      /* in all of these cases, we might need to GC protect the temporary lists */
@@ -74639,7 +74718,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto BEGIN1;
 	  
 	case OP_WITH_BAFFLE:
-	  if (!is_proper_list(sc, sc->code))
+	  if (!s7_is_proper_list(sc, sc->code))
 	    eval_error(sc, "with-baffle: unexpected dot? ~A", sc->code);
 	  
 	  if ((!is_null(sc->code)) &&
@@ -74938,7 +75017,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	case OP_READ_VECTOR:
-	  if (!is_proper_list(sc, sc->value))       /* #(1 . 2) */
+	  if (!s7_is_proper_list(sc, sc->value))    /* #(1 . 2) */
 	    return(read_error(sc, "vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
@@ -74951,7 +75030,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case OP_READ_INT_VECTOR:
-	  if (!is_proper_list(sc, sc->value))
+	  if (!s7_is_proper_list(sc, sc->value))
 	    return(read_error(sc, "vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
@@ -74963,7 +75042,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case OP_READ_FLOAT_VECTOR:
-	  if (!is_proper_list(sc, sc->value))
+	  if (!s7_is_proper_list(sc, sc->value))
 	    return(read_error(sc, "vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
@@ -74975,7 +75054,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;	  
 
 	case OP_READ_BYTE_VECTOR:
-	  if (!is_proper_list(sc, sc->value))
+	  if (!s7_is_proper_list(sc, sc->value))
 	    return(read_error(sc, "byte-vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  sc->value = g_byte_vector(sc, sc->value);
@@ -79789,10 +79868,10 @@ static s7_pointer g_is_proper_list(s7_scheme *sc, s7_pointer args)
   #define Q_is_proper_list pl_bt
   s7_pointer p;
   p = car(args);
-  return(make_boolean(sc, is_proper_list(sc, p)));
+  return(make_boolean(sc, s7_is_proper_list(sc, p)));
 }
 
-static bool is_proper_list_b(s7_pointer p) {return(is_proper_list(cur_sc, p));}
+static bool is_proper_list_b(s7_pointer p) {return(s7_is_proper_list(cur_sc, p));}
 
 
 #if (!MS_WINDOWS)
@@ -81977,6 +82056,7 @@ int main(int argc, char **argv)
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
  * translate all make-* to use function* in clm2xen
+ *   need to check make_delay mus_error stuff (used to trap errors here)
  *
  * lint: as in random-gen, move internally created but unchanged sequences (lists) out of the body
  *
@@ -82015,8 +82095,8 @@ int main(int argc, char **argv)
  *   also ((lambda (x)...)...) -- the (x)!!
  * op_fa->op_fs? closure_sa|as? 
  * perhaps computed gotos for begin1/eval/opt_eval? or is switch just as fast?
- * make_sw et al using args, add closure_star_all_x_direct if none are kws/syms? set_c_function_star_args_direct+apply_lambda_star_direct
- *   there are uses of unscramble in region/snd/dac/select
+ * make_sw et al using args, add closure_star_all_x_direct if none are kws/syms?
+ *   there are uses of unscramble in region/snd/dac/select [23 left in clm2xen]
  *
  * --------------------------------------------------------------------
  *
@@ -82041,7 +82121,7 @@ int main(int argc, char **argv)
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.9
- *                                    || 145  | 135   132   97.0
+ *                                    || 145  | 135   132   95.7
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.

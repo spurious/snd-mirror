@@ -2580,7 +2580,369 @@ static Xen g_oscil_bank(Xen g)
 
 /* ---------------- delay ---------------- */
 
+#define H_make_delay "(" S_make_delay " size initial-contents initial-element max-size type): \
+return a new delay line of size elements. \
+If the delay length will be changing at run-time, max-size sets its maximum length, so\n\
+   (" S_make_delay " len :max-size (+ len 10))\n\
+provides 10 extra elements of delay for subsequent phasing or flanging. \
+initial-contents can be either a list or a " S_vct "."
 
+#define H_make_comb "(" S_make_comb " scaler size initial-contents initial-element max-size type): \
+return a new comb filter (a delay line with a scaler on the feedback) of size elements. \
+If the comb length will be changing at run-time, max-size sets its maximum length. \
+initial-contents can be either a list or a " S_vct "."
+
+#define H_make_filtered_comb "(" S_make_filtered_comb " scaler size initial-contents initial-element max-size type filter): \
+return a new filtered comb filter (a delay line with a scaler and a filter on the feedback) of size elements. \
+If the comb length will be changing at run-time, max-size sets its maximum length. \
+initial-contents can be either a list or a " S_vct "."
+
+#define H_make_notch "(" S_make_notch " scaler size initial-contents initial-element max-size type)): \
+return a new notch filter (a delay line with a scaler on the feedforward) of size elements. \
+If the notch length will be changing at run-time, max-size sets its maximum length. \
+initial-contents can be either a list or a " S_vct "."
+
+#define H_make_all_pass "(" S_make_all_pass " feedback feedforward size initial-contents initial-element max-size type): \
+return a new allpass filter (a delay line with a scalers on both the feedback and the feedforward). \
+If the " S_all_pass " length will be changing at run-time, max-size sets its maximum length. \
+initial-contents can be either a list or a " S_vct "."
+
+#define H_make_moving_average "(" S_make_moving_average " size initial-contents initial-element): \
+return a new moving_average generator. initial-contents can be either a list or a " S_vct "."
+
+#define H_make_moving_max "(" S_make_moving_max " size initial-contents initial-element): \
+return a new moving-max generator. initial-contents can be either a list or a " S_vct "."
+
+#define H_make_moving_norm "(" S_make_moving_norm " size (scaler 1.0)): return a new moving-norm generator."
+
+
+#if HAVE_SCHEME
+
+static mus_long_t d_size(s7_scheme *sc, s7_pointer size, int arg_n, const char *caller)
+{
+  mus_long_t x;
+  if (size == Xen_false)
+    return(-1);
+  if (!s7_is_integer(size))
+    s7_wrong_type_arg_error(sc, caller, arg_n, size, "an integer");    
+  x = s7_integer(size);
+  if (x < 0)
+    Xen_out_of_range_error(caller, arg_n, size, "size < 0?");
+  if (x > mus_max_table_size())
+    Xen_out_of_range_error(caller, arg_n, size, "size too large (see mus-max-table-size)");
+  return(x);
+}
+
+static mus_long_t d_max_size(s7_scheme *sc, s7_pointer msize, int arg_n, const char *caller)
+{
+  mus_long_t max_size;
+  if (msize == Xen_false)
+    return(-1);
+  if (!s7_is_integer(msize))
+    s7_wrong_type_arg_error(sc, caller, arg_n, msize, "an integer");    
+  max_size = s7_integer(msize);
+  if (max_size <= 0)
+    Xen_out_of_range_error(caller, arg_n, msize, "max-size <= 0?");
+  if (max_size > mus_max_table_size())
+    Xen_out_of_range_error(caller, arg_n, msize, "max-size too large (see mus-max-table-size)");
+  return(max_size);
+}
+
+static int d_interp(s7_scheme *sc, s7_pointer interp, bool maxed, int arg_n, const char *caller)
+{
+  if (s7_is_integer(interp))
+    {
+      int interp_type;
+      interp_type = s7_integer(interp);
+      if (!(mus_is_interp_type(interp_type)))
+	Xen_out_of_range_error(caller, arg_n, interp, "no such interp-type");
+      return(interp_type);
+    }
+  return((maxed) ? MUS_INTERP_LINEAR : MUS_INTERP_NONE);
+}
+
+static s7_pointer d_contents(s7_scheme *sc, s7_pointer contents, s7_pointer init, mus_long_t max_size, int arg_n, const char *caller)
+{
+  if (contents == Xen_false)
+    {
+      if (max_size == -1)
+	max_size = 1;
+      contents = s7_make_float_vector(sc, max_size, 1, NULL);
+      if (init != Xen_false)
+	{
+	  mus_float_t initial_element;
+	  initial_element = s7_number_to_real(sc, init);
+	  if (initial_element != 0.0)
+	    {
+	      mus_long_t i;
+	      s7_double *line;
+	      line = s7_float_vector_elements(contents);
+	      for (i = 0; i < max_size; i++) 
+		line[i] = initial_element;
+	    }
+	}
+      return(contents);
+    }
+
+  if (s7_is_number(init))
+    s7_wrong_type_arg_error(sc, caller, arg_n, contents, "initial-contents and initial-element in the same call?");
+
+  if (s7_is_float_vector(contents))
+    {
+      if (max_size > s7_vector_length(contents))
+	Xen_out_of_range_error(caller, arg_n, contents, "size > initial-contents length");
+      return(contents);
+    }
+
+  if (s7_is_pair(contents))
+    {
+      mus_long_t len;
+      len = s7_list_length(sc, contents);
+      if (len < 0)
+	s7_wrong_type_arg_error(sc, caller, arg_n, contents, "a proper list");
+      if (max_size > len)
+	Xen_out_of_range_error(caller, arg_n, contents, "size > initial-contents length");
+      return(xen_list_to_vct(contents));
+    }
+  return(s7_wrong_type_arg_error(sc, caller, arg_n, contents, "a float-vector or a proper list"));
+}
+  
+/* I don't think any of these mus_make* funcs call clm_error, so the local mus_error handlers are not needed */
+
+static s7_pointer g_make_delay(s7_scheme *sc, s7_pointer args)
+{
+  /* size initial-contents initial-element max-size interp-type */
+  mus_any *ge;
+  mus_long_t size, max_size;
+  int interp_type;
+  s7_pointer p;
+  s7_pointer initial_contents;
+  
+  p = s7_cdddr(args);
+  size = d_size(sc, s7_car(args), 1, S_make_delay);        /* -1 if no size key */
+  max_size = d_max_size(sc, s7_car(p), 4, S_make_delay);   /* -1 if no max-size key */
+  if (max_size < size) max_size = (size == 0) ? 1 : size;
+
+  initial_contents = d_contents(sc, s7_cadr(args), s7_caddr(args), max_size, 2, S_make_delay);
+  if (max_size == -1)
+    max_size = s7_vector_length(initial_contents);
+  if (size == -1)
+    size = max_size;
+
+  interp_type = d_interp(sc, s7_cadr(p), max_size != size, 5, S_make_delay);
+  ge = mus_make_delay(size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_comb(s7_scheme *sc, s7_pointer args)
+{
+  /* scaler size initial-contents initial-element max-size interp-type */
+  mus_any *ge;
+  mus_long_t size, max_size;
+  int interp_type;
+  s7_pointer p;
+  s7_pointer initial_contents;
+  mus_float_t scl;
+  
+  size = d_size(sc, s7_cadr(args), 2, S_make_comb);        /* -1 if no size key */
+  p = s7_cdddr(args);
+  max_size = d_max_size(sc, s7_cadr(p), 5, S_make_comb);   /* -1 if no max-size key */
+  if (max_size < size) max_size = (size == 0) ? 1 : size;
+
+  initial_contents = d_contents(sc, s7_caddr(args), s7_car(p), max_size, 3, S_make_comb);
+  if (max_size == -1)
+    max_size = s7_vector_length(initial_contents);
+  if (size == -1)
+    size = max_size;
+
+  scl = s7_number_to_real(sc, s7_car(args));
+  interp_type = d_interp(sc, s7_caddr(p), max_size != size, 6, S_make_comb);
+  ge = mus_make_comb(scl, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_filtered_comb(s7_scheme *sc, s7_pointer args)
+{
+  /* scaler size initial-contents initial-element max-size interp-type filter */
+  mus_any *ge, *filt;
+  mus_long_t size, max_size;
+  int interp_type;
+  s7_pointer p, flt;
+  s7_pointer initial_contents;
+  mus_float_t scl;
+  
+  size = d_size(sc, s7_cadr(args), 2, S_make_filtered_comb);        /* -1 if no size key */
+  p = s7_cdddr(args);
+  max_size = d_max_size(sc, s7_cadr(p), 5, S_make_filtered_comb);   /* -1 if no max-size key */
+  if (max_size < size) max_size = (size == 0) ? 1 : size;
+
+  initial_contents = d_contents(sc, s7_caddr(args), s7_car(p), max_size, 3, S_make_filtered_comb);
+  if (max_size == -1)
+    max_size = s7_vector_length(initial_contents);
+  if (size == -1)
+    size = max_size;
+
+  scl = s7_number_to_real(sc, s7_car(args));
+  interp_type = d_interp(sc, s7_caddr(p), max_size != size, 6, S_make_filtered_comb);
+
+  flt = s7_cadddr(p);
+  if (flt == Xen_false)
+    filt = NULL;
+  else
+    {
+      if (!mus_is_xen(flt))
+	s7_wrong_type_arg_error(sc, S_make_filtered_comb, 7, flt, "a generator");
+      filt = Xen_to_mus_any(flt);
+    }
+
+  ge = mus_make_filtered_comb(scl, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type, filt);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_notch(s7_scheme *sc, s7_pointer args)
+{
+  /* scaler size initial-contents initial-element max-size interp-type */
+  mus_any *ge;
+  mus_long_t size, max_size;
+  int interp_type;
+  s7_pointer p;
+  s7_pointer initial_contents;
+  mus_float_t scl;
+  
+  size = d_size(sc, s7_cadr(args), 2, S_make_notch);        /* -1 if no size key */
+  p = s7_cdddr(args);
+  max_size = d_max_size(sc, s7_cadr(p), 5, S_make_notch);   /* -1 if no max-size key */
+  if (max_size < size) max_size = (size == 0) ? 1 : size;
+
+  initial_contents = d_contents(sc, s7_caddr(args), s7_car(p), max_size, 3, S_make_notch);
+  if (max_size == -1)
+    max_size = s7_vector_length(initial_contents);
+  if (size == -1)
+    size = max_size;
+
+  scl = s7_number_to_real(sc, s7_car(args));
+  interp_type = d_interp(sc, s7_caddr(p), max_size != size, 6, S_make_notch);
+  ge = mus_make_notch(scl, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_all_pass(s7_scheme *sc, s7_pointer args)
+{
+  /* feedback feedforward size initial-contents initial-element max-size interp-type */
+  mus_any *ge;
+  mus_long_t size, max_size;
+  int interp_type;
+  s7_pointer p;
+  s7_pointer initial_contents;
+  mus_float_t feedback, feedforward;
+  
+  size = d_size(sc, s7_caddr(args), 3, S_make_notch);        /* -1 if no size key */
+  p = s7_cdddr(args);
+  max_size = d_max_size(sc, s7_caddr(p), 6, S_make_notch);   /* -1 if no max-size key */
+  if (max_size < size) max_size = (size == 0) ? 1 : size;
+
+  initial_contents = d_contents(sc, s7_car(p), s7_cadr(p), max_size, 4, S_make_notch);
+  if (max_size == -1)
+    max_size = s7_vector_length(initial_contents);
+  if (size == -1)
+    size = max_size;
+
+  feedback = s7_number_to_real(sc, s7_car(args));
+  feedforward = s7_number_to_real(sc, s7_cadr(args));
+  interp_type = d_interp(sc, s7_cadddr(p), max_size != size, 7, S_make_notch);
+  ge = mus_make_all_pass(feedback, feedforward, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_moving_average(s7_scheme *sc, s7_pointer args)
+{
+  /* size initial-contents initial-element */
+  mus_any *ge;
+  mus_long_t size;
+  s7_pointer initial_contents;
+  mus_float_t *line;
+  mus_float_t sum;
+  
+  size = d_size(sc, s7_car(args), 1, S_make_moving_average);        /* -1 if no size key */
+  initial_contents = d_contents(sc, s7_cadr(args), s7_caddr(args), size, 2, S_make_moving_average);
+  size = s7_vector_length(initial_contents);
+  if (size == 0)
+    Xen_out_of_range_error(S_make_moving_average, 1, s7_car(args), "size = 0?");
+
+  line = s7_float_vector_elements(initial_contents);
+  sum = line[0];
+  if (s7_cadr(args) == Xen_false)
+    {
+      if (s7_caddr(args) != Xen_false)
+	sum *= size;
+    }
+  else
+    {
+      mus_long_t i;
+      for (i = 1; i < size; i++)
+	sum += line[i];
+    }
+  ge = mus_make_moving_average_with_initial_sum(size, line, sum);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_moving_max(s7_scheme *sc, s7_pointer args)
+{
+  /* size initial-contents initial-element */
+  mus_any *ge;
+  mus_long_t size;
+  s7_pointer initial_contents;
+  mus_float_t *line;
+  
+  size = d_size(sc, s7_car(args), 1, S_make_moving_max);        /* -1 if no size key */
+  initial_contents = d_contents(sc, s7_cadr(args), s7_caddr(args), size, 2, S_make_moving_max);
+  size = s7_vector_length(initial_contents);
+  if (size == 0)
+    Xen_out_of_range_error(S_make_moving_max, 1, s7_car(args), "size = 0?");
+
+  line = s7_float_vector_elements(initial_contents);
+  ge = mus_make_moving_max(size, line);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_moving_norm(s7_scheme *sc, s7_pointer args)
+{
+  /* size scaler initial_contents initial-element */
+  mus_any *ge;
+  mus_float_t scl;
+  mus_long_t size;
+  mus_float_t *line;
+  s7_pointer initial_contents;
+
+  size = d_size(sc, s7_car(args), 1, S_make_moving_norm);        /* -1 if no size key */
+  initial_contents = d_contents(sc, s7_caddr(args), s7_cadddr(args), size, 3, S_make_moving_max);
+  size = s7_vector_length(initial_contents);
+  if (size == 0)
+    Xen_out_of_range_error(S_make_moving_norm, 1, s7_car(args), "size = 0?");
+
+  scl = s7_number_to_real(sc, s7_cadr(args));
+  line = s7_float_vector_elements(initial_contents);
+  ge = mus_make_moving_norm(size, line, scl);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+  return(Xen_false);
+}
+
+#else
 typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_FCOMB} xclm_delay_t;
 
 static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
@@ -2804,20 +3166,12 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 
 static Xen g_make_delay(Xen args) 
 {
-  #define H_make_delay "(" S_make_delay " (size) (initial-contents) (initial-element 0.0) (max-size) (type mus-interp-linear)): \
-return a new delay line of size elements. \
-If the delay length will be changing at run-time, max-size sets its maximum length, so\n\
-   (" S_make_delay " len :max-size (+ len 10))\n\
-provides 10 extra elements of delay for subsequent phasing or flanging. \
-initial-contents can be either a list or a " S_vct "."
-
   if ((Xen_is_pair(args)) && (!Xen_is_pair(Xen_cdr(args))))
     {
       Xen val, v;
       mus_any *ge;
       mus_long_t size, max_size;
       mus_float_t *line;
-      mus_error_handler_t *old_error_handler;
 
       val = Xen_car(args);
       Xen_check_type(Xen_is_integer(val), val, 1, S_make_delay, "an integer");
@@ -2831,59 +3185,19 @@ initial-contents can be either a list or a " S_vct "."
       line = (mus_float_t *)calloc(max_size, sizeof(mus_float_t));
       v = xen_make_vct(max_size, line); /* we need this for mus-data */
 
-      old_error_handler = mus_error_set_handler(local_mus_error);
       ge = mus_make_delay(size, line, max_size, MUS_INTERP_NONE);
-      mus_error_set_handler(old_error_handler);
       if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
-      return(clm_mus_error(local_error_type, local_error_msg, S_make_delay));
+      return(Xen_false);
     }
 
   return(g_make_delay_1(G_DELAY, args));
 }
 
 
-static Xen g_make_comb(Xen args) 
-{
-  #define H_make_comb "(" S_make_comb " (scaler) (size) (initial-contents) (initial-element 0.0) (max-size) (type " S_mus_interp_linear ")): \
-return a new comb filter (a delay line with a scaler on the feedback) of size elements. \
-If the comb length will be changing at run-time, max-size sets its maximum length. \
-initial-contents can be either a list or a " S_vct "."
-
-  return(g_make_delay_1(G_COMB, args));
-}
-
-
-static Xen g_make_filtered_comb(Xen args) 
-{
-  #define H_make_filtered_comb "(" S_make_filtered_comb " (scaler) (size) (initial-contents) (initial-element 0.0) (max-size) (type " S_mus_interp_linear ") :filter): \
-return a new filtered comb filter (a delay line with a scaler and a filter on the feedback) of size elements. \
-If the comb length will be changing at run-time, max-size sets its maximum length. \
-initial-contents can be either a list or a " S_vct "."
-
-  return(g_make_delay_1(G_FCOMB, args));
-}
-
-
-static Xen g_make_notch(Xen args) 
-{
-  #define H_make_notch "(" S_make_notch " (scaler) (size) (initial-contents) (initial-element 0.0) (max-size) (type " S_mus_interp_linear ")): \
-return a new notch filter (a delay line with a scaler on the feedforward) of size elements. \
-If the notch length will be changing at run-time, max-size sets its maximum length. \
-initial-contents can be either a list or a " S_vct "."
-
-  return(g_make_delay_1(G_NOTCH, args));
-}
-
-
-static Xen g_make_all_pass(Xen args) 
-{
-  #define H_make_all_pass "(" S_make_all_pass " (feedback) (feedforward) (size) (initial-contents) (initial-element 0.0) (max-size) (type " S_mus_interp_linear ")): \
-return a new allpass filter (a delay line with a scalers on both the feedback and the feedforward). \
-If the " S_all_pass " length will be changing at run-time, max-size sets its maximum length. \
-initial-contents can be either a list or a " S_vct "."
-
-  return(g_make_delay_1(G_ALL_PASS, args));
-}
+static Xen g_make_comb(Xen args)          {return(g_make_delay_1(G_COMB, args));}
+static Xen g_make_filtered_comb(Xen args) {return(g_make_delay_1(G_FCOMB, args));}
+static Xen g_make_notch(Xen args)         {return(g_make_delay_1(G_NOTCH, args));}
+static Xen g_make_all_pass(Xen args)      {return(g_make_delay_1(G_ALL_PASS, args));}
 
 
 typedef enum {G_MOVING_AVERAGE, G_MOVING_MAX, G_MOVING_NORM} xclm_moving_t;
@@ -3025,31 +3339,10 @@ static Xen g_make_moving_any(xclm_moving_t choice, const char *caller, Xen argli
   return(clm_mus_error(local_error_type, local_error_msg, caller));
 }
 
-
-static Xen g_make_moving_average(Xen args) 
-{
-  #define H_make_moving_average "(" S_make_moving_average " (size) (initial-contents) (initial-element 0.0)): \
-return a new moving_average generator. initial-contents can be either a list or a " S_vct "."
-
-  return(g_make_moving_any(G_MOVING_AVERAGE, S_make_moving_average, args));
-}
-
-
-static Xen g_make_moving_max(Xen args) 
-{
-  #define H_make_moving_max "(" S_make_moving_max " (size) (initial-contents) (initial-element 0.0)): \
-return a new moving-max generator. initial-contents can be either a list or a " S_vct "."
-
-  return(g_make_moving_any(G_MOVING_MAX, S_make_moving_max, args));
-}
-
-
-static Xen g_make_moving_norm(Xen args) 
-{
-  #define H_make_moving_norm "(" S_make_moving_norm " (size (scaler 1.0))): return a new moving-norm generator."
-
-  return(g_make_moving_any(G_MOVING_NORM, S_make_moving_norm, args));
-}
+static Xen g_make_moving_average(Xen args) {return(g_make_moving_any(G_MOVING_AVERAGE, S_make_moving_average, args));}
+static Xen g_make_moving_max(Xen args)     {return(g_make_moving_any(G_MOVING_MAX, S_make_moving_max, args));}
+static Xen g_make_moving_norm(Xen args)    {return(g_make_moving_any(G_MOVING_NORM, S_make_moving_norm, args));}
+#endif
 
 
 static Xen g_delay(Xen obj, Xen input, Xen pm)
@@ -4170,6 +4463,84 @@ with 'wrap-around' when gen's phase marches off either end of its table."
 
 /* ---------------- sawtooth et al ---------------- */
 
+#if HAVE_SCHEME
+static s7_pointer g_make_sawtooth_wave(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_sawtooth_wave "(" S_make_sawtooth_wave " (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)): \
+return a new " S_sawtooth_wave " generator."
+
+  mus_any *ge;
+  mus_float_t freq, base, phase;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > mus_srate())
+    Xen_out_of_range_error(S_make_sawtooth_wave, 1, s7_car(args), "freq > srate/2?");
+  base = s7_number_to_real(sc, s7_cadr(args));
+  phase = s7_number_to_real(sc, s7_caddr(args));
+
+  ge = mus_make_sawtooth_wave(freq, base, phase);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_square_wave(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_square_wave "(" S_make_square_wave " (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0.0)): \
+return a new " S_square_wave " generator."
+
+  mus_any *ge;
+  mus_float_t freq, base, phase;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > mus_srate())
+    Xen_out_of_range_error(S_make_square_wave, 1, s7_car(args), "freq > srate/2?");
+  base = s7_number_to_real(sc, s7_cadr(args));
+  phase = s7_number_to_real(sc, s7_caddr(args));
+
+  ge = mus_make_square_wave(freq, base, phase);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_triangle_wave(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_triangle_wave "(" S_make_triangle_wave " (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0.0)): \
+return a new " S_triangle_wave " generator."
+
+  mus_any *ge;
+  mus_float_t freq, base, phase;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > mus_srate())
+    Xen_out_of_range_error(S_make_triangle_wave, 1, s7_car(args), "freq > srate/2?");
+  base = s7_number_to_real(sc, s7_cadr(args));
+  phase = s7_number_to_real(sc, s7_caddr(args));
+
+  ge = mus_make_triangle_wave(freq, base, phase);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_pulse_train(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_pulse_train "(" S_make_pulse_train " (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0.0)): \
+return a new " S_pulse_train " generator.  This produces a sequence of impulses."
+
+  mus_any *ge;
+  mus_float_t freq, base, phase;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > mus_srate())
+    Xen_out_of_range_error(S_make_pulse_train, 1, s7_car(args), "freq > srate/2?");
+  base = s7_number_to_real(sc, s7_cadr(args));
+  phase = s7_number_to_real(sc, s7_caddr(args));
+
+  ge = mus_make_pulse_train(freq, base, phase);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+
+#else
 typedef enum {G_SAWTOOTH_WAVE, G_SQUARE_WAVE, G_TRIANGLE_WAVE, G_PULSE_TRAIN} xclm_wave_t;
 
 static Xen g_make_sw(xclm_wave_t type, mus_float_t def_phase, Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
@@ -4224,7 +4595,7 @@ static Xen g_make_sw(xclm_wave_t type, mus_float_t def_phase, Xen arg1, Xen arg2
 
 static Xen g_make_sawtooth_wave(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6) 
 {
-  #define H_make_sawtooth_wave "(" S_make_sawtooth_wave " (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0.0)): \
+  #define H_make_sawtooth_wave "(" S_make_sawtooth_wave " (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)): \
 return a new " S_sawtooth_wave " generator."
 
   return(g_make_sw(G_SAWTOOTH_WAVE, M_PI, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -4256,7 +4627,7 @@ return a new " S_pulse_train " generator.  This produces a sequence of impulses.
 
   return(g_make_sw(G_PULSE_TRAIN, TWO_PI, arg1, arg2, arg3, arg4, arg5, arg6));
 }
-
+#endif
 
 static Xen g_sawtooth_wave(Xen obj, Xen fm) 
 {
@@ -6260,7 +6631,40 @@ static Xen g_rxykcos(Xen obj, Xen fm)
   return(C_double_to_Xen_real(mus_rxykcos(g, fm1)));
 }
 
+#if HAVE_SCHEME
+static s7_pointer g_make_rxyk(s7_scheme *sc, s7_pointer args, bool sin_case, const char *caller)
+{
+  mus_any *ge;
+  mus_float_t freq, r, ratio;
+  
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(caller, 1, s7_car(args), "freq > srate/2?");
+  
+  ratio = s7_number_to_real(sc, s7_cadr(args));
+  r = s7_number_to_real(sc, s7_caddr(args));
 
+  if (sin_case)
+    ge = mus_make_rxyksin(freq, 0.0, r, ratio);
+  else ge = mus_make_rxykcos(freq, 0.0, r, ratio);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(Xen_false);
+}
+
+static s7_pointer g_make_rxyksin(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_rxyksin "(" S_make_rxyksin " (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5)): return a new rxyksin generator."
+
+  return(g_make_rxyk(sc, args, true, S_make_rxyksin));
+}
+
+static s7_pointer g_make_rxykcos(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_rxykcos "(" S_make_rxykcos " (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5)): return a new rxykcos generator."
+
+  return(g_make_rxyk(sc, args, false, S_make_rxykcos));
+}
+#else
 static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
 {
   mus_any *ge;
@@ -6316,7 +6720,7 @@ return a new rxykcos generator."
 
   return(g_make_rxyk(false, S_make_rxykcos, arglist));
 }
-
+#endif
 
 
 /* ----------------  filter ---------------- */
@@ -6879,7 +7283,9 @@ static Xen g_make_pulsed_env(Xen e, Xen dur, Xen frq)
   Xen gp, ge;
   mus_any *pl;
 
-  gp = g_make_pulse_train(frq, Xen_undefined, Xen_undefined, Xen_undefined, Xen_undefined, Xen_undefined);
+  pl = mus_make_pulse_train(Xen_real_to_C_double(frq), 1.0, 0.0);
+  gp = mus_xen_to_object(mus_any_to_mus_xen(pl));
+
   ge = g_make_env(Xen_list_3(e, C_double_to_Xen_real(1.0), dur));
 
   pl = mus_make_pulsed_env(Xen_to_mus_any(ge), Xen_to_mus_any(gp));
@@ -10630,14 +11036,6 @@ Xen_wrap_3_optional_args(g_oscil_w, g_oscil)
 Xen_wrap_1_arg(g_is_oscil_bank_w, g_is_oscil_bank)
 Xen_wrap_1_arg(g_oscil_bank_w, g_oscil_bank)
 Xen_wrap_any_args(g_mus_apply_w, g_mus_apply)
-Xen_wrap_any_args(g_make_delay_w, g_make_delay)
-Xen_wrap_any_args(g_make_comb_w, g_make_comb)
-Xen_wrap_any_args(g_make_filtered_comb_w, g_make_filtered_comb)
-Xen_wrap_any_args(g_make_notch_w, g_make_notch)
-Xen_wrap_any_args(g_make_all_pass_w, g_make_all_pass)
-Xen_wrap_any_args(g_make_moving_average_w, g_make_moving_average)
-Xen_wrap_any_args(g_make_moving_max_w, g_make_moving_max)
-Xen_wrap_any_args(g_make_moving_norm_w, g_make_moving_norm)
 Xen_wrap_3_optional_args(g_delay_w, g_delay)
 Xen_wrap_2_optional_args(g_delay_tick_w, g_delay_tick)
 Xen_wrap_2_optional_args(g_tap_w, g_tap)
@@ -10677,16 +11075,12 @@ Xen_wrap_any_args(g_make_table_lookup_w, g_make_table_lookup)
 Xen_wrap_2_optional_args(g_table_lookup_w, g_table_lookup)
 Xen_wrap_3_optional_args(g_partials_to_wave_w, g_partials_to_wave)
 Xen_wrap_3_optional_args(g_phase_partials_to_wave_w, g_phase_partials_to_wave)
-Xen_wrap_6_optional_args(g_make_sawtooth_wave_w, g_make_sawtooth_wave)
 Xen_wrap_2_optional_args(g_sawtooth_wave_w, g_sawtooth_wave)
 Xen_wrap_1_arg(g_is_sawtooth_wave_w, g_is_sawtooth_wave)
-Xen_wrap_6_optional_args(g_make_triangle_wave_w, g_make_triangle_wave)
 Xen_wrap_2_optional_args(g_triangle_wave_w, g_triangle_wave)
 Xen_wrap_1_arg(g_is_triangle_wave_w, g_is_triangle_wave)
-Xen_wrap_6_optional_args(g_make_square_wave_w, g_make_square_wave)
 Xen_wrap_2_optional_args(g_square_wave_w, g_square_wave)
 Xen_wrap_1_arg(g_is_square_wave_w, g_is_square_wave)
-Xen_wrap_6_optional_args(g_make_pulse_train_w, g_make_pulse_train)
 Xen_wrap_2_optional_args(g_pulse_train_w, g_pulse_train)
 Xen_wrap_1_arg(g_is_pulse_train_w, g_is_pulse_train)
 
@@ -10744,10 +11138,8 @@ Xen_wrap_1_arg(g_is_nrxysin_w, g_is_nrxysin)
 Xen_wrap_2_optional_args(g_nrxycos_w, g_nrxycos)
 Xen_wrap_1_arg(g_is_nrxycos_w, g_is_nrxycos)
 
-Xen_wrap_any_args(g_make_rxyksin_w, g_make_rxyksin)
 Xen_wrap_2_optional_args(g_rxyksin_w, g_rxyksin)
 Xen_wrap_1_arg(g_is_rxyksin_w, g_is_rxyksin)
-Xen_wrap_any_args(g_make_rxykcos_w, g_make_rxykcos)
 Xen_wrap_2_optional_args(g_rxykcos_w, g_rxykcos)
 Xen_wrap_1_arg(g_is_rxykcos_w, g_is_rxykcos)
 
@@ -10869,12 +11261,26 @@ Xen_wrap_4_optional_args(g_make_nsin_w, g_make_nsin)
 Xen_wrap_8_optional_args(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 Xen_wrap_any_args(g_make_nrxysin_w, g_make_nrxysin)
 Xen_wrap_any_args(g_make_nrxycos_w, g_make_nrxycos)
+Xen_wrap_any_args(g_make_rxykcos_w, g_make_rxykcos)
+Xen_wrap_any_args(g_make_rxyksin_w, g_make_rxyksin)
 Xen_wrap_4_optional_args(g_make_one_pole_w, g_make_one_pole)
 Xen_wrap_4_optional_args(g_make_one_zero_w, g_make_one_zero)
 Xen_wrap_6_optional_args(g_make_two_zero_w, g_make_two_zero)
 Xen_wrap_6_optional_args(g_make_two_pole_w, g_make_two_pole)
 Xen_wrap_4_optional_args(g_make_formant_w, g_make_formant)
 Xen_wrap_4_optional_args(g_make_firmant_w, g_make_firmant)
+Xen_wrap_6_optional_args(g_make_sawtooth_wave_w, g_make_sawtooth_wave)
+Xen_wrap_6_optional_args(g_make_triangle_wave_w, g_make_triangle_wave)
+Xen_wrap_6_optional_args(g_make_square_wave_w, g_make_square_wave)
+Xen_wrap_6_optional_args(g_make_pulse_train_w, g_make_pulse_train)
+Xen_wrap_any_args(g_make_delay_w, g_make_delay)
+Xen_wrap_any_args(g_make_comb_w, g_make_comb)
+Xen_wrap_any_args(g_make_filtered_comb_w, g_make_filtered_comb)
+Xen_wrap_any_args(g_make_notch_w, g_make_notch)
+Xen_wrap_any_args(g_make_all_pass_w, g_make_all_pass)
+Xen_wrap_any_args(g_make_moving_average_w, g_make_moving_average)
+Xen_wrap_any_args(g_make_moving_max_w, g_make_moving_max)
+Xen_wrap_any_args(g_make_moving_norm_w, g_make_moving_norm)
 #endif
 
 Xen_wrap_4_optional_args(g_make_oscil_bank_w, g_make_oscil_bank)
@@ -11236,22 +11642,6 @@ static void mus_xen_init(void)
 
   Xen_define_typed_procedure(S_mus_apply,		g_mus_apply_w,			0, 0, 1, H_mus_apply,           pl_dcr);
 
-  Xen_define_typed_procedure(S_make_delay,		g_make_delay_w,			0, 0, 1, H_make_delay,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_delay), t));
-  Xen_define_typed_procedure(S_make_comb,		g_make_comb_w,			0, 0, 1, H_make_comb,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_comb), t));
-  Xen_define_typed_procedure(S_make_filtered_comb,	g_make_filtered_comb_w,		0, 0, 1, H_make_filtered_comb,	
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_filtered_comb), t));
-  Xen_define_typed_procedure(S_make_notch,		g_make_notch_w,			0, 0, 1, H_make_notch,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_notch), t)); 
-  Xen_define_typed_procedure(S_make_all_pass,		g_make_all_pass_w,		0, 0, 1, H_make_all_pass,	
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_all_pass), t));
-  Xen_define_typed_procedure(S_make_moving_average,	g_make_moving_average_w,	0, 0, 1, H_make_moving_average, 
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_average), t));
-  Xen_define_typed_procedure(S_make_moving_max,		g_make_moving_max_w,       0, 0, 1, H_make_moving_max,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_max), t));
-  Xen_define_typed_procedure(S_make_moving_norm,	g_make_moving_norm_w,      0, 0, 1, H_make_moving_norm,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_norm), t));
   Xen_define_typed_procedure(S_delay,			g_delay_w,                 1, 2, 0, H_delay,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_delay), r));
   Xen_define_typed_procedure(S_delay_tick,		g_delay_tick_w,            1, 1, 0, H_delay_tick,		
@@ -11342,24 +11732,15 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_partials_to_wave,	g_partials_to_wave_w,      1, 2, 0, H_partials_to_wave,		pl_fttb);
   Xen_define_typed_procedure(S_phase_partials_to_wave,	g_phase_partials_to_wave_w, 1, 2, 0, H_phase_partials_to_wave,	pl_fttb);
 
-
-  Xen_define_typed_procedure(S_make_sawtooth_wave,	g_make_sawtooth_wave_w,    0, 6, 0, H_make_sawtooth_wave,	
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_sawtooth_wave), t));
   Xen_define_typed_procedure(S_sawtooth_wave,		g_sawtooth_wave_w,         1, 1, 0, H_sawtooth_wave,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_sawtooth_wave), r));
   Xen_define_typed_procedure(S_is_sawtooth_wave,	g_is_sawtooth_wave_w,      1, 0, 0, H_is_sawtooth_wave,		pl_bt);
-  Xen_define_typed_procedure(S_make_triangle_wave,	g_make_triangle_wave_w,    0, 6, 0, H_make_triangle_wave,	
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_triangle_wave), t));
   Xen_define_typed_procedure(S_triangle_wave,		g_triangle_wave_w,         1, 1, 0, H_triangle_wave,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_triangle_wave), r));
   Xen_define_typed_procedure(S_is_triangle_wave,	g_is_triangle_wave_w,      1, 0, 0, H_is_triangle_wave,		pl_bt);
-  Xen_define_typed_procedure(S_make_square_wave,	g_make_square_wave_w,      0, 6, 0, H_make_square_wave,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_square_wave), t));
   Xen_define_typed_procedure(S_square_wave,		g_square_wave_w,           1, 1, 0, H_square_wave,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_square_wave), r));
   Xen_define_typed_procedure(S_is_square_wave,		g_is_square_wave_w,        1, 0, 0, H_is_square_wave,		pl_bt);
-  Xen_define_typed_procedure(S_make_pulse_train,	g_make_pulse_train_w,      0, 6, 0, H_make_pulse_train,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_pulse_train), t));
   Xen_define_typed_procedure(S_pulse_train,		g_pulse_train_w,           1, 1, 0, H_pulse_train,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_pulse_train), r));
   Xen_define_typed_procedure(S_is_pulse_train,		g_is_pulse_train_w,        1, 0, 0, H_is_pulse_train,		pl_bt);
@@ -11443,13 +11824,9 @@ static void mus_xen_init(void)
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_nrxycos), r));
   Xen_define_typed_procedure(S_is_nrxycos,		g_is_nrxycos_w,            1, 0, 0, H_is_nrxycos,		pl_bt);
 
-  Xen_define_typed_procedure(S_make_rxyksin,		g_make_rxyksin_w,          0, 0, 1, H_make_rxyksin,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rxyksin), t));
   Xen_define_typed_procedure(S_rxyksin,			g_rxyksin_w,               1, 1, 0, H_rxyksin,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_rxyksin), r));
   Xen_define_typed_procedure(S_is_rxyksin,		g_is_rxyksin_w,            1, 0, 0, H_is_rxyksin,		pl_bt);
-  Xen_define_typed_procedure(S_make_rxykcos,		g_make_rxykcos_w,          0, 0, 1, H_make_rxykcos,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rxykcos), t));
   Xen_define_typed_procedure(S_rxykcos,			g_rxykcos_w,               1, 1, 0, H_rxykcos,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_rxykcos), r));
   Xen_define_typed_procedure(S_is_rxykcos,		g_is_rxykcos_w,            1, 0, 0, H_is_rxykcos,		pl_bt);
@@ -11641,6 +12018,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_piano_noise,		g_piano_noise_w,            2, 0, 0, H_piano_noise,		pl_djr);
   Xen_define_typed_procedure(S_singer_filter,		g_singer_filter_w,          6, 0, 0, H_singer_filter,		pl_riirfff);
   Xen_define_typed_procedure(S_singer_nose_filter,	g_singer_nose_filter_w,     5, 0, 0, H_singer_nose_filter,	pl_rirfff);
+
   s7_define_typed_function_star(s7, S_make_oscil, g_make_oscil, "(frequency *clm-default-frequency*) (initial-phase 0.0)", H_make_oscil,
 				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil), t));
   s7_define_typed_function_star(s7, S_make_ssb_am, g_make_ssb_am, "(frequency *clm-default-frequency*) (order 40)", H_make_ssb_am,
@@ -11656,23 +12034,54 @@ static void mus_xen_init(void)
 				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxysin), t));
   s7_define_typed_function_star(s7, S_make_nrxycos, g_make_nrxycos, "(frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r 0.5))", H_make_nrxycos,
 				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxycos), t));
+  s7_define_typed_function_star(s7, S_make_rxyksin, g_make_rxyksin, "(frequency *clm-default-frequency*) (ratio 1.0) (r 0.5))", H_make_rxyksin,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rxyksin), t));
+  s7_define_typed_function_star(s7, S_make_rxykcos, g_make_rxykcos, "(frequency *clm-default-frequency*) (ratio 1.0) (r 0.5))", H_make_rxykcos,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rxykcos), t));
+
+  s7_define_typed_function_star(s7, S_make_sawtooth_wave, g_make_sawtooth_wave, "(frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 3.141592653589793)", 
+				H_make_sawtooth_wave, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_sawtooth_wave), t));
+  s7_define_typed_function_star(s7, S_make_square_wave, g_make_square_wave, "(frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0.0)", 
+				H_make_square_wave, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_square_wave), t));
+  s7_define_typed_function_star(s7, S_make_triangle_wave, g_make_triangle_wave, "(frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0.0)", 
+				H_make_triangle_wave, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_triangle_wave), t));
+  s7_define_typed_function_star(s7, S_make_pulse_train, g_make_pulse_train, "(frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 6.283185307179586)", 
+				H_make_pulse_train, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_pulse_train), t));
+
   s7_define_typed_function_star(s7, S_make_one_zero, g_make_one_zero, "(a0 0.0) (a1 0.0)", H_make_one_zero,
                                 s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_zero), t));
   s7_define_typed_function_star(s7, S_make_one_pole, g_make_one_pole, "(a0 0.0) (b1 0.0)", H_make_one_pole,
                                 s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_pole), t));
 
   s7_define_typed_function(s7, S_make_two_zero, g_make_two_zero, 0, 6, 0, H_make_two_zero, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_zero), t));
-  make_two_zero_a = s7_make_function_star(s7, S_make_two_zero, g_make_two_zero_a, "(a0 0.0) (a1 0.0) (a2 0.0)", H_make_two_zero);
-  make_two_zero_f = s7_make_function_star(s7, S_make_two_zero, g_make_two_zero_f, "(frequency 0.0) (radius 0.0)", H_make_two_zero);
+  make_two_zero_a = s7_make_safe_function_star(s7, S_make_two_zero, g_make_two_zero_a, "(a0 0.0) (a1 0.0) (a2 0.0)", H_make_two_zero);
+  make_two_zero_f = s7_make_safe_function_star(s7, S_make_two_zero, g_make_two_zero_f, "(frequency 0.0) (radius 0.0)", H_make_two_zero);
 
   s7_define_typed_function(s7, S_make_two_pole, g_make_two_pole, 0, 6, 0, H_make_two_pole, s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_pole), t));
-  make_two_pole_a = s7_make_function_star(s7, S_make_two_pole, g_make_two_pole_a, "(a0 0.0) (b1 0.0) (b2 0.0)", H_make_two_pole);
-  make_two_pole_f = s7_make_function_star(s7, S_make_two_pole, g_make_two_pole_f, "(frequency 0.0) (radius 0.0)", H_make_two_pole);
+  make_two_pole_a = s7_make_safe_function_star(s7, S_make_two_pole, g_make_two_pole_a, "(a0 0.0) (b1 0.0) (b2 0.0)", H_make_two_pole);
+  make_two_pole_f = s7_make_safe_function_star(s7, S_make_two_pole, g_make_two_pole_f, "(frequency 0.0) (radius 0.0)", H_make_two_pole);
 
   s7_define_typed_function_star(s7, S_make_formant, g_make_formant, "(frequency 0.0) (radius 0.0)", H_make_formant,
 				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_formant), t));
   s7_define_typed_function_star(s7, S_make_firmant, g_make_firmant, "(frequency 0.0) (radius 0.0)", H_make_firmant,
 				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_firmant), t));
+
+  s7_define_typed_function_star(s7, S_make_delay, g_make_delay, "size initial-contents initial-element max-size type", H_make_delay,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_delay), t));
+  s7_define_typed_function_star(s7, S_make_comb, g_make_comb, "(scaler 1.0) size initial-contents initial-element max-size type", H_make_comb,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_comb), t));
+  s7_define_typed_function_star(s7, S_make_filtered_comb, g_make_filtered_comb, "(scaler 1.0) size initial-contents initial-element max-size type filter", H_make_filtered_comb,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_filtered_comb), t));
+  s7_define_typed_function_star(s7, S_make_notch, g_make_notch, "(scaler 1.0) size initial-contents initial-element max-size type", H_make_notch,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_notch), t));
+  s7_define_typed_function_star(s7, S_make_all_pass, g_make_all_pass, "(feedback 0.0) (feedforward 0.0) size initial-contents initial-element max-size type", H_make_all_pass,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_all_pass), t));
+  s7_define_typed_function_star(s7, S_make_moving_average, g_make_moving_average, "size initial-contents initial-element", H_make_moving_average,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_average), t));
+  s7_define_typed_function_star(s7, S_make_moving_max, g_make_moving_max, "size initial-contents initial-element", H_make_moving_max,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_max), t));
+  s7_define_typed_function_star(s7, S_make_moving_norm, g_make_moving_norm, "size (scaler 1.0) initial-contents initial-element", H_make_moving_norm,
+				s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_norm), t));
 #else
   Xen_define_typed_procedure(S_make_oscil,		g_make_oscil_w,             0, 4, 0, H_make_oscil,              
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil), t));
@@ -11688,6 +12097,10 @@ static void mus_xen_init(void)
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxysin), t));
   Xen_define_typed_procedure(S_make_nrxycos,		g_make_nrxycos_w,          0, 0, 1, H_make_nrxycos,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxycos), t));
+  Xen_define_typed_procedure(S_make_rxyksin,		g_make_rxyksin_w,          0, 0, 1, H_make_rxyksin,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rxyksin), t));
+  Xen_define_typed_procedure(S_make_rxykcos,		g_make_rxykcos_w,          0, 0, 1, H_make_rxykcos,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rxykcos), t));
   Xen_define_typed_procedure(S_make_one_zero,		g_make_one_zero_w,         0, 4, 0, H_make_one_zero,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_zero), t));
   Xen_define_typed_procedure(S_make_one_pole,		g_make_one_pole_w,         0, 4, 0, H_make_one_pole,		
@@ -11700,6 +12113,31 @@ static void mus_xen_init(void)
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_formant), t));
   Xen_define_typed_procedure(S_make_firmant,		g_make_firmant_w,          0, 4, 0, H_make_firmant,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_firmant), t));
+  Xen_define_typed_procedure(S_make_pulse_train,	g_make_pulse_train_w,      0, 6, 0, H_make_pulse_train,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_pulse_train), t));
+  Xen_define_typed_procedure(S_make_sawtooth_wave,	g_make_sawtooth_wave_w,    0, 6, 0, H_make_sawtooth_wave,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_sawtooth_wave), t));
+  Xen_define_typed_procedure(S_make_triangle_wave,	g_make_triangle_wave_w,    0, 6, 0, H_make_triangle_wave,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_triangle_wave), t));
+  Xen_define_typed_procedure(S_make_square_wave,	g_make_square_wave_w,      0, 6, 0, H_make_square_wave,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_square_wave), t));
+
+  Xen_define_typed_procedure(S_make_delay,		g_make_delay_w,			0, 0, 1, H_make_delay,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_delay), t));
+  Xen_define_typed_procedure(S_make_comb,		g_make_comb_w,			0, 0, 1, H_make_comb,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_comb), t));
+  Xen_define_typed_procedure(S_make_filtered_comb,	g_make_filtered_comb_w,		0, 0, 1, H_make_filtered_comb,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_filtered_comb), t));
+  Xen_define_typed_procedure(S_make_notch,		g_make_notch_w,			0, 0, 1, H_make_notch,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_notch), t)); 
+  Xen_define_typed_procedure(S_make_all_pass,		g_make_all_pass_w,		0, 0, 1, H_make_all_pass,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_all_pass), t));
+  Xen_define_typed_procedure(S_make_moving_average,	g_make_moving_average_w,	0, 0, 1, H_make_moving_average, 
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_average), t));
+  Xen_define_typed_procedure(S_make_moving_max,		g_make_moving_max_w,       0, 0, 1, H_make_moving_max,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_max), t));
+  Xen_define_typed_procedure(S_make_moving_norm,	g_make_moving_norm_w,      0, 0, 1, H_make_moving_norm,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_norm), t));
 #endif
 
   Xen_define_typed_procedure(S_make_oscil_bank,		g_make_oscil_bank_w,        2, 2, 0, H_make_oscil_bank,		

@@ -11631,9 +11631,6 @@ EDITS: 2
 	      (fneq (delay gen3) 0.25)
 	      (fneq (delay gen3) 0.0))
 	  (snd-display "delay with float-vector initial-contents confused")))
-    (let ((var (catch #t (lambda () (make-delay :size #f)) (lambda args args))))
-      (if (not (eq? (car var) 'wrong-type-arg))
-	  (snd-display "make-delay bad size #f: ~A" var)))
     (let ((var (catch #t (lambda () (make-delay 3 :initial-element (make-oscil))) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display "make-delay bad initial element: ~A" var)))
@@ -20135,7 +20132,7 @@ EDITS: 2
 	 (let ((tag (catch #t
 			   (lambda () (apply make arglist))
 			   (lambda args (car args)))))
-	   (if (not (eq? tag 'mus-error))
+	   (if (not (memq tag '(mus-error wrong-type-arg)))
 	       (snd-display "long arglist to ~A: ~A" name tag))))
        (list make-wave-train make-polyshape make-delay make-moving-average make-moving-max make-moving-norm make-comb make-filtered-comb make-notch
 	     make-rand make-rand-interp make-table-lookup make-env
@@ -45909,7 +45906,7 @@ EDITS: 1
 			  (vector (lambda () (dot-product (make-float-vector 3) (make-float-vector 3) -1))
 				  (lambda () (make-color -0.5 0.0 0.0))
 				  (lambda () (make-color 1.5 0.0 0.0))
-				  (lambda () (make-delay 3 :initial-element 0.0 :initial-contents #r(.1 .2 .3)))
+				  ;(lambda () (make-delay 3 :initial-element 0.0 :initial-contents #r(.1 .2 .3))) -> 'conflicting-arguments
 				  (lambda () (make-delay 3 :max-size 100 :initial-contents #r(.1 .2 .3)))
 				  (lambda () (make-file->frample "oboe.snd" -1))
 				  (lambda () (make-file->frample "oboe.snd" 0))

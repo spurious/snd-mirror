@@ -156,6 +156,22 @@ static s7_pointer plus(s7_scheme *sc, s7_pointer args)
   return(TO_S7_INT(2 * s7_integer(s7_car(args)) + s7_integer(s7_car(s7_cdr(args)))));
 }
 
+static s7_pointer plus1(s7_scheme *sc, s7_pointer args) /* check recursion in "unsafe" case */
+{
+  s7_pointer d;
+  if (s7_integer(s7_car(args)) == 4)
+    d = s7_apply_function_star(sc, s7_name_to_value(sc, "plus1"), 
+			       s7_list(sc, 3, 
+				       s7_make_integer(sc, 1), 
+				       s7_make_integer(sc, 2), 
+				       s7_make_integer(sc, 3)));
+  else d = s7_make_integer(sc, 0);
+  return(s7_make_integer(sc, s7_integer(s7_car(args)) + 
+			 s7_integer(s7_cadr(args)) + 
+			 s7_integer(s7_caddr(args)) + 
+			 s7_integer(d)));
+}
+
 static s7_pointer mac_plus(s7_scheme *sc, s7_pointer args)
 {
   /* (define-macro (plus a b) `(+ ,a ,b)) */
@@ -998,6 +1014,18 @@ int main(int argc, char **argv)
     {fprintf(stderr, "%d: %s is not an integer?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
   if (s7_integer(p) != 4)
     {fprintf(stderr, "%d: %s is not 4?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+
+  s7_define_function_star(sc, "plus1", plus1, "a b c", "an example of define* from C");
+  {
+    s7_int val;
+    val = s7_integer(s7_apply_function_star(sc, s7_name_to_value(sc, "plus1"),
+					    s7_list(sc, 3,
+						    s7_make_integer(sc, 4),
+						    s7_make_integer(sc, 5),
+						    s7_make_integer(sc, 6))));
+    if (val != 21)
+      fprintf(stderr, "plus1: %lld\n", val);
+  }
   
   p = s7_apply_function(sc, s7_name_to_value(sc, "plus"), s7_cons(sc, s7_make_keyword(sc, "blue"), s7_cons(sc, TO_S7_INT(2), s7_nil(sc))));
   if (!s7_is_integer(p))
