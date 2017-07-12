@@ -232,8 +232,6 @@
     (require snd-ws.scm)
     (require sndlib-ws.scm))
 
-(set! *clm-default-frequency* 0.0)
-
 (define-macro (define-animal args . body)
   (let ((name (car args))
 	(targs (cdr args)))

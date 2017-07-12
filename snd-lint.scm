@@ -109,7 +109,7 @@
      beats-per-measure beats-per-minute bes-i0 bes-i1 bes-in bes-j0 bes-j1 bes-jn bes-k0 bes-k1 bes-kn bes-y0 bes-y1 bes-yn
      bold-peaks-font channel-amp-envs channel-data channel-properties channel-property channel-style
      channel-sync channel-widgets channels channels-equal? channels=? chans clipping
-     clm-default-frequency clm-table-size color->list color-cutoff color-inverted color-scale
+     clm-table-size color->list color-cutoff color-inverted color-scale
      color? colormap colormap-name colormap-ref colormap-size colormap? comb-bank?
      comb? combined-data-color comment contrast-control contrast-control-amp contrast-control-bounds contrast-control?
      contrast-enhancement convolve? count-matches current-font

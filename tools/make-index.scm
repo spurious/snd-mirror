@@ -549,7 +549,6 @@
     (*clm-player* "ws.scm")
     (*clm-notehook* "ws.scm")
     (*clm-with-sound-depth* "ws.scm")
-    (*clm-default-frequency* "ws.scm")
     (*clm-delete-reverb* "ws.scm")
     (*to-snd* "ws.scm")
     (*clm-search-list* "ws.scm")

@@ -38476,12 +38476,6 @@ static s7_pointer c_set_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-      c_function_set_setter(p, setter);
-      if ((is_any_closure(setter)) ||
-	  (is_any_macro(setter)))
-	add_setter(sc, p, setter);
-      break;
-
     case T_C_FUNCTION_STAR:
       c_function_set_setter(p, setter);
       if ((is_any_closure(setter)) ||
@@ -42121,6 +42115,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
   static const char *gotos[2] =          {"goto",               "a goto (from call-with-exit)"};
   static const char *continuations[2] =  {"continuation",       "a continuation"};
   static const char *c_functions[2] =    {"c-function",         "a c-function"};
+  static const char *c_function_s[2] =   {"c-function*",        "a c-function*"};
   static const char *macros[2] =         {"macro",              "a macro"};
   static const char *c_macros[2] =       {"c-macro",            "a c-macro"};
   static const char *bacros[2] =         {"bacro",              "a bacro"};
@@ -42167,8 +42162,8 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
-    case T_C_FUNCTION_STAR:
     case T_C_FUNCTION:      return(c_functions[article]);
+    case T_C_FUNCTION_STAR: return(c_function_s[article]);
     case T_CLOSURE:         return(functions[article]);
     case T_CLOSURE_STAR:    return(function_stars[article]);
     case T_C_MACRO:         return(c_macros[article]);
@@ -54012,7 +54007,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     {
     case T_C_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_FUNCTION_STAR: 
       if (((int)c_function_required_args(f) > len) ||
 	  ((int)c_function_all_args(f) < len))
 	{
@@ -65477,7 +65471,6 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
     {
     case T_C_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_FUNCTION_STAR: 
       if ((c_function_required_args(f) > 1) ||
 	  (c_function_all_args(f) == 0))
 	break;
@@ -65624,7 +65617,6 @@ static int unknown_gg_ex(s7_scheme *sc, s7_pointer f)
     {
     case T_C_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_FUNCTION_STAR: 
       if ((c_function_required_args(f) > 2) ||
 	  (c_function_all_args(f) < 2))
 	break;
@@ -65708,7 +65700,6 @@ static int unknown_all_s_ex(s7_scheme *sc, s7_pointer f)
     {
     case T_C_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_FUNCTION_STAR: 
       if (((int)c_function_required_args(f) > num_args) ||
 	  ((int)c_function_all_args(f) < num_args))
 	break;
@@ -65776,7 +65767,6 @@ static int unknown_a_ex(s7_scheme *sc, s7_pointer f)
     {
     case T_C_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_FUNCTION_STAR: 
       if ((c_function_required_args(f) > 1) ||
 	  (c_function_all_args(f) == 0))
 	break;
@@ -65861,7 +65851,6 @@ static int unknown_aa_ex(s7_scheme *sc, s7_pointer f)
     {
     case T_C_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_FUNCTION_STAR: 
       if ((c_function_required_args(f) > 2) ||
 	  (c_function_all_args(f) < 2))
 	break;
@@ -65925,7 +65914,6 @@ static int unknown_all_x_ex(s7_scheme *sc, s7_pointer f)
     {
     case T_C_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-    case T_C_FUNCTION_STAR: 
       if (((int)c_function_required_args(f) > num_args) ||
 	  ((int)c_function_all_args(f) < num_args))
 	break;
@@ -82095,8 +82083,10 @@ int main(int argc, char **argv)
  *   also ((lambda (x)...)...) -- the (x)!!
  * op_fa->op_fs? closure_sa|as? 
  * perhaps computed gotos for begin1/eval/opt_eval? or is switch just as fast?
- * make_sw et al using args, add closure_star_all_x_direct if none are kws/syms?
+ * make_sw et al using args
  *   there are uses of unscramble in region/snd/dac/select [23 left in clm2xen]
+ *   also remove apply_n if possible
+ * t_c_func* ops -- straight to c_fun_call+set_c_fun*_args [includes unknown* and we need tests of stuff like setters(both ways) etc]
  *
  * --------------------------------------------------------------------
  *
@@ -82106,7 +82096,7 @@ int main(int argc, char **argv)
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
  * teq           |      |      | 6612 || 2777 | 2129  1978  1997
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2318
- * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437
+ * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437 2378
  * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2730
  * lint          |      |      |      || 4041 | 3376  3114  3004
  * lg            |      |      |      || 211  | 161   149   144.4
@@ -82121,7 +82111,7 @@ int main(int argc, char **argv)
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.9
- *                                    || 145  | 135   132   95.7
+ *                                    || 145  | 135   132   95.5
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.

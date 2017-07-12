@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 13
-#define MUS_DATE "5-Aug-15"
+#define MUS_REVISION 14
+#define MUS_DATE "11-Jul-17"
 
 /* isn't mus_env_interp backwards? */
 
@@ -591,6 +591,8 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
+ * 11-Jul-17:  removed *clm-default-frequency*.
+ * --------
  * 5-Aug:      removed some now-obsolete mus_locsig functions.
  * 5-Jul:      added stable arg to mus_make_oscil_bank.
  * 15-Feb:     removed mus_set_name, changed mus_free to void.

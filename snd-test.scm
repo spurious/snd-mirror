@@ -727,8 +727,6 @@
       (snd-display "with-file-monitor set default: ~A" *with-file-monitor*))
   (if (not (eqv? *clm-table-size* 512)) 
       (snd-display "clm-table-size set default: ~A" *clm-table-size*))
-  (if (fneq *clm-default-frequency* 0.0)
-      (snd-display "clm-default-frequency set default: ~A" *clm-default-frequency*))
   (if (not (boolean? *with-verbose-cursor*)) 
       (snd-display "with-verbose-cursor set default: ~A" *with-verbose-cursor*))
   (if (not (boolean? *with-inset-graph*))
@@ -1071,7 +1069,6 @@
 	'channel-style *channel-style* 1
 	'clipping *clipping* #f 
 	'clm-table-size *clm-table-size* 512
-	'clm-default-frequency *clm-default-frequency* 0.0
 	'color-cutoff *color-cutoff* '(0.003 0.001)
 	'color-inverted *color-inverted* #t
 	'color-scale *color-scale* 1.0 
@@ -2015,7 +2012,7 @@
 		       channel-properties channel-property channel-style channel-widgets channels channels-combined
 		       channels-separate channels-superimposed chans clear-listener
 		       clip-hook clipping clm-channel 
-		       clm-table-size clm-default-frequency close-hook close-sound color->list
+		       clm-table-size close-hook close-sound color->list
 		       color-cutoff color-orientation-dialog color-hook color-inverted color-scale
 		       color? colormap colormap-name colormap-ref colormap-size
 		       colormap? comb comb? combined-data-color comment connes-window
@@ -15321,10 +15318,10 @@ EDITS: 2
     (test-gen-equal (make-env '((0 0) (1 1) (2 0)) :scaler 0.5 :length 10) (make-env '(0 0 1 1 2 0) :scaler 0.5 :length 10) (make-env '((0 0) (1 1) (3 0)) :scaler 0.5 :length 10))
     
     (let ((var (catch #t (lambda () (make-env :envelope ())) (lambda args args))))
-      (if (not (eq? (car var) 'no-data))
+      (if (not (memq (car var) '(no-data wrong-type-arg)))
 	  (snd-display "make-env null env: ~A" var)))
     (let ((var (catch #t (lambda () (make-env :length 1)) (lambda args args))))
-      (if (not (eq? (car var) 'no-data))
+      (if (not (memq (car var) '(no-data wrong-type-arg)))
 	  (snd-display "make-env no env: ~A" var)))
     (let ((var (catch #t (lambda () (make-env :envelope '(0 0) :length -1)) (lambda args args))))
       (if (not (eq? (car var) 'out-of-range))
@@ -15342,10 +15339,10 @@ EDITS: 2
       (if (not (eq? (car var) 'mus-error))
 	  (snd-display "make-env bad env 0 1 -1 0: ~A" var)))
     (let ((var (catch #t (lambda () (make-env :envelope '(0 1 1 0) :length 11 :length 10)) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
+      (if (not (memq (car var) '(mus-error wrong-type-arg)))
 	  (snd-display "make-env bad end/dur: ~A" var)))
     (let ((var (catch #t (lambda () (make-env :envelope '(0 0 1 1 2 0 1) :duration 1.0)) (lambda args args))))
-      (if (not (eq? (car var) 'bad-type))
+      (if (not (memq (car var) '(bad-type wrong-type-arg)))
 	  (snd-display "make-env odd length env: ~A" var)))
     (let ((var (catch #t (lambda () (make-env :envelope '("hi" 0 1 1 2 0) :duration 1.0)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
@@ -19755,41 +19752,44 @@ EDITS: 2
 			       'mus-location 'mus-order 'mus-phase 'mus-ramp 'mus-scaler 'mus-xcoeffs 'mus-ycoeffs)))
       (for-each
        (lambda (make runp ques arg name)
-	 (let ((gen (make)))
-	   (if (not (ques gen)) (snd-display "~A: ~A -> ~A?" name make gen))
-	   (let ((tag (catch #t (lambda () (if arg (runp gen arg) (runp gen))) (lambda args args))))
-	     (if (not (or (number? tag)
-			  (float-vector? tag)))
-		 (snd-display "~A: ~A ~A ~A: ~A" name runp gen arg tag)))
-	   (for-each
-	    (lambda (func genname)
-	      (let ((tag (catch #t (lambda () (func #f)) (lambda args (car args)))))
-		(if (not (eq? tag 'wrong-type-arg))
-		    (snd-display "generic func with #f: (~A #f) -> ~A" genname tag)))
-	      (let ((g1 (make-oscil))
-		    (g2 (make-one-pole .1 .9)))
-		(let ((tag (catch #t (lambda () (func g1)) (lambda args (car args)))))
-		  (if (and (symbol? tag)
-			   (not (eq? tag 'wrong-type-arg))
-			   (not (eq? tag 'mus-error)))
-		      (snd-display "generic ~A of oscil: ~A" genname tag)))
-		(let ((tag (catch #t (lambda () (func g2)) (lambda args (car args)))))
-		  (if (and (symbol? tag)
-			   (not (eq? tag 'wrong-type-arg))
-			   (not (eq? tag 'mus-error)))
-		      (snd-display "generic ~A of delay: ~A" genname tag))))
-	      (let ((tag (catch #t (lambda () (func gen)) (lambda args (car args)))))
-		(if (and (not (symbol? tag))
-			 (dilambda? func)
-			 (or (not (eq? genname 'mus-data))
-			     (float-vector? tag)))
-		    (let ((tag1 (catch #t (lambda () (set! (func gen) tag)) (lambda args (car args)))))
-		      (if (and (symbol? tag1)
-			       (not (eq? tag1 'mus-error))
-			       (not (eq? tag1 'out-of-range)))
-			  (snd-display "~A set ~A ~A ~A -> ~A" name genname gen tag tag1))))))
-	    generic-procs generic-names)
-	   (mus-reset gen)))
+	 (catch #t
+	   (lambda ()
+	     (let ((gen (make)))
+	       (if (not (ques gen)) (snd-display "~A: ~A -> ~A?" name make gen))
+	       (let ((tag (catch #t (lambda () (if arg (runp gen arg) (runp gen))) (lambda args args))))
+		 (if (not (or (number? tag)
+			      (float-vector? tag)))
+		     (snd-display "~A: ~A ~A ~A: ~A" name runp gen arg tag)))
+	       (for-each
+		(lambda (func genname)
+		  (let ((tag (catch #t (lambda () (func #f)) (lambda args (car args)))))
+		    (if (not (eq? tag 'wrong-type-arg))
+			(snd-display "generic func with #f: (~A #f) -> ~A" genname tag)))
+		  (let ((g1 (make-oscil))
+			(g2 (make-one-pole .1 .9)))
+		    (let ((tag (catch #t (lambda () (func g1)) (lambda args (car args)))))
+		      (if (and (symbol? tag)
+			       (not (eq? tag 'wrong-type-arg))
+			       (not (eq? tag 'mus-error)))
+			  (snd-display "generic ~A of oscil: ~A" genname tag)))
+		    (let ((tag (catch #t (lambda () (func g2)) (lambda args (car args)))))
+		      (if (and (symbol? tag)
+			       (not (eq? tag 'wrong-type-arg))
+			       (not (eq? tag 'mus-error)))
+			  (snd-display "generic ~A of delay: ~A" genname tag))))
+		  (let ((tag (catch #t (lambda () (func gen)) (lambda args (car args)))))
+		    (if (and (not (symbol? tag))
+			     (dilambda? func)
+			     (or (not (eq? genname 'mus-data))
+				 (float-vector? tag)))
+			(let ((tag1 (catch #t (lambda () (set! (func gen) tag)) (lambda args (car args)))))
+			  (if (and (symbol? tag1)
+				   (not (eq? tag1 'mus-error))
+				   (not (eq? tag1 'out-of-range)))
+			      (snd-display "~A set ~A ~A ~A -> ~A" name genname gen tag tag1))))))
+		generic-procs generic-names)
+	       (mus-reset gen)))
+	   (lambda args #f)))
        make-procs gen-procs ques-procs gen-args func-names)
       
       (let ((make-procs (list
@@ -20685,7 +20685,7 @@ EDITS: 2
 		     :make-wrapper (lambda (g)
 				     (set! (g 'frequency) (hz->radians (g 'frequency)))
 				     g))
-	(frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
+	(frequency 0.0) (ratio 1.0) (r 0.5) (angle 0.0) fm)
       
       (define* (old-rxyk!sin gen (fm 0.0))
 	(set! (gen 'fm) fm)
@@ -20702,7 +20702,7 @@ EDITS: 2
 				     (set! (g 'frequency) (hz->radians (g 'frequency)))
 				     (set! (g 'ar) (/ 1.0 (exp (abs (g 'r)))))
 				     g))
-	(frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm ar)
+	(frequency 0.0) (ratio 1.0) (r 0.5) (angle 0.0) fm ar)
       
       (define* (old-rxyk!cos gen (fm 0.0))
 	(set! (gen 'fm) fm)
@@ -44978,7 +44978,7 @@ EDITS: 1
 			   (eq? (car tag) expected-tag)))
 		 (snd-display "check-error-tag ~A from ~A: ~A" 
 			      expected-tag (procedure-source thunk) tag)))))
-	
+
 	(set-arity-ok 
 	 (lambda (func args)
 	   (let ((arit (if (dilambda? func)
@@ -45063,7 +45063,7 @@ EDITS: 1
 		       start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties sound-property stdin-prompt
 		       temp-dir text-focus-color tiny-font region-sampler? transform-dialog transform-sample
 		       transform->float-vector transform-framples transform-type with-file-monitor unbind-key undo
-		       update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
+		       update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size
 		       with-verbose-cursor view-sound wavelet-type with-inset-graph with-interrupts with-pointer-focus with-smpte-label
 		       with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
 		       time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
@@ -45183,7 +45183,7 @@ EDITS: 1
 			   mus-feedback mus-feedforward mus-frequency mus-hop
 			   mus-increment mus-length mus-location mus-name mus-phase mus-ramp mus-scaler x-axis-label
 			   filter-control-coeffs locsig-type mus-file-buffer-size 
-			   mus-rand-seed mus-width clm-table-size clm-default-frequency mus-offset mus-reset
+			   mus-rand-seed mus-width clm-table-size mus-offset mus-reset
 			   phase-vocoder-amp-increments phase-vocoder-amps 
 			   phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
 			   html-dir html-program mus-interp-type widget-position widget-size 
@@ -45461,7 +45461,7 @@ EDITS: 1
 					       (lambda ()
 						 (n arg))
 					       (lambda args (car args)))))
-					(if (not (memq tag '(wrong-type-arg no-data no-such-method bad-type error arg-error)))
+					(if (not (memq tag '(wrong-type-arg no-data no-such-method bad-type error arg-error out-of-range)))
 					    (snd-display "clm ~A: tag: ~A arg: ~A" n tag arg))))
 				    (list all-pass asymmetric-fm comb filtered-comb convolve db->linear moving-average moving-max moving-norm
 					  degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
@@ -45492,7 +45492,7 @@ EDITS: 1
 				     (n (make-oscil) float-vector-5)
 				     )
 				   (lambda args (car args)))))
-			    (if (not (memq tag '(wrong-type-arg bad-arity error mus-error)))
+			    (if (not (memq tag '(wrong-type-arg bad-arity error mus-error out-of-range no-data)))
 				(snd-display "clm-1 ~A: ~A" n tag))))
 			(list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max moving-norm
 			      convolve-files delay dot-product env-interp file->sample snd->sample filter fir-filter formant firmant
@@ -45820,7 +45820,7 @@ EDITS: 1
 			      with-inset-graph with-interrupts with-pointer-focus window-height beats-per-measure with-smpte-label
 			      with-toolbar with-tooltips with-menu-icons remember-sound-state save-as-dialog-src save-as-dialog-auto-comment
 			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
-			      mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
+			      mix-tag-width with-relative-panes clm-table-size mark-tag-width mark-tag-height
 			      ))
 	      
 	      
@@ -45873,7 +45873,7 @@ EDITS: 1
 				  (lambda () (make-iir-filter :order 32 :ycoeffs (make-float-vector 4)))
 				  (lambda () (make-locsig 1/0 :channels 2))
 				  (lambda () (make-rand :envelope '(0 0 1 1) :distribution (make-float-vector 10)))
-				  (lambda () (make-rand :envelope '(0 0 1)))
+				  ;(lambda () (make-rand :envelope '(0 0 1)))
 				  (lambda () (mus-file-mix "oboe.snd" (string-append sf-dir "bad_length.aifc")))
 				  (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist")))
 				  (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist")))
@@ -45992,7 +45992,6 @@ EDITS: 1
 				    (lambda () (save-sound-as "test.snd" ind :header-type mus-riff :sample-type mus-bshort))
 				    (lambda () (save-sound-as "test.snd" ind :header-type mus-voc :sample-type mus-bshort))))
 		  (check-error-tag 'env-error (lambda () (filter-sound '(0 0 .1 .1 .05 .1 1 1) 32)))
-		  (check-error-tag 'mus-error (lambda () (make-readin 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
 		  (check-error-tag 'mus-error (lambda () (save-selection "sel0.snd" :not-a-key 3)))
 		  (check-error-tag 'no-data (lambda () (set! (filter-control-envelope ind) ())))
 		  (for-each (lambda (arg)

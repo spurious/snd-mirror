@@ -121,7 +121,7 @@
 (defgenerator (big-oscil 
   :make-wrapper 
     (lambda (g) (set! (g 'frequency) (big-hz->radians (g 'frequency))) g))
-  (frequency *clm-default-frequency*) 
+  (frequency 0.0) 
   (angle 0.0))
 
 (define* (big-oscil gen (fm 0.0) (pm 0.0))
@@ -149,7 +149,7 @@
      (set! (g 'r) (/ (g 'n)))
      (set! (g 'frequency) (big-hz->radians (g 'frequency)))
      g))
-   (frequency *clm-default-frequency*) 
+   (frequency 0.0) 
    (n 1) 
    (angle 0.0)
    (r 1.0))
@@ -200,7 +200,7 @@
 				 (set! (g 'r) (/ 1.0 (find-scaler (g 'n) 0.0 (/ pi (+ (g 'n) 1/2)))))
 				 (set! (g 'frequency) (big-hz->radians (g 'frequency)))
 				 g)))
-  (frequency *clm-default-frequency*) 
+  (frequency 0.0) 
   (n 1) 
   (angle 0.0) 
   (r 1.0))
@@ -236,7 +236,7 @@
       (set! (g 'frequency) (/ (* (g 'frequency) (g 'size)) *clm-srate*))
       (set! (g 'angle) (/ (* (g 'angle) (g 'size)) (* 2 pi)))
       g))
-  (frequency *clm-default-frequency*) 
+  (frequency 0.0) 
   (angle 0.0) 
   (wave #f) 
   (size *clm-table-size*))

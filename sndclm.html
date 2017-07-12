@@ -491,7 +491,7 @@ in the function definitions to indicate that the argument names are
 keywords, but the keywords themselves are optional.
 Take the make-oscil call, defined as:</p>
 <pre class="indented">
-make-oscil (frequency *clm-default-frequency*) (initial-phase 0.0)
+make-oscil (frequency 0.0) (initial-phase 0.0)
 </pre>
 <p>This says that make-oscil has two optional arguments, frequency (in Hz), and
 initial-phase (in radians).  The keywords associated with these values are
@@ -730,7 +730,7 @@ away in a macro:
 <div class="innerheader" id="oscildoc">oscil</div>
 
 <pre class="indented">
-<em class=def id="make-oscil">make-oscil</em> (frequency *clm-default-frequency*) (initial-phase 0.0)
+<em class=def id="make-oscil">make-oscil</em> (frequency 0.0) (initial-phase 0.0)
 <em class=def id="oscil">oscil</em> os (fm-input 0.0) (pm-input 0.0)
 <em class=def id="oscil?">oscil?</em> os
 
@@ -1621,7 +1621,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm
 
 <pre class="indented">
 <em class=def id="make-table-lookup">make-table-lookup</em> 
-        (frequency *clm-default-frequency*) ; table repetition rate in Hz
+        (frequency 0.0) ; table repetition rate in Hz
         (initial-phase 0.0)                 ; starting point in radians (pi = mid-table)
         wave                                ; a float-vector containing the signal
         (size *clm-table-size*)             ; table size if wave not specified
@@ -2003,7 +2003,7 @@ See also <a href="sndscm.html#granidoc">grani</a>.
 
 <pre class="indented">
 <em class=def id="make-polywave">make-polywave</em> 
-         (frequency *clm-default-frequency*) 
+         (frequency 0.0) 
          (partials '(1 1))                   ; a list of harmonic numbers and their associated amplitudes
          (type mus-chebyshev-first-kind)     ; Chebyshev polynomial choice
          xcoeffs ycoeffs                     ; tn/un for tu-sum case
@@ -2012,7 +2012,7 @@ See also <a href="sndscm.html#granidoc">grani</a>.
 <em class=def id="polywave?">polywave?</em> w
 
 <em class=def id="make-polyshape">make-polyshape</em> 
-        (frequency *clm-default-frequency*) 
+        (frequency 0.0) 
         (initial-phase 0.0) 
         coeffs 
         (partials '(1 1)) 
@@ -2245,7 +2245,7 @@ Here is a somewhat low-level example:
 </p>
 
 <pre class="indented">
-(define* (make-band-limited-triangle-wave (frequency *clm-default-frequency*) (order 1))
+(define* (make-band-limited-triangle-wave (frequency 0.0) (order 1))
   (do ((freqs ())
        (i 1 (+ i 1))
        (j 1 (+ j 2)))
@@ -2756,19 +2756,19 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 <div class="innerheader" id="sawtoothdoc">sawtooth-wave, triangle-wave, pulse-train, square-wave</div>
 
 <pre class="indented">
-<em class=def id="make-triangle-wave">make-triangle-wave</em> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
+<em class=def id="make-triangle-wave">make-triangle-wave</em> (frequency 0.0) (amplitude 1.0) (initial-phase pi)
 <em class=def id="triangle-wave">triangle-wave</em> s (fm 0.0)
 <em class=def id="triangle-wave?">triangle-wave?</em> s
 
-<em class=def id="make-square-wave">make-square-wave</em> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0)
+<em class=def id="make-square-wave">make-square-wave</em> (frequency 0.0) (amplitude 1.0) (initial-phase 0)
 <em class=def id="square-wave">square-wave</em> s (fm  0.0)
 <em class=def id="square-wave?">square-wave?</em> s
 
-<em class=def id="make-sawtooth-wave">make-sawtooth-wave</em> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
+<em class=def id="make-sawtooth-wave">make-sawtooth-wave</em> (frequency 0.0) (amplitude 1.0) (initial-phase pi)
 <em class=def id="sawtooth-wave">sawtooth-wave</em> s (fm 0.0)
 <em class=def id="sawtooth-wave?">sawtooth-wave?</em> s
 
-<em class=def id="make-pulse-train">make-pulse-train</em> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase (* 2 pi))
+<em class=def id="make-pulse-train">make-pulse-train</em> (frequency 0.0) (amplitude 1.0) (initial-phase (* 2 pi))
 <em class=def id="pulse-train">pulse-train</em> s (fm 0.0)
 <em class=def id="pulse-train?">pulse-train?</em> s
 </pre>
@@ -3227,11 +3227,11 @@ for more dicussion about using these generators as FM modulators.
 <div class="innerheader" id="ncosdoc">ncos and nsin</div>
 
 <pre class="indented">
-<em class=def id="make-ncos">make-ncos</em> (frequency *clm-default-frequency*) (n 1)
+<em class=def id="make-ncos">make-ncos</em> (frequency 0.0) (n 1)
 <em class=def id="ncos">ncos</em> nc (fm 0.0)
 <em class=def id="ncos?">ncos?</em> nc
 
-<em class=def id="make-nsin">make-nsin</em> (frequency *clm-default-frequency*) (n 1)
+<em class=def id="make-nsin">make-nsin</em> (frequency 0.0) (n 1)
 <em class=def id="nsin">nsin</em> ns (fm 0.0)
 <em class=def id="nsin?">nsin?</em> ns
 </pre>
@@ -4078,14 +4078,14 @@ Don't shy away from the sums to infinity just because you've heard shouting abou
 
 <pre class="indented">
 <em class=def id="make-nrxysin">make-nrxysin</em> 
-      (frequency *clm-default-frequency*) 
+      (frequency 0.0) 
       (ratio 1.0)               ; ratio between frequency and the spacing between successive sidebands
       (n 1)                     ; number of sidebands
       (r .5)                    ; amplitude ratio between successive sidebands (-1.0 &lt; r &lt; 1.0)
 <em class=def id="nrxysin">nrxysin</em> s (fm 0.0)
 <em class=def id="nrxysin?">nrxysin?</em> s
 
-<em class=def id="make-nrxycos">make-nrxycos</em> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
+<em class=def id="make-nrxycos">make-nrxycos</em> (frequency 0.0) (ratio 1.0) (n 1) (r .5)
 <em class=def id="nrxycos">nrxycos</em> s (fm 0.0)
 <em class=def id="nrxycos?">nrxycos?</em> s
 </pre>
@@ -4272,7 +4272,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 <div class="innerheader" id="ssb-amdoc">ssb-am</div>
 
 <pre class="indented">
-<em class=def id="make-ssb-am">make-ssb-am</em> (frequency *clm-default-frequency*) (order 40)
+<em class=def id="make-ssb-am">make-ssb-am</em> (frequency 0.0) (order 40)
 <em class=def id="ssb-am">ssb-am</em> gen (insig 0.0) (fm 0.0)
 <em class=def id="ssb-am?">ssb-am?</em> gen
 </pre>
@@ -4497,7 +4497,7 @@ We would replace the current make-ssb-am line with:
 
 <pre class="indented">
 <em class=def id="make-wave-train">make-wave-train</em> 
-        (frequency *clm-default-frequency*) 
+        (frequency 0.0) 
         (initial-phase 0.0) 
         wave 
         (size *clm-table-size*) 
@@ -4699,7 +4699,7 @@ trigger, and mus-reset to restart an envelope.
 
 <pre class="indented">
 <em class=def id="make-rand">make-rand</em> 
-        (frequency *clm-default-frequency*) ; frequency at which new random numbers occur
+        (frequency 0.0) ; frequency at which new random numbers occur
         (amplitude 1.0)                     ; numbers are between -amplitude and amplitude
         (envelope '(-1 1 1 1))              ; distribution envelope (uniform distribution is the default)
         distribution                        ; pre-computed distribution
@@ -4708,7 +4708,7 @@ trigger, and mus-reset to restart an envelope.
 <em class=def id="rand?">rand?</em> r
 
 <em class=def id="make-rand-interp">make-rand-interp</em> 
-        (frequency *clm-default-frequency*) 
+        (frequency 0.0) 
         (amplitude 1.0)
         (envelope '(-1 1 1 1)
         distribution)
@@ -7334,7 +7334,7 @@ moving-spectrum in generators.scm.
 
 <pre class="indented">
 <em class=def id="make-asymmetric-fm">make-asymmetric-fm</em> 
-      (frequency *clm-default-frequency*) 
+      (frequency 0.0) 
       (initial-phase 0.0) 
       (r 1.0)             ; amplitude ratio between successive sidebands
       (ratio 1.0)         ; ratio between carrier and sideband spacing
@@ -8244,7 +8244,7 @@ frequency and the spacing between successive sidebands).
 
 <pre class="indented">
 <em class=def id="make-polyoid">make-polyoid</em> 
-         (frequency *clm-default-frequency*) 
+         (frequency 0.0) 
          (partial-amps-and-phases '(1 1 0.0))   ; a list of harmonic numbers, their associated amplitudes, and their initial-phases
 
 <em class=def id="polyoid">polyoid</em> w (fm 0.0)
@@ -9581,7 +9581,7 @@ variants of those given above.
 
 
 <pre class="indented">
-<em class=def id="make-tanhsin">make-tanhsin</em> (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
+<em class=def id="make-tanhsin">make-tanhsin</em> (frequency 0.0) (r 1.0) (initial-phase 0.0)
 <em class=def id="tanhsin">tanhsin</em> gen (fm 0.0)
 <em class=def id="tanhsin?">tanhsin?</em> gen
 </pre>

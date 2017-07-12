@@ -8,7 +8,6 @@ typedef struct mus_xen mus_xen;
 #define Xen_to_mus_xen(arg) ((mus_xen *)Xen_object_ref(arg))
 #define Xen_to_mus_any(obj) mus_xen_gen(Xen_to_mus_xen(obj))
 #define MUS_CLM_DEFAULT_TABLE_SIZE 512
-#define MUS_CLM_DEFAULT_FREQUENCY 0.0
 
 #ifdef __cplusplus
 extern "C" {
