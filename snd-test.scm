@@ -17339,7 +17339,7 @@ EDITS: 2
      '(1 2 4 8))
     
     (let ((var (catch #t (lambda () (make-locsig :channels 0)) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
+      (if (not (memq (car var) '(out-of-range mus-error)))
 	  (snd-display "make-locsig bad (0) chans: ~A" var)))
     (let ((var (catch #t (lambda () (make-locsig :channels -2)) (lambda args args))))
       (if (not (eq? (car var) 'out-of-range))
@@ -19433,15 +19433,15 @@ EDITS: 2
       (let ((tag (catch #t 
 		   (lambda () (make-phase-vocoder #f 512 4 256 1.0 (lambda (a b c) #f) #f #f)) 
 		   (lambda args args))))
-	(if (not (eq? (car tag) 'bad-arity)) (snd-display "make-phase-vocoder bad analyze func: ~A" tag)))
+	(if (not (memq (car tag) '(wrong-type-arg bad-arity))) (snd-display "make-phase-vocoder bad analyze func: ~A" tag)))
       (let ((tag (catch #t
 		   (lambda () (make-phase-vocoder #f 512 4 256 1.0 (lambda (a b) 0.0) (lambda (a b c) #f) #f)) 
 		   (lambda args args))))
-	(if (not (eq? (car tag) 'bad-arity)) (snd-display "make-phase-vocoder bad edit func: ~A" tag)))
+	(if (not (memq (car tag) '(wrong-type-arg bad-arity))) (snd-display "make-phase-vocoder bad edit func: ~A" tag)))
       (let ((tag (catch #t 
 		   (lambda () (make-phase-vocoder #f 512 4 256 1.0 (lambda (a b) 0.0) (lambda (a) #f) (lambda (a b) 0)))
 		   (lambda args args))))
-	(if (not (eq? (car tag) 'bad-arity)) (snd-display "make-phase-vocoder bad synthesize func: ~A" tag)))
+	(if (not (memq (car tag) '(wrong-type-arg bad-arity))) (snd-display "make-phase-vocoder bad synthesize func: ~A" tag)))
       (let* ((geno (make-phase-vocoder (lambda (dir) 0.0)))
 	     (genx (make-phase-vocoder :input (lambda (dir) 0.0))))
 	(if (equal? geno genx) (snd-display "phase-vocoder equal? ~A ~A" geno genx))
@@ -19705,7 +19705,7 @@ EDITS: 2
 		       (lambda () (make-filter :xcoeffs #r(0 1 2))) (lambda () (make-fir-filter :xcoeffs #r(0 1 2))) 
 		       (lambda () (make-filtered-comb :filter (make-one-zero .5 .5)))
 		       make-formant make-granulate
-		       (lambda () (make-iir-filter :xcoeffs #r(0 1 2))) make-locsig 
+		       (lambda () (make-iir-filter :ycoeffs #r(0 1 2))) make-locsig 
 		       make-notch make-one-pole (lambda () (make-one-pole-all-pass 1 .5)) make-one-zero make-oscil 
 		       make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 		       make-square-wave make-src make-table-lookup make-triangle-wave
@@ -19803,7 +19803,7 @@ EDITS: 2
 			 (lambda () (make-fir-filter :xcoeffs #r(0 1 2))) 
 			 (lambda () (make-formant :radius .1 :frequency 440.0)) 
 			 (lambda () (make-granulate (lambda (dir) 1.0)))
-			 (lambda () (make-iir-filter :xcoeffs #r(0 1 2))) 
+			 (lambda () (make-iir-filter :ycoeffs #r(0 1 2))) 
 			 make-locsig 
 			 make-notch 
 			 (lambda () (make-one-pole .3 .7))
@@ -45866,10 +45866,10 @@ EDITS: 1
 		(for-each (lambda (arg)
 			    (check-error-tag 'mus-error arg))
 			  (vector (lambda () (make-filter :ycoeffs (make-float-vector 4) :order 12))
-				  (lambda () (make-fir-filter :coeffs (make-float-vector 4) :xcoeffs (make-float-vector 4)))
+				  ;(lambda () (make-fir-filter :coeffs (make-float-vector 4) :xcoeffs (make-float-vector 4)))
 				  (lambda () (make-granulate :expansion 32000.0))
 				  (lambda () (make-iir-filter 30 (make-float-vector 3)))
-				  (lambda () (make-iir-filter :coeffs (make-float-vector 4) :ycoeffs (make-float-vector 4)))
+				  ;(lambda () (make-iir-filter :xcoeffs (make-float-vector 4) :ycoeffs (make-float-vector 4)))
 				  (lambda () (make-iir-filter :order 32 :ycoeffs (make-float-vector 4)))
 				  (lambda () (make-locsig 1/0 :channels 2))
 				  (lambda () (make-rand :envelope '(0 0 1 1) :distribution (make-float-vector 10)))
@@ -45884,7 +45884,7 @@ EDITS: 1
 				  (lambda () (set! (mus-ycoeff (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3) 4) 1.0))))
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials #r(1 1 -2 1))))
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials '(1 1 -2 1))))
-		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials ())))
+		(check-error-tag 'wrong-type-arg (lambda () (make-polyshape 440.0 :partials ())))
 		(check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" -1)))
 		(check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" 1)))
 		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))

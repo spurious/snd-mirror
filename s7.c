@@ -50187,6 +50187,8 @@ static bool p_pip_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 	      (is_opt_int(slot_value(slot))))
 	    {
 	      opc->v2.p = slot;
+	      /* fprintf(stderr, "%d slot %s\n", __LINE__, DISPLAY(slot)); */
+
 	      if ((obj) &&
 		  (is_step_end(slot)))
 		switch (type(obj))
@@ -51028,6 +51030,7 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 		      int start;
 		      start = sc->pc;
 		      slot = find_symbol(sc, index);
+		      /* fprintf(stderr, "%d slot: %s\n", __LINE__, DISPLAY(slot)); */
 		      if ((is_slot(slot)) &&
 			  (!has_methods(slot_value(slot))))
 			{
@@ -52452,6 +52455,8 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 		  /* TODO: put off this decision until it is needed (ref/set) 
 		   *    another choice: go from init downto 0: init is lim
 		   */
+		  if (slot_symbol(slot) == cadr(stop))
+		    set_stop = true; /* don't overrule this decision below */
 		  if (has_stepper(slot))
 		    {
 		      s7_pointer var, step;
@@ -52466,8 +52471,6 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 			   ((caddr(step) == small_int(1)) && (car(step) == sc->add_symbol))))
 			{
 			  /* fprintf(stderr, "    end: %s\n", DISPLAY(let_slots(frame))); */
-			  if (slot_symbol(slot) == cadr(stop))
-			    set_stop = true;
 			  set_step_end(slot);
 			  denominator(slot_value(slot)) = lim;
 			}
@@ -52482,7 +52485,7 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int len)
 		      (is_opt_int(slot_value(slot))) &&
 		      (stop_is_safe(sc, cadr(stop), cddr(car_x))))
 		    {
-		      /* fprintf(stderr, "%s: %s\n", DISPLAY(slot), DISPLAY(stop)); */
+		      /* fprintf(stderr, "%d %s: %s\n", __LINE__, DISPLAY(slot), DISPLAY(stop)); */
 		      set_step_end(slot);
 		      denominator(slot_value(slot)) = lim;
 		    }
@@ -82043,8 +82046,7 @@ int main(int argc, char **argv)
  *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
- * translate all make-* to use function* in clm2xen
- *   need to check make_delay mus_error stuff (used to trap errors here)
+ * check sndlib make (sndplay) and update tarball
  *
  * lint: as in random-gen, move internally created but unchanged sequences (lists) out of the body
  *
@@ -82083,10 +82085,12 @@ int main(int argc, char **argv)
  *   also ((lambda (x)...)...) -- the (x)!!
  * op_fa->op_fs? closure_sa|as? 
  * perhaps computed gotos for begin1/eval/opt_eval? or is switch just as fast?
- * make_sw et al using args
- *   there are uses of unscramble in region/snd/dac/select [23 left in clm2xen]
- *   also remove apply_n if possible
- * t_c_func* ops -- straight to c_fun_call+set_c_fun*_args [includes unknown* and we need tests of stuff like setters(both ways) etc]
+ * there are uses of unscramble in region/snd/dac/select
+ *   t_c_func* ops -- straight to c_fun_call+set_c_fun*_args [includes unknown* and we need tests of stuff like setters(both ways) etc]
+ * (floor|truncate (/ ...)) also (ash ... -1)
+ *   what are the most common combinations?  lint-> [(a (b))] or [(a (b (c))) or (a (b) (c))]? 
+ *     (a (b (c (d)))) (a (b) (c) (d)) (a (b (c) (d))) etc
+ *     profile data?
  *
  * --------------------------------------------------------------------
  *
@@ -82095,8 +82099,8 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1064
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
  * teq           |      |      | 6612 || 2777 | 2129  1978  1997
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2318
- * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437 2378
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2318 2305
+ * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437
  * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2730
  * lint          |      |      |      || 4041 | 3376  3114  3004
  * lg            |      |      |      || 211  | 161   149   144.4
@@ -82111,7 +82115,7 @@ int main(int argc, char **argv)
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.9
- *                                    || 145  | 135   132   95.5
+ *                                    || 145  | 135   132   94.4
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.

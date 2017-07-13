@@ -277,7 +277,7 @@ int mus_optkey_unscramble(const char *caller, int num_args, int nkeys, Xen *keys
   return(rtn_ctr);
 }
 
-
+#if (!HAVE_SCHEME)
 static mus_float_t optkey_float_error(Xen key, int n, const char *caller)
 {
   Xen_check_type(false, key, n, caller, "a number");
@@ -286,6 +286,7 @@ static mus_float_t optkey_float_error(Xen key, int n, const char *caller)
 
 #define Xen_optkey_to_float(Original_key, Key, Caller, N, Def) \
   ((Xen_keyword_is_eq(Original_key, Key)) ? Def : ((Xen_is_number(Key)) ? Xen_real_to_C_double(Key) : optkey_float_error(Key, N, Caller)))
+#endif
 
 mus_float_t mus_optkey_to_float(Xen key, const char *caller, int n, mus_float_t def)
 {
@@ -296,7 +297,7 @@ mus_float_t mus_optkey_to_float(Xen key, const char *caller, int n, mus_float_t 
   return(def);
 }
 
-
+#if (!HAVE_SCHEME)
 static int optkey_int_error(Xen key, int n, const char *caller)
 {
   Xen_check_type(false, key, n, caller, "an integer");
@@ -305,6 +306,7 @@ static int optkey_int_error(Xen key, int n, const char *caller)
 
 #define Xen_optkey_to_int(Original_key, Key, Caller, N, Def) \
   ((Xen_keyword_is_eq(Original_key, Key)) ? Def : ((Xen_is_integer(Key)) ? Xen_integer_to_C_int(Key) : optkey_int_error(Key, N, Caller)))
+#endif
 
 int mus_optkey_to_int(Xen key, const char *caller, int n, int def)
 {
@@ -325,12 +327,13 @@ bool mus_optkey_to_bool(Xen key, const char *caller, int n, bool def)
   return(def);
 }
 
-
+#if (!HAVE_SCHEME)
 static mus_long_t optkey_llong_error(Xen key, int n, const char *caller)
 {
   Xen_check_type(false, key, n, caller, "an integer");
   return(0);
 }
+#endif
 
 #define Xen_optkey_to_mus_long_t(Original_key, Key, Caller, N, Def) \
   ((Xen_keyword_is_eq(Original_key, Key)) ? Def : ((Xen_is_integer(Key)) ? Xen_llong_to_C_llong(Key) : optkey_llong_error(Key, N, Caller)))
@@ -354,7 +357,7 @@ const char *mus_optkey_to_string(Xen key, const char *caller, int n, char *def)
   return(def);
 }
 
-
+#if (!HAVE_SCHEME)
 static vct *mus_optkey_to_vct(Xen key, const char *caller, int n, vct *def)
 {
   if (mus_is_vct(key))
@@ -363,7 +366,7 @@ static vct *mus_optkey_to_vct(Xen key, const char *caller, int n, vct *def)
     Xen_check_type(false, key, n, caller, "a " S_vct);
   return(def);
 }
-
+#endif
 
 static bool local_arity_ok(Xen proc, int args) /* from snd-xen.c minus (inconvenient) gc protection */
 {
@@ -404,6 +407,14 @@ Xen mus_optkey_to_procedure(Xen key, const char *caller, int n, Xen def, int req
 
 
 /* ---------------- clm keywords ---------------- */
+#if HAVE_SCHEME
+static s7_pointer kw_frequency, kw_radius;
+static void init_keywords(void)
+{
+  kw_frequency = Xen_make_keyword("frequency");
+  kw_radius = Xen_make_keyword("radius");
+}
+#else
 
 static Xen kw_frequency, kw_initial_phase, kw_wave, kw_amplitude,
   kw_r, kw_ratio, kw_size, kw_a0, kw_a1, kw_a2, kw_b1, kw_b2, kw_max_size,
@@ -482,7 +493,7 @@ static void init_keywords(void)
   kw_coeffs =           Xen_make_keyword("coeffs");
   kw_kind =             Xen_make_keyword("kind");
 }
-
+#endif
 
 
 /* ---------------- *clm-table-size* ---------------- */
@@ -1558,7 +1569,7 @@ mus_any *mus_optkey_to_mus_any(Xen key, const char *caller, int n, mus_any *def)
   return(def);
 }
 
-
+#if (!HAVE_SCHEME)
 static Xen mus_optkey_to_input_procedure(Xen key, const char *caller, int n, Xen def, int required_args, const char *err)
 {
   if (Xen_is_procedure(key))
@@ -1580,7 +1591,7 @@ static Xen mus_optkey_to_input_procedure(Xen key, const char *caller, int n, Xen
     Xen_check_type(false, key, n, caller, "a procedure or input generator");
   return(def);
 }
-
+#endif
 
 
 /* ---------------- wrappers ---------------- */
@@ -2801,7 +2812,7 @@ static s7_pointer g_make_filtered_comb(s7_scheme *sc, s7_pointer args)
 
   ge = mus_make_filtered_comb(scl, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type, filt);
   if (ge) 
-    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_two_vcts(ge, initial_contents, flt)));
   return(Xen_false);
 }
 
@@ -4428,15 +4439,75 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   return(table);
 }
 
-
-static Xen g_make_table_lookup(Xen arglist)
-{
-  #define H_make_table_lookup "(" S_make_table_lookup " (frequency 0.0) (initial-phase 0.0) (wave) (size clm-table-size) (type)): \
+#define H_make_table_lookup "(" S_make_table_lookup " (frequency 0.0) (initial-phase 0.0) wave size type): \
 return a new " S_table_lookup " generator.  \
 The default table size is 512; use :size to set some other size, or pass your own " S_vct " as the 'wave'.\n\
    (set! gen (" S_make_table_lookup " 440.0 :wave (" S_partials_to_wave " '(1 1.0))))\n\
 is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice which defaults to " S_mus_interp_linear "."
 
+#if HAVE_SCHEME
+static s7_pointer g_make_table_lookup(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *ge;
+  mus_long_t table_size = clm_table_size;
+  mus_float_t freq, phase;
+  mus_float_t *table = NULL;
+  s7_pointer v, p, fp;
+  int interp_type = (int)MUS_INTERP_LINEAR;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_table_lookup, 1, s7_car(args), "freq > srate/2?");
+  
+  phase = s7_number_to_real(sc, s7_cadr(args));
+  if (phase < 0.0)
+    Xen_out_of_range_error(S_make_table_lookup, 2, s7_cadr(args), "initial phase <= 0.0?"); /* is this actually an error? */
+
+  p = s7_cddr(args);
+  v = s7_car(p);
+  if (v != Xen_false)
+    {
+      if (!s7_is_float_vector(v))
+	return(s7_wrong_type_arg_error(s7, S_make_table_lookup, 3, v, "a float-vector"));
+      table = s7_float_vector_elements(v);
+      table_size = s7_vector_length(v);
+    }
+  
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(s7, S_make_table_lookup, 4, fp, "an integer"));
+      table_size = s7_integer(fp);
+      if (table_size <= 0)
+	Xen_out_of_range_error(S_make_table_lookup, 4, fp, "size <= 0?");
+      if (table_size > mus_max_table_size())
+	Xen_out_of_range_error(S_make_table_lookup, 4, fp, "size too large (see mus-max-table-size)");
+      if ((table) && (table_size > mus_vct_length(v)))
+	Xen_out_of_range_error(S_make_table_lookup, 4, fp, "table size > wave size");
+    }
+  
+  fp = s7_caddr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(s7, S_make_table_lookup, 5, fp, "an integer"));
+      interp_type = s7_integer(fp);
+      if (!(mus_is_interp_type(interp_type)))
+	Xen_out_of_range_error(S_make_table_lookup, 5, fp, "no such interp-type");
+    }
+
+  if (!table)
+    {
+      v = s7_make_float_vector(sc, table_size, 1, NULL);
+      table = s7_float_vector_elements(v);
+    }
+  ge = mus_make_table_lookup(freq, phase, table, table_size, (mus_interp_t)interp_type);
+  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
+}
+#else
+static Xen g_make_table_lookup(Xen arglist)
+{
   mus_any *ge;
   int vals;
   mus_long_t table_size = clm_table_size;
@@ -4504,7 +4575,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   ge = mus_make_table_lookup(freq, phase, table, table_size, (mus_interp_t)interp_type);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
 }
-
+#endif
 
 static Xen g_table_lookup(Xen obj, Xen fm) 
 {
@@ -4948,7 +5019,7 @@ static s7_pointer g_make_two_zero(s7_scheme *sc, s7_pointer args)
       arg = s7_car(p);
       if (s7_is_keyword(arg))
 	{
-	  if ((s7_is_eq(arg, kw_frequency)) || (s7_is_eq(arg, kw_radius)))
+	  if ((arg == kw_frequency) || (arg == kw_radius))
 	    return(s7_apply_function_star(sc, make_two_zero_f, args));
 	  return(s7_apply_function_star(sc, make_two_zero_a, args));
 	}
@@ -5003,7 +5074,7 @@ static s7_pointer g_make_two_pole(s7_scheme *sc, s7_pointer args)
       arg = s7_car(p);
       if (s7_is_keyword(arg))
 	{
-	  if ((s7_is_eq(arg, kw_frequency)) || (s7_is_eq(arg, kw_radius)))
+	  if ((arg == kw_frequency) || (arg == kw_radius))
 	    return(s7_apply_function_star(sc, make_two_pole_f, args));
 	  return(s7_apply_function_star(sc, make_two_pole_a, args));
 	}
@@ -5710,12 +5781,76 @@ static Xen g_singer_nose_filter(Xen end, Xen tmp, Xen dline1, Xen dline2, Xen co
 
 /* ---------------- wave-train ---------------- */
 
-static Xen g_make_wave_train(Xen arglist)
-{
-  #define H_make_wave_train "(" S_make_wave_train " (frequency 0.0) (initial-phase 0.0) (wave) (size clm-table-size) (type)): \
+#define H_make_wave_train "(" S_make_wave_train " (frequency 0.0) (initial-phase 0.0) wave size type): \
 return a new wave-train generator (an extension of pulse-train).   Frequency is \
 the repetition rate of the wave found in wave. Successive waves can overlap."
 
+#if HAVE_SCHEME
+static s7_pointer g_make_wave_train(s7_scheme *sc, s7_pointer args)
+{
+  /* almost the same as make-table-lookup */
+  mus_any *ge;
+  mus_long_t table_size = clm_table_size;
+  mus_float_t freq, phase;
+  mus_float_t *table = NULL;
+  s7_pointer v, p, fp;
+  int interp_type = (int)MUS_INTERP_LINEAR;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_wave_train, 1, s7_car(args), "freq > srate/2?");
+  if (freq < 0.0)
+    Xen_out_of_range_error(S_make_wave_train, 1, s7_car(args), "freq < 0.0?");
+  
+  phase = s7_number_to_real(sc, s7_cadr(args));
+  if (phase < 0.0)
+    Xen_out_of_range_error(S_make_wave_train, 2, s7_cadr(args), "initial phase <= 0.0?");
+
+  p = s7_cddr(args);
+  v = s7_car(p);
+  if (v != Xen_false)
+    {
+      if (!s7_is_float_vector(v))
+	return(s7_wrong_type_arg_error(s7, S_make_wave_train, 3, v, "a float-vector"));
+      table = s7_float_vector_elements(v);
+      table_size = s7_vector_length(v);
+    }
+  
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(s7, S_make_wave_train, 4, fp, "an integer"));
+      table_size = s7_integer(fp);
+      if (table_size <= 0)
+	Xen_out_of_range_error(S_make_wave_train, 4, fp, "size <= 0?");
+      if (table_size > mus_max_table_size())
+	Xen_out_of_range_error(S_make_wave_train, 4, fp, "size too large (see mus-max-table-size)");
+      if ((table) && (table_size > mus_vct_length(v)))
+	Xen_out_of_range_error(S_make_wave_train, 4, fp, "table size > wave size");
+    }
+  
+  fp = s7_caddr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(s7, S_make_wave_train, 5, fp, "an integer"));
+      interp_type = s7_integer(fp);
+      if (!(mus_is_interp_type(interp_type)))
+	Xen_out_of_range_error(S_make_wave_train, 5, fp, "no such interp-type");
+    }
+
+  if (!table)
+    {
+      v = s7_make_float_vector(sc, table_size, 1, NULL);
+      table = s7_float_vector_elements(v);
+    }
+  ge = mus_make_wave_train(freq, phase, table, table_size, (mus_interp_t)interp_type);
+  return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
+}
+#else
+static Xen g_make_wave_train(Xen arglist)
+{
   mus_any *ge;
   Xen args[10];
   Xen keys[5];
@@ -5785,7 +5920,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   ge = mus_make_wave_train(freq, phase, wave, wsize, (mus_interp_t)interp_type);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
 }
-
+#endif
 
 static Xen g_wave_train(Xen obj, Xen fm)
 {
@@ -6233,14 +6368,89 @@ static Xen g_is_polyshape(Xen obj)
   return(C_bool_to_Xen_boolean((mus_is_xen(obj)) && (mus_is_polyshape(Xen_to_mus_any(obj)))));
 }
 
-
-static Xen g_make_polyshape(Xen arglist)
-{
-  #define H_make_polyshape "(" S_make_polyshape " (frequency 0.0) (initial-phase 0.0) (coeffs) (partials '(1 1)) (kind " S_mus_chebyshev_first_kind ")): \
+#define H_make_polyshape "(" S_make_polyshape " (frequency 0.0) (initial-phase 0.0) coeffs partials kind): \
 return a new polynomial-based waveshaping generator:\n\
    (" S_make_polyshape " :coeffs (" S_partials_to_polynomial " '(1 1.0)))\n\
 is the same in effect as " S_make_oscil
 
+
+#if HAVE_SCHEME
+static s7_pointer g_make_polyshape(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *ge;
+  int csize, npartials;
+  s7_pointer v, p, fp;
+  mus_float_t freq, phase;
+  mus_float_t *coeffs = NULL;
+  mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
+
+  freq = s7_number_to_real(sc, s7_car(args));
+  if (freq > (0.5 * mus_srate()))
+    Xen_out_of_range_error(S_make_polyshape, 1, s7_car(args), "freq > srate/2?");
+
+  p = s7_cddr(args);
+  fp = s7_caddr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(s7, S_make_polyshape, 5, fp, "an integer"));
+      kind = s7_integer(fp);
+      if ((kind < MUS_CHEBYSHEV_EITHER_KIND) || (kind > MUS_CHEBYSHEV_SECOND_KIND))
+	Xen_out_of_range_error(S_make_polyshape, 5, fp, "unknown Chebyshev polynomial kind");
+    }
+
+  v = s7_car(p);
+  if (v != Xen_false)
+    {
+      if (!s7_is_float_vector(v))
+	return(s7_wrong_type_arg_error(s7, S_make_polyshape, 3, fp, "a float-vector"));
+      coeffs = s7_float_vector_elements(v);
+      csize = s7_vector_length(v);
+    }
+  else
+    {
+      int error = NO_PROBLEM_IN_LIST;
+      fp = s7_cadr(p);
+      if (fp != Xen_false)
+	{
+	  if (s7_is_float_vector(fp))
+	    coeffs = mus_vct_to_partials(Xen_to_vct(fp), &npartials, &error);
+	  else
+	    {
+	      if (s7_is_pair(fp))
+		coeffs = list_to_partials(fp, &npartials, &error);
+	      else return(s7_wrong_type_arg_error(s7, S_make_polyshape, 4, fp, "a float-vector or a pair"));
+	    }
+	  if (!coeffs)
+	    Xen_error(NO_DATA, 
+		      Xen_list_3(C_string_to_Xen_string(list_to_partials_error_to_string(error)), 
+				 C_string_to_Xen_string(S_make_polyshape), fp));
+	  coeffs = mus_partials_to_polynomial(npartials, coeffs, kind);
+	  csize = npartials;
+	  /* coeffs = partials here, so don't delete */ 
+	}
+    }
+
+  if (!coeffs)
+    {
+      /* clm.html says '(1 1) is the default */
+      v = s7_make_float_vector(sc, 2, 1, NULL);
+      coeffs = s7_float_vector_elements(v);
+      coeffs[0] = 0.0;
+      coeffs[1] = 1.0;
+      csize = 2;
+    }
+  if (!s7_is_float_vector(v)) v = xen_make_vct(csize, coeffs);
+  phase = s7_number_to_real(sc, s7_cadr(args));
+
+  ge = mus_make_polyshape(freq, phase, coeffs, csize, kind);
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
+  return(Xen_false);
+}
+#else
+static Xen g_make_polyshape(Xen arglist)
+{
   mus_any *ge;
   Xen args[10];
   Xen keys[5];
@@ -6257,7 +6467,6 @@ is the same in effect as " S_make_oscil
    *   where we started.  This also does not affect "signification".
    */
   mus_float_t *coeffs = NULL;
-
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
 
   keys[0] = kw_frequency;
@@ -6341,7 +6550,7 @@ is the same in effect as " S_make_oscil
     return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
   return(Xen_false);
 }
-
+#endif
 
 
 /* ---------------- polywave ---------------- */
@@ -6963,7 +7172,95 @@ static Xen g_iir_filter(Xen obj, Xen input)
   return(C_double_to_Xen_real(mus_iir_filter(g, x)));
 }
 
+#define H_make_filter "(" S_make_filter " order xcoeffs ycoeffs): return a new direct form FIR/IIR filter, coeff args are " S_vct "s"
+#define H_make_fir_filter "(" S_make_fir_filter " order xcoeffs): return a new FIR filter, xcoeffs a " S_vct
+#define H_make_iir_filter "(" S_make_iir_filter " order ycoeffs): return a new IIR filter, ycoeffs a " S_vct
 
+#if HAVE_SCHEME
+static s7_pointer g_make_filter_1(s7_scheme *sc, s7_pointer args, xclm_fir_t choice, const char *caller)
+{
+  s7_pointer x = NULL, y = NULL, fp;
+  mus_any *fgen;
+  int order = 0;
+  
+  fp = s7_car(args);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, caller, 1, fp, "an integer"));
+      order = s7_integer(fp);
+      if (order <= 0)
+	Xen_out_of_range_error(caller, 1, fp, "order <= 0?");
+    }
+  
+  fp = s7_cadr(args);
+  if (fp != Xen_false)
+    {
+      int len;
+      if (!s7_is_float_vector(fp))
+	return(s7_wrong_type_arg_error(sc, caller, 2, fp, "a float-vector"));
+      if (choice == G_IIR_FILTER)
+	y = fp;
+      else x = fp;
+      len = s7_vector_length(fp);
+      if ((order != 0) && (len != order))
+	Xen_error(CLM_ERROR, Xen_list_4(C_string_to_Xen_string("~A: coeffs, ~A, must match order, ~A"),
+					C_string_to_Xen_string(caller), fp, s7_car(args)));
+      order = len;
+    }
+  
+  if (choice == G_FILTER)
+    {
+      fp = s7_caddr(args);
+      if (fp != Xen_false)
+	{
+	  int len;
+	  y = fp;
+	  if (!s7_is_float_vector(y))
+	    return(s7_wrong_type_arg_error(sc, caller, 3, y, "a float-vector"));
+	  len = s7_vector_length(y);
+	  if ((order != 0) && (len != order))
+	    {
+	      if (x)
+		Xen_error(CLM_ERROR,
+			  Xen_list_4(C_string_to_Xen_string("~A: coeffs must be same length.  x len: ~A, y len: ~A"),
+				     C_string_to_Xen_string(caller),
+				     C_int_to_Xen_integer(mus_vct_length(x)),
+				     C_int_to_Xen_integer(len)));
+	      else 
+		Xen_error(CLM_ERROR, Xen_list_4(C_string_to_Xen_string("~A: coeffs, ~A, must match order, ~A"),
+						C_string_to_Xen_string(caller), y, s7_car(args)));
+	    }
+	  order = len;
+	}
+      if (!y) choice = G_FIR_FILTER; else {if (!x) choice = G_IIR_FILTER;}
+    }
+  if ((order == 0) || ((!x) && (!y)))
+    Xen_error(NO_DATA, Xen_list_2(C_string_to_Xen_string("~A: no coeffs?"), C_string_to_Xen_string(caller)));
+
+  switch (choice)
+    {
+    case G_FILTER: fgen = mus_make_filter(order, s7_float_vector_elements(x), s7_float_vector_elements(y), NULL); break;
+    case G_FIR_FILTER: fgen = mus_make_fir_filter(order, s7_float_vector_elements(x), NULL); break;
+    case G_IIR_FILTER: fgen = mus_make_iir_filter(order, s7_float_vector_elements(y), NULL); break;
+    }
+  if (fgen)
+    {
+      mus_xen *gn = NULL;
+      gn = mx_alloc(3);
+      gn->gen = fgen; 
+      gn->vcts[G_FILTER_STATE] = xen_make_vct_wrapper(order, mus_data(fgen));
+      gn->vcts[G_FILTER_XCOEFFS] = (x) ? x : Xen_undefined;
+      gn->vcts[G_FILTER_YCOEFFS] = (y) ? y : Xen_undefined;
+      return(mus_xen_to_object(gn));
+    }
+  return(Xen_false);
+}
+
+static s7_pointer g_make_filter(s7_scheme *sc, s7_pointer args)     {return(g_make_filter_1(sc, args, G_FILTER,     S_make_filter));}
+static s7_pointer g_make_fir_filter(s7_scheme *sc, s7_pointer args) {return(g_make_filter_1(sc, args, G_FIR_FILTER, S_make_fir_filter));}
+static s7_pointer g_make_iir_filter(s7_scheme *sc, s7_pointer args) {return(g_make_filter_1(sc, args, G_IIR_FILTER, S_make_iir_filter));}
+#else
 static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
 {
   Xen xwave = Xen_undefined, ywave = Xen_undefined;
@@ -7092,28 +7389,10 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
   return(Xen_false);
 }
 
-
-static Xen g_make_filter(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
-{
-  #define H_make_filter "(" S_make_filter " order xcoeffs ycoeffs): return a new direct form FIR/IIR filter, coeff args are " S_vct "s"
-  return(g_make_filter_1(G_FILTER, arg1, arg2, arg3, arg4, arg5, arg6));
-}
-
-
-static Xen g_make_fir_filter(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
-{
-  #define H_make_fir_filter "(" S_make_fir_filter " order xcoeffs): return a new FIR filter, xcoeffs a " S_vct
-  return(g_make_filter_1(G_FIR_FILTER, arg1, arg2, arg3, arg4, Xen_undefined, Xen_undefined));
-}
-
-
-static Xen g_make_iir_filter(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
-{
-  #define H_make_iir_filter "(" S_make_iir_filter " order ycoeffs): return a new IIR filter, ycoeffs a " S_vct
-  return(g_make_filter_1(G_IIR_FILTER, arg1, arg2, arg3, arg4, Xen_undefined, Xen_undefined));
-}
-
-
+static Xen g_make_filter(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6) {return(g_make_filter_1(G_FILTER, arg1, arg2, arg3, arg4, arg5, arg6));}
+static Xen g_make_fir_filter(Xen arg1, Xen arg2, Xen arg3, Xen arg4) {return(g_make_filter_1(G_FIR_FILTER, arg1, arg2, arg3, arg4, Xen_undefined, Xen_undefined));}
+static Xen g_make_iir_filter(Xen arg1, Xen arg2, Xen arg3, Xen arg4) {return(g_make_filter_1(G_IIR_FILTER, arg1, arg2, arg3, arg4, Xen_undefined, Xen_undefined));}
+#endif
 
 
 /* ---------------- env ---------------- */
@@ -8754,11 +9033,130 @@ static void clm_locsig_detour(mus_any *ptr, mus_long_t pos)
     mus_locsig_or_move_sound_to_vct_or_sound_data(ms, ms->gen, pos, true);
 }
 
+#define H_make_locsig "(" S_make_locsig " (degree 0.0) (distance 1.0) (reverb 0.0) output revout channels type): \
+ return a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees."
+
+#if HAVE_SCHEME
+static s7_pointer g_make_locsig(s7_scheme *sc, s7_pointer args)
+{
+  mus_any *ge, *outp = NULL, *revp = NULL;
+  s7_pointer ov, rv, p, fp;
+  int out_chans, rev_chans;
+  mus_interp_t type;
+  mus_float_t degree = 0.0, distance = 1.0, reverb = 0.0;
+  type = clm_locsig_type;
+  
+  fp = s7_car(args);
+  if (fp != Xen_false) degree = s7_number_to_real(sc, fp);
+  fp = s7_cadr(args);
+  if (fp != Xen_false) distance = s7_number_to_real(sc, fp);
+  fp = s7_caddr(args);
+  if (fp != Xen_false) reverb = s7_number_to_real(sc, fp);
+
+  p = s7_cdddr(args);
+  fp = s7_car(p);
+  ov = (fp == Xen_false) ? CLM_OUTPUT : fp;
+  if ((mus_is_xen(ov)) && 
+      (mus_is_output(Xen_to_mus_any(ov))))
+    {
+      outp = (mus_any *)Xen_to_mus_any(ov);
+      out_chans = mus_channels((mus_any *)outp);
+    }
+  else
+    {
+      if (s7_is_float_vector(ov))
+	{
+	  if (s7_vector_rank(ov) > 1)
+	    out_chans = s7_vector_dimensions(ov)[0];
+	  else out_chans = 1;
+	}
+      else 
+	{
+	  if (ov != Xen_false)
+	    return(s7_wrong_type_arg_error(sc, S_make_locsig, 4, ov, "an output generator or a float-vector"));
+	  else ov = s7_undefined(sc);
+	  out_chans = 1;
+	}
+    }
+
+  fp = s7_cadr(p);
+  rv = (fp == Xen_false) ? CLM_REVERB : fp;
+  if ((mus_is_xen(rv)) && 
+      (mus_is_output(Xen_to_mus_any(rv))))
+    {
+      revp = (mus_any *)Xen_to_mus_any(rv);
+      rev_chans = mus_channels((mus_any *)revp);
+    }
+  else
+    {
+      if (s7_is_float_vector(rv))
+	{
+	  if (s7_vector_rank(rv) > 1)
+	    rev_chans = s7_vector_dimensions(rv)[0];
+	  else rev_chans = 1;
+	}
+      else 
+	{
+	  if (rv != Xen_false)
+	    return(s7_wrong_type_arg_error(sc, S_make_locsig, 5, rv, "an output generator or a float-vector"));
+	  else rv = s7_undefined(sc);
+	  rev_chans = 0;
+	}
+    }
+
+  fp = s7_caddr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_make_locsig, 6, fp, "an integer"));
+      out_chans = s7_integer(fp);
+      if (out_chans <= 0) 
+	Xen_out_of_range_error(S_make_locsig, 6, fp, "chans <= 0?");
+      if (out_chans > mus_max_table_size()) 
+	Xen_out_of_range_error(S_make_locsig, 6, fp, "too many chans");
+    }
+
+  fp = s7_cadddr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_make_locsig, 7, fp, "an integer"));
+      type = s7_integer(fp);
+      if ((type != MUS_INTERP_LINEAR) && (type != MUS_INTERP_SINUSOIDAL))
+	Xen_out_of_range_error(S_make_locsig, 7, fp, "type must be " S_mus_interp_linear " or " S_mus_interp_sinusoidal ".");
+    }
+
+  ge = mus_make_locsig(degree, distance, reverb, out_chans, outp, rev_chans, revp, type);
+  if (ge)
+    {
+      mus_xen *gn;
+      if ((ov != Xen_false) && (rv != Xen_false))
+	gn = mx_alloc(4);
+      else gn = mx_alloc(2);
+
+      /* these two are for the mus-data and mus-xcoeffs methods = MUS_DATA_WRAPPER and G_FILTER_XCOEFFS */
+      if (out_chans > 0)
+	gn->vcts[G_LOCSIG_DATA] = xen_make_vct_wrapper(out_chans, mus_data(ge));
+      else gn->vcts[G_LOCSIG_DATA] = Xen_undefined;
+      if (rev_chans > 0)
+	gn->vcts[G_LOCSIG_REVDATA] = xen_make_vct_wrapper(rev_chans, mus_xcoeffs(ge));
+      else gn->vcts[G_LOCSIG_REVDATA] = Xen_undefined;
+
+      if (gn->nvcts == 4)
+	{
+	  mus_locsig_set_detour(ge, clm_locsig_detour);
+	  gn->vcts[G_LOCSIG_OUT] = ov;
+	  gn->vcts[G_LOCSIG_REVOUT] = rv;
+	  mus_set_environ(ge, (void *)gn);
+	}
+      gn->gen = ge;
+      return(mus_xen_to_object(gn));
+    }
+  return(Xen_false);
+}
+#else
 static Xen g_make_locsig(Xen arglist)
 {
-  #define H_make_locsig "(" S_make_locsig " (degree 0.0) (distance 1.0) (reverb 0.0) (output *output*) (revout *reverb*) (channels (mus-channels *output*)) (type " S_mus_interp_linear ")): \
-return a new generator for signal placement in n channels.  Channel 0 corresponds to 0 degrees."
-
   mus_any *ge;
   mus_any *outp = NULL, *revp = NULL;
   Xen args[14];
@@ -8899,6 +9297,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     }
   return(Xen_false);
 }
+#endif
 
 
 static Xen g_move_locsig(Xen obj, Xen degree, Xen distance)
@@ -9606,17 +10005,153 @@ static Xen g_granulate(Xen obj, Xen func, Xen edit_func)
 }
 
 
+#define H_make_granulate "(" S_make_granulate " input (expansion 1.0) (length .15) (scaler .6) (hop .05) (ramp .4) (jitter 1.0) max-size edit): \
+ return a new granular synthesis generator.  'length' is the grain length (seconds), 'expansion' is the ratio in timing \
+ between the new and old (expansion > 1.0 slows things down), 'scaler' scales the grains \
+ to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output. \
+ 'jitter' controls the randomness in that spacing, 'input' can be a file pointer. 'edit' can \
+ be a function of one arg, the current granulate generator.  It is called just before \
+ a grain is added into the output buffer. The current grain is accessible via " S_mus_data ". \
+ The edit function, if any, should return the length in samples of the grain, or 0."
+
+#if HAVE_SCHEME
+static s7_pointer g_make_granulate(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer in_obj, edit_obj, grn_obj, p, fp;
+  mus_xen *gn;
+  mus_any *ge;
+
+  mus_float_t expansion = 1.0, segment_length = .15, segment_scaler = .6, ramp_time = .4, output_hop = .05, jitter = 1.0;
+  int maxsize = 0;
+
+  in_obj = s7_car(args); /* input proc 1 arg */
+  if (s7_is_procedure(in_obj))
+    {
+      if (!s7_is_aritable(sc, in_obj, 1))
+	return(s7_wrong_type_arg_error(sc, S_make_granulate, 1, in_obj, "a function of one argument"));
+    }
+  else
+    {
+      if (mus_is_xen(in_obj))
+	{
+	  if (!mus_is_input(Xen_to_mus_any(in_obj)))
+	    return(s7_wrong_type_arg_error(sc, S_make_granulate, 1, in_obj, "an input generator"));
+	}
+      else 
+	{
+	  if (in_obj == Xen_false)
+	    in_obj = s7_undefined(sc);
+	  else return(s7_wrong_type_arg_error(sc, S_make_granulate, 1, in_obj, "a procedure or an input generator"));
+	}
+    }
+
+  fp = s7_cadr(args);
+  if (fp != Xen_false)
+    {
+      expansion = s7_number_to_real(sc, fp);
+      if (expansion <= 0.0) 
+	Xen_out_of_range_error(S_make_granulate, 2, fp, "expansion <= 0.0?");
+    }
+  p = s7_cddr(args);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      segment_length = s7_number_to_real(sc, fp);
+      if (segment_length <= 0.0) 
+	Xen_out_of_range_error(S_make_granulate, 3, fp, "segment-length <= 0.0?");
+    }
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      segment_scaler = s7_number_to_real(sc, fp);
+      if (segment_scaler == 0.0) 
+	Xen_out_of_range_error(S_make_granulate, 4, fp, "segment-scaler should be greater than 0.0?");
+    }
+
+  p = s7_cddr(p);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      output_hop = s7_number_to_real(sc, fp);
+      if (output_hop <= 0.0) 
+	Xen_out_of_range_error(S_make_granulate, 5, fp, "hop <= 0?");
+      if (output_hop > 3600.0) 
+	Xen_out_of_range_error(S_make_granulate, 5, fp, "hop > 3600?");
+      if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
+	Xen_out_of_range_error(S_make_granulate, 5, fp, "segment_length + output_hop too large!");
+    }
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      ramp_time = s7_number_to_real(sc, fp);
+      if ((ramp_time < 0.0) || (ramp_time > 0.5))
+	Xen_out_of_range_error(S_make_granulate, 6, fp, "ramp must be between 0.0 and 0.5");
+    }
+
+  p = s7_cddr(p);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      jitter = s7_number_to_real(sc, fp);
+      if ((jitter < 0.0) || (jitter > 100.0))
+	Xen_out_of_range_error(S_make_granulate, 7, fp, "jitter must be between 0.0 and 100.0");
+    }
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 8, fp, "an integer"));
+      maxsize = s7_integer(fp);
+      if ((maxsize > mus_max_malloc()) || (maxsize <= 0))
+	Xen_out_of_range_error(S_make_granulate, 8, fp, "max-size invalid");
+    }
+
+  edit_obj = s7_caddr(p);
+  if (edit_obj != Xen_false)
+    {
+      if (s7_is_procedure(edit_obj))
+	{
+	  if (!s7_is_aritable(sc, edit_obj, 1))
+	    return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 9, edit_obj, "a function of one argument"));
+	}
+      else return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 9, edit_obj, "a procedure"));
+    }
+  else edit_obj = s7_undefined(sc);
+
+  gn = mx_alloc(MUS_MAX_VCTS);
+  {int i; for (i = 0; i < MUS_MAX_VCTS; i++) gn->vcts[i] = Xen_undefined;}
+  {
+    mus_error_handler_t *old_error_handler;
+    old_error_handler = mus_error_set_handler(local_mus_error);
+    ge = mus_make_granulate(NULL, 
+			    expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
+			    (!Xen_is_bound(edit_obj) ? NULL : grnedit),
+			    (void *)gn);
+    mus_error_set_handler(old_error_handler);
+  }
+
+  if (ge)
+    {
+      gn->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
+      gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
+      gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
+      gn->gen = ge;
+      grn_obj = mus_xen_to_object(gn);
+      gn->vcts[MUS_SELF_WRAPPER] = grn_obj;
+      set_as_needed_input_choices(ge, in_obj, gn);
+      return(grn_obj);
+    }
+
+  free(gn->vcts);
+  free(gn);
+  return(clm_mus_error(local_error_type, local_error_msg, S_make_granulate));
+}
+#else
 static Xen g_make_granulate(Xen arglist)
 {
-  #define H_make_granulate "(" S_make_granulate " input (expansion 1.0) (length .15) (scaler .6) (hop .05) (ramp .4) (jitter 1.0) max-size edit): \
-return a new granular synthesis generator.  'length' is the grain length (seconds), 'expansion' is the ratio in timing \
-between the new and old (expansion > 1.0 slows things down), 'scaler' scales the grains \
-to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output. \
-'jitter' controls the randomness in that spacing, 'input' can be a file pointer. 'edit' can \
-be a function of one arg, the current granulate generator.  It is called just before \
-a grain is added into the output buffer. The current grain is accessible via " S_mus_data ". \
-The edit function, if any, should return the length in samples of the grain, or 0."
-
   Xen in_obj = Xen_undefined;
   mus_xen *gn;
   mus_any *ge;
@@ -9714,8 +10249,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   free(gn);
   return(clm_mus_error(local_error_type, local_error_msg, S_make_granulate));
 }
-
-
+#endif
 
 
 /* ---------------- convolve ---------------- */
@@ -10036,40 +10570,183 @@ static Xen g_phase_vocoder(Xen obj, Xen func, Xen analyze_func, Xen edit_func, X
   return(C_double_to_Xen_real(mus_phase_vocoder(g, NULL)));
 }
 
-
-static Xen g_make_phase_vocoder(Xen arglist)
-{
-  #if HAVE_SCHEME
+#if HAVE_SCHEME
     #define pv_example "(" S_make_phase_vocoder " #f 512 4 256 1.0 #f #f #f)"
     #define pv_edit_example "(" S_make_phase_vocoder " #f 512 4 256 1.0\n\
     (lambda (v infunc) (snd-print \"analyzing\") #t)\n\
     (lambda (v) (snd-print \"editing\") #t)\n\
     (lambda (v) (snd-print \"resynthesizing\") 0.0))"
-  #endif
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
     #define pv_example "make_phase_vocoder(false, 512, 4, 256, 1.0, false, false, false)"
     #define pv_edit_example "make_phase_vocoder(false, 512, 4, 256, 1.0,\n\
         lambda do | v, infunc | snd_print(\"analyzing\"); true end,\n\
         lambda do | v | snd_print(\"editing\"); true end,\n\
         lambda do | v | snd_print(\"resynthesizing\"); 0.0 end)"
-  #endif
-  #if HAVE_FORTH
+#endif
+#if HAVE_FORTH
     #define pv_example "#f 512 4 256 1.0 #f #f #f " S_make_phase_vocoder
     #define pv_edit_example "#f 512 4 256 1.0\n\
     lambda: <{ v infunc -- f }> \"analyzing\" snd-print drop #t ;\n\
     lambda: <{ v -- n }> \"editing\" snd-print drop #t ;\n\
     lambda: <{ v -- r }> \"resynthesizing\" snd-print drop 0.0 ; " S_make_phase_vocoder
-  #endif
+#endif
 
-  #define H_make_phase_vocoder "(" S_make_phase_vocoder " input fft-size overlap interp pitch analyze edit synthesize): \
+#define H_make_phase_vocoder "(" S_make_phase_vocoder " input fft-size overlap interp pitch analyze edit synthesize): \
 return a new phase-vocoder generator; input is the input function (it can be set at run-time), analyze, edit, \
 and synthesize are either " PROC_FALSE " or functions that replace the default innards of the generator, fft-size, overlap \
 and interp set the fftsize, the amount of overlap between ffts, and the time between new analysis calls. \
 'analyze', if given, takes 2 args, the generator and the input function; if it returns " PROC_TRUE ", the default analysis \
 code is also called.  'edit', if given, takes 1 arg, the generator; if it returns " PROC_TRUE ", the default edit code \
 is run.  'synthesize' is a function of 1 arg, the generator; it is called to get the current vocoder \
-output. \n\n  " pv_example "\n\n  " pv_edit_example
+output. \n\n  " pv_example "\n\n  " pv_edit_example "."
 
+#if HAVE_SCHEME
+static s7_pointer g_make_phase_vocoder(s7_scheme *sc, s7_pointer args)
+{
+  mus_xen *gn;
+  mus_any *ge;
+  s7_pointer in_obj, edit_obj, synth_obj, analyze_obj, p, pv_obj, fp;
+  mus_float_t pitch;
+  int fft_size, overlap, interp;
+
+  in_obj = s7_car(args); /* input proc 1 arg */
+  if (s7_is_procedure(in_obj))
+    {
+      if (!s7_is_aritable(sc, in_obj, 1))
+	return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 1, in_obj, "a function of one argument"));
+    }
+  else
+    {
+      if (mus_is_xen(in_obj))
+	{
+	  if (!mus_is_input(Xen_to_mus_any(in_obj)))
+	    return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 1, in_obj, "an input generator"));
+	}
+      else 
+	{
+	  if (in_obj == Xen_false)
+	    in_obj = s7_undefined(sc);
+	  else return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 1, in_obj, "a procedure or an input generator"));
+	}
+    }
+
+  fp = s7_cadr(args);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 2, fp, "an integer"));
+      fft_size = s7_integer(fp);
+      if (fft_size <= 1) 
+	Xen_out_of_range_error(S_make_phase_vocoder, 2, fp, "fft size <= 1?");
+      if (fft_size > mus_max_malloc())
+	Xen_out_of_range_error(S_make_phase_vocoder, 2, fp, "fft size too large (see mus-max-malloc)");
+      if (!is_power_of_2(fft_size))
+	Xen_out_of_range_error(S_make_phase_vocoder, 2, fp, "fft size must be power of 2");
+    }
+  else fft_size = 512;
+  
+  p = s7_cddr(args);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 3, fp, "an integer"));
+      overlap = s7_integer(fp);
+      if (overlap <= 0)
+	Xen_out_of_range_error(S_make_phase_vocoder, 3, fp, "overlap <= 0?");
+    }
+  else overlap = 4;
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 4, fp, "an integer"));
+      interp = s7_integer(fp);
+      if (interp <= 0)
+	Xen_out_of_range_error(S_make_phase_vocoder, 4, fp, "interp <= 0?");
+    }
+  else interp = 128;
+
+  p = s7_cddr(p);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    pitch = s7_number_to_real(sc, fp);
+  else pitch = 1.0;
+
+  analyze_obj = s7_cadr(p);
+  if (analyze_obj != Xen_false)
+    {
+      if (s7_is_procedure(analyze_obj))
+	{
+	  if (!s7_is_aritable(sc, analyze_obj, 2))
+	    return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 6, analyze_obj, "a function of two arguments"));
+	}
+      else return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 6, analyze_obj, "a procedure"));
+    }
+  else analyze_obj = s7_undefined(sc);
+
+  p = s7_cddr(p);
+  edit_obj = s7_car(p);
+  if (edit_obj != Xen_false)
+    {
+      if (s7_is_procedure(edit_obj))
+	{
+	  if (!s7_is_aritable(sc, edit_obj, 1))
+	    return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 7, edit_obj, "a function of one argument"));
+	}
+      else return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 7, edit_obj, "a procedure"));
+    }
+  else edit_obj = s7_undefined(sc);
+  
+  synth_obj = s7_cadr(p);
+  if (synth_obj != Xen_false)
+    {
+      if (s7_is_procedure(synth_obj))
+	{
+	  if (!s7_is_aritable(sc, synth_obj, 1))
+	    return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 8, synth_obj, "a function of one argument"));
+	}
+      else return(s7_wrong_type_arg_error(sc, S_make_phase_vocoder, 8, synth_obj, "a procedure"));
+    }
+  else synth_obj = s7_undefined(sc);
+  
+  gn = mx_alloc(MUS_MAX_VCTS);
+  {int i; for (i = 0; i < MUS_MAX_VCTS; i++) gn->vcts[i] = Xen_undefined;}
+  {
+    mus_error_handler_t *old_error_handler;
+    old_error_handler = mus_error_set_handler(local_mus_error);
+    ge = mus_make_phase_vocoder(NULL,
+				fft_size, overlap, interp, pitch,
+				(!Xen_is_bound(analyze_obj) ? NULL : pvanalyze),
+				(!Xen_is_bound(edit_obj) ? NULL : pvedit),
+				(!Xen_is_bound(synth_obj) ? NULL : pvsynthesize),
+				(void *)gn);
+    mus_error_set_handler(old_error_handler);
+  }
+
+  if (ge)
+    {
+      gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
+      gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
+      gn->vcts[MUS_ANALYZE_FUNCTION] = analyze_obj;
+      gn->vcts[MUS_SYNTHESIZE_FUNCTION] = synth_obj;
+      gn->gen = ge;
+      pv_obj = mus_xen_to_object(gn);
+      /* need scheme-relative backpointer for possible function calls */
+      gn->vcts[MUS_SELF_WRAPPER] = pv_obj;
+      set_as_needed_input_choices(ge, in_obj, gn);
+      return(pv_obj);
+    }
+
+  free(gn->vcts);
+  free(gn);
+  return(clm_mus_error(local_error_type, local_error_msg, S_make_phase_vocoder));
+}
+#else
+static Xen g_make_phase_vocoder(Xen arglist)
+{
   Xen in_obj = Xen_undefined, edit_obj = Xen_undefined, synthesize_obj = Xen_undefined, analyze_obj = Xen_undefined;
   mus_xen *gn;
   mus_any *ge;
@@ -10157,6 +10834,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   free(gn);
   return(clm_mus_error(local_error_type, local_error_msg, S_make_phase_vocoder));
 }
+#endif
 
 
 static Xen g_phase_vocoder_amps(Xen pv) 
@@ -11571,7 +12249,6 @@ Xen_wrap_1_arg(g_mus_random_w, g_mus_random)
 Xen_wrap_no_args(g_mus_rand_seed_w, g_mus_rand_seed)
 Xen_wrap_1_arg(g_mus_set_rand_seed_w, g_mus_set_rand_seed)
 Xen_wrap_1_arg(g_is_table_lookup_w, g_is_table_lookup)
-Xen_wrap_any_args(g_make_table_lookup_w, g_make_table_lookup)
 Xen_wrap_2_optional_args(g_table_lookup_w, g_table_lookup)
 Xen_wrap_3_optional_args(g_partials_to_wave_w, g_partials_to_wave)
 Xen_wrap_3_optional_args(g_phase_partials_to_wave_w, g_phase_partials_to_wave)
@@ -11618,10 +12295,8 @@ Xen_wrap_3_args(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_f
 
 Xen_wrap_5_args(g_frample_to_frample_w, g_frample_to_frample)
 
-Xen_wrap_any_args(g_make_wave_train_w, g_make_wave_train)
 Xen_wrap_2_optional_args(g_wave_train_w, g_wave_train)
 Xen_wrap_1_arg(g_is_wave_train_w, g_is_wave_train)
-Xen_wrap_any_args(g_make_polyshape_w, g_make_polyshape)
 Xen_wrap_3_optional_args(g_polyshape_w, g_polyshape)
 Xen_wrap_1_arg(g_is_polyshape_w, g_is_polyshape)
 Xen_wrap_2_optional_args(g_partials_to_polynomial_w, g_partials_to_polynomial)
@@ -11642,14 +12317,11 @@ Xen_wrap_1_arg(g_is_rxyksin_w, g_is_rxyksin)
 Xen_wrap_2_optional_args(g_rxykcos_w, g_rxykcos)
 Xen_wrap_1_arg(g_is_rxykcos_w, g_is_rxykcos)
 
-Xen_wrap_6_optional_args(g_make_filter_w, g_make_filter)
 Xen_wrap_2_optional_args(g_filter_w, g_filter)
 Xen_wrap_1_arg(g_is_filter_w, g_is_filter)
-Xen_wrap_4_optional_args(g_make_fir_filter_w, g_make_fir_filter)
 Xen_wrap_2_args(g_make_fir_coeffs_w, g_make_fir_coeffs)
 Xen_wrap_2_optional_args(g_fir_filter_w, g_fir_filter)
 Xen_wrap_1_arg(g_is_fir_filter_w, g_is_fir_filter)
-Xen_wrap_4_optional_args(g_make_iir_filter_w, g_make_iir_filter)
 Xen_wrap_2_optional_args(g_iir_filter_w, g_iir_filter)
 Xen_wrap_1_arg(g_is_iir_filter_w, g_is_iir_filter)
 Xen_wrap_1_arg(g_mus_xcoeffs_w, g_mus_xcoeffs)
@@ -11706,7 +12378,6 @@ Xen_wrap_1_arg(g_mus_feedback_w, g_mus_feedback)
 Xen_wrap_2_args(g_mus_set_feedback_w, g_mus_set_feedback)
 Xen_wrap_1_arg(g_is_locsig_w, g_is_locsig)
 Xen_wrap_3_args(g_locsig_w, g_locsig)
-Xen_wrap_any_args(g_make_locsig_w, g_make_locsig)
 Xen_wrap_3_args(g_move_locsig_w, g_move_locsig)
 Xen_wrap_no_args(g_locsig_type_w, g_locsig_type)
 Xen_wrap_1_arg(g_set_locsig_type_w, g_set_locsig_type)
@@ -11723,7 +12394,6 @@ Xen_wrap_1_arg(g_is_src_w, g_is_src)
 Xen_wrap_3_optional_args(g_src_w, g_src)
 Xen_wrap_1_arg(g_is_granulate_w, g_is_granulate)
 Xen_wrap_3_optional_args(g_granulate_w, g_granulate)
-Xen_wrap_any_args(g_make_granulate_w, g_make_granulate)
 Xen_wrap_1_arg(g_mus_ramp_w, g_mus_ramp)
 Xen_wrap_2_args(g_mus_set_ramp_w, g_mus_set_ramp)
 Xen_wrap_1_arg(g_is_convolve_w, g_is_convolve)
@@ -11731,7 +12401,6 @@ Xen_wrap_2_optional_args(g_convolve_w, g_convolve)
 Xen_wrap_4_optional_args(g_convolve_files_w, g_convolve_files)
 Xen_wrap_1_arg(g_is_phase_vocoder_w, g_is_phase_vocoder)
 Xen_wrap_5_optional_args(g_phase_vocoder_w, g_phase_vocoder)
-Xen_wrap_any_args(g_make_phase_vocoder_w, g_make_phase_vocoder)
 Xen_wrap_1_arg(g_phase_vocoder_amp_increments_w, g_phase_vocoder_amp_increments)
 Xen_wrap_1_arg(g_phase_vocoder_amps_w, g_phase_vocoder_amps)
 Xen_wrap_1_arg(g_phase_vocoder_freqs_w, g_phase_vocoder_freqs)
@@ -11760,6 +12429,9 @@ Xen_wrap_4_optional_args(g_make_one_pole_w, g_make_one_pole)
 Xen_wrap_4_optional_args(g_make_one_zero_w, g_make_one_zero)
 Xen_wrap_6_optional_args(g_make_two_zero_w, g_make_two_zero)
 Xen_wrap_6_optional_args(g_make_two_pole_w, g_make_two_pole)
+Xen_wrap_6_optional_args(g_make_filter_w, g_make_filter)
+Xen_wrap_4_optional_args(g_make_fir_filter_w, g_make_fir_filter)
+Xen_wrap_4_optional_args(g_make_iir_filter_w, g_make_iir_filter)
 Xen_wrap_4_optional_args(g_make_formant_w, g_make_formant)
 Xen_wrap_4_optional_args(g_make_firmant_w, g_make_firmant)
 Xen_wrap_6_optional_args(g_make_sawtooth_wave_w, g_make_sawtooth_wave)
@@ -11776,11 +12448,17 @@ Xen_wrap_any_args(g_make_moving_max_w, g_make_moving_max)
 Xen_wrap_any_args(g_make_moving_norm_w, g_make_moving_norm)
 Xen_wrap_any_args(g_make_env_w, g_make_env)
 Xen_wrap_any_args(g_make_polywave_w, g_make_polywave)
+Xen_wrap_any_args(g_make_polyshape_w, g_make_polyshape)
 Xen_wrap_any_args(g_make_readin_w, g_make_readin)
 Xen_wrap_any_args(g_make_convolve_w, g_make_convolve)
 Xen_wrap_any_args(g_make_rand_w, g_make_rand)
 Xen_wrap_any_args(g_make_rand_interp_w, g_make_rand_interp)
 Xen_wrap_6_optional_args(g_make_src_w, g_make_src)
+Xen_wrap_any_args(g_make_table_lookup_w, g_make_table_lookup)
+Xen_wrap_any_args(g_make_wave_train_w, g_make_wave_train)
+Xen_wrap_any_args(g_make_phase_vocoder_w, g_make_phase_vocoder)
+Xen_wrap_any_args(g_make_granulate_w, g_make_granulate)
+Xen_wrap_any_args(g_make_locsig_w, g_make_locsig)
 #endif
 
 Xen_wrap_4_optional_args(g_make_oscil_bank_w, g_make_oscil_bank)
@@ -12219,8 +12897,6 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_nsin,			g_is_nsin_w,               1, 0, 0, H_is_nsin,			pl_bt);
 
   Xen_define_typed_procedure(S_is_table_lookup,		g_is_table_lookup_w,       1, 0, 0, H_is_table_lookup,		pl_bt);
-  Xen_define_typed_procedure(S_make_table_lookup,	g_make_table_lookup_w,     0, 0, 1, H_make_table_lookup,	
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_table_lookup), t));
   Xen_define_typed_procedure(S_table_lookup,		g_table_lookup_w,          1, 1, 0, H_table_lookup,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_table_lookup), r));
   Xen_define_typed_procedure(S_partials_to_wave,	g_partials_to_wave_w,      1, 2, 0, H_partials_to_wave,		pl_fttb);
@@ -12264,8 +12940,6 @@ static void mus_xen_init(void)
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_two_pole), r));
   Xen_define_typed_procedure(S_is_two_pole,		g_is_two_pole_w,           1, 0, 0, H_is_two_pole,		pl_bt);
 
-  Xen_define_typed_procedure(S_make_wave_train,		g_make_wave_train_w,       0, 0, 1, H_make_wave_train,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_wave_train), t));
   Xen_define_typed_procedure(S_wave_train,		g_wave_train_w,            1, 1, 0, H_wave_train,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_wave_train), r));
   Xen_define_typed_procedure(S_is_wave_train,		g_is_wave_train_w,         1, 0, 0, H_is_wave_train,		pl_bt);
@@ -12295,8 +12969,6 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency, 
 			     s7_make_signature(s7, 4, d, s7_make_symbol(s7, S_is_formant), r, r));
 
-  Xen_define_typed_procedure(S_make_polyshape,		g_make_polyshape_w,        0, 0, 1, H_make_polyshape,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_polyshape), t));
   Xen_define_typed_procedure(S_polyshape,		g_polyshape_w,             1, 2, 0, H_polyshape,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_polyshape), r));
   Xen_define_typed_procedure(S_is_polyshape,		g_is_polyshape_w,          1, 0, 0, H_is_polyshape,		pl_bt);
@@ -12324,19 +12996,13 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_rxykcos,		g_is_rxykcos_w,            1, 0, 0, H_is_rxykcos,		pl_bt);
 
 
-  Xen_define_typed_procedure(S_make_filter,		g_make_filter_w,           0, 6, 0, H_make_filter,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_filter), t));
   Xen_define_typed_procedure(S_filter,			g_filter_w,                1, 1, 0, H_filter,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_filter), r));
   Xen_define_typed_procedure(S_is_filter,		g_is_filter_w,             1, 0, 0, H_is_filter,		pl_bt);
   Xen_define_typed_procedure(S_make_fir_coeffs,		g_make_fir_coeffs_w,       2, 0, 0, H_make_fir_coeffs,		pl_fif);
-  Xen_define_typed_procedure(S_make_fir_filter,		g_make_fir_filter_w,       0, 4, 0, H_make_fir_filter,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_fir_filter), t));
   Xen_define_typed_procedure(S_fir_filter,		g_fir_filter_w,            1, 1, 0, H_fir_filter,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_fir_filter), r));
   Xen_define_typed_procedure(S_is_fir_filter,		g_is_fir_filter_w,         1, 0, 0, H_is_fir_filter,		pl_bt);
-  Xen_define_typed_procedure(S_make_iir_filter,		g_make_iir_filter_w,       0, 4, 0, H_make_iir_filter,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_iir_filter), t));
   Xen_define_typed_procedure(S_iir_filter,		g_iir_filter_w,            1, 1, 0, H_iir_filter,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_iir_filter), r));
   Xen_define_typed_procedure(S_is_iir_filter,		g_is_iir_filter_w,         1, 0, 0, H_is_iir_filter,		pl_bt);
@@ -12354,8 +13020,6 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_locsig,		g_is_locsig_w,             1, 0, 0, H_is_locsig,		pl_bt);
   Xen_define_typed_procedure(S_locsig,			g_locsig_w,                3, 0, 0, H_locsig,			
 			     s7_make_signature(s7, 4, r, s7_make_symbol(s7, S_is_locsig), i, r));
-  Xen_define_typed_procedure(S_make_locsig,		g_make_locsig_w,           0, 0, 1, H_make_locsig,		
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_locsig), t));
   Xen_define_typed_procedure(S_move_locsig,		g_move_locsig_w,           3, 0, 0, H_move_locsig,		pl_ccrr);
   Xen_define_typed_procedure(S_mus_channels,		g_mus_channels_w,          1, 0, 0, H_mus_channels,		pl_it);
 
@@ -12421,7 +13085,6 @@ static void mus_xen_init(void)
   Xen_define_typed_dilambda(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
 			    S_set S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0, pl_i, pl_i);
 
-
   Xen_define_typed_procedure(S_is_readin,		g_is_readin_w,             1, 0, 0, H_is_readin,		pl_bt);
   Xen_define_typed_procedure(S_readin,			g_readin_w,                1, 0, 0, H_readin,			
 			     s7_make_signature(s7, 2, d, s7_make_symbol(s7, S_is_readin)));
@@ -12436,12 +13099,9 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_granulate,		g_is_granulate_w,          1, 0, 0, H_is_granulate,		pl_bt);
   Xen_define_unsafe_typed_procedure(S_granulate,	g_granulate_w,             1, 2, 0, H_granulate,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_granulate), t));
-  Xen_define_typed_procedure(S_make_granulate,		g_make_granulate_w,        0, 0, 1, H_make_granulate,           
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_granulate), t));
 
   Xen_define_typed_dilambda(S_mus_ramp, g_mus_ramp_w, H_mus_ramp, 
 			    S_set S_mus_ramp, g_mus_set_ramp_w,  1, 0, 2, 0, pl_dc, pl_dcr);
-
 
   Xen_define_typed_procedure(S_clear_sincs,		g_mus_clear_sincs_w,       0, 0, 0, "clears out any sinc tables", NULL);
   Xen_define_typed_procedure(S_is_src,			g_is_src_w,                1, 0, 0, H_is_src,			pl_bt);
@@ -12456,8 +13116,6 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_phase_vocoder,	g_is_phase_vocoder_w,      1, 0, 0, H_is_phase_vocoder,		pl_bt);
   Xen_define_unsafe_typed_procedure(S_phase_vocoder,    g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder,		
 				    s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_phase_vocoder), t));
-  Xen_define_typed_procedure(S_make_phase_vocoder,	g_make_phase_vocoder_w,    0, 0, 1, H_make_phase_vocoder,       
-			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_phase_vocoder), t));
   Xen_define_typed_procedure(S_phase_vocoder_amp_increments, g_phase_vocoder_amp_increments_w, 1, 0, 0, H_phase_vocoder_amp_increments, pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_amps,	g_phase_vocoder_amps_w,    1, 0, 0, H_phase_vocoder_amps,	pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_freqs,	g_phase_vocoder_freqs_w,   1, 0, 0, H_phase_vocoder_freqs,	pl_fc);
@@ -12514,6 +13172,10 @@ static void mus_xen_init(void)
 				"(frequency 0.0) (partials '(1 1)) (type 1) xcoeffs ycoeffs)",
 				H_make_polywave, 
 				star_sig(S_is_polywave));
+  s7_define_typed_function_star(s7, S_make_polyshape, g_make_polyshape, 
+				"(frequency 0.0) (initial-phase 0.0) coeffs partials kind",
+				H_make_polyshape, 
+				star_sig(S_is_polyshape));
   s7_define_typed_function_star(s7, S_make_oscil, g_make_oscil, 
 				"(frequency 0.0) (initial-phase 0.0)", 
 				H_make_oscil, 
@@ -12585,6 +13247,19 @@ static void mus_xen_init(void)
   make_two_pole_a = s7_make_safe_function_star(s7, S_make_two_pole, g_make_two_pole_a, "(a0 0.0) (b1 0.0) (b2 0.0)", H_make_two_pole);
   make_two_pole_f = s7_make_safe_function_star(s7, S_make_two_pole, g_make_two_pole_f, "(frequency 0.0) (radius 0.0)", H_make_two_pole);
 
+  s7_define_typed_function_star(s7, S_make_filter, g_make_filter, 
+				"order xcoeffs ycoeffs",
+				H_make_filter,
+                                star_sig(S_is_filter));
+  s7_define_typed_function_star(s7, S_make_fir_filter, g_make_fir_filter, 
+				"order xcoeffs",
+				H_make_fir_filter,
+                                star_sig(S_is_fir_filter));
+  s7_define_typed_function_star(s7, S_make_iir_filter, g_make_iir_filter, 
+				"order ycoeffs",
+				H_make_iir_filter,
+                                star_sig(S_is_iir_filter));
+
   s7_define_typed_function_star(s7, S_make_formant, g_make_formant, 
 				"(frequency 0.0) (radius 0.0)", 
 				H_make_formant,
@@ -12634,7 +13309,6 @@ static void mus_xen_init(void)
 				"input filter fft-size",
 				H_make_convolve,
 				star_sig(S_is_convolve));
-
   s7_define_typed_function_star(s7, S_make_rand, g_make_rand, 
 				"(frequency 0.0) (amplitude 1.0) envelope distribution size",
 				H_make_rand,
@@ -12643,14 +13317,34 @@ static void mus_xen_init(void)
 				"(frequency 0.0) (amplitude 1.0) envelope distribution size",
 				H_make_rand_interp,
 				star_sig(S_is_rand_interp));
-
   s7_define_typed_function_star(s7, S_make_src, g_make_src, 
 				"input (srate 1.0) (width 10)",
 				H_make_src,
 				star_sig(S_is_src));
+  s7_define_typed_function_star(s7, S_make_table_lookup, g_make_table_lookup, 
+				"(frequency 0.0) (initial-phase 0.0) wave size type)",
+				H_make_table_lookup,
+				star_sig(S_is_table_lookup));
+  s7_define_typed_function_star(s7, S_make_wave_train, g_make_wave_train, 
+				"(frequency 0.0) (initial-phase 0.0) wave size type",
+				H_make_wave_train,
+				star_sig(S_is_wave_train));
+  s7_define_typed_function_star(s7, S_make_phase_vocoder, g_make_phase_vocoder, 
+				"input fft-size overlap interp pitch analyze edit synthesize",
+				H_make_phase_vocoder,
+				star_sig(S_is_phase_vocoder));
+  s7_define_typed_function_star(s7, S_make_granulate, g_make_granulate, 
+				"input (expansion 1.0) (length .15) (scaler .6) (hop .05) (ramp .4) (jitter 1.0) max-size edit)",
+				H_make_granulate,
+				star_sig(S_is_granulate));
+  s7_define_typed_function_star(s7, S_make_locsig, g_make_locsig, 
+				"(degree 0.0) (distance 1.0) (reverb 0.0) output revout channels type",
+				H_make_locsig,
+				star_sig(S_is_locsig));
 #else
   Xen_define_typed_procedure(S_make_env,          g_make_env_w,           0, 0, 1, H_make_env,         star_sig(S_is_env));
   Xen_define_typed_procedure(S_make_polywave,     g_make_polywave_w,      0, 0, 1, H_make_polywave,    star_sig(S_is_polywave));
+  Xen_define_typed_procedure(S_make_polyshape,    g_make_polyshape_w,     0, 0, 1, H_make_polyshape,   star_sig(S_is_polyshape));
   Xen_define_typed_procedure(S_make_oscil,        g_make_oscil_w,         0, 4, 0, H_make_oscil,       star_sig(S_is_oscil));
   Xen_define_typed_procedure(S_make_ssb_am,       g_make_ssb_am_w,        0, 4, 0, H_make_ssb_am,      star_sig(S_is_ssb_am)); 
   Xen_define_typed_procedure(S_make_ncos,         g_make_ncos_w,          0, 4, 0, H_make_ncos,        star_sig(S_is_ncos)); 
@@ -12683,6 +13377,14 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_make_rand,         g_make_rand_w,          0, 0, 1, H_make_rand,	       star_sig(S_is_rand));
   Xen_define_typed_procedure(S_make_rand_interp,  g_make_rand_interp_w,   0, 0, 1, H_make_rand_interp, star_sig(S_is_rand_interp));
   Xen_define_typed_procedure(S_make_src,          g_make_src_w,           0, 6, 0, H_make_src,         star_sig(S_is_src));
+  Xen_define_typed_procedure(S_make_table_lookup, g_make_table_lookup_w,  0, 0, 1, H_make_table_lookup,star_sig(S_is_table_lookup));
+  Xen_define_typed_procedure(S_make_filter,       g_make_filter_w,        0, 6, 0, H_make_filter,      star_sig(S_is_filter));
+  Xen_define_typed_procedure(S_make_fir_filter,   g_make_fir_filter_w,    0, 4, 0, H_make_fir_filter,  star_sig(S_is_fir_filter));
+  Xen_define_typed_procedure(S_make_iir_filter,   g_make_iir_filter_w,    0, 4, 0, H_make_iir_filter,  star_sig(S_is_iir_filter));
+  Xen_define_typed_procedure(S_make_wave_train,   g_make_wave_train_w,    0, 0, 1, H_make_wave_train,  star_sig(S_is_wave_train));
+  Xen_define_typed_procedure(S_make_phase_vocoder,g_make_phase_vocoder_w, 0, 0, 1, H_make_phase_vocoder, star_sig(S_is_phase_vocoder));
+  Xen_define_typed_procedure(S_make_granulate,    g_make_granulate_w,     0, 0, 1, H_make_granulate,   star_sig(S_is_granulate));
+  Xen_define_typed_procedure(S_make_locsig,       g_make_locsig_w,        0, 0, 1, H_make_locsig,      star_sig(S_is_locsig));
 #endif
 
   Xen_define_typed_procedure(S_make_oscil_bank,         g_make_oscil_bank_w,        2, 2, 0, H_make_oscil_bank,	
