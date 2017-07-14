@@ -13593,7 +13593,7 @@ static s7_pointer s7_truncate(s7_scheme *sc, s7_pointer caller, s7_double xf)   
   return(make_integer(sc, (s7_int)ceil(xf)));
 }
 
-static s7_int c_quo_int(s7_scheme *sc, s7_int x, s7_int y)
+static inline s7_int c_quo_int(s7_scheme *sc, s7_int x, s7_int y)
 {
   if (y == 0)
     division_by_zero_error(sc, sc->quotient_symbol, set_elist_2(sc, make_integer(sc, x), make_integer(sc, y)));
@@ -13622,6 +13622,8 @@ static s7_double c_quo_dbl(s7_scheme *sc, s7_double x, s7_double y)
 }
 
 static s7_int quotient_i_ii(s7_int i1, s7_int i2) {return(c_quo_int(cur_sc, i1, i2));}
+static s7_int quotient_i_ii_direct(s7_int i1, s7_int i2) {return(i1 / i2);} /* i2 > 0 */
+
 static s7_double quotient_d_dd(s7_double x1, s7_double x2) 
 {
   if ((is_inf(x1)) || (is_NaN(x1)))
@@ -13749,7 +13751,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_int c_rem_int(s7_scheme *sc, s7_int x, s7_int y)
+static inline s7_int c_rem_int(s7_scheme *sc, s7_int x, s7_int y)
 {
   if (y == 0)
     division_by_zero_error(sc, sc->remainder_symbol, set_elist_2(sc, make_integer(sc, x), make_integer(sc, y)));
@@ -13777,6 +13779,8 @@ static s7_double c_rem_dbl(s7_scheme *sc, s7_double x, s7_double y)
 }
 
 static s7_int remainder_i_ii(s7_int i1, s7_int i2) {return(c_rem_int(cur_sc, i1, i2));}
+static s7_int remainder_i_ii_direct(s7_int i1, s7_int i2) {return(i1 % i2);} /* i2 > 1 */
+
 static s7_double remainder_d_dd(s7_double x1, s7_double x2) 
 {
   if ((is_inf(x1)) || (is_NaN(x1)))
@@ -19751,9 +19755,21 @@ static bool logbit_b_ii(s7_int i1, s7_int i2)
 {
   if (i2 < 0)
     simple_out_of_range(cur_sc, cur_sc->logbit_symbol, make_integer(cur_sc, i2), its_negative_string);
-  if (i1 >= s7_int_bits)
+  if (i2 >= s7_int_bits)
     return(i1 < 0);
-  return((((long long int)(1LL << i2)) & i1) != 0);
+  return((((long long int)(1LL << (long long int)i2)) & (long long int)i1) != 0);
+}
+
+static bool logbit_b_pp(s7_pointer p1, s7_pointer p2)
+{
+  if (is_integer(p1))
+    {
+      if (is_integer(p2))
+	return(logbit_b_ii(integer(p1), integer(p2)));
+      simple_wrong_type_argument(cur_sc, cur_sc->logbit_symbol, p2, T_INTEGER);
+    }
+  simple_wrong_type_argument(cur_sc, cur_sc->logbit_symbol, p1, T_INTEGER);
+  return(false);
 }
 
 
@@ -19806,6 +19822,7 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 static s7_int ash_i_ii(s7_int i1, s7_int i2) {return(c_ash(cur_sc, i1, i2));}
 static s7_int rsh_i_ii_direct(s7_int i1, s7_int i2) {return(i1 >> (-i2));}
 static s7_int lsh_i_ii_direct(s7_int i1, s7_int i2) {return(i1 << i2);}
+static s7_int rsh_i_i2_direct(s7_int i1, s7_int i2) {return(i1 >> 1);}
 
 
 /* ---------------------------------------- random ---------------------------------------- */
@@ -46234,7 +46251,6 @@ static s7_int opt_i_pi_sf(void *p)
 static bool i_pi_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer car_x)
 {
   s7_i_pi_t pfunc;
-
   pfunc = s7_i_pi_function(s_func);
   if (pfunc)
     {
@@ -46446,11 +46462,34 @@ static bool i_ii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 			      if ((car(car_x) == sc->modulo_symbol) &&
 				  (integer(arg2) > 1))
 				opc->v3.i_ii_f = modulo_i_ii_direct;
-			      if (car(car_x) == sc->ash_symbol)
+			      else
 				{
-				  if (integer(arg2) < 0)
-				    opc->v3.i_ii_f = rsh_i_ii_direct;
-				  else opc->v3.i_ii_f = lsh_i_ii_direct;
+				  if (car(car_x) == sc->ash_symbol)
+				    {
+				      if (opc->v2.i < 0)
+					{
+					  if (opc->v2.i == -1)
+					    opc->v3.i_ii_f = rsh_i_i2_direct;
+					  else opc->v3.i_ii_f = rsh_i_ii_direct;
+					}
+				      else opc->v3.i_ii_f = lsh_i_ii_direct;
+				    }
+				  else
+				    {
+				      if (opc->v2.i > 0)
+					{
+					  if (opc->v3.i_ii_f == quotient_i_ii)
+					    opc->v3.i_ii_f = quotient_i_ii_direct;
+					  else
+					    {
+					      if (opc->v2.i > 1)
+						{
+						  if (opc->v3.i_ii_f == remainder_i_ii)
+						    opc->v3.i_ii_f = remainder_i_ii_direct;
+						}
+					    }
+					}
+				      }
 				}
 #endif
 			      return(true);
@@ -46485,7 +46524,22 @@ static bool i_ii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 		      if (int_optimize(sc, cdr(car_x)))
 			{
 			  if (!i_ii_fc_combinable(sc, opc))
-			    opc->v7.fi = opt_i_ii_fc;
+			    {
+			      if (opc->v2.i > 0)
+				{
+				  if (opc->v3.i_ii_f == quotient_i_ii)
+				    opc->v3.i_ii_f = quotient_i_ii_direct;
+				  else
+				    {
+				      if (opc->v2.i > 1)
+					{
+					  if (opc->v3.i_ii_f == remainder_i_ii)
+					    opc->v3.i_ii_f = remainder_i_ii_direct;
+					}
+				    }
+				}
+			      opc->v7.fi = opt_i_ii_fc;
+			    }
 			  return(true);
 			}
 		      pc_fallback(sc, start);
@@ -49579,24 +49633,49 @@ static s7_pointer opt_p_ii_ss(void *p)
   return(o->v3.p_ii_f(integer(slot_value(o->v1.p)), integer(slot_value(o->v2.p))));
 }
 
+static s7_pointer opt_p_ii_fs(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  o1 = cur_sc->opts[++cur_sc->pc];
+  return(o->v3.p_ii_f(o1->v7.fi(o1), integer(slot_value(o->v2.p))));
+}
+
 static bool p_ii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer car_x)
 {
   s7_p_ii_t ifunc;
   ifunc = s7_p_ii_function(s_func);
-  if ((ifunc) &&
-      (is_symbol(cadr(car_x))) &&
-      (is_symbol(caddr(car_x))))
+  if (ifunc)
     {
-      opc->v1.p = find_symbol(sc, cadr(car_x));
-      opc->v2.p = find_symbol(sc, caddr(car_x));
-      if ((is_slot(opc->v1.p)) &&
-	  (is_opt_int(slot_value(opc->v1.p))) &&
-	  (is_slot(opc->v2.p)) &&
-	  (is_opt_int(slot_value(opc->v2.p))))
+      s7_pointer arg1, arg2;
+      arg1 = cadr(car_x);
+      arg2 = caddr(car_x);
+      if ((is_symbol(arg1)) &&
+	  (is_symbol(arg2)))
 	{
-	  opc->v3.p_ii_f = ifunc;
-	  opc->v7.fp = opt_p_ii_ss;
-	  return(true);
+	  opc->v1.p = find_symbol(sc, arg1);
+	  opc->v2.p = find_symbol(sc, arg2);
+	  if ((is_slot(opc->v1.p)) &&
+	      (is_opt_int(slot_value(opc->v1.p))) &&
+	      (is_slot(opc->v2.p)) &&
+	      (is_opt_int(slot_value(opc->v2.p))))
+	    {
+	      opc->v3.p_ii_f = ifunc;
+	      opc->v7.fp = opt_p_ii_ss;
+	      return(true);
+	    }
+	}
+      if ((int_optimize(sc, cdr(car_x))) &&
+	  (is_symbol(arg2)))
+	{
+	  opc->v2.p = find_symbol(sc, arg2);
+	  if ((is_slot(opc->v2.p)) &&
+	      (is_opt_int(slot_value(opc->v2.p))))
+	    {
+	      opc->v3.p_ii_f = ifunc;
+	      opc->v7.fp = opt_p_ii_fs;
+	      return(true);
+	    }
 	}
     }
   return(false);
@@ -53918,22 +53997,29 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
       if (!pair_no_opt(body))
 	{
 	  s7_function func;
-	  s7_pointer slot, old_e;
+	  s7_pointer slot, old_e, seq;
 
 	  old_e = sc->envir;
 	  sc->envir = new_frame_in_env(sc, sc->envir);
-	  slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
-
+	  seq = cadr(args);
+	  if (is_pair(seq))
+	    slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
+	  else
+	    {
+	      if (is_float_vector(seq))
+		slot = make_slot_1(sc, sc->envir, car(closure_args(f)), real_zero);
+	      else slot = make_slot_1(sc, sc->envir, car(closure_args(f)), (is_int_vector(seq)) ? small_int(0) : sc->F);
+	    }
 	  if (is_null(cdr(body)))
 	    func = s7_optimize_nr(sc, body);
 	  else func = s7_cell_optimize(sc, cons(sc, cons(sc, sc->begin_symbol, body), sc->nil), true);
 
 	  if (func)
 	    {
-	      if (is_pair(cadr(args)))
+	      if (is_pair(seq))
 		{
 		  s7_pointer x, y;
-		  for (x = cadr(args), y = x; is_pair(x); )
+		  for (x = seq, y = x; is_pair(x); )
 		    {
 		      slot_set_value(slot, car(x));
 		      func(sc, expr);
@@ -53951,22 +54037,80 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 		}
 	      else
 		{
-		  s7_pointer iter;
-		  sc->z = cadr(args);
-		  if (!is_iterator(sc->z))
-		    sc->z = s7_make_iterator(sc, sc->z);
-		  iter = sc->z;
-		  push_stack(sc, OP_GC_PROTECT, iter, f);
-		  sc->z = sc->nil;
-		  while (true)
+		  if (is_float_vector(seq))
 		    {
-		      slot_set_value(slot, s7_iterate(sc, iter));
-		      if (iterator_is_at_end(iter))
+		      s7_double *vals;
+		      s7_int i, len;
+		      len = vector_length(seq);
+		      vals = float_vector_elements(seq);
+		      for (i = 0; i < len; i++)
 			{
-			  sc->stack_end -= 4;
+			  slot_set_value(slot, make_real(sc, vals[i]));
+			  func(sc, expr);
+			}
+		      return(sc->unspecified);
+		    }
+		  else
+		    {
+		      /* if no set! vector|list|let|hash-table-set! set-car!|cdr! mutable arg? */
+		      if (is_int_vector(seq))
+			{
+			  s7_int *vals;
+			  s7_int i, len;
+			  len = vector_length(seq);
+			  vals = int_vector_elements(seq);
+
+			  if (len > 1000)
+			    {
+			      clear_symbol_list(sc);
+			      add_symbol_to_list(sc, sc->set_symbol);
+			      add_symbol_to_list(sc, sc->vector_set_symbol);
+			      add_symbol_to_list(sc, sc->list_set_symbol);
+			      add_symbol_to_list(sc, sc->let_set_symbol);
+			      add_symbol_to_list(sc, sc->hash_table_set_symbol);
+			      add_symbol_to_list(sc, sc->set_car_symbol);
+			      add_symbol_to_list(sc, sc->set_cdr_symbol);
+			      if (!tree_set_memq(sc, body))
+				{
+				  s7_pointer sv;
+				  sv = make_mutable_integer(sc, 0);
+				  slot_set_value(slot, sv);
+				  for (i = 0; i < len; i++)
+				    {
+				      integer(sv) = vals[i];
+				      func(sc, expr);
+				    }
+				  return(sc->unspecified);
+				}
+			    }
+
+			  for (i = 0; i < len; i++)
+			    {
+			      slot_set_value(slot, make_integer(sc, vals[i]));
+			      func(sc, expr);
+			    }
 			  return(sc->unspecified);
 			}
-		      func(sc, expr);
+		      else
+			{
+			  s7_pointer iter;
+			  sc->z = seq;
+			  if (!is_iterator(sc->z))
+			    sc->z = s7_make_iterator(sc, sc->z);
+			  iter = sc->z;
+			  push_stack(sc, OP_GC_PROTECT, iter, f);
+			  sc->z = sc->nil;
+			  while (true)
+			    {
+			      slot_set_value(slot, s7_iterate(sc, iter));
+			      if (iterator_is_at_end(iter))
+				{
+				  sc->stack_end -= 4;
+				  return(sc->unspecified);
+				}
+			      func(sc, expr);
+			    }
+			}
 		    }
 		}
 	    }
@@ -81752,6 +81896,7 @@ s7_scheme *s7_init(void)
   s7_set_b_dd_function(slot_value(global_slot(sc->geq_symbol)), geq_b_dd);
 
 #if (!WITH_GMP)
+  s7_set_b_pp_function(slot_value(global_slot(sc->logbit_symbol)), logbit_b_pp);
   s7_set_p_pp_function(slot_value(global_slot(sc->eq_symbol)), equal_p_pp);
   s7_set_p_pi_function(slot_value(global_slot(sc->eq_symbol)), equal_p_pi);
   s7_set_p_pp_function(slot_value(global_slot(sc->lt_symbol)), less_p_pp);
@@ -82057,6 +82202,8 @@ int main(int argc, char **argv)
  * there are uses of unscramble in region/snd/dac/select
  *
  * lint: as in random-gen, move internally created but unchanged sequences (lists) out of the body
+ *       (truncate (/ x y)) -> (quotient x y) if ints already?
+ *       (- x (* y (truncate (/ x y)))) -> (remainder x y)
  *
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
@@ -82104,23 +82251,23 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1064
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
  * teq           |      |      | 6612 || 2777 | 2129  1978  1997
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2318 2305
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2318
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437
  * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2730
  * lint          |      |      |      || 4041 | 3376  3114  3004
  * lg            |      |      |      || 211  | 161   149   144.4
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3020
- * tmap          |      |      |  9.3 || 4365 | 3750  3104  3055
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3104
  * tform         |      |      | 6816 || 3714 | 3530  3361  3279
- * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3984
+ * tmap          |      |      |      || 5279 |       3939  3444
+ * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963
  * tsort         |      |      |      || 8584 | 4869  4080  4012
  * titer         |      |      |      || 5971 | 5224  4768  4719
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7813
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.9
- *                                    || 145  | 135   132   94.1
+ *                                    || 145  | 135   132   93.8
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.

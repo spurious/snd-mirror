@@ -524,7 +524,7 @@
 		    
 		    ((not (pair? obj))
 		     (write obj port))
-		    
+
 		    ((hash-table-ref writers (car obj)) 
 		     => (lambda (f) (f obj port column)))
 		    

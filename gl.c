@@ -4455,7 +4455,7 @@ static void define_functions(void)
 {
 #if HAVE_SCHEME
 static s7_pointer s_boolean, s_integer, s_real, s_any;
-static s7_pointer pl_t, pl_bit, pl_bi, pl_ttri, pl_ttit, pl_ttr, pl_ttir, pl_ttb, pl_tti, pl_ttiti, pl_ttrriir, pl_ttititiiti, pl_ttititi, pl_ttrri, pl_ttrrri, pl_pit, pl_piiit, pl_piit, pl_prrrt, pl_prrrrtttrrt, pl_i, pl_tiiit, pl_tiirrrrt, pl_tiiiit, pl_tiiiiiiit, pl_tiiiiiiiit, pl_tirriit, pl_tirriirriit, pl_tirrir, pl_tir, pl_tiit, pl_tit, pl_tiiiiiiiiit, pl_tiiiiiiiiiit, pl_tiiib, pl_ti, pl_tiiiiiit, pl_tiir, pl_tiiiiit, pl_tibiit, pl_tiib, pl_trrrrt, pl_tr, pl_tb, pl_bt, pl_iiiiitiiit, pl_iiiiiiiit, pl_iiiiiiiiiiit, pl_iiiiiiit, pl_iiiiiiiiiit, pl_iiiiiit, pl_iiiiiiiiit;
+static s7_pointer pl_t, pl_pit, pl_piiit, pl_ttri, pl_ttit, pl_ttr, pl_ttir, pl_ttb, pl_tti, pl_ttiti, pl_ttrriir, pl_ttititiiti, pl_ttititi, pl_ttrri, pl_ttrrri, pl_piit, pl_tb, pl_bt, pl_prrrt, pl_prrrrtttrrt, pl_iiiiitiiit, pl_iiiiiiiit, pl_iiiiiiiiiiit, pl_iiiiiiit, pl_iiiiiiiiiit, pl_iiiiiit, pl_iiiiiiiiit, pl_i, pl_tiiit, pl_tiirrrrt, pl_tiiiit, pl_tiiiiiiit, pl_tiiiiiiiit, pl_tirriit, pl_tirriirriit, pl_tirrir, pl_tir, pl_tiit, pl_tit, pl_tiiiiiiiiit, pl_tiiiiiiiiiit, pl_tiiib, pl_ti, pl_tiiiiiit, pl_tiir, pl_tiiiiit, pl_tibiit, pl_tiib, pl_bit, pl_bi, pl_trrrrt, pl_tr;
 #if USE_MOTIF
 static s7_pointer pl_tttti, pl_ttttb, pl_pttit, pl_pt;
 #endif
@@ -4466,8 +4466,8 @@ static s7_pointer pl_tttti, pl_ttttb, pl_pttit, pl_pt;
   s_any = s7_t(s7);
 
   pl_t = s7_make_circular_signature(s7, 0, 1, s_any);
-  pl_bit = s7_make_circular_signature(s7, 2, 3, s_boolean, s_integer, s_any);
-  pl_bi = s7_make_circular_signature(s7, 1, 2, s_boolean, s_integer);
+  pl_pit = s7_make_circular_signature(s7, 2, 3, s_any, s_integer, s_any);
+  pl_piiit = s7_make_circular_signature(s7, 4, 5, s_any, s_integer, s_integer, s_integer, s_any);
   pl_ttri = s7_make_circular_signature(s7, 3, 4, s_any, s_any, s_real, s_integer);
   pl_ttit = s7_make_circular_signature(s7, 3, 4, s_any, s_any, s_integer, s_any);
   pl_ttr = s7_make_circular_signature(s7, 2, 3, s_any, s_any, s_real);
@@ -4480,11 +4480,18 @@ static s7_pointer pl_tttti, pl_ttttb, pl_pttit, pl_pt;
   pl_ttititi = s7_make_circular_signature(s7, 6, 7, s_any, s_any, s_integer, s_any, s_integer, s_any, s_integer);
   pl_ttrri = s7_make_circular_signature(s7, 4, 5, s_any, s_any, s_real, s_real, s_integer);
   pl_ttrrri = s7_make_circular_signature(s7, 5, 6, s_any, s_any, s_real, s_real, s_real, s_integer);
-  pl_pit = s7_make_circular_signature(s7, 2, 3, s_any, s_integer, s_any);
-  pl_piiit = s7_make_circular_signature(s7, 4, 5, s_any, s_integer, s_integer, s_integer, s_any);
   pl_piit = s7_make_circular_signature(s7, 3, 4, s_any, s_integer, s_integer, s_any);
+  pl_tb = s7_make_circular_signature(s7, 1, 2, s_any, s_boolean);
+  pl_bt = s7_make_circular_signature(s7, 1, 2, s_boolean, s_any);
   pl_prrrt = s7_make_circular_signature(s7, 4, 5, s_any, s_real, s_real, s_real, s_any);
   pl_prrrrtttrrt = s7_make_circular_signature(s7, 10, 11, s_any, s_real, s_real, s_real, s_real, s_any, s_any, s_any, s_real, s_real, s_any);
+  pl_iiiiitiiit = s7_make_circular_signature(s7, 9, 10, s_integer, s_integer, s_integer, s_integer, s_integer, s_any, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiiit = s7_make_circular_signature(s7, 8, 9, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiiiiiit = s7_make_circular_signature(s7, 11, 12, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiit = s7_make_circular_signature(s7, 7, 8, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiiiiit = s7_make_circular_signature(s7, 10, 11, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiit = s7_make_circular_signature(s7, 6, 7, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiiiit = s7_make_circular_signature(s7, 9, 10, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
   pl_i = s7_make_circular_signature(s7, 0, 1, s_integer);
   pl_tiiit = s7_make_circular_signature(s7, 4, 5, s_any, s_integer, s_integer, s_integer, s_any);
   pl_tiirrrrt = s7_make_circular_signature(s7, 7, 8, s_any, s_integer, s_integer, s_real, s_real, s_real, s_real, s_any);
@@ -4506,17 +4513,10 @@ static s7_pointer pl_tttti, pl_ttttb, pl_pttit, pl_pt;
   pl_tiiiiit = s7_make_circular_signature(s7, 6, 7, s_any, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
   pl_tibiit = s7_make_circular_signature(s7, 5, 6, s_any, s_integer, s_boolean, s_integer, s_integer, s_any);
   pl_tiib = s7_make_circular_signature(s7, 3, 4, s_any, s_integer, s_integer, s_boolean);
+  pl_bit = s7_make_circular_signature(s7, 2, 3, s_boolean, s_integer, s_any);
+  pl_bi = s7_make_circular_signature(s7, 1, 2, s_boolean, s_integer);
   pl_trrrrt = s7_make_circular_signature(s7, 5, 6, s_any, s_real, s_real, s_real, s_real, s_any);
   pl_tr = s7_make_circular_signature(s7, 1, 2, s_any, s_real);
-  pl_tb = s7_make_circular_signature(s7, 1, 2, s_any, s_boolean);
-  pl_bt = s7_make_circular_signature(s7, 1, 2, s_boolean, s_any);
-  pl_iiiiitiiit = s7_make_circular_signature(s7, 9, 10, s_integer, s_integer, s_integer, s_integer, s_integer, s_any, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiiit = s7_make_circular_signature(s7, 8, 9, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiiiiiit = s7_make_circular_signature(s7, 11, 12, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiit = s7_make_circular_signature(s7, 7, 8, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiiiiit = s7_make_circular_signature(s7, 10, 11, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiit = s7_make_circular_signature(s7, 6, 7, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiiiit = s7_make_circular_signature(s7, 9, 10, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
 
 #if USE_MOTIF
   pl_tttti = s7_make_circular_signature(s7, 4, 5, s_any, s_any, s_any, s_any, s_integer);
@@ -5731,7 +5731,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("05-May-17"));
+      Xen_define("gl-version", C_string_to_Xen_string("12-Jul-17"));
       gl_already_inited = true;
     }
 }

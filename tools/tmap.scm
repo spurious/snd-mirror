@@ -310,10 +310,77 @@
   (fe13 size)
   (fe13 1))
 
+
+;;; this is a revision of some code posted in comp.lang.lisp by melzzzzz for euler project 512
+;;;   apparently sbcl computes the big case (below) in "about a minute" -- well, so does s7!
+
+(define (make-boolean-vector n)
+  (make-int-vector (ceiling (/ n 63))))
+
+(define-expansion (boolean-vector-ref v n)
+  `(logbit? (int-vector-ref ,v (quotient ,n 63)) (remainder ,n 63)))
+
+(define-expansion (boolean-vector-set! v n)
+  `(int-vector-set! ,v (quotient ,n 63)
+		    (logior (int-vector-ref ,v (quotient ,n 63))
+			    (ash 1 (remainder ,n 63)))))
+
+(define (odd-get n)
+  (let* ((visited-range (+ (ash n -1) 1))
+	 (visited (make-boolean-vector visited-range))
+	 (sqrt-n (+ (floor (sqrt n)) 1)))
+    (do ((i 3 (+ i 2)))
+	((>= i sqrt-n))
+      (unless (boolean-vector-ref visited (ash i -1))
+	(do ((j (ash (* i i) -1) (+ j i)))
+	    ((>= j visited-range))
+	  (boolean-vector-set! visited j))))
+    (let ((rc (make-int-vector (+ n 1) 0))
+	  (rcp 0)
+	  (lim (+ n 1)))
+      (do ((i 3 (+ i 2)))
+	  ((= i lim) (copy rc (make-int-vector rcp)))
+	(unless (boolean-vector-ref visited (ash i -1))
+	  (int-vector-set! rc rcp i)
+	  (set! rcp (+ rcp 1)))))))
+
+(define (getr n)
+  (let* ((odd-bound (ash (+ n 1) -1))
+	 (prime-list (odd-get n))
+	 (result (make-int-vector odd-bound 0))
+	 (resp 0))
+    (do ((i 0 (+ i 1)))
+	((= i odd-bound))
+      (int-vector-set! result i (+ (* 2 i) 1)))
+
+    (for-each (lambda (prime)
+		(do ((j prime (+ j (* 2 prime))))
+		    ((>= j n))
+		  (int-vector-set! result (ash j -1)
+			       (* (quotient (int-vector-ref result (ash j -1)) prime)
+				  (- prime 1)))))
+	      prime-list)
+      
+    (let ((sum 0))
+      (do ((i 0 (+ i 1)))
+	  ((= i odd-bound) sum)
+	(set! sum (+ sum (int-vector-ref result i)))))))
+
+(let ((r (getr 100)))
+  (unless (= r 2007)
+    (display r)
+    (newline)))
+
+(let ((r (getr 500000)))
+  (unless (= r 50660660193)
+    (display r)
+    (newline)))
+
+;;; (display (getr 500000000)) ;50660591862310323
+
+;;; unsafe, strings, precheck types in vect cases
+
+
 (s7-version)
 (exit)
 
-
-
-
-;;; unsafe, strings, precheck types in vect cases

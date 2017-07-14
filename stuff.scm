@@ -2257,3 +2257,4 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			       (apply format #f (cadr args)))
 			     (lambda args
 			       (copy "?"))))))))))))
+
