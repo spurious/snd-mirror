@@ -1749,9 +1749,20 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
     }
   else
     {
+      mus_float_t (*runf1)(mus_any *gen, mus_float_t arg);
       samples_to_vct_with_reader(dur, idata, sf);
-      for (k = 0; k < dur; k++)
-	idata[k] = runf(gen, idata[k], 0.0);
+
+      runf1 = mus_run1_function(gen);
+      if (runf1)
+	{
+	  for (k = 0; k < dur; k++)
+	    idata[k] = runf1(gen, idata[k]);
+	}
+      else
+	{
+	  for (k = 0; k < dur; k++)
+	    idata[k] = runf(gen, idata[k], 0.0);
+	}
       j = (int)dur;
     }
 
@@ -1986,6 +1997,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
   io_error_t io_err = IO_NO_ERROR;
   mus_any *g = NULL;
   mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
+  mus_float_t (*runf1)(mus_any *gen, mus_float_t arg);
   
   if (!(is_editable(cp))) return(NULL);
   sp = cp->sound;
@@ -2055,13 +2067,21 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
     dur -= order;
 
   runf = mus_run_function(g);
-
+  runf1 = mus_run1_function(g);
   if (!temp_file)
     {
       if (sf->runf == next_sample_value_unscaled)
 	{
-	  for (j = 0; j < dur; j++)
-	    idata[j] = runf(g, (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++], 0.0);
+	  if (runf1)
+	    {
+	      for (j = 0; j < dur; j++)
+		idata[j] = runf1(g, (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++]);
+	    }
+	  else
+	    {
+	      for (j = 0; j < dur; j++)
+		idata[j] = runf(g, (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++], 0.0);
+	    }
 	}
       else
 	{
@@ -2079,8 +2099,16 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 
 	  if (sf->runf == next_sample_value_unscaled)
 	    {
-	      for (j = 0; j < kdur; j++)
-		idata[j] = runf(g, (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++], 0.0);
+	      if (runf1)
+		{
+		  for (j = 0; j < kdur; j++)
+		    idata[j] = runf1(g, (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++]);
+		}
+	      else
+		{
+		  for (j = 0; j < kdur; j++)
+		    idata[j] = runf(g, (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++], 0.0);
+		}
 	    }
 	  else
 	    {

@@ -16502,6 +16502,66 @@ mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_
   return(NULL);
 }
 
+mus_float_t (*mus_run1_function(mus_any *g))(mus_any *gen, mus_float_t arg)
+{
+  if (g)
+    {
+      switch (g->core->type)
+	{
+	case MUS_FILTER:
+	case MUS_FIR_FILTER:
+	case MUS_IIR_FILTER:    return(((flt *)g)->filtw);
+
+	case MUS_FORMANT:       return(mus_formant);
+	case MUS_FIRMANT:       return(mus_firmant);
+	  
+	case MUS_ONE_POLE:      return(mus_one_pole);
+	case MUS_ONE_ZERO:      return(mus_one_zero);
+	case MUS_TWO_POLE:      return(mus_two_pole);
+	case MUS_TWO_ZERO:      return(mus_two_zero);
+	case MUS_ONE_POLE_ALL_PASS: return(((onepall *)g)->f);
+
+	case MUS_DELAY:         return(mus_delay_unmodulated);
+	case MUS_COMB:          return(mus_comb_unmodulated);
+	case MUS_NOTCH:         return(mus_notch_unmodulated);
+	case MUS_ALL_PASS:      return(mus_all_pass_unmodulated);
+
+	case MUS_TRIANGLE_WAVE: return(mus_triangle_wave);
+	case MUS_SAWTOOTH_WAVE: return(mus_sawtooth_wave);
+	case MUS_SQUARE_WAVE:   return(mus_square_wave);
+	case MUS_PULSE_TRAIN:   return(mus_pulse_train);
+	case MUS_PULSED_ENV:    return(mus_pulsed_env);
+	  
+	case MUS_OSCIL:         return(mus_oscil_fm);
+	case MUS_NCOS:          return(mus_ncos);
+	case MUS_NSIN:          return(mus_nsin);
+	case MUS_NRXYCOS:       return(mus_ncos);
+	case MUS_NRXYSIN:       return(mus_nsin);
+	case MUS_RXYKCOS:       return(mus_ncos);
+	case MUS_RXYKSIN:       return(mus_nsin);
+
+	case MUS_TABLE_LOOKUP:  return(((tbl *)g)->tbl_look);
+	case MUS_POLYWAVE:      return(((pw *)g)->polyw);
+	  
+	case MUS_WAVE_TRAIN:    return(mus_wave_train);
+	case MUS_COMB_BANK:     return(((cmb_bank *)g)->cmbf);
+	case MUS_ALL_PASS_BANK: return(((allp_bank *)g)->apf);
+	case MUS_FILTERED_COMB_BANK: return(((fltcmb_bank *)g)->cmbf);
+	case MUS_FORMANT_BANK:  return(((frm_bank *)g)->one_input);
+
+	case MUS_MOVING_AVERAGE: return(mus_moving_average);
+	case MUS_MOVING_MAX:    return(mus_moving_max);
+	case MUS_MOVING_NORM:   return(mus_moving_norm);
+
+	case MUS_RAND:          return(mus_rand);
+	case MUS_RAND_INTERP:   return(mus_rand_interp);
+
+	case MUS_SSB_AM:        return(mus_ssb_am_unmodulated);
+	}
+    }
+  return(NULL);
+}
+
 mus_float_t mus_apply(mus_any *gen, mus_float_t f1, mus_float_t f2)
 {
   /* what about non-gen funcs such as polynomial, ring_modulate etc? */

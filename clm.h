@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 14
-#define MUS_DATE "11-Jul-17"
+#define MUS_REVISION 15
+#define MUS_DATE "13-Jul-17"
 
 /* isn't mus_env_interp backwards? */
 
@@ -139,6 +139,7 @@ MUS_EXPORT bool mus_is_fft_window(int val);
 
 MUS_EXPORT int mus_sample_type_zero(mus_sample_t samp_type);
 MUS_EXPORT mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
+MUS_EXPORT mus_float_t (*mus_run1_function(mus_any *g))(mus_any *gen, mus_float_t arg);
 
 
 /* -------- generic functions -------- */
@@ -591,6 +592,7 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
+ * 13-Jul:     mus_run1_function.
  * 11-Jul-17:  removed *clm-default-frequency*.
  * --------
  * 5-Aug:      removed some now-obsolete mus_locsig functions.

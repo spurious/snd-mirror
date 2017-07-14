@@ -14036,6 +14036,15 @@ static s7_double floor_d_d(s7_double x)
   return(floor(x));
 }
 
+static s7_int floor_i_p(s7_pointer p)
+{
+  if (is_t_integer(p)) return(s7_integer(p));
+  if (is_t_real(p)) return((s7_int)floor(real(p)));
+  if (is_t_ratio(p)) return((s7_int)(floor(fraction(p))));
+  s7_wrong_type_arg_error(cur_sc, "floor", 0, p, "a real number");
+  return(0);
+}
+
 
 /* -------------------------------- ceiling -------------------------------- */
 static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
@@ -14148,10 +14157,7 @@ static s7_double truncate_d_d(s7_double x)
   return(ceil(x));
 }
 
-static s7_int truncate_i_d(s7_double x) 
-{
-  return((s7_int)truncate_d_d(x));
-}
+static s7_int truncate_i_d(s7_double x) {return((s7_int)truncate_d_d(x));}
 
 
 /* -------------------------------- round -------------------------------- */
@@ -19798,6 +19804,8 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 }
 
 static s7_int ash_i_ii(s7_int i1, s7_int i2) {return(c_ash(cur_sc, i1, i2));}
+static s7_int rsh_i_ii_direct(s7_int i1, s7_int i2) {return(i1 >> (-i2));}
+static s7_int lsh_i_ii_direct(s7_int i1, s7_int i2) {return(i1 << i2);}
 
 
 /* ---------------------------------------- random ---------------------------------------- */
@@ -43829,6 +43837,11 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 }
 
 
+static void apply_c_function_star(s7_scheme *sc)
+{
+  sc->value = c_function_call(sc->code)(sc, set_c_function_star_args(sc));
+}
+
 s7_pointer s7_apply_function_star(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 {
   TRACK(sc);
@@ -43838,15 +43851,14 @@ s7_pointer s7_apply_function_star(s7_scheme *sc, s7_pointer fnc, s7_pointer args
 
   if (is_c_function_star(fnc))
     {
-      s7_pointer val;
       sc->w = sc->args;
       sc->z = sc->code;
       sc->args = args;
       sc->code = fnc;
-      val = c_function_call(fnc)(sc, set_c_function_star_args(sc));
+      apply_c_function_star(sc);
       sc->args = sc->w;
       sc->code = sc->z;
-      return(val);
+      return(sc->value);
     }
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
   sc->code = fnc;
@@ -45567,6 +45579,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 		return(local_x_c_sub1);
 	      if (c_call(arg) == g_if_x2)
 		return(all_x_if_x2);
+	      /* g_if_x1 doesn't happen much */
 	      if (c_call(arg) == g_and_2)
 		return(all_x_and2);
 	      if (c_call(arg) == g_or_2)
@@ -46433,6 +46446,12 @@ static bool i_ii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 			      if ((car(car_x) == sc->modulo_symbol) &&
 				  (integer(arg2) > 1))
 				opc->v3.i_ii_f = modulo_i_ii_direct;
+			      if (car(car_x) == sc->ash_symbol)
+				{
+				  if (integer(arg2) < 0)
+				    opc->v3.i_ii_f = rsh_i_ii_direct;
+				  else opc->v3.i_ii_f = lsh_i_ii_direct;
+				}
 #endif
 			      return(true);
 			    }
@@ -66326,11 +66345,6 @@ static void apply_c_any_args_function(s7_scheme *sc)                /* -------- 
   sc->value = c_function_call(sc->code)(sc, sc->args);
 }
 
-static void apply_c_function_star(s7_scheme *sc)                    /* -------- C-based function with defaults (lambda*) -------- */
-{
-  sc->value = c_function_call(sc->code)(sc, set_c_function_star_args(sc));
-}
-
 static void apply_c_macro(s7_scheme *sc)  	                    /* -------- C-based macro -------- */
 {
   int len;
@@ -68355,19 +68369,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START;
 	    }
 
-	  /* lt   1: 2645935 2: 746242 3: 102531 4: 155259
-	   * snd    15002510   3280896   1545202    659699
-	   * b       5751838    441240      7969      8443 but 6: 186868?
-	   */
-
-	  /* main 1 cases: [about 5 per]
-	   * lt   74310[case e_g else_case_2] 67361[for_each_1] 73599[cond1] 67215[map_1] 
-	   *         70814[closure_all_x] 70706[closure_aa] 68099[do_end_1] 73207[let1] 73672[cond_all_x] 70639[closure_a]
-	   * snd  70706 71734[apply closure*?] 72968[let_one_1] 67361
-	   * b    70706 73651[cond_all_x?] 73672 71734 70220[safe_closure_s] 70334[safe_closure_ss] 73697[cond_all_x_2] 73207 70639 70375 68060
-	   * lg   67361 73599 74310 67215 70814 73672 70334 70706 73207 72968 71734 68099 71983 70639 70661 73035 70391 70031
-	   */
-
 	case OP_BEGIN1:
 	  if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F);
 	BEGIN1:
@@ -68380,7 +68381,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	EVAL:
 	case OP_EVAL:
 	  /* main part of evaluation
-	   *   at this point, it's sc->code we care about; sc->args is not relevant.
+	   *   at this point, it's sc->code we care about; sc->args is not set yet.
 	   */
 	  /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
 
@@ -81623,6 +81624,7 @@ s7_scheme *s7_init(void)
   s7_set_d_p_function(slot_value(global_slot(sc->angle_symbol)), angle_d_p);
   s7_set_i_d_function(slot_value(global_slot(sc->round_symbol)), round_i_d);
   s7_set_i_d_function(slot_value(global_slot(sc->floor_symbol)), floor_i_d);
+  s7_set_i_p_function(slot_value(global_slot(sc->floor_symbol)), floor_i_p);
   s7_set_i_d_function(slot_value(global_slot(sc->truncate_symbol)), truncate_i_d);
   s7_set_i_d_function(slot_value(global_slot(sc->ceiling_symbol)), ceiling_i_d);
   s7_set_i_i_function(slot_value(global_slot(sc->random_symbol)), random_i_i);
@@ -82030,8 +82032,13 @@ int main(int argc, char **argv)
  * s7:
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
- * perhaps add various version numbers etc to *features* (snd-help) or (*s7* 'version-info)?
- * settable heap-size (or at least increasable)
+ * object->let method for clm/snd objects? and generators.scm 
+ *   what if setting a field were reflected in the original object?
+ *   clm gens work already??: (object->let (make-oscil)) ->
+ *    (inlet 'value oscil freq: 0.000Hz, phase: 0.000 'type c-object? 'length 1 'c-type 0 'let () 'class "<generator>")
+ *    sort-of: 'value is obj which is printed via mus_describe -- this is not what we actually want
+ *    perhaps in clm2xen run through all the built-in methods?
+ *    see block_methods in s7test, but this is set on every instance!
  *
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func
@@ -82047,6 +82054,7 @@ int main(int argc, char **argv)
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
  * check sndlib make (sndplay) and update tarball
+ * there are uses of unscramble in region/snd/dac/select
  *
  * lint: as in random-gen, move internally created but unchanged sequences (lists) out of the body
  *
@@ -82058,10 +82066,8 @@ int main(int argc, char **argv)
  * ruby version crashes in test 4|8 -- file_copy?
  *
  * ip for pi cases (b_ip, but it doesn't appear to happen much)
- * snd-test: if envelope-interp set! frample->file file->sample[d_p|vii] et al array-interp
  * finish the t563.scm bugs: a couple number type problems 31905 30802 
  * weed out unused stuff -- choose.data/choose: not_is_string|char, simple_char_eq, is_eq_caar_q?
- * ash if arg2 known -- forego checks, similarly quotient: i_ii_direct as in modulo (these need opt_choosers too->v7.fp)
  * map/for-each multi-expr bodies could be done in-place (rather than cons with begin)
  *   map/for-each/sort! in-place if c-func: p_pp 
  *   for-each+lambda also doable if lambda body is
@@ -82083,14 +82089,13 @@ int main(int argc, char **argv)
  * extend op_s_s business throughout (no trailers!) -- where are the most breaks? count clears in trailers?
  * unknowns: macro like quasiquote hook-function, [let-temp bindings?? (target-line-length 120) in lt] also (code (+ i 1)) (quit) (lastref 1) etc
  *   also ((lambda (x)...)...) -- the (x)!!
- * op_fa->op_fs? closure_sa|as? 
- * perhaps computed gotos for begin1/eval/opt_eval? or is switch just as fast?
- * there are uses of unscramble in region/snd/dac/select
- *   t_c_func* ops -- straight to c_fun_call+set_c_fun*_args [includes unknown* and we need tests of stuff like setters(both ways) etc]
- * (floor|truncate (/ ...)) also (ash ... -1)
+ * t_c_func* ops -- straight to c_fun_call+set_c_fun*_args [includes unknown* and we need tests of stuff like setters(both ways), sort, etc]
+ * (floor|truncate (/ ...))
  *   what are the most common combinations?  lint-> [(a (b))] or [(a (b (c))) or (a (b) (c))]? 
  *     (a (b (c (d)))) (a (b) (c) (d)) (a (b (c) (d))) etc
  *     profile data?
+ * if float|int-vector set and val is not vector, avoid univect?
+ * all_x_if_a...?
  *
  * --------------------------------------------------------------------
  *
@@ -82115,7 +82120,7 @@ int main(int argc, char **argv)
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.9
- *                                    || 145  | 135   132   94.4
+ *                                    || 145  | 135   132   94.1
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.
