@@ -313,6 +313,7 @@
 
 ;;; this is a revision of some code posted in comp.lang.lisp by melzzzzz for euler project 512
 ;;;   apparently sbcl computes the big case (below) in "about a minute" -- well, so does s7!
+;;;   53 secs sbcl, 80 in s7
 
 (define (make-boolean-vector n)
   (make-int-vector (ceiling (/ n 63))))
@@ -348,20 +349,19 @@
   (let* ((odd-bound (ash (+ n 1) -1))
 	 (prime-list (odd-get n))
 	 (result (make-int-vector odd-bound 0))
-	 (resp 0))
+	 (resp 0)
+	 (n2 (/ n 2))) ; this optimization suggested by "Peter" (in comp.lang.lisp)
     (do ((i 0 (+ i 1)))
 	((= i odd-bound))
       (int-vector-set! result i (+ (* 2 i) 1)))
 
     (for-each (lambda (prime)
-		(do ((j prime (+ j (* 2 prime))))
-		    ((>= j n))
-		  (int-vector-set! result (ash j -1)
-			       (* (quotient (int-vector-ref result (ash j -1)) prime)
-				  (- prime 1)))))
+		(do ((j (ash prime -1) (+ j prime)))
+		    ((>= j n2))
+		  (int-vector-set! result j (* (quotient (int-vector-ref result j) prime) (- prime 1)))))
 	      prime-list)
-      
-    (let ((sum 0))
+
+   (let ((sum 0))
       (do ((i 0 (+ i 1)))
 	  ((= i odd-bound) sum)
 	(set! sum (+ sum (int-vector-ref result i)))))))
@@ -377,9 +377,6 @@
     (newline)))
 
 ;;; (display (getr 500000000)) ;50660591862310323
-
-;;; unsafe, strings, precheck types in vect cases
-
 
 (s7-version)
 (exit)

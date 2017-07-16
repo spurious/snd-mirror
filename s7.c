@@ -1643,7 +1643,18 @@ static s7_scheme *cur_sc = NULL;
 /* this marks symbols that represent syntax objects, it should be in the second byte */
 #define set_syntactic_pair(p)         typeflag(_TPair(p)) = (SYNTACTIC_PAIR | (typeflag(p) & 0xffff0000))
 
-/* bit 2 currently unused */
+
+#define T_SIMPLE_ARG_DEFAULTS         (1 << (TYPE_BITS + 2))
+#define has_simple_arg_defaults(p)    ((typeflag(_TPair(p)) & T_SIMPLE_ARG_DEFAULTS) != 0)
+#define set_simple_arg_defaults(p)    typeflag(_TPair(p)) |= T_SIMPLE_ARG_DEFAULTS
+/* are all lambda* default values simple? */
+
+#define T_LIST_IN_USE                 T_SIMPLE_ARG_DEFAULTS
+#define list_is_in_use(p)             ((typeflag(_TPair(p)) & T_LIST_IN_USE) != 0)
+#define set_list_in_use(p)            typeflag(_TPair(p)) |= T_LIST_IN_USE
+#define clear_list_in_use(p)          typeflag(_TPair(p)) &= (~T_LIST_IN_USE)
+/* these could all be one permanent list, indexed from inside, and this bit is never actually protecting anything across a call */
+
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
 #define set_optimized(p)              typesflag(_TPair(p)) |= T_OPTIMIZED
@@ -1658,6 +1669,7 @@ static s7_scheme *cur_sc = NULL;
 #define T_SCOPE_SAFE                  T_OPTIMIZED
 #define is_scope_safe(p)              ((typeflag(_TFnc(p)) & T_SCOPE_SAFE) != 0)
 #define set_scope_safe(p)             typeflag(_TFnc(p)) |= T_SCOPE_SAFE
+
 
 #define T_SAFE_CLOSURE                (1 << (TYPE_BITS + 4))
 #define is_safe_closure(p)            ((typesflag(_NFre(p)) & T_SAFE_CLOSURE) != 0)
@@ -1762,6 +1774,7 @@ static s7_scheme *cur_sc = NULL;
 #define clear_simple_defaults(p)      typeflag(_TFnc(p)) &= (~T_SIMPLE_DEFAULTS)
 /* flag c_func_star arg defaults that need GC protection */
 
+
 #define T_SHARED                      (1 << (TYPE_BITS + 11))
 #define is_shared(p)                  ((typeflag(_TSeq(p)) & T_SHARED) != 0)
 #define set_shared(p)                 typeflag(_TSeq(p)) |= T_SHARED
@@ -1856,6 +1869,7 @@ static s7_scheme *cur_sc = NULL;
 #define let_removed(p)                ((typeflag(_TLet(p)) & T_LET_REMOVED) != 0)
 /* these mark objects that have been removed from the heap or checked for that possibility */
 
+
 #define T_MUTABLE                     (1 << (TYPE_BITS + 18))
 #define is_mutable(p)                 ((typeflag(_TNum(p)) & T_MUTABLE) != 0)
 /* #define set_mutable(p)             typeflag(_TNum(p)) |= T_MUTABLE */
@@ -1929,6 +1943,7 @@ static s7_scheme *cur_sc = NULL;
 #define set_has_set_fallback(p)       typeflag(_TLet(p)) |= T_HAS_SET_FALLBACK
 #define set_all_methods(p, e)         typeflag(_TLet(p)) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
 
+
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define needs_copied_args(p)          ((typeflag(_NFre(p)) & T_COPY_ARGS) != 0)
 /* this marks something that might mess with its argument list, it should not be in the second byte */
@@ -1942,16 +1957,7 @@ static s7_scheme *cur_sc = NULL;
 #define is_gensym(p)                  ((typeflag(_TSym(p)) & T_GENSYM) != 0)
 /* symbol is from gensym (GC-able etc) */
 
-#define T_SIMPLE_ARG_DEFAULTS         T_GENSYM
-#define has_simple_arg_defaults(p)    ((typeflag(_TPair(p)) & T_SIMPLE_ARG_DEFAULTS) != 0)
-#define set_simple_arg_defaults(p)    typeflag(_TPair(p)) |= T_SIMPLE_ARG_DEFAULTS
-/* are all lambda* default values simple? */
-
-#define T_LIST_IN_USE                 T_GENSYM
-#define list_is_in_use(p)             ((typeflag(_TPair(p)) & T_LIST_IN_USE) != 0)
-#define set_list_in_use(p)            typeflag(_TPair(p)) |= T_LIST_IN_USE
-#define clear_list_in_use(p)          typeflag(_TPair(p)) &= (~T_LIST_IN_USE)
-/* these could all be one permanent list, indexed from inside, and this bit is never actually protecting anything across a call */
+ /* gensym bit is ok for a pair */
 
 #define T_FUNCLET                     T_GENSYM
 #define is_funclet(p)                 ((typeflag(_TLet(p)) & T_FUNCLET) != 0)
@@ -3151,6 +3157,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_SAFE_C_op_S_opSq_q, HOP_SAFE_C_op_S_opSq_q, OP_SAFE_C_op_opSq_S_q, HOP_SAFE_C_op_opSq_S_q, 
       OP_SAFE_C_opSq_Q, HOP_SAFE_C_opSq_Q, OP_SAFE_C_opSq_QS, HOP_SAFE_C_opSq_QS,
 
+      OP_SAFE_C_STAR_A, HOP_SAFE_C_STAR_A, OP_SAFE_C_STAR_AA, HOP_SAFE_C_STAR_AA, OP_SAFE_C_STAR_ALL_X, HOP_SAFE_C_STAR_ALL_X, 
+
       OP_SAFE_QUOTE, HOP_SAFE_QUOTE,
       OP_SAFE_IFA_SS_A, HOP_SAFE_IFA_SS_A, OP_SAFE_C_P, HOP_SAFE_C_P,
 
@@ -3375,6 +3383,8 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_op_s_opsq_q", "h_safe_c_op_s_opsq_q", "safe_c_op_opsq_s_q", "h_safe_c_op_opsq_s_q",
       "safe_c_opsq_q", "h_safe_c_opsq_q", "safe_c_opsq_q_s", "h_safe_c_opsq_q_s",
       
+      "safe_c*_a", "h_safe_c*_a", "safe_c*_aa", "h_safe_c*_aa", "safe_c*_all_x", "h_safe_c*_all_x", 
+
       "safe_quote", "h_safe_quote",
       "safe_ifa_ss_a", "h_safe_ifa_ss_a", "safe_c_p", "h_safe_c_p",
 
@@ -16818,6 +16828,7 @@ static s7_double divide_d_dddd(s7_double x1, s7_double x2, s7_double x3, s7_doub
 }
 
 static s7_pointer divide_p_ii(s7_int x, s7_int y) {return(s7_make_ratio(cur_sc, x, y));} /* make-ratio checks for y==0 */
+
 
 
 /* ---------------------------------------- max/min ---------------------------------------- */
@@ -37924,135 +37935,6 @@ void s7_define_typed_function_star(s7_scheme *sc, const char *name, s7_function 
 }
 
 
-static int next_tx(s7_scheme *sc)
-{
-  sc->t_temp_ctr++;
-  if (sc->t_temp_ctr >= T_TEMPS_SIZE) sc->t_temp_ctr = 0;
-  return(sc->t_temp_ctr);
-}
-
-static s7_pointer set_c_function_star_args(s7_scheme *sc)
-{
-  int i, j, n_args;
-  s7_pointer arg, par, call_args, func;
-  s7_pointer *df;
-
-  func = sc->code;
-  n_args = c_function_all_args(func);     /* not counting keywords, I think */
-  if (is_safe_procedure(func))
-    call_args = c_function_call_args(func);
-  else 
-    {
-      int tx;
-      tx = next_tx(sc);
-      call_args = make_list(sc, c_function_optional_args(func), sc->F);
-      sc->t_temps[tx] = call_args;
-    }
-
-  /* assume at the start that there are no keywords */
-  for (i = 0, arg = sc->args, par = call_args; (i < n_args) && (is_pair(arg)); i++, arg = cdr(arg), par = cdr(par))
-    {
-      if (!is_keyword(car(arg)))
-	set_car(par, car(arg));
-      else
-	{
-	  s7_pointer kpar, karg;
-	  int ki;
-	  /* oops -- there are keywords, change scanners (much duplicated code...) */
-	  for (kpar = call_args; kpar != par; kpar = cdr(kpar))
-	    set_checked(kpar);
-	  for (; is_pair(kpar); kpar = cdr(kpar))
-	    clear_checked(kpar);
-	  df = c_function_arg_names(func);
-	  for (ki = i, karg = arg, kpar = par; (ki < n_args) && (is_pair(karg)); ki++, karg = cdr(karg), kpar = cdr(kpar))
-	    {
-	      if (!is_keyword(car(karg)))
-		{
-		  if (is_checked(kpar))
-		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(kpar), sc->args)));
-		  set_checked(kpar);
-		  set_car(kpar, car(karg));
-		}
-	      else
-		{
-		  s7_pointer p;
-		  for (j = 0, p = call_args; j < n_args; j++, p = cdr(p))
-		    if (df[j] == car(karg))
-		      break;
-		  if (j == n_args)
-		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "~A: not a parameter name?"), car(karg))));
-		  if (is_checked(p))
-		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(p), sc->args)));
-		  if (!is_pair(cdr(karg)))
-		    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, value_is_missing_string, func, car(karg))));
-		  set_checked(p);
-		  karg = cdr(karg);
-		  set_car(p, car(karg));
-		}
-	    }
-	  if (!is_null(karg))
-	    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, func, sc->args)));
-	  if (ki < n_args)
-	    {
-	      df = c_function_arg_defaults(func);
-	      if (has_simple_defaults(func))
-		{
-		  for (ki = i, kpar = par; ki < n_args; ki++, kpar = cdr(kpar))
-		    if (!is_checked(kpar))
-		      set_car(kpar, df[ki]);
-		}
-	      else
-		{
-		  for (ki = i, kpar = par; ki < n_args; ki++, kpar = cdr(kpar))
-		    if (!is_checked(kpar))
-		      {
-			s7_pointer defval;
-			defval = df[ki];
-			if (is_symbol(defval))
-			  set_car(kpar, find_symbol_checked(sc, defval));
-			else
-			  {
-			    if (is_pair(defval))
-			      set_car(kpar, s7_eval(sc, defval, sc->nil));
-			    else set_car(kpar, defval);
-			  }
-		      }
-		}
-	    }
-	  return(call_args);
-	}
-    }
-  if (!is_null(arg))
-    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, func, sc->args)));
-  if (i < n_args)
-    {
-      df = c_function_arg_defaults(func);
-      if (has_simple_defaults(func))
-	{
-	  for (; i < n_args; i++, par = cdr(par))
-	    set_car(par, df[i]);
-	}
-      else
-	{
-	  for (; i < n_args; i++, par = cdr(par))
-	    {
-	      s7_pointer defval;
-	      defval = df[i];
-	      if (is_symbol(defval))
-		set_car(par, find_symbol_checked(sc, defval));
-	      else
-		{
-		  if (is_pair(defval))
-		    set_car(par, s7_eval(sc, defval, sc->nil));
-		  else set_car(par, defval);
-		}
-	    }
-	}
-    }
-  return(call_args);
-}
-
-
 /* -------------------------------- procedure-documentation -------------------------------- */
 static s7_pointer get_doc(s7_scheme *sc, s7_pointer x)
 {
@@ -41110,6 +40992,9 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
   #define Q_append s7_make_circular_signature(sc, 0, 1, sc->T)
   s7_pointer a1;
 
+  /* it's possible to see brand-new lists at optimization time and set them to be uncopied here,
+   *   but the various overheads swamp the gain.
+   */
   if (is_null(args)) return(sc->nil);  /* (append) -> () */
   a1 = car(args);                      /* first arg determines result type unless all args but last are empty (sigh) */
   if (is_null(cdr(args))) return(a1);  /* (append <anything>) -> <anything> */
@@ -43853,6 +43738,134 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
   return(sc->value);
 }
 
+
+static int next_tx(s7_scheme *sc)
+{
+  sc->t_temp_ctr++;
+  if (sc->t_temp_ctr >= T_TEMPS_SIZE) sc->t_temp_ctr = 0;
+  return(sc->t_temp_ctr);
+}
+
+static s7_pointer set_c_function_star_args(s7_scheme *sc)
+{
+  int i, j, n_args;
+  s7_pointer arg, par, call_args, func;
+  s7_pointer *df;
+
+  func = sc->code;
+  n_args = c_function_all_args(func);     /* not counting keywords, I think */
+  if (is_safe_procedure(func))
+    call_args = c_function_call_args(func);
+  else 
+    {
+      int tx;
+      tx = next_tx(sc);
+      call_args = make_list(sc, c_function_optional_args(func), sc->F);
+      sc->t_temps[tx] = call_args;
+    }
+
+  /* assume at the start that there are no keywords */
+  for (i = 0, arg = sc->args, par = call_args; (i < n_args) && (is_pair(arg)); i++, arg = cdr(arg), par = cdr(par))
+    {
+      if (!is_keyword(car(arg)))
+	set_car(par, car(arg));
+      else
+	{
+	  s7_pointer kpar, karg;
+	  int ki;
+	  /* oops -- there are keywords, change scanners (much duplicated code...) */
+	  for (kpar = call_args; kpar != par; kpar = cdr(kpar))
+	    set_checked(kpar);
+	  for (; is_pair(kpar); kpar = cdr(kpar))
+	    clear_checked(kpar);
+	  df = c_function_arg_names(func);
+	  for (ki = i, karg = arg, kpar = par; (ki < n_args) && (is_pair(karg)); ki++, karg = cdr(karg), kpar = cdr(kpar))
+	    {
+	      if (!is_keyword(car(karg)))
+		{
+		  if (is_checked(kpar))
+		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(kpar), sc->args)));
+		  set_checked(kpar);
+		  set_car(kpar, car(karg));
+		}
+	      else
+		{
+		  s7_pointer p;
+		  for (j = 0, p = call_args; j < n_args; j++, p = cdr(p))
+		    if (df[j] == car(karg))
+		      break;
+		  if (j == n_args)
+		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "~A: not a parameter name?"), car(karg))));
+		  if (is_checked(p))
+		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, parameter_set_twice_string, car(p), sc->args)));
+		  if (!is_pair(cdr(karg)))
+		    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, value_is_missing_string, func, car(karg))));
+		  set_checked(p);
+		  karg = cdr(karg);
+		  set_car(p, car(karg));
+		}
+	    }
+	  if (!is_null(karg))
+	    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, func, sc->args)));
+	  if (ki < n_args)
+	    {
+	      df = c_function_arg_defaults(func);
+	      if (has_simple_defaults(func))
+		{
+		  for (ki = i, kpar = par; ki < n_args; ki++, kpar = cdr(kpar))
+		    if (!is_checked(kpar))
+		      set_car(kpar, df[ki]);
+		}
+	      else
+		{
+		  for (ki = i, kpar = par; ki < n_args; ki++, kpar = cdr(kpar))
+		    if (!is_checked(kpar))
+		      {
+			s7_pointer defval;
+			defval = df[ki];
+			if (is_symbol(defval))
+			  set_car(kpar, find_symbol_checked(sc, defval));
+			else
+			  {
+			    if (is_pair(defval))
+			      set_car(kpar, s7_eval(sc, defval, sc->nil));
+			    else set_car(kpar, defval);
+			  }
+		      }
+		}
+	    }
+	  return(call_args);
+	}
+    }
+  if (!is_null(arg))
+    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, func, sc->args)));
+  if (i < n_args)
+    {
+      df = c_function_arg_defaults(func);
+      if (has_simple_defaults(func))
+	{
+	  for (; i < n_args; i++, par = cdr(par))
+	    set_car(par, df[i]);
+	}
+      else
+	{
+	  for (; i < n_args; i++, par = cdr(par))
+	    {
+	      s7_pointer defval;
+	      defval = df[i];
+	      if (is_symbol(defval))
+		set_car(par, find_symbol_checked(sc, defval));
+	      else
+		{
+		  if (is_pair(defval))
+		    set_car(par, s7_eval(sc, defval, sc->nil));
+		  else set_car(par, defval);
+		}
+	    }
+	}
+    }
+  return(call_args);
+}
 
 static void apply_c_function_star(s7_scheme *sc)
 {
@@ -53885,6 +53898,19 @@ static s7_pointer make_iterators(s7_scheme *sc, s7_pointer args)
   return(safe_reverse_in_place(sc, sc->z));
 }
 
+static bool tree_has_setters(s7_scheme *sc, s7_pointer tree)
+{
+  clear_symbol_list(sc);
+  add_symbol_to_list(sc, sc->set_symbol);
+  add_symbol_to_list(sc, sc->vector_set_symbol);
+  add_symbol_to_list(sc, sc->list_set_symbol);
+  add_symbol_to_list(sc, sc->let_set_symbol);
+  add_symbol_to_list(sc, sc->hash_table_set_symbol);
+  add_symbol_to_list(sc, sc->set_car_symbol);
+  add_symbol_to_list(sc, sc->set_cdr_symbol);
+  return(tree_set_memq(sc, tree));
+}
+
 static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
@@ -54035,83 +54061,80 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 		    }
 		  return(sc->unspecified);
 		}
-	      else
+
+	      if (is_float_vector(seq))
 		{
-		  if (is_float_vector(seq))
+		  s7_double *vals;
+		  s7_int i, len;
+		  len = vector_length(seq);
+		  vals = float_vector_elements(seq);
+		  
+		  if ((len > 1000) &&
+		      (!tree_has_setters(sc, body)))
 		    {
-		      s7_double *vals;
-		      s7_int i, len;
-		      len = vector_length(seq);
-		      vals = float_vector_elements(seq);
+		      s7_pointer sv;
+		      sv = s7_make_mutable_real(sc, 0.0);
+		      slot_set_value(slot, sv);
 		      for (i = 0; i < len; i++)
 			{
-			  slot_set_value(slot, make_real(sc, vals[i]));
+			  real(sv) = vals[i];
 			  func(sc, expr);
 			}
 		      return(sc->unspecified);
 		    }
-		  else
+		  for (i = 0; i < len; i++)
 		    {
-		      /* if no set! vector|list|let|hash-table-set! set-car!|cdr! mutable arg? */
-		      if (is_int_vector(seq))
-			{
-			  s7_int *vals;
-			  s7_int i, len;
-			  len = vector_length(seq);
-			  vals = int_vector_elements(seq);
-
-			  if (len > 1000)
-			    {
-			      clear_symbol_list(sc);
-			      add_symbol_to_list(sc, sc->set_symbol);
-			      add_symbol_to_list(sc, sc->vector_set_symbol);
-			      add_symbol_to_list(sc, sc->list_set_symbol);
-			      add_symbol_to_list(sc, sc->let_set_symbol);
-			      add_symbol_to_list(sc, sc->hash_table_set_symbol);
-			      add_symbol_to_list(sc, sc->set_car_symbol);
-			      add_symbol_to_list(sc, sc->set_cdr_symbol);
-			      if (!tree_set_memq(sc, body))
-				{
-				  s7_pointer sv;
-				  sv = make_mutable_integer(sc, 0);
-				  slot_set_value(slot, sv);
-				  for (i = 0; i < len; i++)
-				    {
-				      integer(sv) = vals[i];
-				      func(sc, expr);
-				    }
-				  return(sc->unspecified);
-				}
-			    }
-
-			  for (i = 0; i < len; i++)
-			    {
-			      slot_set_value(slot, make_integer(sc, vals[i]));
-			      func(sc, expr);
-			    }
-			  return(sc->unspecified);
-			}
-		      else
-			{
-			  s7_pointer iter;
-			  sc->z = seq;
-			  if (!is_iterator(sc->z))
-			    sc->z = s7_make_iterator(sc, sc->z);
-			  iter = sc->z;
-			  push_stack(sc, OP_GC_PROTECT, iter, f);
-			  sc->z = sc->nil;
-			  while (true)
-			    {
-			      slot_set_value(slot, s7_iterate(sc, iter));
-			      if (iterator_is_at_end(iter))
-				{
-				  sc->stack_end -= 4;
-				  return(sc->unspecified);
-				}
-			      func(sc, expr);
-			    }
-			}
+		      slot_set_value(slot, make_real(sc, vals[i]));
+		      func(sc, expr);
 		    }
+		  return(sc->unspecified);
+		}
+	      
+	      /* if no set! vector|list|let|hash-table-set! set-car!|cdr! mutable arg? */
+	      if (is_int_vector(seq))
+		{
+		  s7_int *vals;
+		  s7_int i, len;
+		  len = vector_length(seq);
+		  vals = int_vector_elements(seq);
+		  
+		  if ((len > 1000) &&
+		      (!tree_has_setters(sc, body)))
+		    {
+		      s7_pointer sv;
+		      sv = make_mutable_integer(sc, 0);
+		      slot_set_value(slot, sv);
+		      for (i = 0; i < len; i++)
+			{
+			  integer(sv) = vals[i];
+			  func(sc, expr);
+			}
+		      return(sc->unspecified);
+		    }
+		  
+		  for (i = 0; i < len; i++)
+		    {
+		      slot_set_value(slot, make_integer(sc, vals[i]));
+		      func(sc, expr);
+		    }
+		  return(sc->unspecified);
+		}
+
+	      sc->z = seq;
+	      if (!is_iterator(sc->z))
+		sc->z = s7_make_iterator(sc, sc->z);
+	      seq = sc->z;
+	      push_stack(sc, OP_GC_PROTECT, seq, f);
+	      sc->z = sc->nil;
+	      while (true)
+		{
+		  slot_set_value(slot, s7_iterate(sc, seq));
+		  if (iterator_is_at_end(seq))
+		    {
+		      sc->stack_end -= 4;
+		      return(sc->unspecified);
+		    }
+		  func(sc, expr);
 		}
 	    }
 	  set_pair_no_opt(body);
@@ -58039,6 +58062,18 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
       return((is_optimized(expr)) ? OPT_T : OPT_F);
     }
 
+  if ((is_c_function_star(func)) &&
+      (all_x_count(sc, expr) == 1))
+    {
+      set_optimized(expr);
+      set_optimize_op(expr, hop + OP_SAFE_C_STAR_A);
+      annotate_args(sc, cdr(expr), e);
+      set_arglist_length(expr, small_int(1));
+      clear_overlay(expr);
+      set_c_function(expr, func);
+      return(OPT_T);
+    }
+
   if ((s7_is_vector(func)) &&
       (is_all_x_safe(sc, arg1)))
     {
@@ -58725,6 +58760,19 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  return(OPT_F);
 	}
     }
+
+  if ((is_c_function_star(func)) &&
+      (all_x_count(sc, expr) == 2))
+    {
+      set_optimized(expr);
+      set_optimize_op(expr, hop + OP_SAFE_C_STAR_AA);
+      annotate_args(sc, cdr(expr), e);
+      set_arglist_length(expr, small_int(2));
+      clear_overlay(expr);
+      set_c_function(expr, func);
+      return(OPT_T);
+    }
+
   return((is_optimized(expr)) ? OPT_T : OPT_F);
 }
 
@@ -59142,6 +59190,18 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 	}
     }
 
+  if ((is_c_function_star(func)) &&
+      (all_x_count(sc, expr) == 3))
+    {
+      set_optimized(expr);
+      set_optimize_op(expr, hop + OP_SAFE_C_STAR_ALL_X);
+      annotate_args(sc, cdr(expr), e);
+      set_arglist_length(expr, small_int(3));
+      clear_overlay(expr);
+      set_c_function(expr, func);
+      return(OPT_T);
+    }
+
   if (bad_pairs > quotes) return(OPT_F);
   return((is_optimized(expr)) ? OPT_T : OPT_F);
 }
@@ -59269,6 +59329,18 @@ static opt_t optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
       ((!has_simple_arg_defaults(closure_body(func))) ||
        (closure_star_arity_to_int(sc, func) < args)))
     return(OPT_F);
+
+  if ((is_c_function_star(func)) &&
+      (all_x_count(sc, expr) == args))
+    {
+      set_optimized(expr);
+      set_optimize_op(expr, hop + OP_SAFE_C_STAR_ALL_X);
+      annotate_args(sc, cdr(expr), e);
+      set_arglist_length(expr, make_permanent_integer(args));
+      clear_overlay(expr);
+      set_c_function(expr, func);
+      return(OPT_T);
+    }
 
   if (args < GC_TRIGGER_SIZE)
     {
@@ -70499,6 +70571,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (needs_copied_args(sc->code))
 		    sc->args = copy_list(sc, sc->args);
 		  goto APPLY;
+
+
+		case OP_SAFE_C_STAR_A:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_C_STAR_A:
+		  set_car(sc->a1_1, c_call(cdr(code))(sc, cadr(code)));
+		  sc->args = sc->a1_1;
+		  sc->code = opt_cfunc(code);
+		  apply_c_function_star(sc);
+		  goto START;
+
+		case OP_SAFE_C_STAR_AA:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_C_STAR_AA:
+		  set_car(sc->a2_1, c_call(cdr(code))(sc, cadr(code)));
+		  set_car(sc->a2_2, c_call(cddr(code))(sc, caddr(code)));
+		  sc->args = sc->a2_1;
+		  sc->code = opt_cfunc(code);
+		  apply_c_function_star(sc);
+		  goto START;
+
+		case OP_SAFE_C_STAR_ALL_X:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_C_STAR_ALL_X:
+		  {
+		    s7_pointer args, p;
+		    sc->args = safe_list_if_possible(sc, integer(arglist_length(code)));
+		    for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
+		      set_car(p, c_call(args)(sc, car(args)));
+		    clear_list_in_use(sc->args);
+		    sc->current_safe_list = 0;
+		    sc->code = opt_cfunc(code);
+		    apply_c_function_star(sc);
+		    goto START;
+		  }
 
 
 		  /* -------------------------------------------------------------------------------- */
@@ -82202,8 +82309,6 @@ int main(int argc, char **argv)
  * there are uses of unscramble in region/snd/dac/select
  *
  * lint: as in random-gen, move internally created but unchanged sequences (lists) out of the body
- *       (truncate (/ x y)) -> (quotient x y) if ints already?
- *       (- x (* y (truncate (/ x y)))) -> (remainder x y)
  *
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
@@ -82224,9 +82329,6 @@ int main(int argc, char **argv)
  * s7_macroexpand of multiple-value-set!? maybe disable values?
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
  * see g_float_vector_ref -- 3mil univects! [call/all] [all_x_c_ss and various all_x combinations]
- * macro expanded in func (optimize_lambda) -- since we have local macros, this requires a smart walker, or handling during evaluation
- *    so macro encountered in body, eval as now, but splice result into body (how to optimize spliced result? what if body removed from heap?)
- *    how to know we're in a function body?
  * need tests for cond/case in opt_dotimes_2
  * opt overhead: after optimize, fill one array with opt_infos, then march through it -- no opt* call, cur_sc->pc = index into array
  *   an array of functions, but what form
@@ -82236,13 +82338,9 @@ int main(int argc, char **argv)
  * extend op_s_s business throughout (no trailers!) -- where are the most breaks? count clears in trailers?
  * unknowns: macro like quasiquote hook-function, [let-temp bindings?? (target-line-length 120) in lt] also (code (+ i 1)) (quit) (lastref 1) etc
  *   also ((lambda (x)...)...) -- the (x)!!
- * t_c_func* ops -- straight to c_fun_call+set_c_fun*_args [includes unknown* and we need tests of stuff like setters(both ways), sort, etc]
- * (floor|truncate (/ ...))
- *   what are the most common combinations?  lint-> [(a (b))] or [(a (b (c))) or (a (b) (c))]? 
- *     (a (b (c (d)))) (a (b) (c) (d)) (a (b (c) (d))) etc
- *     profile data?
  * if float|int-vector set and val is not vector, avoid univect?
  * all_x_if_a...?
+ * opt let?
  *
  * --------------------------------------------------------------------
  *
@@ -82258,8 +82356,8 @@ int main(int argc, char **argv)
  * lg            |      |      |      || 211  | 161   149   144.4
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3020
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3104
- * tform         |      |      | 6816 || 3714 | 3530  3361  3279
- * tmap          |      |      |      || 5279 |       3939  3444
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3280
+ * tmap          |      |      |  9.3 || 5279 |       3939  3391
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963
  * tsort         |      |      |      || 8584 | 4869  4080  4012
  * titer         |      |      |      || 5971 | 5224  4768  4719

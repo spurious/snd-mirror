@@ -4836,7 +4836,7 @@
 			   (arg2 (cadr args)))
 		       (cond ((just-rationals? args) (apply - args)) ; (- 3 2) -> 1
 			     
-			     ((eqv? arg1 0) (list '- arg2))              ; (- 0 x) -> (- x)
+			     ((eqv? arg1 0) (list '- arg2))          ; (- 0 x) -> (- x)
 			     
 			     ((eqv? arg2 0) arg1)                    ; (- x 0) -> x
 			     
@@ -4845,7 +4845,7 @@
 			     ((and (len>1? arg2)
 				   (eq? (car arg2) '-))
 			      (if (null? (cddr arg2)) 
-				  (list '+ arg1 (cadr arg2))            ; (- x (- y)) -> (+ x y)
+				  (list '+ arg1 (cadr arg2))         ; (- x (- y)) -> (+ x y)
 				  (simplify-numerics `(- (+ ,arg1 ,@(cddr arg2)) ,(cadr arg2)) env))) ; (- x (- y z)) -> (- (+ x z) y)
 			     
 			     ((and (pair? arg2)                      ; (- x (+ y z)) -> (- x y z)
@@ -4878,6 +4878,19 @@
 				`(if ,(cadr arg2)
 				     ,(if (eqv? true 0) arg1 (list '- arg1 true))
 				     ,(if (eqv? true 0) (list '- arg1 false) arg1))))
+
+			     ((and (len=3? arg2)                     ; (- x (* y (quotient x y))) or reversed -> (remainder x y)
+				   (eq? (car arg2) '*)
+				   (or (and (len=3? (caddr arg2))    ; arg2 here is (* y (quotient x y)), arg1 is x
+					    (eq? (caaddr arg2) 'quotient)
+					    (equal? arg1 (cadr (caddr arg2)))
+					    (equal? (cadr arg2) (caddr (caddr arg2)))
+					    `(remainder ,arg1 ,(cadr arg2)))	    
+				       (and (len=3? (cadr arg2))      ; arg2 here is (* (quotient x y) y), arg1 is x
+					    (eq? (caadr arg2) 'quotient)
+					    (equal? arg1 (cadr (cadr arg2)))
+					    (equal? (caddr arg2) (caddr (cadr arg2)))
+					    `(remainder ,arg1 ,(caddr arg2))))))
 			     
 			     (else (cons '- args)))))
 		    (else 
@@ -5236,6 +5249,13 @@
 				(pair? (cdar args))
 				(integer? (cadar args))))
 		       (car args))
+
+		      ((and (eq? (car form) 'truncate)  ; (truncate (/ x y)) -> (quotient x y)
+			    (pair? (cdr form))
+			    (pair? (cadr form))
+			    (eq? (caadr form) '/)
+			    (len=3? (cadr form)))
+		       (cons 'quotient (cdadr form)))
 		      
 		      ((memq (caar args) '(inexact->exact exact))
 		       (list (car form) (cadar args)))

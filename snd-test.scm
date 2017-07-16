@@ -46831,4 +46831,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   337,020,228  clm.c:mus_src_to_buffer [/home/bil/motif-snd/snd]
   330,406,288  clm.c:fb_many_with_amps_c1_c2 [/home/bil/motif-snd/snd]
  
+14-Jul-17:
+39,992,822,005
+5,087,369,302  s7.c:eval'2 [/home/bil/motif-snd/snd]
+2,767,363,726  sin.c:sincos
+2,489,931,500  sin.c:__sin_avx
+1,882,891,339  sin.c:__cos_avx
+1,050,059,865  s7.c:gc [/home/bil/motif-snd/snd]
+  971,702,388  s7.c:eval [/home/bil/motif-snd/snd]
+  888,579,240  clm.c:fir_ge_20 [/home/bil/motif-snd/snd]
+  812,154,805  clm.c:mus_src [/home/bil/motif-snd/snd]
+  578,669,563  clm.c:mus_phase_vocoder_with_editors [/home/bil/motif-snd/snd]
+  540,581,915  snd-edits.c:channel_local_maxamp [/home/bil/motif-snd/snd]
+  481,331,424  clm.c:mus_env_linear [/home/bil/motif-snd/snd]
+  476,778,133  sincos.c:sincos
+  471,298,034  io.c:mus_read_any_1 [/home/bil/motif-snd/snd]
+  460,565,829  clm2xen.c:safe_out_any_2_to_mus_xen [/home/bil/motif-snd/snd]
+  400,507,324  s7.c:find_symbol_unchecked.isra.41 [/home/bil/motif-snd/snd]
+  316,839,152  clm.c:fb_one_with_amps_c1_c2 [/home/bil/motif-snd/snd]
+  296,511,570  clm.c:filter_ge_10 [/home/bil/motif-snd/snd]
+  289,431,086  s7.c:s7_make_real [/home/bil/motif-snd/snd]
+  282,377,079  s7.c:opt_dotimes [/home/bil/motif-snd/snd]
+  264,755,736  clm.c:run_hilbert [/home/bil/motif-snd/snd]
+  239,373,538  clm.c:mus_src_to_buffer [/home/bil/motif-snd/snd]
+
 |#
