@@ -869,7 +869,8 @@
 	
 
 ;;; --------------------------------------------------------------------------------
-
+#|
+;;; built-in as an experiment
 (define (exptmod a b n) ; from the net somewhere: (modulo (expt a b) n)
   (cond ((zero? b) 1)
         ((even? b) (exptmod (modulo (* a a) n) (quotient b 2) n))
@@ -878,3 +879,4 @@
 ;; (exptmod 3 100 5) 1
 ;; (exptmod 3 101 5) 3
 ;; (exptmod 3 100 3) 0
+|#

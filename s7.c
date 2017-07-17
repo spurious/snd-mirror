@@ -425,8 +425,8 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 #define T_EOF_OBJECT           5
 #define T_BOOLEAN              6
 #define T_CHARACTER            7
-#define T_SYMBOL               8
-#define T_SYNTAX               9
+#define T_SYNTAX               8
+#define T_SYMBOL               9
 
 #define T_INTEGER             10
 #define T_RATIO               11
@@ -4616,6 +4616,9 @@ static void init_mark_functions(void)
   mark_function[T_UNSPECIFIED]         = mark_noop;
   mark_function[T_NIL]                 = mark_noop;
   mark_function[T_BOOLEAN]             = mark_noop;
+  mark_function[T_SYNTAX]              = mark_noop;
+  mark_function[T_CHARACTER]           = mark_noop;
+  mark_function[T_SYMBOL]              = mark_noop; /* this changes to mark_symbol when gensyms are in the heap */
   mark_function[T_STRING]              = just_mark;
   mark_function[T_INTEGER]             = just_mark;
   mark_function[T_RATIO]               = just_mark;
@@ -4625,12 +4628,22 @@ static void init_mark_functions(void)
   mark_function[T_BIG_RATIO]           = just_mark;
   mark_function[T_BIG_REAL]            = just_mark;
   mark_function[T_BIG_COMPLEX]         = just_mark;
-  mark_function[T_SYMBOL]              = mark_noop; /* this changes to mark_symbol when gensyms are in the heap */
+  mark_function[T_RANDOM_STATE]        = just_mark;
+  mark_function[T_GOTO]                = just_mark;
+  mark_function[T_OUTPUT_PORT]         = just_mark;
+  mark_function[T_OPTLIST]             = just_mark;
+  mark_function[T_BAFFLE]              = just_mark;
+  mark_function[T_C_MACRO]             = just_mark;
+  mark_function[T_C_POINTER]           = just_mark;
+  mark_function[T_C_FUNCTION]          = just_mark;
+  mark_function[T_C_FUNCTION_STAR]     = just_mark;  /* changes to mark_c_proc_star if defaults involve an expression */
+  mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
+  mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
+  mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
   mark_function[T_PAIR]                = mark_pair;
   mark_function[T_CLOSURE]             = mark_closure;
   mark_function[T_CLOSURE_STAR]        = mark_closure;
   mark_function[T_CONTINUATION]        = mark_continuation;
-  mark_function[T_CHARACTER]           = mark_noop;
   mark_function[T_INPUT_PORT]          = mark_input_port;
   mark_function[T_VECTOR]              = mark_vector; /* this changes if shared vector created (similarly below) */
   mark_function[T_INT_VECTOR]          = mark_int_or_float_vector;
@@ -4640,27 +4653,14 @@ static void init_mark_functions(void)
   mark_function[T_MACRO_STAR]          = mark_closure;
   mark_function[T_BACRO_STAR]          = mark_closure;
   mark_function[T_C_OBJECT]            = mark_c_object;
-  mark_function[T_RANDOM_STATE]        = just_mark;
-  mark_function[T_GOTO]                = just_mark;
-  mark_function[T_OUTPUT_PORT]         = just_mark;
   mark_function[T_CATCH]               = mark_catch;
   mark_function[T_DYNAMIC_WIND]        = mark_dynamic_wind;
   mark_function[T_HASH_TABLE]          = mark_hash_table;
   mark_function[T_ITERATOR]            = mark_iterator;
-  mark_function[T_SYNTAX]              = mark_noop;
   mark_function[T_LET]                 = mark_let;
   mark_function[T_STACK]               = mark_stack;
   mark_function[T_COUNTER]             = mark_counter;
-  mark_function[T_OPTLIST]             = just_mark;
   mark_function[T_SLOT]                = mark_slot;
-  mark_function[T_BAFFLE]              = just_mark;
-  mark_function[T_C_MACRO]             = just_mark;
-  mark_function[T_C_POINTER]           = just_mark;
-  mark_function[T_C_FUNCTION]          = just_mark;
-  mark_function[T_C_FUNCTION_STAR]     = just_mark;  /* changes to mark_c_proc_star if defaults involve an expression */
-  mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
-  mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
-  mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
 }
 
 
@@ -16307,35 +16307,6 @@ static s7_pointer g_sqr_ss(s7_scheme *sc, s7_pointer args)
     }
   return(x);
 }
-
-static s7_pointer mul_s_sin_s, mul_s_cos_s;
-static s7_pointer g_mul_s_sin_s(s7_scheme *sc, s7_pointer args)
-{
-  /* (* s (sin s)) */
-  s7_pointer x, y;
-
-  x = find_symbol_unchecked(sc, car(args));
-  y = find_symbol_unchecked(sc, cadadr(args));
-
-  if ((is_real(x)) && (is_real(y)))
-    return(make_real(sc, real_to_double(sc, x, "*") * sin(real_to_double(sc, y, "sin"))));
-
-  return(g_multiply(sc, set_plist_2(sc, x, g_sin(sc, set_plist_1(sc, y)))));
-}
-
-static s7_pointer g_mul_s_cos_s(s7_scheme *sc, s7_pointer args)
-{
-  /* (* s (cos s)) */
-  s7_pointer x, y;
-
-  x = find_symbol_unchecked(sc, car(args));
-  y = find_symbol_unchecked(sc, cadadr(args));
-
-  if ((is_real(x)) && (is_real(y)))
-    return(make_real(sc, real_to_double(sc, x, "*") * cos(real_to_double(sc, y, "cos"))));
-
-  return(g_multiply(sc, set_plist_2(sc, x, g_cos(sc, set_plist_1(sc, y)))));
-}
 #endif /* with-gmp */
 
 static s7_int multiply_i_ii(s7_int i1, s7_int i2) {return(i1 * i2);}
@@ -27659,9 +27630,9 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   ((full_typ & T_KEYWORD) != 0) ?        " keyword" : "",
 	   /* bit 1 */
 	   ((full_typ & T_SYNTACTIC) != 0) ?      " syntactic" : "",
-	   /* bit 2 -- currently unused */
-	   /* ((full_typ & T_LOCAL_SYMBOL) != 0) ?   " local-symbol" : "", */
-	   "",
+	   /* bit 2 */
+	   ((full_typ & T_SIMPLE_ARG_DEFAULTS) != 0) ? ((is_pair(obj)) ? " simple-args|in-use" : " ?2?") : "",
+
 	   /* bit 3 */
 	   ((full_typ & T_OPTIMIZED) != 0) ?      ((is_c_function(obj)) ? " scope-safe" : 
 						   ((is_pair(obj)) ? " optimized" :
@@ -27671,9 +27642,12 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   /* bit 5 */
 	   ((full_typ & T_DONT_EVAL_ARGS) != 0) ? " dont-eval-args" : "",
 	   /* bit 6 */
-	   ((full_typ & T_EXPANSION) != 0) ?      " expansion" : "",
+	   ((full_typ & T_EXPANSION) != 0) ?      (((is_symbol(obj)) || (is_macro(obj))) ? " expansion" : 
+						   " ?6?") : "",
 	   /* bit 7 */
-	   ((full_typ & T_MULTIPLE_VALUE) != 0) ? " values|matched" : "",
+	   ((full_typ & T_MULTIPLE_VALUE) != 0) ? ((is_symbol(obj)) ? " matched" :
+						   ((is_pair(obj)) ? " values|matched" : 
+						    " ?7?")) : "",
 	   /* bit 8 */
 	   ((full_typ & T_GLOBAL) != 0) ?         ((is_pair(obj)) ? " unsafe-do" : 
 						   ((is_symbol(obj)) ? " global" :
@@ -27732,10 +27706,9 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 						    "?20?")) : "",
 	   /* bit 21 */
 	   ((full_typ & T_GENSYM) != 0) ?         ((is_let(obj)) ? " funclet" : 
-						   ((is_pair(obj)) ? " list-in-use|simple-arg-defaults" :
-						    ((is_symbol(obj)) ? " gensym" :
-						     ((is_string(obj)) ? " documented-symbol" :
-						      " ?21?")))) : "",
+						   ((is_symbol(obj)) ? " gensym" :
+						    ((is_string(obj)) ? " documented-symbol" :
+						     " ?21?"))) : "",
 	   /* bit 22 */
 	   ((full_typ & T_HAS_METHODS) != 0) ?    " has-methods" : "",
 	   /* bit 23 */
@@ -56240,6 +56213,36 @@ static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int args, 
 
 
 #if (!WITH_GMP)
+/* an experiment in non-safe_c_c overrides for (a (b,.))
+ *   expt is disabled by setting its c_function to cons
+ *   modulo is rerouted by setting its function to exptmod
+ *   this appears to work even in the clm-opt world because
+ *   cons/exptmod are called there as well.
+ */
+static s7_int exptmod_1(s7_int a, s7_int b, s7_int n)
+{
+  s7_int d;
+  if (b == 0) return(1);
+  d = exptmod_1((a * a) % n, b >> 1, n);
+  if ((b & 1) == 0) return(d);
+  return((a * d) % n);
+}
+
+static s7_pointer exptmod;
+static s7_pointer g_exptmod(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer a, b, n;
+  a = caar(args);
+  b = cdar(args);
+  /* free_cell(sc, car(args)); */ /* seems to be safe */
+  n = cadr(args);
+  if ((!is_t_integer(a)) || (integer(a) < 0) ||
+      (!is_t_integer(b)) || (integer(b) < 0) ||
+      (!is_t_integer(n)) || (integer(n) <= 0))                                   /* floating exception if n==0 */
+    return(g_modulo(sc, set_plist_2(sc, g_expt(sc, set_elist_2(sc, a, b)), n))); /* fallback on (modulo (expt a b) n) */
+  return(make_integer(sc, exptmod_1(integer(a), integer(b), integer(n))));
+}
+
 static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr, bool ops)
 {
   if (!ops) return(f);
@@ -56253,6 +56256,14 @@ static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       set_optimize_op(expr, HOP_SAFE_C_C);
       return(mod_si);
     }
+  
+  if ((is_pair(cadr(expr))) &&
+      (caadr(expr) == sc->expt_symbol))
+    {
+      set_c_function(cadr(expr), slot_value(initial_slot(sc->cons_symbol)));
+      return(exptmod);
+    }
+
   return(f);
 }
 #endif
@@ -56372,20 +56383,8 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 		  set_optimize_op(expr, HOP_SAFE_C_C);
 		  return(sqr_ss);
 		}
-	      
-	      if ((is_h_safe_c_s(arg2)) &&
-		  ((car(arg2) == sc->sin_symbol) || (car(arg2) == sc->cos_symbol)) &&
-		  ((optimize_op(expr) == HOP_SAFE_C_S_opSq) ||
-		   (is_h_safe_c_c(expr))))
-		{
-		  set_optimize_op(expr, HOP_SAFE_C_C);
-		  clear_unsafe(expr);
-		  if (car(arg2) == sc->sin_symbol)
-		    return(mul_s_sin_s);
-		  return(mul_s_cos_s);
-		}
 	    }
-	  
+
 	  if (is_symbol(arg2))
 	    {
 	      if ((optimize_op(expr) == HOP_SAFE_C_CS) ||
@@ -57101,8 +57100,6 @@ static void init_choosers(s7_scheme *sc)
   multiply_sf = make_function_with_class(sc, f, "*", g_multiply_sf, 2, 0, false, "* opt");
 
   sqr_ss = make_function_with_class(sc, f, "*", g_sqr_ss, 2, 0, false, "* opt");
-  mul_s_sin_s = make_function_with_class(sc, f, "*", g_mul_s_sin_s, 2, 0, false, "* opt");
-  mul_s_cos_s = make_function_with_class(sc, f, "*", g_mul_s_cos_s, 2, 0, false, "* opt");
 #endif
 
   /* / */
@@ -57114,6 +57111,7 @@ static void init_choosers(s7_scheme *sc)
   /* modulo */
   f = set_function_chooser(sc, sc->modulo_symbol, modulo_chooser);
   mod_si = make_function_with_class(sc, f, "modulo", g_mod_si, 2, 0, false, "modulo opt");
+  exptmod = make_function_with_class(sc, f, "modulo", g_exptmod, 3, 0, false, "modulo opt");
 
   /* max */
   f = set_function_chooser(sc, sc->max_symbol, max_chooser);
@@ -82341,6 +82339,9 @@ int main(int argc, char **argv)
  * if float|int-vector set and val is not vector, avoid univect?
  * all_x_if_a...?
  * opt let?
+ * g_multiply_2 (et al) where both args are known-to-be-numbers (either constant or func->num)
+ *   how to make the output type recognition very fast? LLint with bit per type?
+ *   then rather than s7_apply_function(symbol->value(func)) just check type&type != 0
  *
  * --------------------------------------------------------------------
  *
@@ -82349,11 +82350,11 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1064
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
  * teq           |      |      | 6612 || 2777 | 2129  1978  1997
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2318
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2233
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437
  * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2730
- * lint          |      |      |      || 4041 | 3376  3114  3004
- * lg            |      |      |      || 211  | 161   149   144.4
+ * lint          |      |      |      || 4041 | 3376  3114  3008
+ * lg            |      |      |      || 211  | 161   149   144.0
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3020
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3104
  * tform         |      |      | 6816 || 3714 | 3530  3361  3280

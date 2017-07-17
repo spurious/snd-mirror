@@ -11019,7 +11019,7 @@ EDITS: 2
       (if (or (fneq (car vals) 1.999876644816418)
 	      (fneq (cadr vals) 1.555089933857112))
 	  (snd-display "sin-nx-peak 100: ~A" vals)))
-    (if (not (= (exptmod 3 100 5) 1)) (snd-display "exptmod 3 100 5: ~A" (exptmod 3 100 5)))
+    ;(if (not (= (exptmod 3 100 5) 1)) (snd-display "exptmod 3 100 5: ~A" (exptmod 3 100 5)))
     
     (set! *clm-srate* 22050)
     (let ((samps (seconds->samples 1.0))

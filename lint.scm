@@ -330,10 +330,7 @@
 	(*current-file* "")
 	(*top-level-objects* (make-hash-table))
 	(*output-port* *stderr*)
-	(fragments (do ((v (make-vector *fragment-max-size* #f))
-			(i 0 (+ i 1)))
-		       ((= i *fragment-max-size*) v)
-		     (set! (v i) (make-hash-table))))
+	(fragments (make-vector *fragment-max-size* #f))
 	(fragmin *fragment-max-size*)
 	(fragmax 0)
 	(*max-cdr-len* 16)) ; 40 is too high, 24 questionable, if #f the let+do rewrite is turned off
@@ -20792,7 +20789,7 @@
     (define (hash-fragment reduced-form leaves env func orig-form line outer-vars)
       ;; func here is either #f or an env-style entry (cons name let) as produced by make-fvar,
       ;;   the let entries accessed are initial-value, history, arglist
-      (let ((old (hash-table-ref (vector-ref fragments leaves) reduced-form)))
+      (let ((old (hash-table-ref (or (vector-ref fragments leaves) (vector-set! fragments leaves (make-hash-table))) reduced-form)))
 	(set! fragmin (min leaves fragmin))
 	(set! fragmax (min *fragment-max-size* (max leaves fragmax)))
 	(if (not (vector? old))
@@ -21158,6 +21155,7 @@
 		 (unless (and (pair? lint-function-body)
 			      (equal? new-form (car lint-function-body)))
 		   (let ((fvars (let ((fcase (and (< leaves *fragment-max-size*)
+						  (vector-ref fragments leaves)
 						  (hash-table-ref (vector-ref fragments leaves) (list reduced-form)))))
 				  (and (vector? fcase)
 				       (vector-ref fcase 2)))))
@@ -21898,9 +21896,10 @@
 		   (let ((reportables ())
 			 (size-cutoff (+ *fragment-min-size* 6))
 			 (score-cutoff (if (integer? *report-repeated-code-fragments*) *report-repeated-code-fragments* 130)))
-		     (do ((i *fragment-min-size* (+ i 1)))
-			 ((= i *fragment-max-size*))
-		       (when (> (hash-table-entries (vector-ref fragments i)) 0)
+		     (do ((i fragmin (+ i 1)))
+			 ((> i fragmax))
+		       (when (and (vector-ref fragments i)
+				  (> (hash-table-entries (vector-ref fragments i)) 0))
 			 (for-each (lambda (kv)
 				     (let ((vals (cdr kv)))
 				       (when (> (vals 0) 1) ; more than 1 use of fragment
@@ -22257,11 +22256,7 @@
 	(fill! other-names-counts 0)
 
 	(set! fragmax (min fragmax (- *fragment-max-size* 1)))
-	(do ((i fragmin (+ i 1))) 
-	    ((> i fragmax))
-	  (if (> (length (vector-ref fragments i)) 16)
-	      (vector-set! fragments i (make-hash-table))
-	      (fill! (vector-ref fragments i) #f)))
+	(fill! fragments #f)
 
 	(set! last-simplify-boolean-line-number -1)
 	(set! last-simplify-numeric-line-number -1)
@@ -22289,6 +22284,7 @@
 	(set! (hook-functions *read-error-hook*) read-hooks)
 
 	;; preset list-tail and list-ref
+	(vector-set! fragments 10 (make-hash-table))
 	(hash-table-set! (vector-ref fragments 10) '((if (zero? _2_) _1_ (_F_ (cdr _1_) (- _2_ 1))))
 			 (vector 0 () 
 				 (list (cons 'list-tail 
@@ -22297,7 +22293,7 @@
 						    :history :built-in)))
 				 '(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
 				 #f))
-	
+	(vector-set! fragments 12 (make-hash-table))
 	(hash-table-set! (vector-ref fragments 12) '((if (= _2_ 0) (car _1_) (_F_ (cdr _1_) (- _2_ 1))))
 			 (vector 0 ()
 				 (list (cons 'list-ref (inlet :initial-value '(define (list-ref items n) (if (= n 0) (car items) (list-ref (cdr items) (- n 1))))
@@ -22517,7 +22513,7 @@
     #f))
 |#
 
-;;; 62 31733 883913
+;;; 63 889880
 ;;;
 ;;; combine do|case|cond: currently combine-successive-ifs for if|when|unless 12874 (see t605 for examples)
 
