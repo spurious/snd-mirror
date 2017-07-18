@@ -11660,7 +11660,7 @@ GEN_2(wave_train, mus_wave_train_unmodulated, mus_wave_train)
 GEN_3(ssb_am, mus_ssb_am_0, mus_ssb_am_unmodulated, mus_ssb_am)
 GEN_2(tap, mus_tap_unmodulated, mus_tap)
 
-/* convolve and phase-vocoder are omitted because their editing functions can
+/* granulate and phase-vocoder are omitted because their editing functions can
  *   involve loops, causing the optimizer to step on itself.  Ideally, and
  *   maybe eventually, the optimized program would be sequestered, but for
  *   now these two generators will run slower.  One quick fix would be to 

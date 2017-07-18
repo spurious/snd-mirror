@@ -2,8 +2,48 @@
 ;(set! (*s7* 'gc-stats) 6)
 ;heap ca 30*size!
 
-(define-constant symbols (make-vector 1000000))
-(define-constant strings (make-vector 1000000))
+
+(define (reader)
+  (let ((port (open-input-file "/home/bil/test/scheme/bench/src/bib"))
+	(new-pos 0)
+	(counts (make-hash-table)))
+    (do ((line (read-line port) (read-line port)))
+	((eof-object? line))
+      (set! new-pos 0)
+      (do ((pos (char-position #\space line) (char-position #\space line (+ pos 1))))
+	  ((not pos))
+	(unless (= pos new-pos)
+	  (let* ((start (do ((k new-pos (+ k 1))) ; char-position here is slower!
+			    ((or (= k pos)
+				 (char-alphabetic? (string-ref line k)))
+			     k)))
+		 (end (do ((k (- pos 1) (- k 1)))
+			  ((or (= k start)
+			       (char-alphabetic? (string-ref line k)))
+			   (+ k 1)))))
+	    (when (> end start)
+	      (let ((word (string->symbol (substring line start end))))
+		(let ((refs (or (hash-table-ref counts word) 0)))
+		  (hash-table-set! counts word (+ refs 1)))))))
+	(set! new-pos (+ pos 1))))
+    
+    (close-input-port port)
+    (sort! (copy counts (make-vector (hash-table-entries counts)))
+	   (lambda (a b) (> (cdr a) (cdr b))))))
+
+(format *stderr* "reader ")
+
+(let ((counts (reader)))
+  (if (not (and (eq? (car (counts 0)) 'the)
+		(= (cdr (counts 0)) 62063)))
+      (do ((i 0 (+ i 1))) 
+	  ((= i 40)) 
+	(format *stderr* "~A: ~A~%" (car (counts i)) (cdr (counts i))))))
+
+;;; ----------------------------------------
+
+(define symbols (make-vector 1))
+(define strings (make-vector 1))
 
 (define (test1 size)
   (let ((int-hash (make-hash-table size))
@@ -132,6 +172,8 @@
 
 (define (test-hash size)
   (format *stderr* "~D " size)
+  (set! symbols (make-vector size))
+  (set! strings (make-vector size))
   (test1 size)
   (test2 size)
   (test3 size)
@@ -144,46 +186,6 @@
   (test10 size))
 
 (for-each test-hash (list 1 10 100 1000 10000 100000 1000000))
-
-;;; ----------------------------------------
-
-(define (reader)
-  (let ((port (open-input-file "/home/bil/test/scheme/bench/src/bib"))
-	(new-pos 0)
-	(counts (make-hash-table)))
-    (do ((line (read-line port) (read-line port)))
-	((eof-object? line))
-      (set! new-pos 0)
-      (do ((pos (char-position #\space line) (char-position #\space line (+ pos 1))))
-	  ((not pos))
-	(unless (= pos new-pos)
-	  (let* ((start (do ((k new-pos (+ k 1))) ; char-position here is slower!
-			    ((or (= k pos)
-				 (char-alphabetic? (string-ref line k)))
-			     k)))
-		 (end (do ((k (- pos 1) (- k 1)))
-			  ((or (= k start)
-			       (char-alphabetic? (string-ref line k)))
-			   (+ k 1)))))
-	    (when (> end start)
-	      (let ((word (string->symbol (substring line start end))))
-		(let ((refs (or (hash-table-ref counts word) 0)))
-		  (hash-table-set! counts word (+ refs 1)))))))
-	(set! new-pos (+ pos 1))))
-    
-    (close-input-port port)
-    (sort! (copy counts (make-vector (hash-table-entries counts)))
-	   (lambda (a b) (> (cdr a) (cdr b))))))
-
-(format *stderr* "reader~%")
-
-(let ((counts (reader)))
-  (if (not (and (eq? (car (counts 0)) 'the)
-		(= (cdr (counts 0)) 62063)))
-      (do ((i 0 (+ i 1))) 
-	  ((= i 40)) 
-	(format *stderr* "~A: ~A~%" (car (counts i)) (cdr (counts i))))))
-;;; ----------------------------------------
 
 ;(gc)
 

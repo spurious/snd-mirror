@@ -1559,7 +1559,8 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	    (samp0 0.0)
 	    (samp1 0.0)
 	    (samp2 0.0)
-	    (len (framples)))
+	    (len (framples))
+	    (local-max 0.0))
 	(call-with-exit
 	 (lambda (return)
 	   (do ((ctr loc (+ ctr 1)))
@@ -1567,11 +1568,11 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	     (set! samp0 samp1)
 	     (set! samp1 samp2)
 	     (set! samp2 (next-sample reader))
-	     (let ((local-max (max .1 (moving-max mmax samp0))))
-	       (if (and (> (abs (- samp0 samp1)) local-max)
-			(> (abs (- samp1 samp2)) local-max)
-			(< (abs (- samp0 samp2)) (/ local-max 2)))
-		   (return (- ctr 1)))))))))))
+	     (set! local-max (max .1 (moving-max mmax samp0)))
+	     (if (and (> (abs (- samp0 samp1)) local-max)
+		      (> (abs (- samp1 samp2)) local-max)
+		      (< (abs (- samp0 samp2)) (/ local-max 2)))
+		 (return (- ctr 1))))))))))
 
 (define remove-clicks
   (let ((documentation "(remove-clicks) tries to find and smooth-over clicks"))
@@ -1593,15 +1594,16 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
       (let ((samp0 0.0)
 	    (samp1 0.0)
 	    (samp2 0.0)
-	    (mmax (make-moving-max 10)))
+	    (mmax (make-moving-max 10))
+	    (local-max 0.0))
 	(lambda (val)
 	  (set! samp0 samp1)
 	  (set! samp1 samp2)
 	  (set! samp2 val)
-	  (let ((local-max (max .1 (moving-max mmax samp0))))
-	    (and (>= (abs (- samp0 samp1)) local-max)
-		 (>= (abs (- samp1 samp2)) local-max)
-		 (<= (abs (- samp0 samp2)) (/ local-max 2)))))))))
+	  (set! local-max (max .1 (moving-max mmax samp0)))
+	  (and (>= (abs (- samp0 samp1)) local-max)
+	       (>= (abs (- samp1 samp2)) local-max)
+	       (<= (abs (- samp0 samp2)) (/ local-max 2))))))))
 
 
 (define zero+

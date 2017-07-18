@@ -3594,6 +3594,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      free_snd_fd(sf);
 	      return(res);
 	    }
+
 	  /* I suppose if the body is (sin y) or the like, we could use tree-vectorize: mus_sin_floats in vct.c */
 	  {
 	    /* try s7_float_optimize */
@@ -3854,7 +3855,6 @@ static Xen g_map_chan_1(Xen proc_and_list, Xen s_beg, Xen s_end, Xen org, Xen sn
   return(res);
 }
 
-
 static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, const char *caller, bool counting, Xen edpos, int arg_pos, Xen s_dur)
 {
   chan_info *cp;
@@ -3944,17 +3944,19 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 
       e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
 
-      if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  s7_pointer res, yp, old_e, y, val;
 	  s7_function func;
-	  res = s7_car(body);
 
 	  old_e = s7_set_curlet(s7, e);                  /* new env for scan lambda */
 	  y = s7_make_mutable_real(s7, 1.5);             /* slot for the scan lambda arg */
 	  yp = s7_make_slot(s7, e, arg, y);
 	  val = y;
-	  func = s7_optimize(s7, body);
+	  res = s7_car(body);
+
+	  if (s7_is_null(s7, s7_cdr(body)))
+	    func = s7_optimize(s7, body);
+	  else func = s7_optimize(s7, s7_cons(s7, s7_cons(s7, s7_make_symbol(s7, "begin"), body), s7_nil(s7)));
 	  if (func)
 	    {
 	      for (kp = 0; kp < num; kp++)

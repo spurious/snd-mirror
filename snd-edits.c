@@ -611,17 +611,8 @@ static mus_float_t next_sample_value(snd_fd *sf)
 }
 
 
-#define SF_UNSAFE 0
-
 static mus_float_t next_sample_value_unchecked(snd_fd *sf) 
 {
-#if SF_UNSAFE
-  if (sf->loc > sf->last) 
-    {
-      fprintf(stderr, "ran off end somehow\n");
-      abort();
-    }
-#endif
   return(sf->data[sf->loc++] * sf->fscaler);
 }
 
@@ -650,13 +641,6 @@ mus_float_t next_sample_value_unscaled(snd_fd *sf)
 mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf);
 mus_float_t next_sample_value_unscaled_and_unchecked(snd_fd *sf) 
 {
-#if SF_UNSAFE
-  if (sf->loc > sf->last) 
-    {
-      fprintf(stderr, "ran off end somehow\n");
-      abort();
-    }
-#endif
   return(sf->data[sf->loc++]);
 }
 
@@ -707,13 +691,6 @@ static mus_float_t next_ramp1(snd_fd *sf)
 static mus_float_t next_ramp1_unchecked(snd_fd *sf)
 {
   mus_float_t val;
-#if SF_UNSAFE
-  if (sf->loc > sf->last) 
-    {
-      fprintf(stderr, "ran off end somehow\n");
-      abort();
-    }
-#endif
   val = sf->data[sf->loc++] * READER_VAL(sf, 0);
   READER_VAL(sf, 0) += READER_INCR(sf, 0);
   return(val);
