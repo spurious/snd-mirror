@@ -146,7 +146,7 @@ int mus_make_generator_type(void) {return(mus_generator_type++);}
 
 static const char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
 
-static const char *interp_type_to_string(int type)
+const char *mus_interp_type_to_string(int type)
 {
   if (mus_is_interp_type(type))
     return(interp_name[type]);
@@ -797,6 +797,46 @@ mus_long_t mus_location(mus_any *gen)
     return(((*gen->core->location))(gen));
   return((mus_long_t)mus_error(MUS_NO_LOCATION, "can't get %s's location", mus_name(gen)));
 }
+
+mus_long_t mus_set_location(mus_any *gen, mus_long_t loc)
+{
+  if ((check_gen(gen, S_set S_mus_location)) &&
+      (gen->core->set_location))
+    return((*(gen->core->set_location))(gen, loc));
+  return((mus_long_t)mus_error(MUS_NO_LOCATION, "can't set %s's location", mus_name(gen)));
+}
+
+char *mus_file_name(mus_any *gen)
+{
+  if ((check_gen(gen, S_mus_file_name)) &&
+      (gen->core->file_name))
+    return((*(gen->core->file_name))(gen));
+  else mus_error(MUS_NO_FILE_NAME, "can't get %s's file name", mus_name(gen));
+  return(NULL);
+}
+
+
+bool mus_phase_exists(mus_any *gen)       {return(gen->core->phase);}
+bool mus_frequency_exists(mus_any *gen)   {return(gen->core->frequency);}
+bool mus_length_exists(mus_any *gen)      {return(gen->core->length);}
+bool mus_order_exists(mus_any *gen)       {return(gen->core->length);}
+bool mus_data_exists(mus_any *gen)        {return(gen->core->data);}
+bool mus_name_exists(mus_any *gen)        {return(gen->core->name);}
+bool mus_scaler_exists(mus_any *gen)      {return(gen->core->scaler);}
+bool mus_offset_exists(mus_any *gen)      {return(gen->core->offset);}
+bool mus_width_exists(mus_any *gen)       {return(gen->core->width);}
+bool mus_file_name_exists(mus_any *gen)   {return(gen->core->file_name);}
+bool mus_xcoeffs_exists(mus_any *gen)     {return(gen->core->xcoeffs);}
+bool mus_ycoeffs_exists(mus_any *gen)     {return(gen->core->ycoeffs);}
+bool mus_increment_exists(mus_any *gen)   {return(gen->core->increment);}
+bool mus_location_exists(mus_any *gen)    {return(gen->core->location);}
+bool mus_channel_exists(mus_any *gen)     {return(gen->core->channel);}
+bool mus_channels_exists(mus_any *gen)    {return(gen->core->channels);}
+bool mus_interp_type_exists(mus_any *gen) {return(gen->core->channels);}
+bool mus_ramp_exists(mus_any *gen)        {return(gen->core->ramp);}
+bool mus_hop_exists(mus_any *gen)         {return(gen->core->hop);}
+bool mus_feedforward_exists(mus_any *gen) {return(gen->core->scaler);}
+bool mus_feedback_exists(mus_any *gen)    {return(gen->core->increment);}
 
 
 /* ---------------- AM etc ---------------- */
@@ -2971,7 +3011,7 @@ static char *describe_table_lookup(mus_any *ptr)
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       (int)mus_length(ptr),
-	       interp_type_to_string(table_lookup_interp_type(ptr)));
+	       mus_interp_type_to_string(table_lookup_interp_type(ptr)));
   return(describe_buffer);
 }
 
@@ -4138,7 +4178,7 @@ static char *describe_wt(mus_any *ptr)
 	       mus_frequency(ptr), 
 	       mus_phase(ptr), 
 	       mus_length(ptr), 
-	       interp_type_to_string(wt_interp_type(ptr)));
+	       mus_interp_type_to_string(wt_interp_type(ptr)));
   return(describe_buffer);
 }
 
@@ -4504,12 +4544,12 @@ static char *describe_delay(mus_any *ptr)
 		 mus_name(ptr),
 		 gen->size, 
 		 gen->zsize, 
-		 interp_type_to_string(gen->type),
+		 mus_interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s line[%u, %s]: %s", 
 		    mus_name(ptr),
 		    gen->size, 
-		    interp_type_to_string(gen->type), 
+		    mus_interp_type_to_string(gen->type), 
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) free(str);
   return(describe_buffer);
@@ -4745,13 +4785,13 @@ static char *describe_comb(mus_any *ptr)
 		 gen->yscl, 
 		 gen->size, 
 		 gen->zsize, 
-		 interp_type_to_string(gen->type),
+		 mus_interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%u, %s]: %s", 
 		    mus_name(ptr),
 		    gen->yscl, 
 		    gen->size, 
-		    interp_type_to_string(gen->type),
+		    mus_interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) free(str);
   return(describe_buffer);
@@ -5008,13 +5048,13 @@ static char *describe_notch(mus_any *ptr)
 		 gen->xscl, 
 		 gen->size, 
 		 gen->zsize, 
-		 interp_type_to_string(gen->type),
+		 mus_interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%u, %s]: %s", 
 		    mus_name(ptr),
 		    gen->xscl, 
 		    gen->size, 
-		    interp_type_to_string(gen->type),
+		    mus_interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) free(str);
   return(describe_buffer);
@@ -5153,14 +5193,14 @@ static char *describe_all_pass(mus_any *ptr)
 		 gen->xscl, 
 		 gen->size, 
 		 gen->zsize, 
-		 interp_type_to_string(gen->type),
+		 mus_interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
   else snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s feedback: %.3f, feedforward: %.3f, line[%u, %s]:%s",
 		    mus_name(ptr),
 		    gen->yscl, 
 		    gen->xscl, 
 		    gen->size, 
-		    interp_type_to_string(gen->type),
+		    mus_interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) free(str);
   return(describe_buffer);
@@ -5622,6 +5662,11 @@ mus_float_t mus_moving_norm(mus_any *ptr, mus_float_t input)
   return(gen->norm / gen->y1);
 }
 
+static mus_float_t moving_norm_norm(mus_any *ptr)
+{
+  dly *gen = (dly *)ptr;
+  return(gen->norm / (gen->size + 1.0));
+}
 
 static mus_float_t run_mus_moving_norm(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_moving_norm(ptr, input));}
 
@@ -5669,7 +5714,7 @@ static mus_any_class MOVING_NORM_CLASS = {
   &run_mus_moving_norm,
   MUS_DELAY_LINE,
   NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  &moving_norm_norm, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &delay_loc,
   0, 0,
@@ -10364,16 +10409,6 @@ static mus_float_t mus_read_sample(mus_any *fd, mus_long_t frample, int chan)
 }
 
 
-char *mus_file_name(mus_any *gen)
-{
-  if ((check_gen(gen, S_mus_file_name)) &&
-      (gen->core->file_name))
-    return((*(gen->core->file_name))(gen));
-  else mus_error(MUS_NO_FILE_NAME, "can't get %s's file name", mus_name(gen));
-  return(NULL);
-}
-
-
 bool mus_is_input(mus_any *gen) 
 {
   return((gen) && 
@@ -10847,16 +10882,6 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
 /* it would be easy to extend readin to read from a float-vector by using the saved_data and safe_readin
  *   business above -- just need mus_make_readin_from_float_vector or something.
  */
-
-
-mus_long_t mus_set_location(mus_any *gen, mus_long_t loc)
-{
-  if ((check_gen(gen, S_set S_mus_location)) &&
-      (gen->core->set_location))
-    return((*(gen->core->set_location))(gen, loc));
-  return((mus_long_t)mus_error(MUS_NO_LOCATION, "can't set %s's location", mus_name(gen)));
-}
-
 
 
 /* ---------------- in-any ---------------- */
@@ -11833,7 +11858,7 @@ static char *describe_locsig(mus_any *ptr)
       strcat(describe_buffer, str);
     }
 
-  snprintf(str, STR_SIZE, ", interp: %s", interp_type_to_string(gen->type));
+  snprintf(str, STR_SIZE, ", interp: %s", mus_interp_type_to_string(gen->type));
   strcat(describe_buffer, str);
   free(str);
   return(describe_buffer);

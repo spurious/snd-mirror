@@ -38223,6 +38223,13 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   return(x);
 }
 
+s7_pointer s7_make_object_with_let(s7_scheme *sc, int type, void *value, s7_pointer let)
+{
+  s7_pointer g;
+  g = s7_make_object(sc, type, value);
+  c_object_set_let(g, let);
+  return(g);
+}
 
 s7_pointer s7_object_let(s7_pointer obj)
 {
@@ -82337,13 +82344,8 @@ int main(int argc, char **argv)
  * s7:
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
- * object->let method for clm/snd objects? and generators.scm 
+ * object->let clm: ca 20 to go + generators.scm
  *   what if setting a field were reflected in the original object?
- *   clm gens work already??: (object->let (make-oscil)) ->
- *    (inlet 'value oscil freq: 0.000Hz, phase: 0.000 'type c-object? 'length 1 'c-type 0 'let () 'class "<generator>")
- *    sort-of: 'value is obj which is printed via mus_describe -- this is not what we actually want
- *    perhaps in clm2xen run through all the built-in methods?
- *    see block_methods in s7test, but this is set on every instance!
  *
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func
@@ -82358,7 +82360,7 @@ int main(int argc, char **argv)
  *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
- * there are uses of unscramble in region/snd/dac/select
+ * there are uses of unscramble in snd-snd.c(3) and snd-dac.c(1)
  *
  * lint: as in random-gen, move internally created but unchanged sequences (lists) out of the body
  *

@@ -1533,7 +1533,9 @@ static Xen mus_xen_apply(s7_scheme *sc, Xen gen, Xen args)
 
 static Xen s7_mus_length(s7_scheme *sc, Xen obj)
 {
-  return(g_mus_length(obj));
+  if (mus_length_exists(Xen_to_mus_any(obj)))
+    return(g_mus_length(obj));
+  return(s7_make_integer(sc, 1));
 }
 
 static Xen g_mus_copy(Xen gen);
@@ -1542,12 +1544,17 @@ static Xen s7_mus_copy(s7_scheme *sc, Xen args)
   return(g_mus_copy(s7_car(args)));
 }
 
+static s7_pointer g_clm_let;
 #endif
 
 
 Xen mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 {
+#if HAVE_SCHEME
+  return(s7_make_object_with_let(s7, mus_xen_tag, gn, g_clm_let));
+#else
   return(Xen_make_object(mus_xen_tag, gn, mark_mus_xen, free_mus_xen));
+#endif
 }
 
 
@@ -2855,12 +2862,12 @@ static s7_pointer g_make_all_pass(s7_scheme *sc, s7_pointer args)
   s7_pointer initial_contents;
   mus_float_t feedback, feedforward;
   
-  size = d_size(sc, s7_caddr(args), 3, S_make_notch);        /* -1 if no size key */
+  size = d_size(sc, s7_caddr(args), 3, S_make_all_pass);        /* -1 if no size key */
   p = s7_cdddr(args);
-  max_size = d_max_size(sc, s7_caddr(p), 6, S_make_notch);   /* -1 if no max-size key */
+  max_size = d_max_size(sc, s7_caddr(p), 6, S_make_all_pass);   /* -1 if no max-size key */
   if (max_size < size) max_size = (size == 0) ? 1 : size;
 
-  initial_contents = d_contents(sc, s7_car(p), s7_cadr(p), max_size, 4, S_make_notch);
+  initial_contents = d_contents(sc, s7_car(p), s7_cadr(p), max_size, 4, S_make_all_pass);
   if (max_size == -1)
     max_size = s7_vector_length(initial_contents);
   if (size == -1)
@@ -2868,7 +2875,7 @@ static s7_pointer g_make_all_pass(s7_scheme *sc, s7_pointer args)
 
   feedback = s7_number_to_real(sc, s7_car(args));
   feedforward = s7_number_to_real(sc, s7_cadr(args));
-  interp_type = d_interp(sc, s7_cadddr(p), max_size != size, 7, S_make_notch);
+  interp_type = d_interp(sc, s7_cadddr(p), max_size != size, 7, S_make_all_pass);
   ge = mus_make_all_pass(feedback, feedforward, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type);
   if (ge) 
     return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, initial_contents)));
@@ -12502,6 +12509,406 @@ static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
   /* s7_error(sc, s7_make_symbol(sc, "io-error"), s7_list(sc, 1, s7_make_string(sc, "can't write a clm generator readably"))); */
   /* return(NULL); */
 }
+
+static s7_pointer generator_to_let(s7_scheme *sc, s7_pointer args)
+{
+  /* this is called upon (object->let <gen>)
+   *   ideally it would be in clm.c, local to each generator like other methods
+   */
+  s7_pointer gen, let;
+  mus_any *g;
+  mus_xen *gn;
+
+  gen = s7_car(args);
+  let = s7_cadr(args);
+  gn = (mus_xen *)s7_object_value(gen);
+  g = gn->gen;  /* gn->nvcts and gn->vcts hold the arrays and functions */
+
+  if (mus_name_exists(g)) s7_varlet(sc, let, s7_make_symbol(sc, "name"), s7_make_string(sc, mus_name(g)));
+  if (mus_file_name_exists(g)) s7_varlet(sc, let, s7_make_symbol(sc, "file-name"), s7_make_string(sc, mus_file_name(g)));
+  if (mus_frequency_exists(g)) s7_varlet(sc, let, s7_make_symbol(sc, "frequency"), s7_make_real(sc, mus_frequency(g)));
+  if (mus_phase_exists(g)) s7_varlet(sc, let, s7_make_symbol(sc, "phase"), s7_make_real(sc, mus_phase(g)));
+
+  if (mus_is_oscil_bank(g))
+    {
+      if (mus_length_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "size"), s7_make_integer(sc, mus_length(g)));
+      if (gn->nvcts == 3)  /* let includes gen (the s7 c_object) which includes gn (the clm2xen mus_xen object), so vcts should be safe (GC protected) */
+	{
+	  s7_varlet(sc, let, s7_make_symbol(sc, "freqs"), gn->vcts[0]);
+	  s7_varlet(sc, let, s7_make_symbol(sc, "phases"), gn->vcts[1]);
+	  s7_varlet(sc, let, s7_make_symbol(sc, "amps"), gn->vcts[2]);
+	}
+    }
+
+  if ((mus_is_nsin(g)) || (mus_is_ncos(g)))
+    {
+      if (mus_length_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "n"), s7_make_integer(sc, mus_length(g)));
+    }
+
+  if ((mus_is_nrxysin(g)) || (mus_is_nrxycos(g)) || (mus_is_asymmetric_fm(g)))
+    {
+      if (mus_length_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "n"), s7_make_integer(sc, mus_length(g)));
+      if (mus_scaler_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "r"), s7_make_real(sc, mus_scaler(g)));
+      if (mus_offset_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "ratio"), s7_make_real(sc, mus_offset(g)));
+    }
+  
+  if ((mus_is_rxyksin(g)) || (mus_is_rxykcos(g)))
+    {
+      if (mus_scaler_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "r"), s7_make_real(sc, mus_scaler(g)));
+      if (mus_offset_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "ratio"), s7_make_real(sc, mus_offset(g)));
+    }
+
+  if ((mus_is_square_wave(g)) || (mus_is_sawtooth_wave(g)) || 
+      (mus_is_pulse_train(g)) || (mus_is_triangle_wave(g)))
+    {
+      if (mus_scaler_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "amplitude"), s7_make_real(sc, mus_scaler(g)));
+    }
+  
+  if (mus_is_fir_filter(g))
+    {
+      if (mus_length_exists(g)) 
+	s7_varlet(sc, let, s7_make_symbol(sc, "order"), s7_make_integer(sc, mus_length(g)));
+      if (gn->nvcts == 3)
+	s7_varlet(sc, let, s7_make_symbol(sc, "xcoeffs"), gn->vcts[G_FILTER_XCOEFFS]);
+    }
+  else
+    {
+      if (mus_is_iir_filter(g))
+	{
+	  if (mus_length_exists(g)) 
+	    s7_varlet(sc, let, s7_make_symbol(sc, "order"), s7_make_integer(sc, mus_length(g)));
+	  if (gn->nvcts == 3)
+	    s7_varlet(sc, let, s7_make_symbol(sc, "ycoeffs"), gn->vcts[G_FILTER_YCOEFFS]);
+	}
+      else
+	{
+	  if (mus_is_filter(g))
+	    {
+	      if (mus_length_exists(g)) 
+		s7_varlet(sc, let, s7_make_symbol(sc, "order"), s7_make_integer(sc, mus_length(g)));
+	      if (gn->nvcts == 3)
+		{
+		  s7_varlet(sc, let, s7_make_symbol(sc, "xcoeffs"), gn->vcts[G_FILTER_XCOEFFS]);
+		  s7_varlet(sc, let, s7_make_symbol(sc, "ycoeffs"), gn->vcts[G_FILTER_YCOEFFS]);
+		}
+	    }
+	}
+    }
+
+  if ((mus_is_one_zero(g)) && (mus_xcoeffs_exists(g)))
+    {
+      mus_float_t *xs;
+      xs = mus_xcoeffs(g);
+      s7_varlet(sc, let, s7_make_symbol(sc, "a0"), s7_make_real(sc, xs[0]));
+      s7_varlet(sc, let, s7_make_symbol(sc, "a1"), s7_make_real(sc, xs[1]));
+    }
+  if (mus_is_two_zero(g))
+    {
+      if (mus_scaler_exists(g))
+	s7_varlet(sc, let, s7_make_symbol(sc, "radius"), s7_make_real(sc, mus_scaler(g)));
+      if (mus_xcoeffs_exists(g))
+	{
+	  mus_float_t *xs;
+	  xs = mus_xcoeffs(g);
+	  s7_varlet(sc, let, s7_make_symbol(sc, "a0"), s7_make_real(sc, xs[0]));
+	  s7_varlet(sc, let, s7_make_symbol(sc, "a1"), s7_make_real(sc, xs[1]));
+	  s7_varlet(sc, let, s7_make_symbol(sc, "a2"), s7_make_real(sc, xs[2]));
+	}
+    }
+  if ((mus_is_one_pole(g)) && (mus_xcoeffs_exists(g)) && (mus_ycoeffs_exists(g)))
+    {
+      mus_float_t *xs, *ys;
+      xs = mus_xcoeffs(g);
+      ys = mus_ycoeffs(g);
+      s7_varlet(sc, let, s7_make_symbol(sc, "a0"), s7_make_real(sc, xs[0]));
+      s7_varlet(sc, let, s7_make_symbol(sc, "b1"), s7_make_real(sc, ys[1]));
+    }
+  if (mus_is_two_pole(g))
+    {
+      if (mus_scaler_exists(g))
+	s7_varlet(sc, let, s7_make_symbol(sc, "radius"), s7_make_real(sc, mus_scaler(g)));
+      if ((mus_xcoeffs_exists(g)) && (mus_ycoeffs_exists(g)))
+	{
+	  mus_float_t *xs, *ys;
+	  xs = mus_xcoeffs(g);
+	  ys = mus_ycoeffs(g);
+	  s7_varlet(sc, let, s7_make_symbol(sc, "a0"), s7_make_real(sc, xs[0]));
+	  s7_varlet(sc, let, s7_make_symbol(sc, "b1"), s7_make_real(sc, ys[1]));
+	  s7_varlet(sc, let, s7_make_symbol(sc, "b2"), s7_make_real(sc, ys[2]));
+	}
+    }
+
+  if ((mus_is_formant(g)) || (mus_is_firmant(g)))
+    {
+      if (mus_scaler_exists(g))
+	s7_varlet(sc, let, s7_make_symbol(sc, "radius"), s7_make_real(sc, mus_scaler(g)));
+    }
+  if (mus_is_formant_bank(g))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "gens"), gn->vcts[0]);
+      if (gn->nvcts == 2)
+	s7_varlet(sc, let, s7_make_symbol(sc, "amps"), gn->vcts[1]);
+    }
+
+  if ((mus_is_comb(g)) || (mus_is_notch(g)) || (mus_is_filtered_comb(g)))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "scaler"), s7_make_real(sc, (mus_is_notch(g)) ? mus_scaler(g) : mus_increment(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "length"), s7_make_integer(sc, mus_length(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "interp"), s7_make_symbol(sc, mus_interp_type_to_string(mus_channels(g))));
+      s7_varlet(sc, let, s7_make_symbol(sc, "line"), gn->vcts[0]);
+      if ((mus_is_filtered_comb(g)) &&
+	  (gn->vcts[1]))
+	s7_varlet(sc, let, s7_make_symbol(sc, "filter"), gn->vcts[1]);
+    }
+  if (mus_is_all_pass(g))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "feedforward"), s7_make_real(sc, mus_scaler(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "feedback"), s7_make_real(sc, mus_increment(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "length"), s7_make_integer(sc, mus_length(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "interp"), s7_make_symbol(sc, mus_interp_type_to_string(mus_channels(g))));
+      s7_varlet(sc, let, s7_make_symbol(sc, "line"), gn->vcts[0]);
+    }
+  if ((mus_is_delay(g)) || (mus_is_moving_max(g)) ||
+      (mus_is_moving_average(g)) || (mus_is_moving_norm(g)))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "length"), s7_make_integer(sc, mus_length(g)));
+      if (mus_is_delay(g))
+	s7_varlet(sc, let, s7_make_symbol(sc, "interp"), s7_make_symbol(sc, mus_interp_type_to_string(mus_channels(g))));
+      s7_varlet(sc, let, s7_make_symbol(sc, "line"), gn->vcts[0]);
+      if ((mus_is_moving_norm(g)) || (mus_is_moving_max(g)))
+	{
+	  if ((mus_is_moving_norm(g)) && (mus_increment_exists(g)))
+	    s7_varlet(sc, let, s7_make_symbol(sc, "norm"), s7_make_real(sc, mus_offset(g)));
+	  if (mus_scaler_exists(g))
+	    s7_varlet(sc, let, s7_make_symbol(sc, "max"), s7_make_real(sc, mus_scaler(g)));
+	}
+    }
+  
+  if ((mus_is_table_lookup(g)) || (mus_is_wave_train(g)))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "size"), s7_make_integer(sc, mus_length(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "wave"), gn->vcts[0]);
+      s7_varlet(sc, let, s7_make_symbol(sc, "interp"), s7_make_symbol(sc, mus_interp_type_to_string(mus_channels(g))));
+    }
+  if ((mus_is_comb_bank(g)) || (mus_is_all_pass_bank(g)) || (mus_is_filtered_comb_bank(g)))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "size"), s7_make_integer(sc, mus_length(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "gens"), gn->vcts[0]);
+    }
+
+
+#if 0
+  /*
+
+TODO:
+MUS_RAND, MUS_RAND_INTERP, MUS_SRC, MUS_GRANULATE, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
+MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAMPLE, MUS_SAMPLE_TO_FILE, MUS_FRAMPLE_TO_FILE, MUS_PHASE_VOCODER,
+MUS_SSB_AM, MUS_POLYSHAPE, MUS_MOVE_SOUND, MUS_POLYWAVE, MUS_ONE_POLE_ALL_PASS, MUS_PULSED_ENV
+generators.scm
+
+  (object->let (make-comb-bank (vector (make-comb .5 3) (make-comb .2 4))))
+     (inlet 'value comb-bank size: 2 'type c-object? 'length 2 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "comb-bank" 'size 2 'gens #(comb scaler: 0.500, line[3, step]: [0 0 0] 
+                                              comb scaler: 0.200, line[4, step]: [0 0 0 0]))
+  (object->let (make-all-pass-bank (vector (make-all-pass -.5 .5 3) (make-all-pass -.2 .2 10) (make-all-pass -.7 .1 11))))
+     (inlet 'value all-pass-bank size: 3 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "all-pass-bank" 'size 3 'gens #(all-pass feedback: -0.500, feedforward: 0.500, line[3, step]:[0 0 0] 
+                                                  all-pass feedback: -0.200, feedforward: 0.200, line[10, step]:[0 0 0 0 0 0 0 0...(0: 0, 0: 0)] 
+                                                  all-pass feedback: -0.700, feedforward: 0.100, line[11, step]:[0 0 0 0 0 0 0 0...(0: 0, 0: 0)]))
+  (object->let (make-filtered-comb-bank (vector (make-filtered-comb .5 3))))
+     (inlet 'value filtered-comb-bank size: 1 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "filtered-comb-bank" 'size 1 'gens #(filtered-comb scaler: 0.500, line[3, step]: [0 0 0], filter: [one-zero a0: 1.000, a1: 0.000, x1: 0.000]))
+
+  (object->let (make-wave-train 440.0 0.0 #r(0 0 0)))
+     (inlet 'value wave-train freq: 440.000Hz, phase: 0.000, size: 3, interp: linear 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "wave-train" 'frequency 440.0 'phase 0.0 'size 3 'wave #r(0.0 0.0 0.0) 'interp linear)
+  (object->let (make-table-lookup :wave #r(0 1 2 1 0)))
+     (inlet 'value table-lookup freq: 0.000Hz, phase: 0.000, length: 5, interp: linear 'type c-object? 'length 5 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "table-lookup" 'frequency 0.0 'phase 0.0 'size 5 'wave #r(0.0 1.0 2.0 1.0 0.0) 'interp linear)
+
+  (object->let (make-moving-max 3))
+     (inlet 'value moving-max 0.000, line[3]:[0 0 0] 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "moving-max" 'length 3 'line #r(0.0 0.0 0.0) 'max 0.0)
+  (object->let (make-moving-average 3))
+     (inlet 'value moving-average 0.000, line[3]:[0 0 0] 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "moving-average" 'length 3 'line #r(0.0 0.0 0.0))
+  (object->let (make-moving-norm 3 :scaler 0.5))
+     (inlet 'value moving-norm, max 0.000, y1 4.000, weight 0.750, line[3]:[0 0 0] 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "moving-norm" 'length 3 'line #r(0.0 0.0 0.0) 'norm 0.5 'max 0.0)
+  (object->let  (make-filtered-comb .4 5 :filter (make-one-zero .3 .7)))
+     (inlet 'value filtered-comb scaler: 0.400, line[5, step]: [0 0 0 0 0], filter: [one-zero a0: 0.300, a1: 0.700, x1: 0.000] 'type c-object? 'length 5 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "filtered-comb" 'scaler 0.4 'length 5 'interp step 'line #r(0.0 0.0 0.0 0.0 0.0) 'filter one-zero a0: 0.300, a1: 0.700, x1: 0.000)
+  (object->let (make-all-pass .1 .9 3))
+     (inlet 'value all-pass feedback: 0.100, feedforward: 0.900, line[3, step]:[0 0 0] 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "all-pass" 'feedforward 0.9 'feedback 0.1 'length 3 'interp step 'line #r(0.0 0.0 0.0))
+  (object->let (make-delay 3))
+     (inlet 'value delay line[3, step]: [0 0 0] 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "delay" 'length 3 'interp step 'line #r(0.0 0.0 0.0))
+  (object->let (make-notch :initial-contents #r(0 1 2 3) :scaler .1 :type 3))
+     (inlet 'value notch scaler: 0.100, line[4,4, all-pass]: [0 1 2 3] 'type c-object? 'length 4 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "notch" 'scaler 0.1 'length 4 'interp all-pass 'line #r(0.0 1.0 2.0 3.0))
+  (object->let (make-comb :size 3 :scaler .1))
+     (inlet 'value comb scaler: 0.100, line[3, step]: [0 0 0] 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "comb" 'scaler 0.1 'length 3 'interp step 'line #r(0.0 0.0 0.0))
+
+  (object->let (make-formant 1000 .5))
+     (inlet 'value formant frequency: 1000.000, radius: 0.500 'type c-object? 'length 2 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "formant" 'frequency 999.9999999999999 'radius 0.5)
+  (object->let (make-firmant 1000 .5))
+     (inlet 'value firmant frequency: 1000.000, radius: 0.500 'type c-object? 'length 2 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "firmant" 'frequency 999.9999999999999 'radius 0.5)
+
+  (object->let (make-formant-bank (vector (make-formant 440.0 .5))))\
+     (inlet 'value formant-bank size: 1 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "formant-bank" 'gens #(formant frequency: 440.000, radius: 0.500))
+  (object->let (make-formant-bank (vector (make-formant 440.0 .5) (make-formant 1000.0 .2) (make-formant 34.0 .1)) #r(.5 .3 .4)))
+     (inlet 'value formant-bank size: 3 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "formant-bank" 'gens #(formant frequency: 440.000, radius: 0.500 
+                                         formant frequency: 1000.000, radius: 0.200 
+                                         formant frequency: 34.000, radius: 0.100) 
+                                 'amps #r(0.5 0.3 0.4))
+
+  (object->let (make-oscil 440)) 
+      (inlet 'value oscil freq: 440.000Hz, phase: 0.000 'type c-object? 'length 1 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>" 
+             'name "oscil" 'frequency 440.0000000000001 'phase 0.0)
+  (object->let (let ((o (make-oscil 440))) (oscil o) o))
+      (inlet 'value oscil freq: 440.000Hz, phase: 0.063 'type c-object? 'length 1 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>" 
+             'name "oscil" 'frequency 440.0000000000001 'phase 0.06268937721449021)
+
+  (object->let (make-nsin 100.0 3))
+      (inlet 'value nsin freq: 100.000Hz, phase: 0.000, n: 3 'type c-object? 'length 3 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>" 
+             'name "nsin" 'frequency 100.0 'phase 0.0 'n 3)
+  (object->let (make-nsin :n 4 :frequency 100))
+      (inlet 'value nsin freq: 100.000Hz, phase: 0.000, n: 4 'type c-object? 'length 4 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>"
+             'name "nsin" 'frequency 100.0 'phase 0.0 'n 4)
+
+  (object->let (make-ncos 100.0 3))
+      (inlet 'value ncos freq: 100.000Hz, phase: 0.000, n: 3 'type c-object? 'length 3 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>"
+             'name "ncos" 'frequency 100.0 'phase 0.0 'n 3)
+
+  (object->let (make-nrxysin :n 3 :frequency 100 :r .1))
+      (inlet 'value nrxysin frequency: 100.000, ratio: 1.000, phase: 0.000, n: 3, r: 0.100 'type c-object? 'length 3 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>" 
+             'name "nrxysin" 'frequency 100.0 'phase 0.0 'offset 1.0 'n 3 'r 0.1 'ratio 1.0)
+  (object->let (make-nrxysin :n 4 :frequency 100 :ratio .1))
+      (inlet 'value nrxysin frequency: 100.000, ratio: 0.100, phase: 0.000, n: 4, r: 0.500 'type c-object? 'length 4 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>" 
+             'name "nrxysin" 'frequency 100.0 'phase 0.0 'n 4 'r 0.5 'ratio 0.1)
+
+  (object->let (make-nrxycos :n 4 :frequency 100 :ratio .1))
+       (inlet 'value nrxycos frequency: 100.000, ratio: 0.100, phase: 0.000, n: 4, r: 0.500 'type c-object? 'length 4 'c-type 0 
+              'let (inlet 'object->let generator->let) 'class "<generator>" 
+              'name "nrxycos" 'frequency 100.0 'phase 0.0 'n 4 'r 0.5 'ratio 0.1)
+
+  (object->let (make-oscil-bank #r(0.0 0.0) #r(0.0 0.0) #r(0.0 0.0)))
+      (inlet 'value oscil-bank size: 2 'type c-object? 'length 2 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>" 
+             'name "oscil-bank" 'size 2 'freqs #r(0.0 0.0) 'phases #r(0.0 0.0) 'amps #r(0.0 0.0))
+  (object->let (make-oscil-bank #r(100 200 300) #r(0.0 1.0 2.0) #r(0.5 0.25 0.125)))
+      (inlet 'value oscil-bank size: 3 'type c-object? 'length 3 'c-type 0 
+             'let (inlet 'object->let generator->let) 'class "<generator>" 
+             'name "oscil-bank" 'size 3 'freqs #r(100.0 200.0 300.0) 'phases #r(0.0 1.0 2.0) 'amps #r(0.5 0.25 0.125))
+
+  (object->let (make-rxyk!sin :frequency 100))
+     (inlet 'value rxyk!sin freq: 100.000Hz, phase: 0.000, ratio: 1.000, r: 0.500 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "rxyk!sin" 'frequency 100.0 'phase 0.0 'r 0.5 'ratio 1.0)
+  (object->let (make-rxyk!cos :frequency 100 :r .1 :ratio .6))
+     (inlet 'value rxyk!cos freq: 100.000Hz, phase: 0.000, ratio: 0.600, r: 0.100 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "rxyk!cos" 'frequency 100.0 'phase 0.0 'r 0.1 'ratio 0.6000000000000001)
+
+  (object->let (make-asymmetric-fm 100))
+     (inlet 'value asymmetric-fm freq: 100.000Hz, phase: 0.000, ratio: 1.000, r: 1.000 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "asymmetric-fm" 'frequency 100.0 'phase 0.0 'r 1.0 'ratio 1.0)
+  (object->let (make-asymmetric-fm 100 :r .3 :ratio 2.0))
+     (inlet 'value asymmetric-fm freq: 100.000Hz, phase: 0.000, ratio: 2.000, r: 0.300 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "asymmetric-fm" 'frequency 100.0 'phase 0.0 'r 0.3 'ratio 2.0)
+
+  (object->let (make-square-wave 100 :amplitude .5 :initial-phase 1.0))
+     (inlet 'value square-wave freq: 100.000Hz, phase: 1.000, amp: 0.500 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "square-wave" 'frequency 100.0 'phase 1.0 'amp 0.5)
+   (object->let (make-sawtooth-wave 100 :amplitude .25))
+     (inlet 'value sawtooth-wave freq: 100.000Hz, phase: 3.142, amp: 0.250 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "sawtooth-wave" 'frequency 100.0 'phase 3.141592653589793 'amplitude 0.25)
+   (object->let (make-triangle-wave))
+     (inlet 'value triangle-wave freq: 0.000Hz, phase: 0.000, amp: 1.000 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "triangle-wave" 'frequency 0.0 'phase 0.0 'amplitude 1.0)
+   (object->let (make-pulse-train 100))
+     (inlet 'value pulse-train freq: 100.000Hz, phase: 0.000, amp: 1.000 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "pulse-train" 'frequency 100.0 'phase 0.0 'amplitude 1.0)
+
+   (object->let (make-fir-filter :order 3 :xcoeffs #r(1.0 0.5 0.25)))
+     (inlet 'value fir-filter order: 3, xs: [1 0.5 0.25] 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "fir-filter" 'order 3 'xcoeffs #r(1.0 0.5 0.25))
+   (object->let (make-iir-filter :order 4 :ycoeffs #r(1.0 0.5 0.25 -0.1)))
+     (inlet 'value iir-filter order: 4, ys: [1 0.5 0.25 -0.1] 'type c-object? 'length 4 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "iir-filter" 'order 4 'ycoeffs #r(1.0 0.5 0.25 -0.1))
+   (object->let (make-filter 3 #r(1.0 0.5 0.2) #r(0.2 0.3 0.4)))
+     (inlet 'value filter order: 3, xs: [1 0.5 0.2], ys: [0.2 0.3 0.4] 'type c-object? 'length 3 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "filter" 'order 3 'ycoeffs #r(0.2 0.3 0.4) 'xcoeffs #r(1.0 0.5 0.2))
+
+   (object->let (make-one-zero .3 .2))
+     (inlet 'value one-zero a0: 0.300, a1: 0.200, x1: 0.000 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "one-zero" 'a0 0.3 'a1 0.2)
+   (object->let (make-one-pole .3 .2))(object->let (make-one-pole .3 .2))
+     (inlet 'value one-pole a0: 0.300, b1: 0.200, y1: 0.000 'type c-object? 'length 1 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "one-pole" 'a0 0.3 'b1 0.2)
+   (object->let (make-two-zero :frequency 1000 :radius .5))
+     (inlet 'value two-zero a0: 1.000, a1: -0.990, a2: 0.250, x1: 0.000, x2: 0.000 'type c-object? 'length 2 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "two-zero" 'frequency 999.9999999999999 'radius 0.5 'a0 1.0 'a1 -0.9898674727799416 'a2 0.25)
+   (object->let (make-two-pole :frequency 1000 :radius .5))
+     (inlet 'value two-pole a0: 1.000, b1: -0.990, b2: 0.250, y1: 0.000, y2: 0.000 'type c-object? 'length 2 'c-type 0 
+            'let (inlet 'object->let generator->let) 'class "<generator>" 
+            'name "two-pole" 'frequency 999.9999999999999 'radius 0.5 'a0 1.0 'b1 -0.9898674727799416 'b2 0.25)
+
+  */
+#endif
+  return(let);
+}
+
 #endif
 
 static void mus_xen_init(void)
@@ -12702,6 +13109,11 @@ static void mus_xen_init(void)
   mus_array_print_length_symbol = s7_define_variable(s7, "*" S_mus_array_print_length "*", s7_make_integer(s7, MUS_DEFAULT_ARRAY_PRINT_LENGTH));
   s7_symbol_set_documentation(s7, mus_array_print_length_symbol, "*mus-array-print-length*: current clm array print length (default is 8).");
   s7_symbol_set_access(s7, mus_array_print_length_symbol, s7_make_function(s7, "[acc-mus-array-print-length]", acc_mus_array_print_length, 2, 0, false, "accessor"));
+
+  g_clm_let = s7_openlet(s7, s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "object->let"), 
+						  s7_make_function(s7, "generator->let", generator_to_let, 2, 0, false, "clm generator object->let method"))));
+  s7_gc_protect(s7, g_clm_let);
+
 #endif
 
   Xen_define_typed_procedure(S_radians_to_hz,		g_radians_to_hz_w,		1, 0, 0, H_radians_to_hz,	pl_dr);

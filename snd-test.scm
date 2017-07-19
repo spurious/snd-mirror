@@ -45990,7 +45990,7 @@ EDITS: 1
 				    (lambda () (save-sound-as "test.snd" ind :header-type mus-riff :sample-type mus-bshort))
 				    (lambda () (save-sound-as "test.snd" ind :header-type mus-voc :sample-type mus-bshort))))
 		  (check-error-tag 'env-error (lambda () (filter-sound '(0 0 .1 .1 .05 .1 1 1) 32)))
-		  (check-error-tag 'mus-error (lambda () (save-selection "sel0.snd" :not-a-key 3)))
+		  (check-error-tag 'wrong-type-arg (lambda () (save-selection "sel0.snd" :not-a-key 3)))
 		  (check-error-tag 'no-data (lambda () (set! (filter-control-envelope ind) ())))
 		  (for-each (lambda (arg)
 			      (check-error-tag 'no-such-axis arg))

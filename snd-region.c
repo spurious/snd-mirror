@@ -1929,6 +1929,95 @@ selection is used."
 }
 
 
+static void save_region_to_xen_error(const char *msg, void *data)
+{
+  redirect_snd_error_to(NULL, NULL);
+  Xen_error(Xen_make_error_type("cannot-save"),
+	    Xen_list_2(C_string_to_Xen_string(S_save_region ": can't save ~S"),
+		       C_string_to_Xen_string(msg)));
+}
+
+#define H_save_region "(" S_save_region " region file sample-type header-type comment): save region in file \
+using sample-type (default depends on machine byte order), header-type (" S_mus_next "), and comment"
+
+#if HAVE_SCHEME
+static s7_pointer g_save_region(s7_scheme *sc, s7_pointer args)
+{
+  mus_header_t head_type;
+  mus_sample_t samp_type;
+  int rg;
+  const char *com, *file;
+  char *name;
+  s7_pointer p, fp, res;
+
+  fp = s7_car(args);
+  if (!xen_is_region(fp))
+    return(s7_wrong_type_arg_error(sc, S_save_region, 1, fp, "a region"));
+  rg = Xen_region_to_C_int(fp);
+  if (!(region_ok(rg)))
+    return(snd_no_such_region_error(S_save_region, fp));
+
+  fp = s7_cadr(args);
+  if (fp == Xen_false)
+    Xen_error(Xen_make_error_type("IO-error"),
+	      Xen_list_1(C_string_to_Xen_string(S_save_region ": no output file?")));
+  if (!s7_is_string(fp))
+    return(s7_wrong_type_arg_error(sc, S_save_region, 2, fp, "a string"));
+  file = s7_string(fp);
+  name = mus_expand_filename(file);
+  res = fp;
+
+  p = s7_cddr(args);
+  fp = s7_car(p);
+  if (fp == Xen_false)
+    samp_type = MUS_OUT_SAMPLE_TYPE;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_selection, 3, fp, "an integer"));
+      samp_type = s7_integer(fp);
+    }
+
+  fp = s7_cadr(p);
+  if (fp == Xen_false)
+    head_type = MUS_NEXT;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_selection, 4, fp, "an integer"));
+      head_type = s7_integer(fp);
+    }
+
+  if (!(mus_header_writable(head_type, samp_type))) 
+    {
+      if (mus_header_writable(MUS_NEXT, samp_type))
+	head_type = MUS_NEXT;
+      else
+	{
+	  if (mus_header_writable(MUS_RIFF, samp_type))
+	    head_type = MUS_RIFF;
+	  else head_type = MUS_RAW;
+	}
+    }
+
+  fp = s7_caddr(p);
+  if (fp == Xen_false)
+    com = NULL;
+  else
+    {
+      if (!s7_is_string(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_selection, 5, fp, "a string"));
+      com = s7_string(fp);
+    }
+  
+  redirect_snd_error_to(save_region_to_xen_error, NULL); /* could perhaps pass name here for free in case of error */
+  save_region(rg, name, samp_type, head_type, com);
+  redirect_snd_error_to(NULL, NULL);
+
+  if (name) free(name);
+  return(res);
+}
+#else
 static Xen kw_header_type, kw_comment, kw_file, kw_sample_type;
 
 static void init_region_keywords(void)
@@ -1939,21 +2028,8 @@ static void init_region_keywords(void)
   kw_file = Xen_make_keyword("file");
 }
 
-
-static void save_region_to_xen_error(const char *msg, void *data)
-{
-  redirect_snd_error_to(NULL, NULL);
-  Xen_error(Xen_make_error_type("cannot-save"),
-	    Xen_list_2(C_string_to_Xen_string(S_save_region ": can't save ~S"),
-		       C_string_to_Xen_string(msg)));
-}
-
-
 static Xen g_save_region(Xen n, Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
-  #define H_save_region "(" S_save_region " region file sample-type header-type comment): save region in file \
-using sample-type (default depends on machine byte order), header-type (" S_mus_next "), and comment"
-
   char *name = NULL;
   const char *file = NULL, *com = NULL;
   int rg, true_args;
@@ -2012,7 +2088,7 @@ using sample-type (default depends on machine byte order), header-type (" S_mus_
   if (name) free(name);
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
-
+#endif
 
 static Xen g_mix_region(Xen reg_n, Xen chn_samp_n, Xen snd_n, Xen chn_n, Xen reg_chn)
 {
@@ -2175,7 +2251,6 @@ Xen_wrap_1_arg(g_region_chans_w, g_region_chans)
 Xen_wrap_1_arg(g_region_home_w, g_region_home)
 Xen_wrap_1_arg(g_region_maxamp_w, g_region_maxamp)
 Xen_wrap_1_arg(g_region_maxamp_position_w, g_region_maxamp_position)
-Xen_wrap_9_optional_args(g_save_region_w, g_save_region)
 Xen_wrap_1_arg(g_forget_region_w, g_forget_region)
 Xen_wrap_4_optional_args(g_make_region_w, g_make_region)
 Xen_wrap_5_optional_args(g_mix_region_w, g_mix_region)
@@ -2192,6 +2267,8 @@ Xen_wrap_1_arg(g_region_to_integer_w, g_region_to_integer)
 #if HAVE_SCHEME
 static s7_pointer acc_region_graph_style(s7_scheme *sc, s7_pointer args) {return(g_set_region_graph_style(s7_cadr(args)));}
 static s7_pointer acc_max_regions(s7_scheme *sc, s7_pointer args) {return(g_set_max_regions(s7_cadr(args)));}
+#else
+Xen_wrap_9_optional_args(g_save_region_w, g_save_region)
 #endif
 
 
@@ -2211,12 +2288,13 @@ void g_init_regions(void)
 #endif
 
   init_xen_region();
+#if (!HAVE_SCHEME)
   init_region_keywords();
+#endif
 
   Xen_define_typed_procedure(S_restore_region,         g_restore_region_w,         0, 0, 1, "internal func used in save-state, restores a region",
 			     s7_make_signature(s7, 11, i, i, i, i, i, r, s, s, s, s, p));
   Xen_define_typed_procedure(S_insert_region,          g_insert_region_w,          2, 2, 0, H_insert_region,   s7_make_signature(s7, 5, rg, rg, i, t, t));
-  Xen_define_typed_procedure(S_save_region,            g_save_region_w,            2, 7, 0, H_save_region,     s7_make_circular_signature(s7, 0, 1, t));
   Xen_define_typed_procedure(S_forget_region,          g_forget_region_w,          1, 0, 0, H_forget_region,   s7_make_signature(s7, 2, rg, rg));
   Xen_define_typed_procedure(S_make_region,            g_make_region_w,            0, 4, 0, H_make_region,     s7_make_signature(s7, 5, rg, i, i, t, t));
   Xen_define_typed_procedure(S_mix_region,             g_mix_region_w,             1, 4, 0, H_mix_region,      s7_make_signature(s7, 6, t, rg, i, t, t, t));
@@ -2249,6 +2327,10 @@ void g_init_regions(void)
 
   s7_symbol_set_documentation(s7, ss->max_regions_symbol, "*max-regions*: max number of regions saved on the region list");
   s7_symbol_set_documentation(s7, ss->region_graph_style_symbol, "*region-graph-style*: graph style of the region dialog graph (graph-lines etc)");
+
+  s7_define_safe_function_star(s7, S_save_region, g_save_region, "region file sample-type header-type comment", H_save_region);
+#else
+  Xen_define_typed_procedure(S_save_region,            g_save_region_w,            2, 7, 0, H_save_region,     s7_make_circular_signature(s7, 0, 1, t));
 #endif
 }
 

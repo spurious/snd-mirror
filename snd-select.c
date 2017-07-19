@@ -1646,6 +1646,108 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
 }
 
 
+#define H_save_selection "(" S_save_selection " file srate sample-type header-type comment channel): \
+save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
+
+#if HAVE_SCHEME
+static s7_pointer g_save_selection(s7_scheme *sc, s7_pointer args)
+{
+  mus_header_t head_type;
+  mus_sample_t samp_type;
+  int sr, chn;
+  io_error_t io_err;
+  const char *com, *file;
+  char *fname;
+  s7_pointer p, fp, res;
+
+  if (!(selection_is_active()))
+    return(snd_no_active_selection_error(S_save_selection));
+
+  fp = s7_car(args);
+  if (fp == Xen_false)
+    Xen_error(Xen_make_error_type("IO-error"), Xen_list_1(C_string_to_Xen_string(S_save_selection ": no output file?")));
+  if (!s7_is_string(fp))
+    return(s7_wrong_type_arg_error(sc, S_save_selection, 1, fp, "a string"));
+  file = s7_string(fp);
+  res = fp;
+
+  fp = s7_cadr(args);
+  if (fp == Xen_false)
+    sr = selection_srate();
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_selection, 2, fp, "an integer"));
+      sr = s7_integer(fp);
+      if (sr <= 0)
+	Xen_error(Xen_make_error_type("cannot-save"),
+		  Xen_list_2(C_string_to_Xen_string(S_save_selection ": srate (~A) can't be <= 0"), fp));
+    }
+
+  p = s7_cddr(args);
+  fp = s7_car(p);
+  if (fp == Xen_false)
+    samp_type = MUS_UNKNOWN_SAMPLE;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_selection, 3, fp, "an integer"));
+      samp_type = s7_integer(fp);
+    }
+
+  fp = s7_cadr(p);
+  if (fp == Xen_false)
+    head_type = MUS_UNKNOWN_HEADER;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_selection, 4, fp, "an integer"));
+      head_type = s7_integer(fp);
+    }
+  if ((head_type != MUS_UNKNOWN_HEADER) && (!(mus_header_writable(head_type, MUS_IGNORE_SAMPLE))))
+    Xen_error(Xen_make_error_type("cannot-save"),
+	      Xen_list_2(C_string_to_Xen_string(S_save_selection ": can't write a ~A header"),
+			 C_string_to_Xen_string(mus_header_type_name(head_type))));
+
+  if ((head_type != MUS_UNKNOWN_HEADER) && (samp_type != MUS_UNKNOWN_SAMPLE) && (!(mus_header_writable(head_type, samp_type))))
+    Xen_error(Xen_make_error_type("cannot-save"),
+	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't write ~A data to a ~A header"),
+			 C_string_to_Xen_string(mus_sample_type_name(samp_type)),
+			 C_string_to_Xen_string(mus_header_type_name(head_type))));
+
+  p = s7_cddr(p);
+  fp = s7_car(p);
+  if (fp == Xen_false)
+    com = NULL;
+  else
+    {
+      if (!s7_is_string(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_selection, 5, fp, "a string"));
+      com = s7_string(fp);
+    }
+  
+  fp = s7_cadr(p);
+  if (fp == Xen_false)
+    chn = SAVE_ALL_CHANS;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_selection, 6, fp, "an integer"));
+      chn = s7_integer(fp);
+    }
+
+  fname = mus_expand_filename(file);
+  io_err = save_selection(fname, sr, samp_type, head_type, com, chn);
+
+  if (fname) free(fname);
+  if ((io_err != IO_NO_ERROR) &&
+      (io_err != IO_INTERRUPTED) &&
+      (io_err != IO_SAVE_HOOK_CANCELLATION))
+    Xen_error(Xen_make_error_type("cannot-save"),
+	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't save ~S, ~A"), res, C_string_to_Xen_string(snd_open_strerror())));
+  return(res);
+}
+#else
 static Xen kw_header_type, kw_comment, kw_file, kw_srate, kw_channel, kw_sample_type;
 
 static void init_selection_keywords(void)
@@ -1658,12 +1760,8 @@ static void init_selection_keywords(void)
   kw_channel = Xen_make_keyword("channel");
 }
 
-
 static Xen g_save_selection(Xen arglist)
 {
-  #define H_save_selection "(" S_save_selection " file srate sample-type header-type comment channel): \
-save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
-
   mus_header_t head_type = MUS_UNKNOWN_HEADER;
   mus_sample_t samp_type = MUS_UNKNOWN_SAMPLE;
   int sr = -1, chn = 0;
@@ -1739,7 +1837,7 @@ save the current selection in file using the indicated file attributes.  If chan
 			 C_string_to_Xen_string(snd_open_strerror())));
   return(args[orig_arg[0] - 1]);
 }
-
+#endif
 
 Xen g_selection_chans(void)
 {
@@ -1865,7 +1963,6 @@ Xen_wrap_3_optional_args(g_insert_selection_w, g_insert_selection)
 Xen_wrap_4_optional_args(g_mix_selection_w, g_mix_selection)
 Xen_wrap_no_args(g_selection_to_mix_w, g_selection_to_mix)
 Xen_wrap_2_optional_args(g_select_all_w, g_select_all)
-Xen_wrap_any_args(g_save_selection_w, g_save_selection)
 Xen_wrap_no_args(g_show_selection_w, g_show_selection)
 Xen_wrap_no_args(g_unselect_all_w, g_unselect_all)
 #if HAVE_SCHEME
@@ -1873,6 +1970,7 @@ Xen_wrap_no_args(g_unselect_all_w, g_unselect_all)
 #define g_set_selection_framples_w g_set_selection_framples_reversed
 #define g_set_selection_member_w g_set_selection_member_reversed
 #else
+Xen_wrap_any_args(g_save_selection_w, g_save_selection)
 Xen_wrap_3_optional_args(g_set_selection_position_w, g_set_selection_position)
 Xen_wrap_3_optional_args(g_set_selection_framples_w, g_set_selection_framples)
 Xen_wrap_3_optional_args(g_set_selection_member_w, g_set_selection_member)
@@ -1890,7 +1988,9 @@ void g_init_selection(void)
   t = s7_t(s7);
 #endif
 
+#if (!HAVE_SCHEME)
   init_selection_keywords();
+#endif
   init_xen_selection();
 
   Xen_define_typed_dilambda(S_selection_position, g_selection_position_w, H_selection_position, S_set S_selection_position, g_set_selection_position_w, 0, 2, 1, 2,
@@ -1912,6 +2012,10 @@ void g_init_selection(void)
   Xen_define_typed_procedure(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection,  s7_make_signature(s7, 4, b, i, t, t));
   Xen_define_typed_procedure(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection,     s7_make_signature(s7, 5, t, i, t, t, i));
   Xen_define_typed_procedure(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix,  s7_make_signature(s7, 1, p));
-  Xen_define_typed_procedure(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection,    s7_make_circular_signature(s7, 0, 1, t));
   Xen_define_typed_procedure(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection,    s7_make_signature(s7, 1, b));
+#if HAVE_SCHEME
+  s7_define_safe_function_star(s7, S_save_selection, g_save_selection, "file srate sample-type header-type comment channel", H_save_selection);
+#else
+  Xen_define_typed_procedure(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection,    s7_make_circular_signature(s7, 0, 1, t));
+#endif
 }

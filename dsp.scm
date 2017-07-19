@@ -2491,7 +2491,13 @@ is assumed to be outside -1.0 to 1.0."))
 
 
 ;;; -------- parallel FM spectrum calculator
-
+;;;
+;;; outside Snd, jn can be accessed via:
+;;;   (require libgsl.scm)
+;;;   (define jn (*libgsl* 'gsl_sf_bessel_Jn))
+;;; or:
+;;;   (require libm.scm)
+;;;   (define jn (*libm* 'jn))
 					;(fm-parallel-component 200 2000.0 (list 2000.0 200.0) (list 0.5 1.0) () () #t)
 
 (define fm-parallel-component 

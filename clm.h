@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 15
-#define MUS_DATE "13-Jul-17"
+#define MUS_REVISION 16
+#define MUS_DATE "18-Jul-17"
 
 /* isn't mus_env_interp backwards? */
 
@@ -108,6 +108,7 @@ MUS_EXPORT mus_float_t mus_odd_multiple(mus_float_t x, mus_float_t y);
 MUS_EXPORT mus_float_t mus_even_multiple(mus_float_t x, mus_float_t y);
 MUS_EXPORT mus_float_t mus_odd_weight(mus_float_t x);
 MUS_EXPORT mus_float_t mus_even_weight(mus_float_t x);
+MUS_EXPORT const char *mus_interp_type_to_string(int type);
 
 MUS_EXPORT mus_float_t mus_srate(void);
 MUS_EXPORT mus_float_t mus_set_srate(mus_float_t val);
@@ -190,6 +191,29 @@ MUS_EXPORT mus_float_t mus_feedforward(mus_any *gen);
 MUS_EXPORT mus_float_t mus_set_feedforward(mus_any *gen, mus_float_t val);
 MUS_EXPORT mus_float_t mus_feedback(mus_any *rd);
 MUS_EXPORT mus_float_t mus_set_feedback(mus_any *rd, mus_float_t dir);
+
+MUS_EXPORT bool mus_phase_exists(mus_any *gen);
+MUS_EXPORT bool mus_frequency_exists(mus_any *gen);
+MUS_EXPORT bool mus_length_exists(mus_any *gen);
+MUS_EXPORT bool mus_order_exists(mus_any *gen);
+MUS_EXPORT bool mus_data_exists(mus_any *gen);
+MUS_EXPORT bool mus_name_exists(mus_any *gen);
+MUS_EXPORT bool mus_scaler_exists(mus_any *gen);
+MUS_EXPORT bool mus_offset_exists(mus_any *gen);
+MUS_EXPORT bool mus_width_exists(mus_any *gen);
+MUS_EXPORT bool mus_file_name_exists(mus_any *gen);
+MUS_EXPORT bool mus_xcoeffs_exists(mus_any *gen);
+MUS_EXPORT bool mus_ycoeffs_exists(mus_any *gen);
+MUS_EXPORT bool mus_increment_exists(mus_any *gen);
+MUS_EXPORT bool mus_location_exists(mus_any *gen);
+MUS_EXPORT bool mus_channel_exists(mus_any *gen);
+MUS_EXPORT bool mus_channels_exists(mus_any *gen);
+MUS_EXPORT bool mus_position_exists(mus_any *gen);
+MUS_EXPORT bool mus_interp_type_exists(mus_any *gen);
+MUS_EXPORT bool mus_ramp_exists(mus_any *gen);
+MUS_EXPORT bool mus_hop_exists(mus_any *gen);
+MUS_EXPORT bool mus_feedforward_exists(mus_any *gen);
+MUS_EXPORT bool mus_feedback_exists(mus_any *gen);
 
 
 /* -------- generators -------- */
@@ -592,6 +616,7 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
+ * 18-Jul:     mus_<method>_exists.
  * 13-Jul:     mus_run1_function.
  * 11-Jul-17:  removed *clm-default-frequency*.
  * --------

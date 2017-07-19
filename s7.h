@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "5.5"
-#define S7_DATE "10-July-17"
+#define S7_VERSION "5.6"
+#define S7_DATE "18-July-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -620,6 +620,7 @@ int s7_object_type(s7_pointer obj);
 void *s7_object_value(s7_pointer obj);
 void *s7_object_value_checked(s7_pointer obj, int type);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
+s7_pointer s7_make_object_with_let(s7_scheme *sc, int type, void *value, s7_pointer let);
 void s7_mark_object(s7_pointer p);
 s7_pointer s7_object_let(s7_pointer obj);
 s7_pointer s7_object_set_let(s7_pointer obj, s7_pointer e);
@@ -854,6 +855,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 18-Jul:    s7_make_object_with_let.
  * 8-July:    s7_define_typed_function_star, s7_make_function_star. s7_apply_function_star.
  * 27-June:   s7_make_string_wrapper.
  * 22-May:    lambda* keyword arg handling changed slightly. 
