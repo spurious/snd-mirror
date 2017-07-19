@@ -1975,7 +1975,7 @@ static s7_pointer g_save_region(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_integer(fp))
 	return(s7_wrong_type_arg_error(sc, S_save_selection, 3, fp, "an integer"));
-      samp_type = s7_integer(fp);
+      samp_type = (mus_sample_t)s7_integer(fp);
     }
 
   fp = s7_cadr(p);
@@ -1985,7 +1985,7 @@ static s7_pointer g_save_region(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_integer(fp))
 	return(s7_wrong_type_arg_error(sc, S_save_selection, 4, fp, "an integer"));
-      head_type = s7_integer(fp);
+      head_type = (mus_header_t)s7_integer(fp);
     }
 
   if (!(mus_header_writable(head_type, samp_type))) 

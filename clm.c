@@ -9342,11 +9342,8 @@ static mus_float_t run_onepall(mus_any *ptr, mus_float_t input, mus_float_t unus
 }
 
 
-static mus_long_t onepall_length(mus_any *ptr)
-{
-  return(((onepall *)ptr)->size);
-}
-
+static mus_long_t onepall_length(mus_any *ptr) {return(((onepall *)ptr)->size);}
+static mus_float_t onepall_scaler(mus_any *ptr) {return(((onepall *)ptr)->coeff);}
 
 static void onepall_reset(mus_any *ptr)
 {
@@ -9451,7 +9448,7 @@ static mus_any_class ONE_POLE_ALL_PASS_CLASS = {
   &onepall_length, 0,
   0, 0, 
   0, 0,
-  0, 0,
+  &onepall_scaler, 0,
   0, 0,
   &run_onepall,
   MUS_NOT_SPECIAL, 
@@ -11071,6 +11068,8 @@ static mus_any *rdout_copy(mus_any *ptr)
 }
 
 static int sample_to_file_channels(mus_any *ptr) {return((int)(((rdout *)ptr)->chans));}
+static mus_long_t sample_to_file_samp_type(mus_any *ptr) {return((int)(((rdout *)ptr)->output_sample_type));}
+static int sample_to_file_head_type(mus_any *ptr) {return((int)(((rdout *)ptr)->output_header_type));}
 
 static mus_long_t bufferlen(mus_any *ptr) {return(clm_file_buffer_size);}
 
@@ -11102,7 +11101,8 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   &mus_out_any_to_file,
   &sample_to_file_file_name,
   &sample_to_file_end,
-  0, 0, 0,
+  &sample_to_file_samp_type, 0, 
+  &sample_to_file_head_type,
   0, 0, 0, 0,
   &no_reset,
   0, &rdout_copy
@@ -11678,7 +11678,6 @@ static char *describe_frample_to_file(mus_any *ptr)
   return(describe_buffer);
 }
 
-
 static mus_float_t run_frample_to_file(mus_any *ptr, mus_float_t arg1, mus_float_t arg2) 
 {
   mus_error(MUS_NO_RUN, "no run method for frample->file"); 
@@ -11706,7 +11705,8 @@ static mus_any_class FRAMPLE_TO_FILE_CLASS = {
   &mus_out_any_to_file,
   &sample_to_file_file_name,
   &sample_to_file_end,
-  0, 0, 0,
+  &sample_to_file_samp_type, 0, 
+  &sample_to_file_head_type,
   0, 0, 0, 0,
   &no_reset,
   0, &rdout_copy
@@ -11786,7 +11786,7 @@ typedef struct {
   mus_float_t *revn;
   int chans, rev_chans;
   mus_interp_t type;
-  mus_float_t reverb;
+  mus_float_t reverb, degree, distance;
   bool safe_output;
   void *closure;
   void (*locsig_func)(mus_any *ptr, mus_long_t loc, mus_float_t val);
@@ -11922,6 +11922,10 @@ static mus_any *locs_copy(mus_any *ptr)
 }
 
 static mus_long_t locsig_length(mus_any *ptr) {return(((locs *)ptr)->chans);}
+static mus_long_t locsig_type(mus_any *ptr) {return(((locs *)ptr)->type);}
+static mus_float_t locsig_degree(mus_any *ptr) {return(((locs *)ptr)->degree);}
+static mus_float_t locsig_distance(mus_any *ptr) {return(((locs *)ptr)->distance);}
+static mus_float_t locsig_reverb(mus_any *ptr) {return(((locs *)ptr)->reverb);}
 
 static int locsig_channels(mus_any *ptr) {return(((locs *)ptr)->chans);}
 
@@ -12082,15 +12086,16 @@ static mus_any_class LOCSIG_CLASS = {
   &locsig_length,
   0,
   0, 0, 0, 0,
-  0, 0,
-  0, 0,
+  &locsig_degree, 0,
+  &locsig_distance, 0,
   &run_locsig,
   MUS_OUTPUT,
   &mus_locsig_closure,
   &locsig_channels,
-  0, 0, 0, 0,
+  &locsig_reverb, 0,
+  0, 0,
   &locsig_xcoeff, &locsig_set_xcoeff, 
-  0, 0, 0, 0,
+  &locsig_type, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 
   &locsig_xcoeffs, 0,
@@ -12435,6 +12440,8 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 
   gen->type = type;
   gen->reverb = reverb;
+  gen->distance = distance;
+  gen->degree = degree;
   gen->safe_output = false;
   if (distance > 1.0)
     dist = 1.0 / distance;
@@ -13647,7 +13654,7 @@ typedef struct {
   int s20;
   int s50;
   int rmp;
-  mus_float_t amp;
+  mus_float_t amp, jitter;
   int cur_out;
   int input_hop;
   int ctr;
@@ -13680,13 +13687,14 @@ static char *describe_granulate(mus_any *ptr)
   grn_info *gen = (grn_info *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f",
-	       mus_name(ptr),
-	       (mus_float_t)(gen->output_hop) / (mus_float_t)(gen->input_hop),
-	       gen->input_hop, gen->output_hop,
-	       gen->amp,
-	       (mus_float_t)(gen->grain_len) / (mus_float_t)sampling_rate, gen->grain_len,
-	       (mus_float_t)(gen->rmp) / (mus_float_t)sampling_rate);
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f, jitter: %.3f",
+	   mus_name(ptr),
+	   (mus_float_t)(gen->output_hop) / (mus_float_t)(gen->input_hop),
+	   gen->input_hop, gen->output_hop,
+	   gen->amp,
+	   (mus_float_t)(gen->grain_len) / (mus_float_t)sampling_rate, gen->grain_len,
+	   (mus_float_t)(gen->rmp) / (mus_float_t)gen->grain_len,
+	   gen->jitter);
   return(describe_buffer);
 }
 
@@ -13774,6 +13782,8 @@ int mus_granulate_grain_max_length(mus_any *ptr) {return(((grn_info *)ptr)->in_d
 static mus_long_t grn_location(mus_any *ptr) {return((mus_long_t)(((grn_info *)ptr)->randx));}
 static mus_long_t grn_set_location(mus_any *ptr, mus_long_t val) {((grn_info *)ptr)->randx = (unsigned long)val; return(val);}
 
+static mus_float_t grn_jitter(mus_any *ptr) {return(((grn_info *)ptr)->jitter);}
+
 static mus_float_t run_granulate(mus_any *ptr, mus_float_t unused1, mus_float_t unused2) {return(mus_granulate(ptr, NULL));}
 
 
@@ -13817,7 +13827,7 @@ static mus_any_class GRANULATE_CLASS = {
   MUS_NOT_SPECIAL,
   &grn_closure,
   0,
-  0, 0, 0, 0, 0, 0, 
+  &grn_jitter, 0, 0, 0, 0, 0, 
   &grn_hop, &grn_set_hop, 
   &grn_ramp, &grn_set_ramp,
   0, 0, 0, 0, 
@@ -13861,6 +13871,7 @@ mus_any *mus_make_granulate(mus_float_t (*input)(void *arg, int direction),
   spd->grain_len = (int)(ceil(length * sampling_rate));
   spd->rmp = (int)(ramp * spd->grain_len);
   spd->amp = scaler;
+  spd->jitter = jitter;
   spd->output_hop = (int)(hop * sampling_rate);
   spd->input_hop = (int)((mus_float_t)(spd->output_hop) / expansion);
   spd->s20 = 2 * (int)(jitter * sampling_rate * hop); /* was *.05 here and *.02 below */

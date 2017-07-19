@@ -18025,7 +18025,7 @@ EDITS: 2
     (let ((gen (make-granulate :expansion 2.0 :input (make-readin "oboe.snd" 0 4000 1 2048))))
       (print-and-check gen 
 		       "granulate"
-		       "granulate expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060")
+		       "granulate expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.400, jitter: 1.000")
       (let ((rd1b (make-readin :file "oboe.snd" :channel 0 :start 4000 :direction 1 :size *clm-file-buffer-size*))
 	    (v0 (make-float-vector 1000)))
 	(let ((gen1 (make-granulate :expansion 2.0

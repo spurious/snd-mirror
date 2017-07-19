@@ -60882,7 +60882,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 			{
 			  s7_pointer largs, lbody, q;
 			  slist *top, *locals;
-			  int lresult;
+			  body_t lresult;
 #if SAFE_FORM_PRINT
 			  fprintf(stderr, "scope_safe check %s\n", DISPLAY(car(p)));
 #endif
