@@ -3980,12 +3980,80 @@ static void init_sound_keywords(void)
   kw_comment = Xen_make_keyword("comment");
 }
 
-
-static Xen g_open_raw_sound(Xen arglist)
-{
-  #define H_open_raw_sound "(" S_open_raw_sound " file channels srate sample-type): \
+#define H_open_raw_sound "(" S_open_raw_sound " file channels srate sample-type): \
 open file assuming the data matches the attributes indicated unless the file actually has a header"
 
+#if HAVE_SCHEME
+static s7_pointer g_open_raw_sound(s7_scheme *sc, s7_pointer args)
+{
+  const char *file;
+  char *fullname;
+  snd_info *sp;
+  bool file_exists;
+  int os = 1, oc = 1;
+  mus_sample_t ofr = MUS_BSHORT;
+  s7_pointer p, fp;
+
+  mus_header_raw_defaults(&os, &oc, &ofr);
+  
+  fp = s7_car(args);
+  if (!s7_is_string(fp))
+    Xen_error(NO_SUCH_FILE,
+	      Xen_list_1(C_string_to_Xen_string(S_open_raw_sound ": no output file?")));
+  file = s7_string(fp);
+  fullname = mus_expand_filename(file);
+  file_exists = mus_file_probe(fullname);
+  free(fullname);
+  if (!file_exists)
+    return(snd_no_such_file_error(S_open_raw_sound, fp));
+  
+  fp = s7_cadr(args);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_open_raw_sound, 2, fp, "an integer"));
+      oc = s7_integer(fp);
+      if ((oc < 0) ||
+	  (oc > MUS_MAX_CHANS))
+	Xen_out_of_range_error(S_open_raw_sound, 2, fp, "too many channels requested");
+      set_fallback_chans(oc);
+    }
+
+  p = s7_cddr(args);
+
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_open_raw_sound, 3, fp, "an integer"));
+      os = s7_integer(fp);
+      set_fallback_srate(os);
+    }
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_open_raw_sound, 4, fp, "an integer"));
+      ofr = (mus_sample_t)s7_integer(fp);
+      set_fallback_sample_type(ofr);
+    }
+
+  mus_header_set_raw_defaults(os, oc, ofr);
+  ss->reloading_updated_file = -1;
+  ss->open_requestor = FROM_OPEN_RAW_SOUND;
+  sp = snd_open_file(file, FILE_READ_WRITE);
+  set_fallback_chans(0);
+  set_fallback_srate(0);
+  set_fallback_sample_type(MUS_UNKNOWN_SAMPLE);
+  ss->reloading_updated_file = 0;
+  if (sp) 
+    return(C_int_to_Xen_sound(sp->index));
+  return(Xen_false);
+}
+#else
+static Xen g_open_raw_sound(Xen arglist)
+{
   const char *file = NULL;
   char *fullname;
   snd_info *sp;
@@ -4054,7 +4122,7 @@ open file assuming the data matches the attributes indicated unless the file act
     return(C_int_to_Xen_sound(sp->index));
   return(Xen_false);
 }
-
+#endif
 
 #if HAVE_SCHEME
   #define read_only_example "You can make it writable via: (set! (" S_read_only ") #f)"
@@ -5762,7 +5830,6 @@ Xen_wrap_1_optional_arg(g_close_sound_w, g_close_sound)
 Xen_wrap_1_optional_arg(g_update_sound_w, g_update_sound)
 Xen_wrap_1_optional_arg(g_save_sound_w, g_save_sound)
 Xen_wrap_1_arg(g_open_sound_w, g_open_sound)
-Xen_wrap_any_args(g_open_raw_sound_w, g_open_raw_sound)
 Xen_wrap_1_arg(g_view_sound_w, g_view_sound)
 Xen_wrap_any_args(g_new_sound_w, g_new_sound)
 Xen_wrap_1_optional_arg(g_revert_sound_w, g_revert_sound)
@@ -5853,6 +5920,7 @@ Xen_wrap_2_optional_args(g_status_report_w, g_status_report)
 #define g_set_speed_control_style_w g_set_speed_control_style_reversed
 #define g_set_speed_control_tones_w g_set_speed_control_tones_reversed
 #else
+Xen_wrap_any_args(g_open_raw_sound_w, g_open_raw_sound)
 Xen_wrap_2_optional_args(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
 Xen_wrap_2_optional_args(g_set_read_only_w, g_set_read_only)
 Xen_wrap_2_optional_args(g_set_sound_properties_w, g_set_sound_properties)
@@ -6007,11 +6075,16 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_unsafe_typed_procedure(S_update_sound,   g_update_sound_w,       0, 1, 0, H_update_sound,      s7_make_signature(s7, 2, t, t));
   Xen_define_unsafe_typed_procedure(S_save_sound,     g_save_sound_w,         0, 1, 0, H_save_sound,        s7_make_signature(s7, 2, sd, t));
   Xen_define_unsafe_typed_procedure(S_open_sound,     g_open_sound_w,         1, 0, 0, H_open_sound,        s7_make_signature(s7, 2, sd, s));
-  Xen_define_unsafe_typed_procedure(S_open_raw_sound, g_open_raw_sound_w,     0, 0, 1, H_open_raw_sound,    s7_make_circular_signature(s7, 0, 1, t));
   Xen_define_unsafe_typed_procedure(S_view_sound,     g_view_sound_w,         1, 0, 0, H_view_sound,        s7_make_signature(s7, 2, sd, s));
   Xen_define_unsafe_typed_procedure(S_new_sound,      g_new_sound_w,          0, 0, 1, H_new_sound,         s7_make_circular_signature(s7, 0, 1, t));
   Xen_define_unsafe_typed_procedure(S_revert_sound,   g_revert_sound_w,       0, 1, 0, H_revert_sound,      s7_make_signature(s7, 2, sd, sd));
   Xen_define_unsafe_typed_procedure(S_save_sound_as,  g_save_sound_as_w,      0, 0, 1, H_save_sound_as,     s7_make_circular_signature(s7, 0, 1, t));
+
+#if HAVE_SCHEME
+  s7_define_function_star(s7, S_open_raw_sound, g_open_raw_sound, "file channels srate sample-type", H_open_raw_sound);
+#else
+  Xen_define_unsafe_typed_procedure(S_open_raw_sound, g_open_raw_sound_w,     0, 0, 1, H_open_raw_sound,    s7_make_circular_signature(s7, 0, 1, t));
+#endif
 
   Xen_define_typed_procedure(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls,         s7_make_signature(s7, 5, t, t, i, i, i));
   Xen_define_typed_procedure(S_controls_to_channel,    g_controls_to_channel_w,     0, 6, 0, H_controls_to_channel,    s7_make_signature(s7, 7, p, p, i, i, t, t, s));

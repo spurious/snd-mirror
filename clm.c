@@ -4082,7 +4082,8 @@ static mus_any_class POLYSHAPE_CLASS = {
   MUS_NOT_SPECIAL, 
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 
+  &pw_choice,
   0, 0, 0, 0,
   &pw_reset,
   0, &pw_copy

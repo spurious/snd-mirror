@@ -1128,7 +1128,8 @@ struct s7_scheme {
              string_set_symbol, string_symbol, string_to_number_symbol, string_to_symbol_symbol, string_upcase_symbol,
              sublet_symbol, substring_symbol, subtract_symbol, symbol_access_symbol, symbol_symbol, symbol_to_dynamic_value_symbol,
              symbol_to_keyword_symbol, symbol_to_string_symbol, symbol_to_value_symbol, s7_version_symbol,
-             tan_symbol, tanh_symbol, throw_symbol, string_to_byte_vector_symbol, truncate_symbol, type_of_symbol,
+             tan_symbol, tanh_symbol, throw_symbol, string_to_byte_vector_symbol, 
+             tree_count_symbol, truncate_symbol, type_of_symbol,
              unlet_symbol, 
              values_symbol, varlet_symbol, vector_append_symbol, vector_dimensions_symbol, vector_fill_symbol, vector_ref_symbol,
              vector_set_symbol, vector_symbol, 
@@ -6849,14 +6850,14 @@ s7_pointer s7_varlet(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointe
   if (!is_symbol(symbol))
     return(wrong_type_argument_with_type(sc, sc->varlet_symbol, 2, symbol, a_symbol_string));
 
+  if ((is_slot(global_slot(symbol))) &&
+      (is_syntax(slot_value(global_slot(symbol)))))
+    return(wrong_type_argument_with_type(sc, sc->varlet_symbol, 2, symbol, s7_make_string_wrapper(sc, "a non-syntactic name")));
+
   if (env == sc->rootlet)
     {
       if (is_slot(global_slot(symbol)))
-	{
-	  if (is_syntax(slot_value(global_slot(symbol))))
-	    return(wrong_type_argument_with_type(sc, sc->varlet_symbol, 2, symbol, s7_make_string_wrapper(sc, "a non-syntactic keyword")));
-	  slot_set_value(global_slot(symbol), value);
-	}
+	slot_set_value(global_slot(symbol), value);
       else s7_make_slot(sc, env, symbol, value);
     }
   else make_slot_1(sc, env, symbol, value);
@@ -7066,6 +7067,9 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 
 	  if (is_immutable_symbol(sym))
 	    return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), sym, a_non_constant_symbol_string));
+	  if ((is_slot(global_slot(sym))) &&
+	      (is_syntax(slot_value(global_slot(sym)))))
+	    return(wrong_type_argument_with_type(sc, sc->sublet_symbol, 2, sym, s7_make_string_wrapper(sc, "a non-syntactic name")));
 
 	  /* here we know new_e is a let and is not rootlet */
 	  make_slot_1(sc, new_e, sym, val);
@@ -30871,6 +30875,8 @@ static s7_pointer g_tree_count(s7_scheme *sc, s7_pointer args)
 {
   if (is_null(cddr(args)))
     return(s7_make_integer(sc, tree_count(sc, car(args), cadr(args), 0)));
+  if (!s7_is_integer(caddr(args)))
+    return(simple_wrong_type_argument(sc, sc->tree_count_symbol, caddr(args), T_INTEGER));
   return(s7_make_integer(sc, tree_count_at_least(sc, car(args), cadr(args), 0, s7_integer(caddr(args)))));
 }
 
@@ -41411,12 +41417,13 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
       {
 	s7_pointer let, clet;
 	clet = c_object_let(obj);
-	let = s7_inlet(sc, s7_list(sc, 12, sc->value_symbol, obj,
+	let = s7_inlet(sc, s7_list(sc, 10,
+				   sc->value_symbol, obj,
 				   sc->type_symbol, sc->is_c_object_symbol,
-				   sc->length_symbol, s7_length(sc, obj),
-				   s7_make_symbol(sc, "c-type"), s7_make_integer(sc, c_object_type(obj)),
-				   sc->let_symbol, clet,
+				   s7_make_symbol(sc, "c-object-type"), s7_make_integer(sc, c_object_type(obj)),
+				   s7_make_symbol(sc, "c-object-let"), clet,
 				   s7_make_symbol(sc, "class"), c_object_scheme_name(obj)));
+	/* TODO: local 'let entry causes trouble -- it's an error now in s7_varlet */
 	if ((is_let(clet)) &&
 	    ((has_methods(clet)) || (has_methods(obj))))
 	  {
@@ -81533,7 +81540,7 @@ s7_scheme *s7_init(void)
   s7_define_safe_function(sc, "tree-leaves",   g_tree_leaves,   1, 0, false, "an experiment");
   s7_define_safe_function(sc, "tree-memq",     g_tree_memq,     2, 0, false, "an experiment");
   s7_define_safe_function(sc, "tree-set-memq", g_tree_set_memq, 2, 0, false, "an experiment");
-  s7_define_safe_function(sc, "tree-count",    g_tree_count,    2, 1, false, "an experiment");
+  sc->tree_count_symbol = s7_define_safe_function(sc, "tree-count",    g_tree_count,    2, 1, false, "an experiment");
 
 
   /* -------- *features* -------- */
@@ -82344,8 +82351,6 @@ int main(int argc, char **argv)
  * s7:
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
- * object->let clm: ca 20 to go + generators.scm
- *   what if setting a field were reflected in the original object?
  *
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func
@@ -82360,7 +82365,7 @@ int main(int argc, char **argv)
  *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
- * there are uses of unscramble in snd-snd.c(3) and snd-dac.c(1)
+ * there are uses of unscramble in snd-snd.c(2) and snd-dac.c(1)
  *
  * lint: as in random-gen, move internally created but unchanged sequences (lists) out of the body
  *
@@ -82368,7 +82373,7 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num
- * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
+ * snd namespaces: dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * ruby version crashes in test 4|8 -- file_copy?
  *
  * ip for pi cases (b_ip, but it doesn't appear to happen much)
@@ -82410,14 +82415,14 @@ int main(int argc, char **argv)
  * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2730
  * lint          |      |      |      || 4041 | 3376  3114  3008
  * lg            |      |      |      || 211  | 161   149   144.0
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3020
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3017
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3104
  * tform         |      |      | 6816 || 3714 | 3530  3361  3280
  * tmap          |      |      |  9.3 || 5279 |       3939  3391
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963
  * tsort         |      |      |      || 8584 | 4869  4080  4012
- * titer         |      |      |      || 5971 | 5224  4768  4719
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7666
+ * titer         |      |      |      || 5971 | 5224  4768  4722
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7668
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.8

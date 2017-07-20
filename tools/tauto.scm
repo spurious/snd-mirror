@@ -165,7 +165,7 @@
 		  all delete-file system set-cdr! stacktrace test-sym
 		  cutlet varlet gc cond-expand reader-cond
 		  openlet coverlet eval vector list cons hash-table* hash-table values
-		  throw symbol-table load
+		  throw symbol-table load local-symbol?
 		  global-environment current-environment make-procedure-with-setter procedure-with-setter? make-rectangular
 		  
 		  copy fill! hash-table-set! vector-set! let-set! list-values apply-values ; omitted { before (see below)
@@ -173,7 +173,8 @@
 		  mock-number mock-pair mock-string mock-char mock-vector 
 		  mock-symbol mock-port mock-hash-table m 
 		  *mock-number* *mock-pair* *mock-string* *mock-char* *mock-vector*
-		  *mock-symbol* *mock-port* *mock-hash-table*
+		  *mock-symbol* *mock-port* *mock-hash-table* mp ms mv
+		  *unbound-variable-hook* ;error
 		  
 		  c-define-1 apropos map-values ;set-current-output-port
 		  tree-count outlet-member make-method make-object))
@@ -189,6 +190,7 @@
 		  (strname (symbol->string sym)))
 	      (if (not (memv (strname 0) '(#\{ #\[ #\()))
 		  (begin
+		    ;(format *stderr* "~A~%" sym)
 		    (if (< top bottom)
 			(format *stderr* ";~A (bottom: ~A, top: ~A)...~%" sym bottom top))
 					;(format *stderr* ";~A...~%" sym)

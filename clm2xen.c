@@ -12802,302 +12802,41 @@ static s7_pointer generator_to_let(s7_scheme *sc, s7_pointer args)
   if (mus_is_ssb_am(g))
     s7_varlet(sc, let, s7_make_symbol(sc, "order"), s7_make_integer(sc, mus_length(g)));
 
-#if 0
-  /*
+  if (mus_is_phase_vocoder(g))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "input"), gn->vcts[MUS_INPUT_FUNCTION]);
+      s7_varlet(sc, let, s7_make_symbol(sc, "fft-size"), s7_make_integer(sc, mus_length(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "overlap"), s7_make_integer(sc, mus_length(g) / mus_hop(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "interp"), s7_make_integer(sc, (s7_int)mus_increment(g)));
+      s7_varlet(sc, let, s7_make_symbol(sc, "analyze"), gn->vcts[MUS_ANALYZE_FUNCTION]);
+      s7_varlet(sc, let, s7_make_symbol(sc, "edit"), gn->vcts[MUS_EDIT_FUNCTION]);
+      s7_varlet(sc, let, s7_make_symbol(sc, "synthesize"), gn->vcts[MUS_SYNTHESIZE_FUNCTION]);
+    }
 
-TODO:
-MUS_PHASE_VOCODER, MUS_POLYSHAPE, MUS_MOVE_SOUND, MUS_POLYWAVE
-generators.scm
+  if (mus_is_move_sound(g))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "pars"), gn->vcts[G_LOCSIG_DATA]);
+      if (gn->nvcts == 4)
+	{
+	  s7_varlet(sc, let, s7_make_symbol(sc, "output"), gn->vcts[G_LOCSIG_OUT]);
+	  s7_varlet(sc, let, s7_make_symbol(sc, "revout"), gn->vcts[G_LOCSIG_REVOUT]);
+	  s7_varlet(sc, let, s7_make_symbol(sc, "rev-coeffs"), gn->vcts[G_LOCSIG_REVDATA]);
+	}
+    }
 
-  (object->let (make-ssb-am 100.0 8))
-     (inlet 'value ssb-am shift: up, sin/cos: 100.000000 Hz (0.000000 radians), order: 9 'type c-object? 'length 9 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "ssb-am" 'frequency 100.0 'phase 0.0 'order 9)
+  if (mus_is_polyshape(g))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "coeffs"), gn->vcts[0]);
+      s7_varlet(sc, let, s7_make_symbol(sc, "choice"), s7_make_integer(sc, mus_channel(g)));
+    }
 
-  (object->let (make-sample->file "fmv.snd" 2 mus-lshort mus-riff))
-    (inlet 'value sample->file "fmv.snd" 'type c-object? 'length 8192 'c-type 0 
-           'let (inlet 'object->let generator->let) 'class "<generator>" 
-           'name "sample->file" 'file-name "fmv.snd" 'channels 2 'sample-type mus-lshort 'header-type mus-riff 'buffer-length 8192)
-  (object->let (make-frample->file "fmv.snd" 2 mus-lshort mus-riff))(object->let (make-frample->file "fmv.snd" 2 mus-lshort mus-riff))
-     (inlet 'value frample->file "fmv.snd" 'type c-object? 'length 8192 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "frample->file" 'file-name "fmv.snd" 'channels 2 'sample-type mus-lshort 'header-type mus-riff 'buffer-length 8192)
-
-  (object->let (make-locsig))
-     (inlet 'value locsig chans 1, outn: [1.000], interp: linear 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "locsig" 'degree 0.0 'distance 1.0 'reverb 0.0 'channels 1 'type linear 'out-coeffs #r(1.0) 'rev-coeffs #<undefined> 'output #<undefined> 'revout #<undefined>)
-  (object->let (make-locsig :reverb .1 :distance 2.0 :degree 46))
-     (inlet 'value locsig chans 1, outn: [0.500], interp: linear 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "locsig" 'degree 46.0 'distance 2.0 'reverb 0.1 'channels 1 'type linear 'out-coeffs #r(0.5) 'rev-coeffs #<undefined> 'output #<undefined> 'revout #<undefined>)
-  
-  (object->let (make-granulate :expansion .5 :scaler .4 :ramp .3))
-     (inlet 'value granulate expansion: 0.500 (4410/2205), scaler: 0.400, length: 0.150 secs (6615 samps), ramp: 0.300 'type c-object? 'length 6615 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "granulate" 'input #<undefined> 'expansion 0.5 'scaler 0.4 'hop 0.05 'ramp 0.2999244142101285 'jitter 1.0 'length 0.15 'edit #<undefined> 'grain #r(0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 ...))
-
-  (object->let (make-rand 100))
-     (inlet 'value rand freq: 100.000Hz, phase: 0.000, amp: 1.000 'type c-object? 'length 0 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "rand" 'frequency 100.0 'phase 0.0 'amplitude 1.0)
-  (object->let (make-rand-interp 100 :amplitude .1))
-     (inlet 'value rand-interp freq: 100.000Hz, phase: 0.000, amp: 0.100, incr: 0.000, curval: -0.065 'type c-object? 'length 0 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "rand-interp" 'frequency 100.0 'phase 0.0 'amplitude 0.1)
-  object->let (make-rand-interp 100 :amplitude .1 :envelope '(0 0 1 1)))
-     (inlet 'value rand-interp freq: 100.000Hz, phase: 0.000, amp: 0.100, incr: 0.000, curval: 0.073, with distribution envelope 'type c-object? 'length 512 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "rand-interp" 'frequency 100.0 'phase 0.0 'amplitude 0.1 'distribution #r(0.02 0.05397260273972604 0.07196347031963472 0.08595890410958906 0.09794520547945207 0.1079452054794521 0.1175342465753425 0.1259360730593607 0.1339269406392694 0.1416438356164384 0.1484931506849315 0.1553424657534247 0.1619178082191781 0.1679109589041096 0.1739041095890411 0.1798972602739726 0.1852359208523592 0.1905631659056316 0.1958904109589041 0.2010958904109589 0.2058904109589041 0.2106849315068493 0.2154794520547945 0.2202490660024906 0.2246077210460772 0.2289663760896637 0.2333250311332503 0.2376836861768368 0.2418721461187214 0.2458675799086757 0.2498630136986301 0.2538584474885844 ...))
-  (object->let (make-rand 100 :amplitude .1 :envelope '(0 0 1 1) :size 8))
-     (inlet 'value rand freq: 100.000Hz, phase: 0.000, amp: 0.100, with distribution envelope 'type c-object? 'length 8 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "rand" 'frequency 100.0 'phase 0.0 'amplitude 0.1 'distribution #r(0.02 0.3842105263157896 0.5392307692307695 0.6581250000000003 0.7583783783783787 0.8466666666666671 0.9265217391304352 1.0))
-
-  (object->let (make-one-pole-all-pass 8 .5))
-     (inlet 'value one-pole-all-pass size: 8, coeff: 0.500000 'type c-object? 'length 8 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "one-pole-all-pass" 'size 8 'coeff 0.5)
-
-  (object->let (make-pulsed-env '(0 0 1 1 2 0) .0004 2205))
-     (inlet 'value pulsed-env 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "pulsed-env" 'env env linear, pass: 0 (dur: 17), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 1 2 0] 
-                               'pulse-train pulse-train freq: 2205.000Hz, phase: 0.000, amp: 1.000)
-
-  (object->let (make-convolve :filter #r(0 1 2) :input (lambda (dir) 1.0))) 
-     (inlet 'value convolve size: 8 'type c-object? 'length 8 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "convolve" 'input #<lambda (dir)> 'filter #r(0.0 1.0 2.0) 'fft-size 8)
-
-  (object->let (make-env '(0 0 1 1) :length 11 :scaler .5))
-     (inlet 'value env linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0 0 1 1] 'type c-object? 'length 11 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "env" 'envelope #r(0.0 0.0 1.0 1.0) 'scaler 0.5 'offset 0.0 'base 1.0 'length 11 'current-value 0.0)
-  (object->let (make-env '(0 0 1 1) :length 11 :scaler .1 :offset .1 :base 3.0))
-     (inlet 'value env exponential, pass: 0 (dur: 11), index: 0, scaler: 0.1000, offset: 0.1000, data: [0 0 1 1] 'type c-object? 'length 11 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "env" 'envelope #r(0.0 0.0 1.0 1.0) 'scaler 0.1 'offset 0.1 'base 3.0 'length 11 'current-value 0.1)
-
-  (object->let (make-src :srate .5))
-     (inlet 'value src width: 10, x: 0.000, incr: 0.500, sinc table len: 20000 'type c-object? 'length 10 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "src" 'input #<undefined> 'srate 0.5 'width 10)
-  (object->let (make-src :srate 2.0 :input (make-readin "oboe.snd" 0 10000)))
-     (inlet 'value src width: 10, x: 0.000, incr: 2.000, sinc table len: 20000 'type c-object? 'length 10 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "src" 'input readin oboe.snd[chan 0], loc: 10011, dir: 1 'srate 2.0 'width 10)
-
-  (object->let (make-file->sample "oboe.snd"))
-     (inlet 'value file->sample "oboe.snd" 'type c-object? 'length 50828 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "file->sample" 'file-name "oboe.snd" 'file-size 50828 'file-channels 1)
-  (object->let (make-file->frample"4.aiff"))
-     (inlet 'value file->frample "4.aiff" 'type c-object? 'length 844799 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "file->frample" 'file-name "4.aiff" 'file-size 844799 'file-channels 4)
-
-  (object->let (make-readin :file "oboe.snd"))
-     (inlet 'value readin oboe.snd[chan 0], loc: 0, dir: 1 'type c-object? 'length 50828 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "readin" 'file-name "oboe.snd" 'channel 0 'location 0 'direction 1 'file-size 50828 'file-channels 1)
-  (object->let (make-readin :start 123 :channel 2 :file "4.aiff"))
-     (inlet 'value readin 4.aiff[chan 2], loc: 123, dir: 1 'type c-object? 'length 844799 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "readin" 'file-name "4.aiff" 'channel 2 'location 123 'direction 1 'file-size 844799 'file-channels 4)
-
-  (object->let (make-comb-bank (vector (make-comb .5 3) (make-comb .2 4))))
-     (inlet 'value comb-bank size: 2 'type c-object? 'length 2 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "comb-bank" 'size 2 'gens #(comb scaler: 0.500, line[3, step]: [0 0 0] 
-                                              comb scaler: 0.200, line[4, step]: [0 0 0 0]))
-  (object->let (make-all-pass-bank (vector (make-all-pass -.5 .5 3) (make-all-pass -.2 .2 10) (make-all-pass -.7 .1 11))))
-     (inlet 'value all-pass-bank size: 3 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "all-pass-bank" 'size 3 'gens #(all-pass feedback: -0.500, feedforward: 0.500, line[3, step]:[0 0 0] 
-                                                  all-pass feedback: -0.200, feedforward: 0.200, line[10, step]:[0 0 0 0 0 0 0 0...(0: 0, 0: 0)] 
-                                                  all-pass feedback: -0.700, feedforward: 0.100, line[11, step]:[0 0 0 0 0 0 0 0...(0: 0, 0: 0)]))
-  (object->let (make-filtered-comb-bank (vector (make-filtered-comb .5 3))))
-     (inlet 'value filtered-comb-bank size: 1 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "filtered-comb-bank" 'size 1 'gens #(filtered-comb scaler: 0.500, line[3, step]: [0 0 0], filter: [one-zero a0: 1.000, a1: 0.000, x1: 0.000]))
-
-  (object->let (make-wave-train 440.0 0.0 #r(0 0 0)))
-     (inlet 'value wave-train freq: 440.000Hz, phase: 0.000, size: 3, interp: linear 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "wave-train" 'frequency 440.0 'phase 0.0 'size 3 'wave #r(0.0 0.0 0.0) 'interp linear)
-  (object->let (make-table-lookup :wave #r(0 1 2 1 0)))
-     (inlet 'value table-lookup freq: 0.000Hz, phase: 0.000, length: 5, interp: linear 'type c-object? 'length 5 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "table-lookup" 'frequency 0.0 'phase 0.0 'size 5 'wave #r(0.0 1.0 2.0 1.0 0.0) 'interp linear)
-
-  (object->let (make-moving-max 3))
-     (inlet 'value moving-max 0.000, line[3]:[0 0 0] 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "moving-max" 'length 3 'line #r(0.0 0.0 0.0) 'max 0.0)
-  (object->let (make-moving-average 3))
-     (inlet 'value moving-average 0.000, line[3]:[0 0 0] 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "moving-average" 'length 3 'line #r(0.0 0.0 0.0))
-  (object->let (make-moving-norm 3 :scaler 0.5))
-     (inlet 'value moving-norm, max 0.000, y1 4.000, weight 0.750, line[3]:[0 0 0] 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "moving-norm" 'length 3 'line #r(0.0 0.0 0.0) 'norm 0.5 'max 0.0)
-  (object->let  (make-filtered-comb .4 5 :filter (make-one-zero .3 .7)))
-     (inlet 'value filtered-comb scaler: 0.400, line[5, step]: [0 0 0 0 0], filter: [one-zero a0: 0.300, a1: 0.700, x1: 0.000] 'type c-object? 'length 5 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "filtered-comb" 'scaler 0.4 'length 5 'interp step 'line #r(0.0 0.0 0.0 0.0 0.0) 'filter one-zero a0: 0.300, a1: 0.700, x1: 0.000)
-  (object->let (make-all-pass .1 .9 3))
-     (inlet 'value all-pass feedback: 0.100, feedforward: 0.900, line[3, step]:[0 0 0] 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "all-pass" 'feedforward 0.9 'feedback 0.1 'length 3 'interp step 'line #r(0.0 0.0 0.0))
-  (object->let (make-delay 3))
-     (inlet 'value delay line[3, step]: [0 0 0] 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "delay" 'length 3 'interp step 'line #r(0.0 0.0 0.0))
-  (object->let (make-notch :initial-contents #r(0 1 2 3) :scaler .1 :type 3))
-     (inlet 'value notch scaler: 0.100, line[4,4, all-pass]: [0 1 2 3] 'type c-object? 'length 4 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "notch" 'scaler 0.1 'length 4 'interp all-pass 'line #r(0.0 1.0 2.0 3.0))
-  (object->let (make-comb :size 3 :scaler .1))
-     (inlet 'value comb scaler: 0.100, line[3, step]: [0 0 0] 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "comb" 'scaler 0.1 'length 3 'interp step 'line #r(0.0 0.0 0.0))
-
-  (object->let (make-formant 1000 .5))
-     (inlet 'value formant frequency: 1000.000, radius: 0.500 'type c-object? 'length 2 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "formant" 'frequency 999.9999999999999 'radius 0.5)
-  (object->let (make-firmant 1000 .5))
-     (inlet 'value firmant frequency: 1000.000, radius: 0.500 'type c-object? 'length 2 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "firmant" 'frequency 999.9999999999999 'radius 0.5)
-
-  (object->let (make-formant-bank (vector (make-formant 440.0 .5))))\
-     (inlet 'value formant-bank size: 1 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "formant-bank" 'gens #(formant frequency: 440.000, radius: 0.500))
-  (object->let (make-formant-bank (vector (make-formant 440.0 .5) (make-formant 1000.0 .2) (make-formant 34.0 .1)) #r(.5 .3 .4)))
-     (inlet 'value formant-bank size: 3 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "formant-bank" 'gens #(formant frequency: 440.000, radius: 0.500 
-                                         formant frequency: 1000.000, radius: 0.200 
-                                         formant frequency: 34.000, radius: 0.100) 
-                                 'amps #r(0.5 0.3 0.4))
-
-  (object->let (make-oscil 440)) 
-      (inlet 'value oscil freq: 440.000Hz, phase: 0.000 'type c-object? 'length 1 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>" 
-             'name "oscil" 'frequency 440.0000000000001 'phase 0.0)
-  (object->let (let ((o (make-oscil 440))) (oscil o) o))
-      (inlet 'value oscil freq: 440.000Hz, phase: 0.063 'type c-object? 'length 1 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>" 
-             'name "oscil" 'frequency 440.0000000000001 'phase 0.06268937721449021)
-
-  (object->let (make-nsin 100.0 3))
-      (inlet 'value nsin freq: 100.000Hz, phase: 0.000, n: 3 'type c-object? 'length 3 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>" 
-             'name "nsin" 'frequency 100.0 'phase 0.0 'n 3)
-  (object->let (make-nsin :n 4 :frequency 100))
-      (inlet 'value nsin freq: 100.000Hz, phase: 0.000, n: 4 'type c-object? 'length 4 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>"
-             'name "nsin" 'frequency 100.0 'phase 0.0 'n 4)
-
-  (object->let (make-ncos 100.0 3))
-      (inlet 'value ncos freq: 100.000Hz, phase: 0.000, n: 3 'type c-object? 'length 3 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>"
-             'name "ncos" 'frequency 100.0 'phase 0.0 'n 3)
-
-  (object->let (make-nrxysin :n 3 :frequency 100 :r .1))
-      (inlet 'value nrxysin frequency: 100.000, ratio: 1.000, phase: 0.000, n: 3, r: 0.100 'type c-object? 'length 3 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>" 
-             'name "nrxysin" 'frequency 100.0 'phase 0.0 'offset 1.0 'n 3 'r 0.1 'ratio 1.0)
-  (object->let (make-nrxysin :n 4 :frequency 100 :ratio .1))
-      (inlet 'value nrxysin frequency: 100.000, ratio: 0.100, phase: 0.000, n: 4, r: 0.500 'type c-object? 'length 4 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>" 
-             'name "nrxysin" 'frequency 100.0 'phase 0.0 'n 4 'r 0.5 'ratio 0.1)
-
-  (object->let (make-nrxycos :n 4 :frequency 100 :ratio .1))
-       (inlet 'value nrxycos frequency: 100.000, ratio: 0.100, phase: 0.000, n: 4, r: 0.500 'type c-object? 'length 4 'c-type 0 
-              'let (inlet 'object->let generator->let) 'class "<generator>" 
-              'name "nrxycos" 'frequency 100.0 'phase 0.0 'n 4 'r 0.5 'ratio 0.1)
-
-  (object->let (make-oscil-bank #r(0.0 0.0) #r(0.0 0.0) #r(0.0 0.0)))
-      (inlet 'value oscil-bank size: 2 'type c-object? 'length 2 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>" 
-             'name "oscil-bank" 'size 2 'freqs #r(0.0 0.0) 'phases #r(0.0 0.0) 'amps #r(0.0 0.0))
-  (object->let (make-oscil-bank #r(100 200 300) #r(0.0 1.0 2.0) #r(0.5 0.25 0.125)))
-      (inlet 'value oscil-bank size: 3 'type c-object? 'length 3 'c-type 0 
-             'let (inlet 'object->let generator->let) 'class "<generator>" 
-             'name "oscil-bank" 'size 3 'freqs #r(100.0 200.0 300.0) 'phases #r(0.0 1.0 2.0) 'amps #r(0.5 0.25 0.125))
-
-  (object->let (make-rxyk!sin :frequency 100))
-     (inlet 'value rxyk!sin freq: 100.000Hz, phase: 0.000, ratio: 1.000, r: 0.500 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "rxyk!sin" 'frequency 100.0 'phase 0.0 'r 0.5 'ratio 1.0)
-  (object->let (make-rxyk!cos :frequency 100 :r .1 :ratio .6))
-     (inlet 'value rxyk!cos freq: 100.000Hz, phase: 0.000, ratio: 0.600, r: 0.100 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "rxyk!cos" 'frequency 100.0 'phase 0.0 'r 0.1 'ratio 0.6000000000000001)
-
-  (object->let (make-asymmetric-fm 100))
-     (inlet 'value asymmetric-fm freq: 100.000Hz, phase: 0.000, ratio: 1.000, r: 1.000 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "asymmetric-fm" 'frequency 100.0 'phase 0.0 'r 1.0 'ratio 1.0)
-  (object->let (make-asymmetric-fm 100 :r .3 :ratio 2.0))
-     (inlet 'value asymmetric-fm freq: 100.000Hz, phase: 0.000, ratio: 2.000, r: 0.300 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "asymmetric-fm" 'frequency 100.0 'phase 0.0 'r 0.3 'ratio 2.0)
-
-  (object->let (make-square-wave 100 :amplitude .5 :initial-phase 1.0))
-     (inlet 'value square-wave freq: 100.000Hz, phase: 1.000, amp: 0.500 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "square-wave" 'frequency 100.0 'phase 1.0 'amp 0.5)
-   (object->let (make-sawtooth-wave 100 :amplitude .25))
-     (inlet 'value sawtooth-wave freq: 100.000Hz, phase: 3.142, amp: 0.250 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "sawtooth-wave" 'frequency 100.0 'phase 3.141592653589793 'amplitude 0.25)
-   (object->let (make-triangle-wave))
-     (inlet 'value triangle-wave freq: 0.000Hz, phase: 0.000, amp: 1.000 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "triangle-wave" 'frequency 0.0 'phase 0.0 'amplitude 1.0)
-   (object->let (make-pulse-train 100))
-     (inlet 'value pulse-train freq: 100.000Hz, phase: 0.000, amp: 1.000 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "pulse-train" 'frequency 100.0 'phase 0.0 'amplitude 1.0)
-
-   (object->let (make-fir-filter :order 3 :xcoeffs #r(1.0 0.5 0.25)))
-     (inlet 'value fir-filter order: 3, xs: [1 0.5 0.25] 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "fir-filter" 'order 3 'xcoeffs #r(1.0 0.5 0.25))
-   (object->let (make-iir-filter :order 4 :ycoeffs #r(1.0 0.5 0.25 -0.1)))
-     (inlet 'value iir-filter order: 4, ys: [1 0.5 0.25 -0.1] 'type c-object? 'length 4 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "iir-filter" 'order 4 'ycoeffs #r(1.0 0.5 0.25 -0.1))
-   (object->let (make-filter 3 #r(1.0 0.5 0.2) #r(0.2 0.3 0.4)))
-     (inlet 'value filter order: 3, xs: [1 0.5 0.2], ys: [0.2 0.3 0.4] 'type c-object? 'length 3 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "filter" 'order 3 'ycoeffs #r(0.2 0.3 0.4) 'xcoeffs #r(1.0 0.5 0.2))
-
-   (object->let (make-one-zero .3 .2))
-     (inlet 'value one-zero a0: 0.300, a1: 0.200, x1: 0.000 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "one-zero" 'a0 0.3 'a1 0.2)
-   (object->let (make-one-pole .3 .2))(object->let (make-one-pole .3 .2))
-     (inlet 'value one-pole a0: 0.300, b1: 0.200, y1: 0.000 'type c-object? 'length 1 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "one-pole" 'a0 0.3 'b1 0.2)
-   (object->let (make-two-zero :frequency 1000 :radius .5))
-     (inlet 'value two-zero a0: 1.000, a1: -0.990, a2: 0.250, x1: 0.000, x2: 0.000 'type c-object? 'length 2 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "two-zero" 'frequency 999.9999999999999 'radius 0.5 'a0 1.0 'a1 -0.9898674727799416 'a2 0.25)
-   (object->let (make-two-pole :frequency 1000 :radius .5))
-     (inlet 'value two-pole a0: 1.000, b1: -0.990, b2: 0.250, y1: 0.000, y2: 0.000 'type c-object? 'length 2 'c-type 0 
-            'let (inlet 'object->let generator->let) 'class "<generator>" 
-            'name "two-pole" 'frequency 999.9999999999999 'radius 0.5 'a0 1.0 'b1 -0.9898674727799416 'b2 0.25)
-
-  */
-#endif
+  if (mus_is_polywave(g))
+    {
+      s7_varlet(sc, let, s7_make_symbol(sc, "xcoeffs"), gn->vcts[0]);
+      if (gn->nvcts > 1)
+	s7_varlet(sc, let, s7_make_symbol(sc, "ycoeffs"), gn->vcts[1]);
+      s7_varlet(sc, let, s7_make_symbol(sc, "choice"), s7_make_integer(sc, mus_channel(g)));
+    }
   return(let);
 }
 

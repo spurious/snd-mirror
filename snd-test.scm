@@ -20974,6 +20974,91 @@ EDITS: 2
       (table-lookup o 1.0)
       (if (equal? o p)
 	  (snd-display "table-lookup run ~A == ~A~%" o p)))
+
+    ;; object->let 
+    (object->let (make-polywave 440.0 :partials '(1 1) :type mus-chebyshev-first-kind))
+    (object->let (make-polyshape 440.0 :coeffs (partials->polynomial '(1 1))))
+    (object->let (make-move-sound (list 0 1000 1 0
+					(make-delay 32) 
+					(make-env '(0 0 1 1) :length 1001) 
+					(make-env '(0 0 1 1) :length 1001)
+					(vector (make-delay 32)) 
+					(vector (make-env '(0 0 1 1) :length 1001)) 
+					#f
+					(vector 0 1)) (make-float-vector 100)))
+    (object->let (make-phase-vocoder #f 512 4 256 1.0))
+    (object->let (make-phase-vocoder (lambda (dir) (next-sample reader))
+				     512 4 256 1.0
+				     (lambda (v infunc)
+				       (set! incalls (+ incalls 1)))
+				     #f ;no change to edits
+				     (lambda (v)
+				       (set! outcalls (+ outcalls 1))
+				       0.0)
+				     ))
+    (object->let (make-ssb-am 100.0 8))
+    (object->let (make-sample->file "fmv.snd" 2 mus-lshort mus-riff))
+    (object->let (make-frample->file "fmv.snd" 2 mus-lshort mus-riff))
+    (object->let (make-locsig))
+    (object->let (make-locsig :reverb .1 :distance 2.0 :degree 46))
+    (object->let (make-granulate :expansion .5 :scaler .4 :ramp .3))
+    (object->let (make-rand 100))
+    (object->let (make-rand-interp 100 :amplitude .1))
+    (object->let (make-rand-interp 100 :amplitude .1 :envelope '(0 0 1 1)))
+    (object->let (make-rand 100 :amplitude .1 :envelope '(0 0 1 1) :size 8))
+    (object->let (make-one-pole-all-pass 8 .5))
+    (object->let (make-pulsed-env '(0 0 1 1 2 0) .0004 2205))
+    (object->let (make-convolve :filter #r(0 1 2) :input (lambda (dir) 1.0))) 
+    (object->let (make-env '(0 0 1 1) :length 11 :scaler .5))
+    (object->let (make-env '(0 0 1 1) :length 11 :scaler .1 :offset .1 :base 3.0))
+    (object->let (make-src :srate .5))
+    (object->let (make-src :srate 2.0 :input (make-readin "oboe.snd" 0 10000)))
+    (object->let (make-file->sample "oboe.snd"))
+    (object->let (make-file->frample"4.aiff"))
+    (object->let (make-readin :file "oboe.snd"))
+    (object->let (make-readin :start 123 :channel 2 :file "4.aiff"))
+    (object->let (make-comb-bank (vector (make-comb .5 3) (make-comb .2 4))))
+    (object->let (make-all-pass-bank (vector (make-all-pass -.5 .5 3) (make-all-pass -.2 .2 10) (make-all-pass -.7 .1 11))))
+    (object->let (make-filtered-comb-bank (vector (make-filtered-comb .5 3))))
+    (object->let (make-wave-train 440.0 0.0 #r(0 0 0)))
+    (object->let (make-table-lookup :wave #r(0 1 2 1 0)))
+    (object->let (make-moving-max 3))
+    (object->let (make-moving-average 3))
+    (object->let (make-moving-norm 3 :scaler 0.5))
+    (object->let  (make-filtered-comb .4 5 :filter (make-one-zero .3 .7)))
+    (object->let (make-all-pass .1 .9 3))
+    (object->let (make-delay 3))
+    (object->let (make-notch :initial-contents #r(0 1 2 3) :scaler .1 :type 3))
+    (object->let (make-comb :size 3 :scaler .1))
+    (object->let (make-formant 1000 .5))
+    (object->let (make-firmant 1000 .5))
+    (object->let (make-formant-bank (vector (make-formant 440.0 .5))))
+    (object->let (make-formant-bank (vector (make-formant 440.0 .5) (make-formant 1000.0 .2) (make-formant 34.0 .1)) #r(.5 .3 .4)))
+    (object->let (make-oscil 440)) 
+    (object->let (let ((o (make-oscil 440))) (oscil o) o))
+    (object->let (make-nsin 100.0 3))
+    (object->let (make-nsin :n 4 :frequency 100))
+    (object->let (make-ncos 100.0 3))
+    (object->let (make-nrxysin :n 3 :frequency 100 :r .1))
+    (object->let (make-nrxysin :n 4 :frequency 100 :ratio .1))
+    (object->let (make-nrxycos :n 4 :frequency 100 :ratio .1))
+    (object->let (make-oscil-bank #r(0.0 0.0) #r(0.0 0.0) #r(0.0 0.0)))
+    (object->let (make-oscil-bank #r(100 200 300) #r(0.0 1.0 2.0) #r(0.5 0.25 0.125)))
+    (object->let (make-rxyk!sin :frequency 100))
+    (object->let (make-rxyk!cos :frequency 100 :r .1 :ratio .6))
+    (object->let (make-asymmetric-fm 100))
+    (object->let (make-asymmetric-fm 100 :r .3 :ratio 2.0))
+    (object->let (make-square-wave 100 :amplitude .5 :initial-phase 1.0))
+    (object->let (make-sawtooth-wave 100 :amplitude .25))
+    (object->let (make-triangle-wave))
+    (object->let (make-pulse-train 100))
+    (object->let (make-fir-filter :order 3 :xcoeffs #r(1.0 0.5 0.25)))
+    (object->let (make-iir-filter :order 4 :ycoeffs #r(1.0 0.5 0.25 -0.1)))
+    (object->let (make-filter 3 #r(1.0 0.5 0.2) #r(0.2 0.3 0.4)))
+    (object->let (make-one-zero .3 .2))
+    (object->let (make-one-pole .3 .2))
+    (object->let (make-two-zero :frequency 1000 :radius .5))
+    (object->let (make-two-pole :frequency 1000 :radius .5))
     ))
 
 
@@ -28749,11 +28834,14 @@ EDITS: 2
 	    (if (= (framples ind) 0) (snd-display "map-channel #f framples after undo: ~A" (framples ind)))
 	    (let ((tag (catch #t (lambda () (map-channel (lambda (y) (copy "hiho")))) (lambda args (car args)))))
 	      (if (not (memq tag '(bad-type wrong-type-arg))) (snd-display "map-channel bad-type: ~A" tag)))
+#|
+	    ;; TODO: this does not unwind the C stack past the scan-channel call?
 	    (let* ((ctr 0)
 		   (tag (catch #t (lambda () (scan-channel (lambda (y) (set! ctr (+ ctr 1)) (asdf)))) (lambda args (car args)))))
 	      (if (not (= ctr 1)) (snd-display "scan-channel error exit: ~A" ctr))
 	      (if (not (memq tag '(unbound-variable syntax-error error)))
 		  (snd-display "scan-channel unbound: ~A" tag)))
+|#
 	    (let ((val (scan-channel (lambda (y) #f)))) (if val (snd-display "scan-channel func #f: ~A" val)))
 	    (let ((val (scan-channel (lambda (y) #f) 1234))) (if val (snd-display "scan-channel func #f with beg: ~A" val)))
 	    (let ((val (scan-channel (lambda (y) #f) 1234 4321))) (if val (snd-display "scan-channel func #f with beg+dur: ~A" val)))
@@ -38805,11 +38893,11 @@ EDITS: 1
   
   (dismiss-all-dialogs)
   
+  ;; start of test 22
   (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
     (log-mem clmtest)
     
 					;    (set! *clm-notehook* (lambda args (display args) (newline)))
-    
     ;; check clm output for bad zero case
     (for-each
      (lambda (type)
@@ -38826,7 +38914,7 @@ EDITS: 1
 	   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
 	   mus-ubshort  mus-ulshort  mus-ubyte   mus-bfloat mus-bdouble 
 	   mus-ldouble))
-    
+
     (with-sound () (fm-violin 0 .1 440 .1))
     (with-sound (:continue-old-file #t) (fm-violin .2 .1 660 .04))
     (let ((ind (find-sound "test.snd")))
@@ -38992,7 +39080,7 @@ EDITS: 1
       (close-sound ind))
     
     (for-each close-sound (sounds))
-    
+
     (when (file-exists? "ii.scm")
       (time (load "ii.scm"))
       (for-each close-sound (sounds))
@@ -39013,7 +39101,7 @@ EDITS: 1
     (let ((var (make-st1 :two 3)))
       (if (fneq (var 'one) 0.0) (snd-display "st1-one #f (def): ~A" (var 'one)))  
       (if (not (= (var 'two) 3)) (snd-display "st1-two (3): ~A" (var 'two))))
-    
+
     (let ((var (make-st2 :one 1 :two 2)))
       (if (not (= (var 'one) 1)) (snd-display "st2-one: ~A" (var 'one)))
       (if (not (= (var 'two) 2)) (snd-display "st2-two: ~A" (var 'two)))
