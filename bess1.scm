@@ -268,7 +268,7 @@
       (let ((col (XColor))
 	    (cmap (DefaultColormap dpy (DefaultScreen dpy))))
 	(if (= (XAllocNamedColor dpy cmap color col col) 0)
-	    (error (format #f "can't allocate ~A" color))
+	    (error 'no-memory "can't allocate ~A" color)
 	    (.pixel col))))
 
     (XtSetValues shell (list XmNtitle "FM Forever!"))

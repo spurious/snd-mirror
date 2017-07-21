@@ -2560,7 +2560,7 @@ static int not_heap = -1;
 #define closure_arity_unknown(p)      (closure_arity(p) == CLOSURE_ARITY_NOT_SET)
 #define is_thunk(Sc, Fnc)             ((type(Fnc) >= T_GOTO) && (s7_is_aritable(Sc, Fnc, 0)))
 
-#define is_optlist(p)                 (type(p) == T_OPTLIST)
+/* #define is_optlist(p)              (type(p) == T_OPTLIST) */
 #define optlist_num_exprs(p)          (_TOpt(p))->object.opt.num_exprs
 #define optlist_set_num_exprs(p, Val) (_TOpt(p))->object.opt.num_exprs = Val
 #define optlist_addr(p)               (_TOpt(p))->object.opt.addr
@@ -2570,7 +2570,7 @@ static int not_heap = -1;
 #define optlist_set_num_args(p, Val)  (_TOpt(p))->object.opt.num_args = Val
 #define optlist_len(p)                (_TOpt(p))->object.opt.len
 #define optlist_set_len(p, Val)       (_TOpt(p))->object.opt.len = Val
-#define optlist_opts(p)               (_TOpt(p))->object.opt.opts
+/* #define optlist_opts(p)            (_TOpt(p))->object.opt.opts */
 
 #define hook_has_functions(p)         (is_pair(s7_hook_functions(sc, _TClo(p))))
 
@@ -30798,7 +30798,7 @@ bool s7_tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
   if (!is_pair(tree)) return(false);
   if (car(tree) == sc->quote_symbol)
     {
-      if ((is_symbol(sym)) || (is_pair(sym)))
+      if ((is_symbol(sym)) || (is_pair(sym)) || (!is_pair(cdr(tree))))
 	return(false);
       return(sym == cadr(tree));
     }
@@ -30811,6 +30811,8 @@ bool s7_tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
   return((!is_null(tree)) &&
 	 (sym == tree));
 }
+
+
 
 static s7_pointer g_tree_memq(s7_scheme *sc, s7_pointer args)
 {
@@ -42374,7 +42376,7 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches the tag (#t matches all), the handler is called"
-  #define Q_catch s7_make_circular_signature(sc, 2, 3, sc->values_symbol, sc->T, sc->is_procedure_symbol)
+  #define Q_catch s7_make_signature(sc, 4, sc->values_symbol, s7_make_signature(sc, 2, sc->is_symbol_symbol, sc->is_boolean_symbol), sc->is_procedure_symbol, sc->is_procedure_symbol)
 
   s7_pointer p, proc, err;
 
@@ -42879,7 +42881,7 @@ static s7_pointer g_throw(s7_scheme *sc, s7_pointer args)
 {
   #define H_throw "(throw tag . info) is like (error ...) but it does not affect the owlet. \
 It looks for an existing catch with a matching tag, and jumps to it if found.  Otherwise it raises an error."
-  #define Q_throw pcl_t
+  #define Q_throw s7_make_circular_signature(sc, 2, 3, sc->values_symbol, sc->is_symbol_symbol, sc->T)
 
   bool ignored_flag = false;
   int i;
@@ -43323,7 +43325,7 @@ static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
   #define H_error "(error type ...) signals an error.  The 'type' can be used with catch to trap \
 particular errors.  If the error is not caught, s7 treats the second argument as a format control string, \
 and applies it to the rest of the arguments."
-  #define Q_error pcl_t
+  #define Q_error s7_make_circular_signature(sc, 2, 3, sc->values_symbol, sc->is_symbol_symbol, sc->T)
 
   if (is_not_null(args))
     {
@@ -44196,7 +44198,7 @@ void s7_quit(s7_scheme *sc)
 static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_emergency_exit "(emergency-exit obj) exits s7 immediately"
-  #define Q_emergency_exit pcl_t
+  #define Q_emergency_exit s7_make_signature(sc, 2, sc->T, sc->T)
 
   s7_pointer obj;
 #ifndef EXIT_SUCCESS
@@ -44218,7 +44220,7 @@ static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_exit "(exit obj) exits s7"
-  #define Q_exit pcl_t
+  #define Q_exit s7_make_signature(sc, 2, sc->T, sc->T)
 
   s7_quit(sc);
   return(g_emergency_exit(sc, args));
@@ -51005,6 +51007,13 @@ static s7_pointer opt_set_p_d_f(void *p)
   return(x);
 }
 
+static s7_pointer opt_set_p_c(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  slot_set_value(o->v1.p, o->v2.p);
+  return(o->v2.p);
+}
+
 static s7_pointer opt_set_p_i_fo(void *p)
 {
   opt_info *o = (opt_info *)p;
@@ -51110,6 +51119,12 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 	    }
 	  if (stype == sc->is_float_symbol)
 	    {
+	      if (is_t_real(caddr(car_x)))
+		{
+		  opc->v2.p = caddr(car_x);
+		  opc->v7.fp = opt_set_p_c;
+		  return(true);
+		}
 	      if (float_optimize(sc, cddr(car_x)))
 		{
 		  opc->v7.fp = opt_set_p_d_f;
@@ -54706,7 +54721,7 @@ static s7_pointer g_list_values(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply_values "(apply-values var) applies values to var.  This is an internal function."
-  #define Q_apply_values pcl_t
+  #define Q_apply_values s7_make_signature(sc, 2, sc->T, sc->is_list_symbol)
   s7_pointer x;
 
   if (is_null(args))
@@ -54772,7 +54787,6 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 comma (\"unquote\") and comma-atsign (\"apply values\") to pre-evaluate portions of the list. \
 unquoted expressions are evaluated and plugged into the list, apply-values evaluates the expression \
 and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -> (1 2 3 4)."
-  #define Q_quasiquote pcl_t
 
   if (!is_pair(form))
     {
@@ -67844,8 +67858,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		let_set_slots(counter_let(c), counter_slots(c));
 		sc->envir = old_frame_with_slot(sc, counter_let(c), arg);
 	      }
-	    sc->code = _TPair(closure_body(code));
-	    goto BEGIN1;
+#if DEBUGGING
+	    if (is_pair(cdr(closure_body(code))))
+	      fprintf(stderr, "cdr! %s\n", DISPLAY_80(closure_body(code)));
+#endif
+	    sc->code = car(closure_body(code));
+	    goto EVAL;
 	  }
 
 	  
@@ -75415,7 +75433,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 /* needed in s7_gmp_init and s7_init, initialized in s7_init before we get to gmp */
-static s7_pointer pl_bt, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pcl_bt, pcl_e, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c, pl_tl;
+static s7_pointer pl_bt, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pcl_bt, pcl_e, pcl_i, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c, pl_tl;
 
 
 
@@ -81087,7 +81105,6 @@ s7_scheme *s7_init(void)
   pcl_bs = s7_make_circular_signature(sc, 1, 2, sc->is_boolean_symbol, sc->is_string_symbol);
 
   pcl_i =  s7_make_circular_signature(sc, 0, 1, sc->is_integer_symbol);
-  pcl_t =  s7_make_circular_signature(sc, 0, 1, sc->T);
   pcl_r =  s7_make_circular_signature(sc, 0, 1, sc->is_real_symbol);
   pcl_f =  s7_make_circular_signature(sc, 0, 1, sc->is_rational_symbol);
   pcl_n =  s7_make_circular_signature(sc, 0, 1, sc->is_number_symbol);
@@ -81475,7 +81492,7 @@ s7_scheme *s7_init(void)
   /* it's faster to leave error/throw unsafe than to set needs_copied_args and use s7_define_safe_function because copy_list overwhelms any other savings */
   sc->stacktrace_symbol =            defun("stacktrace",	stacktrace,		0, 5, false);
 
-  sc->apply_values_symbol =          unsafe_defun("apply-values", apply_values, 0, 0, true);
+  sc->apply_values_symbol =          unsafe_defun("apply-values", apply_values, 0, 1, false);
   set_immutable(sc->apply_values_symbol);
   sc->apply_values_function = slot_value(global_slot(sc->apply_values_symbol));
 
@@ -82393,8 +82410,6 @@ int main(int argc, char **argv)
  * all_x_c_opsq_opsq continued: c_opsq, s_opssq (fvref) etc -- s_opssq has .5mil filters (as base), 1/4 as mul
  *   so where to choose if base as p_pd?
  * extend op_s_s business throughout (no trailers!) -- where are the most breaks? count clears in trailers?
- * unknowns: macro like quasiquote hook-function, [let-temp bindings?? (target-line-length 120) in lt] also (code (+ i 1)) (quit) (lastref 1) etc
- *   also ((lambda (x)...)...) -- the (x)!!
  * if float|int-vector set and val is not vector, avoid univect?
  * all_x_if_a...?
  * opt let? opt_float_begin in s7_float_optimize for map-channel in snd?
@@ -82402,20 +82417,29 @@ int main(int argc, char **argv)
  *   how to make the output type recognition very fast? LLint with bit per type?
  *   then rather than s7_apply_function(symbol->value(func)) just check type&type != 0
  * tie in p_di|id?
+ * each symbol-access function could have a closure variable of watchers
+ *   (let ((watchers ())) (lambda (sym val))...)
+ *   ((outlet (symbol-access sym)) 'watcher) to get/set the list
+ *   or slot-let = (inlet 'writer <func> 'watcher ...)
+ *   so slot-access not symbol-access -- need to avoid circles
+ *   or no special marker --variable has an invisible dilambda or at least setter
+ *   (set! var x): slot-set-value <find var slot> x -> slot-set-value function is slot-specific
+ *     a continuance of slot_set_value_with_hook
+ * private let: block outlet of any let = shutlet?
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6
  * tmac          |      |      |      || 9052 |  615   259   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1064
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1059
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
- * teq           |      |      | 6612 || 2777 | 2129  1978  1994
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1958
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1989
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437
  * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2730
  * lint          |      |      |      || 4041 | 3376  3114  3008
  * lg            |      |      |      || 211  | 161   149   144.0
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  3017
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3104
  * tform         |      |      | 6816 || 3714 | 3530  3361  3280
  * tmap          |      |      |  9.3 || 5279 |       3939  3391
@@ -82423,7 +82447,7 @@ int main(int argc, char **argv)
  * tsort         |      |      |      || 8584 | 4869  4080  4012
  * titer         |      |      |      || 5971 | 5224  4768  4722
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7668
- * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.0
+ * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.1
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.8
  *                                    || 145  | 135   132   93.7

@@ -4132,6 +4132,20 @@ in its closure:
 <em class="gray">(boolean? real?)</em>
 </pre>
 
+<p>procedure-signature could also be used to implement CL's 'the:
+</p>
+<pre class="indented">
+(define-macro (the value-type form)
+  `((let ((signature (list ,value-type)))
+      (lambda ()
+	,form))))
+
+(display (+ 1 (<em class="red">the</em> integer? (+ 2 3))))
+</pre>
+
+<p>but the optimizer currently doesn't know how to take advantage of this pattern.
+</p>
+
 <p>openlet alerts s7 that f1 has methods.
 </p>
 <blockquote>

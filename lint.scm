@@ -20562,7 +20562,9 @@
 			       (or (not (pair? (cdr tag)))
 				   (length (cadr tag)))))
 		      ;; (catch #(0) (lambda () #f) (lambda a a))
-		      (lint-format "catch tag ~S is unreliable (catch uses eq? to match tags)" caller tag))
+		      (lint-format "catch tag ~S is unreliable (catch uses eq? to match tags)" caller tag)
+		      (if (not tag) ; (catch #f ...)
+			  (lint-format "catch tag #f makes this catch a no-op" caller)))
 		  (let ((body (caddr form))
 			(error-handler (cadddr form)))
 		    ;; empty catch+catch apparently never happens
@@ -22513,7 +22515,7 @@
     #f))
 |#
 
-;;; 63 889880
+;;; 63 910075
 ;;;
 ;;; combine do|case|cond: currently combine-successive-ifs for if|when|unless 12874 (see t605 for examples)
 
