@@ -13395,7 +13395,7 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
   /* sr_change = 0.0
    */
   sr *srp = (sr *)srptr;
-  mus_float_t sum, x, zf, srx, factor, sincx, srpx;
+  mus_float_t x, zf, srx, factor, sincx, srpx;
   int lim, i, xi, xs, dir = 1;
   bool int_ok;
   mus_long_t k;
@@ -13431,6 +13431,7 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
   for (k = 0; k < dur; k++)
     {
       int loc;
+      mus_float_t sum;
       loc = srp->start;
       if (srpx >= 1.0)
 	{
@@ -13527,7 +13528,6 @@ void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direc
 mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 {
   sr *srp = (sr *)srptr;
-  mus_float_t sum;
   int lim, i, width, wid1, wid10, xs, xi;
   mus_long_t k, dur2;
   mus_float_t *out_data, *ldata, *coeffs;
@@ -13558,6 +13558,7 @@ mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
   for (k = 0; k < dur2; k++, ldata += 2)
     {
       int j;
+      mus_float_t sum;
       sum = ldata[wid1];
       i = 0;
       j = 0;
@@ -13587,7 +13588,6 @@ mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 mus_float_t *mus_src_05(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 {
   sr *srp = (sr *)srptr;
-  mus_float_t sum;
   int lim, i, width, wid1, wid10, xs, xi;
   mus_long_t k, dur2;
   mus_float_t *out_data, *ldata, *coeffs;
@@ -13615,6 +13615,7 @@ mus_float_t *mus_src_05(mus_any *srptr, mus_float_t *in_data, mus_long_t dur)
 
   for (k = 0; k < dur2; k += 2)
     {
+      mus_float_t sum;
       out_data[k] = ldata[wid1];
 
       sum = 0.0;
@@ -15395,7 +15396,7 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
   mus_float_t result;
   if (gen->ctr >= gen->fftsize2)
     {
-      mus_long_t i, N;
+      mus_long_t N;
       N = gen->fftsize2;
       if (input) {gen->feeder = input; gen->block_feeder = NULL;}
 
@@ -15409,6 +15410,7 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
 	gen->block_feeder(gen->closure, 1, gen->rl1, 0, N);
       else
 	{
+	  mus_long_t i;
 	  for (i = 0; i < N;)
 	    {
 	      gen->rl1[i] = gen->feeder(gen->closure, 1); i++;
@@ -15860,7 +15862,6 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
  {
   pv_info *pv = (pv_info *)ptr;
   int N2, i;
-  mus_float_t sum, sum1;
   mus_float_t (*pv_synthesize)(void *arg) = synthesize;
 
   if (!pv_synthesize) pv_synthesize = pv->synthesize;
@@ -16012,6 +16013,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 
   if (pv->calc)
     {
+      mus_float_t sum, sum1;
       mus_float_t *pinc, *frq, *ph, *amp, *panc;
       int topN;
 #if HAVE_SINCOS

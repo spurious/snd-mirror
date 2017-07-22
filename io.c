@@ -33,6 +33,26 @@
 
 #include "_sndlib.h"
 
+#if (!USE_SND)
+#define mus_clear_floats(Arr, Len)		\
+  do {						\
+    mus_long_t K;				\
+    mus_float_t *dst;				\
+    dst = Arr;					\
+    for (K = Len; K > 0; K--)			\
+      *dst++ = 0.0;				\
+  } while (0)
+#define mus_copy_floats(Dst, Src, Len)		\
+  do {						\
+    mus_long_t K;				\
+    mus_float_t *dst, *src;			\
+    dst = Dst;					\
+    src = Src;					\
+    for (K = Len; K > 0; K--)			\
+      *dst++ = *src++;				\
+    } while (0)
+#endif
+
 #define HAVE_BYTESWAP_H __linux__
 
 #define mus_byte_to_sample(n)  (((mus_float_t)(n) / (mus_float_t)(1 << 7)))

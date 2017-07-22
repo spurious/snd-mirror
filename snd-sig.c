@@ -3595,7 +3595,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      return(res);
 	    }
 
-	  /* I suppose if the body is (sin y) or the like, we could use tree-vectorize: mus_sin_floats in vct.c */
 	  {
 	    /* try s7_float_optimize */
 	    s7_pointer e, yp, old_e;
