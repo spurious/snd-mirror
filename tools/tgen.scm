@@ -180,6 +180,12 @@
 (define-constant F (make-env (float-vector 0.0 .1 1.0 1.0) :length 100))
 (define-constant K (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0))
 (define-constant V (make-float-vector 10))
+(define-constant VV1 (make-float-vector 10))
+(define-constant VV4 (make-float-vector 10))
+(define-constant VV5 (make-float-vector 10))
+(define-constant VV6 (make-float-vector 10))
+(define-constant VV8 (make-float-vector 10))
+(define-constant VV10 (make-float-vector 10))
 (define (Z) (mus-copy F))
 
 (define G #f)
@@ -192,7 +198,7 @@
     (let ((body
      `(let ()
 	(define (tester-1)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v VV1))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (float-vector-set! v i ,form))))
 	
@@ -214,7 +220,7 @@
 	      (set! lst (cons ,form lst)))))
 	
 	(define (tester-5)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v VV4))
 	    (set! *output* (make-sample->file "test.snd" 1 mus-ldouble mus-next "t816"))
 	    (do ((i 0 (+ i 1)) (x 0.0 (+ x 0.1))) ((= i 10))
 	      (outa i ,form))
@@ -222,12 +228,12 @@
 	    (file->array "test.snd" 0 0 10 v)))
 	
 	(define (tester-6)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (k 1) (v VV5))
 	    (do ((i 0 (+ i 1)) (y -0.5) (x 0.0 (+ x 0.1))) ((= i 10) v)
 	      (float-vector-set! v i ,form))))
 	
 	(define (tester-11)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v VV6))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (let ((x (,gen o)))
 		(set! (v i) ,form)))))
@@ -256,7 +262,7 @@
     (let ((body
      `(let ()
 	(define (tester-1)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v VV1))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (float-vector-set! v i ,form))))
 	
@@ -278,7 +284,7 @@
 	      (set! lst (cons ,form lst)))))
 	
 	(define (tester-5)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v VV4))
 	    (set! *output* (make-sample->file "test.snd" 1 mus-ldouble mus-next "t816"))
 	    (do ((i 0 (+ i 1)) (x 0.0 (+ x 0.1))) ((= i 10))
 	      (outa i ,form))
@@ -286,12 +292,12 @@
 	    (file->array "test.snd" 0 0 10 v)))
 	
 	(define (tester-6)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (k 1) (v VV5))
 	    (do ((i 0 (+ i 1)) (y -0.5) (x 0.0 (+ x 0.1))) ((= i 10) v)
 	      (float-vector-set! v i ,form))))
 	
 	(define (tester-7)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v VV6))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (let ((z ,form))
 		(float-vector-set! v i (,gen o z))))))
@@ -304,7 +310,7 @@
 		(outa i (,gen o z))))))
 	
 	(define (tester-9)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v VV8))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (let ((z ,form))
 		(float-vector-set! v i (* (env a) (,gen o z)))))))
@@ -317,7 +323,7 @@
 		(outa i (* (env a) (,gen o z)))))))
 	
 	(define (tester-11)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v VV10))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (let ((x (,gen o)))
 		(set! (v i) ,form)))))
@@ -348,7 +354,7 @@
     (let ((body
      `(let ()
 	(define (tester-1)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1) (v VV1))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (float-vector-set! v i ,form))))
 	
@@ -370,7 +376,7 @@
 	      (set! lst (cons ,form lst)))))
 	
 	(define (tester-5)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (y -0.5) (k 1) (z 0.1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (y -0.5) (k 1) (z 0.1) (v VV4))
 	    (set! *output* (make-sample->file "test.snd" 1 mus-ldouble mus-next "t816"))
 	    (do ((i 0 (+ i 1)) (x 0.0 (+ x 0.1))) ((= i 10))
 	      (outa i ,form))
@@ -378,12 +384,12 @@
 	    (file->array "test.snd" 0 0 10 v)))
 	
 	(define (tester-6)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (k 1) (v VV5))
 	    (do ((i 0 (+ i 1)) (y -0.5) (z 0.1) (x 0.0 (+ x 0.1))) ((= i 10) v)
 	      (set! (v i) ,form))))
 	
 	(define (tester-7)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (k 1) (z 0.1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (k 1) (z 0.1) (v VV6))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (let ((zz ,form))
 		(float-vector-set! v i (,gen o zz))))))
@@ -396,7 +402,7 @@
 		(outa i (,gen o zz))))))
 	
 	(define (tester-9)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (z 0.1) (k 1) (v VV8))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (let ((zz ,form))
 		(float-vector-set! v i (* (env a) (,gen o zz)))))))
@@ -409,7 +415,7 @@
 		(outa i (* (env a) (,gen o zz)))))))
 	
 	(define (tester-11)
-	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (y -0.5) (z 0.1) (k 1) (v (make-float-vector 10)))
+	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (y -0.5) (z 0.1) (k 1) (v VV10))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (let ((x (,gen o)))
 		(float-vector-set! v i ,form)))))

@@ -656,11 +656,11 @@ typedef struct {
 /* cell structure */
 typedef struct s7_cell {
   union {
-    unsigned int flag;
+    unsigned long long int flag;
     unsigned char type_field;
     unsigned short sflag;
   } tf;
-  int hloc;
+  long long int hloc;
   union {
 
     union {                       /* integers, floats */
@@ -948,16 +948,7 @@ struct s7_scheme {
   unsigned int op_stack_size, max_stack_size;
 
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger, **previous_free_heap_top;
-  unsigned int heap_size;
-  int gc_freed;
-  /* "int" or "unsigned int" seems safe here:
-   *      sizeof(s7_cell) = 48 bytes
-   *      so to get more than 2^32 actual objects would require ca 200 GBytes RAM
-   *      vectors might be full of the same object (sc->nil for example), so there
-   *      we need ca 38 GBytes RAM (8 bytes per pointer).
-   * But currently s7_cell hloc (heap_location) is a signed int using the sign to
-   *  indicate "not-in-heap", so this is really limited to 2^31.
-   */
+  long long int heap_size, gc_freed;
 
 #if WITH_HISTORY
   s7_pointer eval_history1, eval_history2, error_history;
@@ -1007,7 +998,7 @@ struct s7_scheme {
 
   bool gc_off;                        /* gc_off: if true, the GC won't run */
   unsigned int gc_stats;
-  unsigned int gensym_counter, cycle_counter, f_class, add_class, multiply_class, subtract_class, equal_class;
+  unsigned int gensym_counter, f_class, add_class, multiply_class, subtract_class, equal_class;
   int format_column;
   unsigned long long int capture_let_counter;
   bool short_print, is_autoloading;
@@ -1494,11 +1485,11 @@ static s7_scheme *cur_sc = NULL;
       p->current_alloc_type = f;					\
       p->uses++; 					                \
       if ((((f) & 0xff) == T_FREE) || (((f) & 0xff) >= NUM_TYPES))	\
-        fprintf(stderr, "%d: set free %p type to %x\n", __LINE__, p, f); \
+        fprintf(stderr, "%d: set free %p type to %llx\n", __LINE__, p, (long long int)f); \
       else								\
 	{								\
 	  if (((typeflag(p) & T_IMMUTABLE) != 0) && ((typeflag(p) != (f))))						\
-	    {fprintf(stderr, "%s[%d]: set immutable %p type %d to %d\n", __func__, __LINE__, p, unchecked_type(p), f); abort();} \
+	    {fprintf(stderr, "%s[%d]: set immutable %p type %d to %lld\n", __func__, __LINE__, p, unchecked_type(p), (long long int)f); abort();} \
 	  if (((typeflag(p) & T_LINE_NUMBER) != 0) && (((typeflag(p)) & 0xff) == T_PAIR) && (((f) & T_LINE_NUMBER) == 0)) \
             fprintf(stderr, "%d unsets line_number\n", __LINE__); \
 	}								\
@@ -1998,7 +1989,7 @@ static s7_scheme *cur_sc = NULL;
  * don't reuse this bit if possible
  */
 
-#define T_GC_MARK                     0x80000000            /* (1 << (TYPE_BITS + 23)) but that makes gcc unhappy */
+#define T_GC_MARK                     0x8000000000000000            /* (1 << (TYPE_BITS + 23)) but that makes gcc unhappy */
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(_NFre(p)) |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
@@ -4997,9 +4988,9 @@ static int gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
-      fprintf(stdout, "freed %d/%u (free: " PD_U "), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
+      fprintf(stdout, "freed %lld/%lld (free: " PD_U "), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
 #else
-      fprintf(stdout, "freed %d/%u\n", sc->gc_freed, sc->heap_size);
+      fprintf(stdout, "freed %lld/%lld\n", sc->gc_freed, sc->heap_size);
 #endif
     }
   
@@ -5009,8 +5000,8 @@ static int gc(s7_scheme *sc)
 }
 
 void s7_gc_stats(s7_scheme *sc, bool on) {sc->gc_stats = (on) ? GC_STATS : 0;}
-unsigned int s7_heap_size(s7_scheme *sc) {return(sc->heap_size);}
-int s7_gc_freed(s7_scheme *sc) {return(sc->gc_freed);}
+long long int s7_heap_size(s7_scheme *sc) {return(sc->heap_size);}
+long long int s7_gc_freed(s7_scheme *sc) {return(sc->gc_freed);}
 
 
 #define GC_TRIGGER_SIZE 64
@@ -5075,7 +5066,7 @@ static bool for_any_other_reason(s7_scheme *sc, int line)
 static void resize_heap_to(s7_scheme *sc, unsigned int size)
 {
   /* alloc more heap */
-  unsigned int old_size, old_free, k;
+  long long int old_size, old_free, k;
   s7_cell *cells;
   s7_pointer p;
 
@@ -5096,11 +5087,11 @@ static void resize_heap_to(s7_scheme *sc, unsigned int size)
 
   sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
   if (!(sc->heap))
-    s7_warn(sc, 256, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));
+    s7_warn(sc, 256, "heap reallocation failed! tried to get %lld bytes\n", (long long int)(sc->heap_size * sizeof(s7_cell *)));
 
   sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
   if (!(sc->free_heap))
-    s7_warn(sc, 256, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));
+    s7_warn(sc, 256, "free heap reallocation failed! tried to get %lld bytes\n", (long long int)(sc->heap_size * sizeof(s7_cell *)));
 
   sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
   sc->free_heap_top = sc->free_heap + old_free; /* incremented below, added old_free 21-Aug-12?!? */
@@ -5126,7 +5117,7 @@ static void resize_heap_to(s7_scheme *sc, unsigned int size)
 
   if (show_heap_stats(sc))
     {
-      fprintf(stderr, "heap grows to %u\n", sc->heap_size);
+      fprintf(stderr, "heap grows to %lld\n", sc->heap_size);
 #if DEBUGGING
       if (sc->heap_size > 50000000) /* maybe a max-heap-size? */
 	{
@@ -5150,14 +5141,14 @@ static void try_to_call_gc(s7_scheme *sc)
   else
     {
 #if (!DEBUGGING)
-      unsigned int freed_heap;
+      long long int freed_heap;
       freed_heap = gc(sc);
       if ((freed_heap < sc->heap_size / 2) &&
 	  (freed_heap < 1000000)) /* if huge heap */
 	resize_heap(sc);
 #else
       gc(sc);
-      if ((unsigned int)(sc->free_heap_top - sc->free_heap) < sc->heap_size / 2)
+      if ((long long int)(sc->free_heap_top - sc->free_heap) < sc->heap_size / 2)
 	resize_heap(sc);
 #endif
     }
@@ -8774,7 +8765,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
       if (len < CC_INITIAL_STACK_SIZE)
 	len = CC_INITIAL_STACK_SIZE;
     }
-  if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4)) gc(sc);
+  if ((long long int)(sc->free_heap_top - sc->free_heap) < (long long int)(sc->heap_size / 4)) gc(sc);
   /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
    *   we can end up hitting the end of the gc free list time after time while
    *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
@@ -27599,7 +27590,7 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 		(type(arg) < NUM_TYPES) &&
 		(arg->hloc >= not_heap) &&
 		((arg->hloc < 0) ||
-		 ((arg->hloc < (int)sc->heap_size) && (sc->heap[arg->hloc] == arg))));
+		 ((arg->hloc < sc->heap_size) && (sc->heap[arg->hloc] == arg))));
 
 #if TRAP_SEGFAULT
       signal(SIGSEGV, old_segv);
@@ -28372,7 +28363,7 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
   tmpbuf_malloc(str, len);
 
   nlen = snprintf(str, len,
-		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), free: %s[%d], alloc: %s[%d]>",
+		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %lld (%d uses), free: %s[%d], alloc: %s[%d]>",
 		  excl_name, current_bits,
 		  obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
 		  obj->previous_alloc_func, obj->previous_alloc_line, previous_bits,
@@ -31209,10 +31200,39 @@ bool s7_is_proper_list(s7_scheme *sc, s7_pointer lst)
       if (!is_pair(fast)) return(is_null(fast));
 
       fast = cdr(fast);
+      if (!is_pair(fast)) return(is_null(fast));
+
+      fast = cdr(fast);
       slow = cdr(slow);
       if (fast == slow) return(false);
     }
   return(true);
+
+#if 0
+  /* Richard Brent's algorithm from Wikipedia -- in this case, slower than the tortoise/hare above (because we skip a step) */
+  if (!is_pair(lst)) 
+    return(is_null(lst));
+  {
+    s7_pointer fast, slow;
+    int power = 1, lam = 1;
+    slow = lst;
+    fast = cdr(lst);
+    while (fast != slow)
+      {
+	if (!is_pair(fast))
+	  return(is_null(fast));
+	if (power == lam)
+	  {
+	    slow = fast;
+	    power *= 2;
+	    lam = 0;
+	  }
+	fast = cdr(fast);
+	lam++;
+      }
+    return(false);
+  }
+#endif
 }
 
 
@@ -38228,7 +38248,7 @@ int s7_object_type(s7_pointer obj)
 }
 
 
-s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
+s7_pointer s7_make_object_with_let(s7_scheme *sc, int type, void *value, s7_pointer let)
 {
   s7_pointer x;
   new_cell(sc, x, object_types[type]->outer_type);
@@ -38239,18 +38259,16 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
    */
   c_object_type(x) = type;
   c_object_value(x) = value;
-  c_object_set_let(x, sc->nil);
+  c_object_set_let(x, let);
   add_c_object(sc, x);
   return(x);
 }
 
-s7_pointer s7_make_object_with_let(s7_scheme *sc, int type, void *value, s7_pointer let)
+s7_pointer s7_make_object(s7_scheme *sc, int type, void *value) 
 {
-  s7_pointer g;
-  g = s7_make_object(sc, type, value);
-  c_object_set_let(g, let);
-  return(g);
+  return(s7_make_object_with_let(sc, type, value, sc->nil));
 }
+
 
 s7_pointer s7_object_let(s7_pointer obj)
 {
@@ -59510,9 +59528,10 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
   opcode_t op;
   s7_pointer p, body;
   /* TODO: those not allowed need to be passed back and treated as unsafe symbols (find_uncomplicated_symbol etc) */
+#if 0
   if (!is_pair(cdr(expr))) /* cddr(expr) might be null if, for example, (begin (let ...)) */
     return(OPT_F);
-
+#endif
   op = (opcode_t)syntax_opcode(func);
   sc->w = e;
   body = cdr(expr);
@@ -59545,10 +59564,11 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	  {
 	    s7_pointer var;
 	    var = car(p);
-	    if ((is_pair(var)) &&
-		(is_symbol(car(var))) &&
-		(is_pair(cdr(var))) &&
-		(is_pair(cadr(var))) &&
+	    if ((!is_pair(var)) ||
+		(!is_symbol(car(var))) ||
+		(!is_pair(cdr(var))))
+	      return(OPT_OOPS);
+	    if ((is_pair(cadr(var))) &&
 		(!is_checked(cadr(var))) &&
 		(optimize_expression(sc, cadr(var), hop, e) == OPT_OOPS))
 	      return(OPT_OOPS);
@@ -59584,19 +59604,18 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	  {
 	    s7_pointer var;
 	    var = car(p);
-	    if ((is_pair(var)) &&
-		(is_symbol(car(var))) &&
-		(is_pair(cdr(var))))
-	      {
-		if ((is_pair(cadr(var))) &&
-		    (!is_checked(cadr(var))))
-		  {
-		    if (optimize_expression(sc, cadr(var), hop, e) == OPT_OOPS)
-		      return(OPT_OOPS);
-		  }
-		e = cons(sc, add_symbol_to_list(sc, car(var)), e);
-		sc->w = e;
-	      }
+	    if ((!is_pair(var)) ||
+		(!is_symbol(car(var))) ||
+		(!is_pair(cdr(var))))
+	      return(OPT_OOPS);
+
+	    if ((is_pair(cadr(var))) &&
+		(!is_checked(cadr(var))) &&
+		(optimize_expression(sc, cadr(var), hop, e) == OPT_OOPS))
+	      return(OPT_OOPS);
+
+	    e = cons(sc, add_symbol_to_list(sc, car(var)), e);
+	    sc->w = e;
 	  }
 	if (is_symbol(cadr(expr)))
 	  {
@@ -59640,9 +59659,10 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	  {
 	    s7_pointer var;
 	    var = car(p);
-	    if ((is_pair(var)) &&
-		(is_pair(cdr(var))) &&
-		(is_pair(cadr(var))) &&
+	    if ((!is_pair(var)) ||
+		(!is_pair(cdr(var))))
+	      return(OPT_OOPS);
+	    if ((is_pair(cadr(var))) &&
 		(!is_checked(cadr(var))) &&
 		(optimize_expression(sc, cadr(var), hop, e) == OPT_OOPS)) /* the init field -- locals are not defined yet */
 	      return(OPT_OOPS);
@@ -59651,13 +59671,11 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	for (p = vars; is_pair(p); p = cdr(p))
 	  {
 	    s7_pointer var;
-	    var = car(p);
+	    var = cddar(p);
 	    if ((is_pair(var)) &&
-		(is_pair(cdr(var))) &&
-		(is_pair(cddr(var))) &&
-		(is_pair(caddr(var))) &&
-		(!is_checked(caddr(var))) &&
-		(optimize_expression(sc, caddr(var), hop, e) == OPT_OOPS)) /* the step field -- locals are defined */
+		(is_pair(car(var))) &&
+		(!is_checked(car(var))) &&
+		(optimize_expression(sc, car(var), hop, e) == OPT_OOPS)) /* the step field -- locals are defined */
 	      return(OPT_OOPS);
 	  }
       }
@@ -59964,21 +59982,23 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
   if (is_symbol(car_expr))
     {
       s7_pointer func;
-      if (is_syntactic(car_expr)) 
-	return(optimize_syntax(sc, expr, _TSyn(slot_value(global_slot(car_expr))), hop, e));
-#if 0
-      if (car_expr == sc->quote_symbol)
-	return(OPT_F);
-      if (car_expr == sc->cutlet_symbol)
-	return(OPT_OOPS);
-#endif
+      if (is_syntactic(car_expr))
+	{
+	  if (!is_pair(cdr(expr)))
+	    return(OPT_OOPS);
+	  return(optimize_syntax(sc, expr, _TSyn(slot_value(global_slot(car_expr))), hop, e));
+	}
+
       func = find_uncomplicated_symbol(sc, car_expr, e);
       if (is_slot(func))
 	{
 	  func = slot_value(func);
 	  if (is_syntax(func))   /* 12-8-16 was is_syntactic, but that is only appropriate above -- here we have the value */
-	    return(optimize_syntax(sc, expr, func, hop, e));  /* e can be extended via set-cdr! here */
-
+	    {
+	      if (!is_pair(cdr(expr)))
+		return(OPT_OOPS);
+	      return(optimize_syntax(sc, expr, func, hop, e));  /* e can be extended via set-cdr! here */
+	    }
 	  /* we miss implicit indexing here because at this time, the data are not set */
 	  if ((is_procedure(func)) ||
 	      /* (is_c_function(func)) || */
@@ -60610,14 +60630,10 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
   body_t result = VERY_SAFE_BODY;
 
   if (!is_pair(x)) return(result);
-  sc->cycle_counter++;
-  if ((!s7_is_proper_list(sc, x)) ||
-      (sc->cycle_counter > 5000))
-    return(UNSAFE_BODY);
-  
   expr = car(x);
   if (is_syntactic_symbol(expr))
     {
+      if (!is_pair(cdr(x))) return(UNSAFE_BODY);
       switch (symbol_syntax_op(expr))
 	{
 	case OP_OR:
@@ -60631,11 +60647,9 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	  
 	case OP_QUOTE:
 	  return(VERY_SAFE_BODY);
-	  break;
 	  
 	case OP_IF:
-	  if (!is_pair(cdr(x)))     /* (if) ! */   
-	    return(UNSAFE_BODY); 
+	  if (!is_pair(cddr(x))) return(UNSAFE_BODY);
 	  if (is_pair(cadr(x)))
 	    {
 	      result = form_is_safe(sc, func, cadr(x), main_args, false);
@@ -60656,8 +60670,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	  
 	case OP_WHEN:
 	case OP_UNLESS:
-	  if (!is_pair(cdr(x)))      /* (when) */
-	    return(UNSAFE_BODY); 
+	  if (!is_pair(cddr(x))) return(UNSAFE_BODY);
 	  if (is_pair(cadr(x)))
 	    {
 	      result = form_is_safe(sc, func, cadr(x), main_args, false);
@@ -60669,8 +60682,9 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 
 	case OP_COND:
 	  {
-	    s7_pointer p;
-	    for (p = cdr(x); is_pair(p); p = cdr(p))
+	    bool follow = false;
+	    s7_pointer sp, p;
+	    for (p = cdr(x), sp = x; is_pair(p); p = cdr(p))
 	      {
 		s7_pointer ex;
 		ex = car(p);
@@ -60688,6 +60702,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 		    if (result == UNSAFE_BODY) 
 		      return(UNSAFE_BODY);
 		  }
+		if (follow) {sp = cdr(sp); if (p == sp) return(UNSAFE_BODY);}
+		follow = (!follow);
 	      }
 	    if (is_not_null(p))
 	      return(UNSAFE_BODY);
@@ -60697,14 +60713,18 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	  
 	case OP_CASE:
 	  {
-	    s7_pointer p;
+	    bool follow = false;
+	    s7_pointer sp, p;
+	    if (!is_pair(cddr(x))) return(UNSAFE_BODY);
 	    if (is_pair(cadr(x)))
 	      {
 		result = form_is_safe(sc, func, cadr(x), main_args, false);
 		if (result == UNSAFE_BODY) 
 		  return(UNSAFE_BODY);
 	      }
-	    for (p = cddr(x); is_pair(p); p = cdr(p))
+	    sp = cdr(x);
+	    p = cdr(sp);
+	    for (; is_pair(p); p = cdr(p))
 	      {
 		if (!is_pair(car(p))) return(UNSAFE_BODY);
 		if (is_pair(cdar(p)))
@@ -60713,6 +60733,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 		    if (result == UNSAFE_BODY) 
 		      return(UNSAFE_BODY);
 		  }
+		if (follow) {sp = cdr(sp); if (p == sp) return(UNSAFE_BODY);}
+		follow = (!follow);
 	      }
 	    return(result);
 	  }
@@ -60722,8 +60744,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	  /* if we set func, we have to make sure we abandon the tail call scan:
 	   * (let () (define (hi a) (let ((v (vector 1 2 3))) (set! hi v) (hi a))) (hi 1))
 	   */
-	  if (!is_pair(cdr(x)))
-	    return(UNSAFE_BODY); /* (set!) ! */
+	  if (!is_pair(cddr(x))) return(UNSAFE_BODY);
 	  if (cadr(x) == func)
 	    return(UNSAFE_BODY);
 	  
@@ -60741,6 +60762,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	  /* not OP_DEFINE even in simple cases (safe_closure assumes constant funclet) */
 
 	case OP_WITH_LET:
+	  if (!is_pair(cddr(x))) return(UNSAFE_BODY);
 	  if (is_pair(cadr(x)))
 	    return(UNSAFE_BODY);
 	  return(min_body(body_is_safe(sc, sc->F, cddr(x), main_args, at_end), SAFE_BODY));
@@ -60750,8 +60772,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	case OP_LET_TEMPORARILY:
 	  {
 	    s7_pointer p;
-	    if (!is_pair(cadr(x)))
-	      return(UNSAFE_BODY);
+	    if (!is_pair(cadr(x))) return(UNSAFE_BODY);
 	    for (p = cadr(x); is_pair(p); p = cdr(p))
 	      {
 		if ((!is_pair(car(p))) ||
@@ -60770,7 +60791,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	case OP_LETREC:
 	case OP_LETREC_STAR:
 	  {
-	    s7_pointer vars, body, let_name;
+	    bool follow = true;
+	    s7_pointer vars, body, let_name, sp;
 	    slist *top, *locals;
 	    top = main_args;
 	    vars = cadr(x);
@@ -60787,7 +60809,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 		body = cdddr(x);
 	      }
 	    else let_name = func;
-	    
+
+	    sp = vars;
 	    for (; is_pair(vars); vars = cdr(vars))
 	      {
 		s7_pointer let_var, var_name;
@@ -60820,6 +60843,11 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 			return(UNSAFE_BODY);
 		      }
 		  }
+		if (sp != vars)
+		  {
+		    follow = (!follow);
+		    if (follow) {sp = cdr(sp); if (vars == sp) return(UNSAFE_BODY);}
+		  }
 	      }
 	    result = min_body(result, body_is_safe(sc, let_name, body, top, at_end));
 	    locals = split_slist(top, main_args);
@@ -60838,12 +60866,14 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	  {
 	    slist *top, *locals;
 	    top = main_args;
-	    if (!is_pair(cddr(x)))
-	      return(UNSAFE_BODY);
+	    if (!is_pair(cddr(x))) return(UNSAFE_BODY);
 	    if (is_pair(cadr(x)))
 	      {
-		s7_pointer vars;
-		for (vars = cadr(x); is_pair(vars); vars = cdr(vars))
+		bool follow = false;
+		s7_pointer vars, sp;
+		vars = cadr(x);
+		sp = vars;
+		for (; is_pair(vars); vars = cdr(vars))
 		  {
 		    s7_pointer do_var;
 		    do_var = car(vars);
@@ -60866,6 +60896,11 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 		      {
 			free_syms(split_slist(top, main_args));
 			return(UNSAFE_BODY);
+		      }
+		    if (sp != vars)
+		      {
+			if (follow) {sp = cdr(sp); if (vars == sp) return(UNSAFE_BODY);}
+			follow = (!follow);
 		      }
 		  }
 	      }
@@ -60914,8 +60949,11 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
     {
       if (expr == func) /* try to catch tail call, expr is car(x) */
 	{
-	  s7_pointer p;
-	  for (p = cdr(x); is_pair(p); p = cdr(p))
+	  bool follow = false;
+	  s7_pointer sp, p;
+	  p = cdr(x);
+	  sp = x;
+	  for (; is_pair(p); p = cdr(p))
 	    {
 	      if (is_pair(car(p)))
 		{
@@ -60930,6 +60968,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 		  if (car(p) == func)
 		    return(UNSAFE_BODY);
 		}
+	      if (follow) {sp = cdr(sp); if (p == sp) return(UNSAFE_BODY);}
+	      follow = (!follow);
 	    }
 	  if ((at_end) && (is_null(p))) /* tail call, so safe */
 	    return(result); 
@@ -60958,8 +60998,11 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	      ((is_any_closure(f)) && (is_safe_closure(f))) ||
 	      (is_sequence(f)))
 	    {
-	      s7_pointer p;
-	      for (p = cdr(x); is_pair(p); p = cdr(p))
+	      bool follow = false;
+	      s7_pointer sp, p;
+	      p = cdr(x);
+	      sp = x;
+	      for (; is_pair(p); p = cdr(p))
 		{
 		  if ((is_pair(car(p))) &&
 		      (caar(p) != sc->quote_symbol))
@@ -61025,6 +61068,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 		      if (car(p) == func)
 			return(UNSAFE_BODY);
 		    }
+		  if (follow) {sp = cdr(sp); if (p == sp) return(UNSAFE_BODY);}
+		  follow = (!follow);
 		}
 	      if (!is_null(p))
 		return(UNSAFE_BODY);
@@ -61038,18 +61083,20 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 
 static body_t body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, slist *main_args, bool at_end)
 {
-  s7_pointer p;
+  bool follow = false;
+  s7_pointer p, sp;
   body_t result = VERY_SAFE_BODY;
-  for (p = body; is_pair(p); p = cdr(p))
+  for (p = body, sp = body; is_pair(p); p = cdr(p))
     {
       if (is_pair(car(p)))
 	{
 	  result = min_body(result, form_is_safe(sc, func, car(p), main_args, (at_end) && (is_null(cdr(p)))));
-#if SAFE_FORM_PRINT
-	  fprintf(stderr, "%d: %s %d\n", __LINE__, DISPLAY(car(p)), result);
-#endif
-	  if (result == UNSAFE_BODY)
-	    return(UNSAFE_BODY);
+	  if (result == UNSAFE_BODY) return(UNSAFE_BODY);
+	}
+      if (p != body)
+	{
+	  if (follow) {sp = cdr(sp); if (p == sp) return(UNSAFE_BODY);}
+	  follow = (!follow);
 	}
     }
   if (!is_null(p))
@@ -61102,7 +61149,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	}
 
       free_syms(sargs);
-      sc->cycle_counter = 0;
       clear_symbol_list(sc);  /* tracks locals */
 
       if (is_symbol(func))    /* func can be sc->gc_nil (see check_lambda and check_lambda_star) */
@@ -66529,7 +66575,9 @@ static int vector_a_ex(s7_scheme *sc)
 	  if ((index < vector_length(v)) &&
 	      (index >= 0))
 	    {
-	      sc->value = vector_getter(v)(sc, v, index);
+	      if (is_float_vector(v))
+		sc->value = make_real(sc, float_vector_element(v, index));
+	      else sc->value = vector_getter(v)(sc, v, index);
 	      return(goto_START);
 	    }
 	}
@@ -66538,7 +66586,7 @@ static int vector_a_ex(s7_scheme *sc)
   return(goto_START);
 }
 
-static int cvector_a_ex(s7_scheme *sc)
+static int constant_vector_a_ex(s7_scheme *sc)
 {
   s7_pointer v, x, code;
 
@@ -71585,7 +71633,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		case OP_CVECTOR_A:
 		case HOP_CVECTOR_A:
-		  if (cvector_a_ex(sc) == goto_START) goto START;
+		  if (constant_vector_a_ex(sc) == goto_START) goto START;
 		  if (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL;
 		  break;
 
@@ -79843,9 +79891,9 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
   fprintf(stderr, "process size: %" LL_D "\n", (s7_int)(info.ru_maxrss * 1024));
 #endif
 
-  fprintf(stderr, "heap: %u (%" LL_D " bytes)", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
+  fprintf(stderr, "heap: %lld (%" LL_D " bytes)", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
   {
-    unsigned int k;
+    long long int k;
     int ts[NUM_TYPES];
     for (i = 0; i < NUM_TYPES; i++) ts[i] = 0;
     for (k = 0; k < sc->heap_size; k++)
@@ -80150,8 +80198,6 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	{
 	  s7_int size;
 	  size = s7_integer(val);
-	  if (size > S7_LONG_MAX)
-	    return(simple_out_of_range(sc, sym, val, s7_make_string_wrapper(sc, "should be less than 2^31")));
 	  if (size >= sc->heap_size * 2)
 	    resize_heap_to(sc, size);
 	  return(val);
@@ -80571,7 +80617,7 @@ s7_scheme *s7_init(void)
 
   sc->heap_size = INITIAL_HEAP_SIZE;
   if ((sc->heap_size % 32) != 0)
-    sc->heap_size = 32 * (int)ceil((double)(sc->heap_size) / 32.0);
+    sc->heap_size = 32 * (long long int)ceil((double)(sc->heap_size) / 32.0);
   sc->heap = (s7_pointer *)malloc(sc->heap_size * sizeof(s7_pointer));
 
   sc->free_heap = (s7_cell **)malloc(sc->heap_size * sizeof(s7_cell *));
@@ -82360,7 +82406,7 @@ s7_scheme *s7_init(void)
 #endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
-  /* 64 bit machine: size: 48 [size 72 if gmp, 120 if debugging], op: 409, opt: 410 */
+  /* 64 bit machine: size: 48 or 56(heap-size) [size 72 if gmp, 120 if debugging], op: 426, opt: 442 */
 
   if (sizeof(void *) > sizeof(s7_int))
     fprintf(stderr, "s7_int is too small: it has %d bytes, but void* has %d\n", (int)sizeof(s7_int), (int)sizeof(void *));
@@ -82491,31 +82537,32 @@ int main(int argc, char **argv)
  *     a continuance of slot_set_value_with_hook
  * private let: block outlet of any let = shutlet?
  * doc tree*?
+ * check bit vs arref again (new type bits)
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6
  * tmac          |      |      |      || 9052 |  615   259   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1059
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1776
- * teq           |      |      | 6612 || 2777 | 2129  1978  1989
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1997
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2437
- * bench    42.7 | 8752 | 4220 | 3506 || 3477 | 3032  2955  2730
- * lint          |      |      |      || 4041 | 3376  3114  3008
+ * lint          |      |      |      || 4041 | 3376  3114  3003
  * lg            |      |      |      || 211  | 161   149   144.0
- * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3104
- * tform         |      |      | 6816 || 3714 | 3530  3361  3280
- * tmap          |      |      |  9.3 || 5279 |       3939  3391
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3093
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3300
+ * tmap          |      |      |  9.3 || 5279 |       3939  3387
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963
- * tsort         |      |      |      || 8584 | 4869  4080  4012
- * titer         |      |      |      || 5971 | 5224  4768  4722
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7603
- * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  12.1
+ * tsort         |      |      |      || 8584 | 4869  4080  4010
+ * titer         |      |      |      || 5971 | 5224  4768  4707
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7570
+ * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.8
+ * bench         |      |      |      || 17.3 | 15.7  15.4  14.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7
- * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.8
- *                                    || 145  | 135   132   93.7
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7
+ *                                    || 145  | 135   132   93.4
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.

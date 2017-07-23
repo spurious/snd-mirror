@@ -125,8 +125,8 @@ void s7_gc_unprotect_at(s7_scheme *sc, unsigned int loc);
 s7_pointer s7_gc_protected_at(s7_scheme *sc, unsigned int loc);
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);
 void s7_gc_stats(s7_scheme *sc, bool on);
-unsigned int s7_heap_size(s7_scheme *sc);
-int s7_gc_freed(s7_scheme *sc);
+long long int s7_heap_size(s7_scheme *sc);
+long long int s7_gc_freed(s7_scheme *sc);
 
   /* any s7_pointer object held in C (as a local variable for example) needs to be
    *   protected from garbage collection if there is any chance the GC may run without
