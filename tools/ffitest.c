@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <inttypes.h>
 
 #include "s7.h"
 
@@ -1024,7 +1025,7 @@ int main(int argc, char **argv)
 						    s7_make_integer(sc, 5),
 						    s7_make_integer(sc, 6))));
     if (val != 21)
-      fprintf(stderr, "plus1: %lld\n", val);
+      fprintf(stderr, "plus1: %" PRId64 "\n", val);
   }
   
   p = s7_apply_function(sc, s7_name_to_value(sc, "plus"), s7_cons(sc, s7_make_keyword(sc, "blue"), s7_cons(sc, TO_S7_INT(2), s7_nil(sc))));
@@ -1110,11 +1111,11 @@ int main(int argc, char **argv)
     dims = s7_vector_dimensions(p1);
     offs = s7_vector_offsets(p1);
     els = s7_vector_elements(p1);
-    if (dims[0] != 2) fprintf(stderr, "%d: dims[0]: %lld?\n", __LINE__, dims[0]);
-    if (dims[1] != 3) fprintf(stderr, "%d: dims[1]: %lld?\n", __LINE__, dims[1]);
-    if (dims[2] != 4) fprintf(stderr, "%d: dims[2]: %lld?\n", __LINE__, dims[2]);
-    if (offs[0] != 12) fprintf(stderr, "%d: offs[0]: %lld?\n", __LINE__, offs[0]);
-    if (offs[1] != 4) fprintf(stderr, "%d: offs[1]: %lld?\n", __LINE__, offs[1]);
+    if (dims[0] != 2) fprintf(stderr, "%d: dims[0]: %" PRId64 "?\n", __LINE__, dims[0]);
+    if (dims[1] != 3) fprintf(stderr, "%d: dims[1]: %" PRId64 "?\n", __LINE__, dims[1]);
+    if (dims[2] != 4) fprintf(stderr, "%d: dims[2]: %" PRId64 "?\n", __LINE__, dims[2]);
+    if (offs[0] != 12) fprintf(stderr, "%d: offs[0]: %" PRId64 "?\n", __LINE__, offs[0]);
+    if (offs[1] != 4) fprintf(stderr, "%d: offs[1]: %" PRId64 "?\n", __LINE__, offs[1]);
     if (s7_integer(p = els[12 + 4 + 1]) != 32)
       {fprintf(stderr, "%d: %s is not 32?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
   }
