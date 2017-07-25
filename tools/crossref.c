@@ -340,6 +340,8 @@ int main(int argc, char **argv)
   add_file("xm.c");
   add_file("gl.c");
   add_file("xg.c");
+  
+  add_file("xen.h");
 
   add_file("cmus.c");
   add_file("ffi.lisp");

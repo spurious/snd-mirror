@@ -46284,7 +46284,7 @@ static void define_strings(void)
 /* -------------------------------- lint -------------------------------- */
 
 #if HAVE_SCHEME
-typedef struct {const char *name, *type; long long int value;} enummer_t;
+typedef struct {const char *name, *type; int64_t value;} enummer_t;
 static enummer_t enum_info[] = {
 #if GTK_CHECK_VERSION(2, 0, 0)
         {"G_NORMALIZE_DEFAULT", "GNormalizeMode", G_NORMALIZE_DEFAULT},
@@ -47364,10 +47364,10 @@ static enummer_t enum_info[] = {
 #endif
         {NULL, NULL, 0}};
 
-static s7_pointer enum_value_to_name(s7_scheme *sc, long long int val, const char *type) 
+static s7_pointer enum_value_to_name(s7_scheme *sc, int64_t val, const char *type) 
 { 
   int k; 
-  long long int range_min = 0, range_max = 0; 
+  int64_t range_min = 0, range_max = 0; 
   bool range_set = false; 
   for (k = 0; ; k++) 
     { 
@@ -47397,7 +47397,7 @@ static s7_pointer enum_value_to_name(s7_scheme *sc, long long int val, const cha
       char *range_string; 
       s7_pointer str; 
       range_string = (char *)malloc(256 * sizeof(char)); 
-      snprintf(range_string, 256, "between %lld and %lld", range_min, range_max); 
+      snprintf(range_string, 256, "between %" PRId64 " and %" PRId64, range_min, range_max); 
       str = s7_make_string(sc, range_string); 
       free(range_string); 
       return(str);                            /* ... value should be between <min> and <max> */ 
@@ -47504,7 +47504,7 @@ void Init_libxg(void)
           Xen_provide_feature("gtk2");
         #endif
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("23-Jul-17"));
+      Xen_define("xg-version", C_string_to_Xen_string("25-Jul-17"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

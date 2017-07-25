@@ -210,11 +210,11 @@ s7_pointer s7_cddaar(s7_pointer p);
 
 bool s7_is_list(s7_scheme *sc, s7_pointer p);                                /* (list? p) -> (or (pair? p) (null? p)) */
 bool s7_is_proper_list(s7_scheme *sc, s7_pointer p);                         /* (proper-list? p) */
-int32_t s7_list_length(s7_scheme *sc, s7_pointer a);                             /* (length a) */
-s7_pointer s7_list(s7_scheme *sc, int32_t num_values, ...);                      /* (list ...) */
+int32_t s7_list_length(s7_scheme *sc, s7_pointer a);                         /* (length a) */
+s7_pointer s7_list(s7_scheme *sc, int32_t num_values, ...);                  /* (list ...) */
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a);                          /* (reverse a) */
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b);             /* (append a b) */
-s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int32_t num);              /* (list-ref lst num) */
+s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int32_t num);          /* (list-ref lst num) */
 s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int32_t num, s7_pointer val); /* (list-set! lst num val) */
 s7_pointer s7_assoc(s7_scheme *sc, s7_pointer obj, s7_pointer lst);          /* (assoc obj lst) */
 s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x);             /* (assq obj lst) */
@@ -228,12 +228,12 @@ s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* 
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int32_t len);  /* same as s7_make_string, but provides strlen */
 s7_pointer s7_make_string_wrapper(s7_scheme *sc, const char *str);
 s7_pointer s7_make_permanent_string(const char *str);                        /* make a string that will never be GC'd */
-uint32_t s7_string_length(s7_pointer str);                               /* (string-length str) */
+uint32_t s7_string_length(s7_pointer str);                                   /* (string-length str) */
 
 
 bool s7_is_character(s7_pointer p);                                          /* (character? p) */
 char s7_character(s7_pointer p);                                             /* Scheme character -> C char */
-s7_pointer s7_make_character(s7_scheme *sc, uint32_t c);                 /* C char (as uint32_t) -> Scheme character */
+s7_pointer s7_make_character(s7_scheme *sc, uint32_t c);                     /* C char (as uint32_t) -> Scheme character */
 
 
 bool s7_is_number(s7_pointer p);                                             /* (number? p) */
@@ -265,7 +265,7 @@ bool s7_is_complex(s7_pointer arg);                                         /* (
 s7_pointer s7_make_complex(s7_scheme *sc, s7_double a, s7_double b);        /* returns the Scheme object a+bi */
 s7_double s7_real_part(s7_pointer z);                                       /* (real-part z) */
 s7_double s7_imag_part(s7_pointer z);                                       /* (imag-part z) */
-char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int32_t radix);        /* (number->string obj radix) */
+char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int32_t radix);    /* (number->string obj radix) */
 
 bool s7_is_ulong(s7_pointer arg);
 unsigned long s7_ulong(s7_pointer p);
@@ -277,7 +277,7 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, uint64_t n);
 
 bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */
 s7_int s7_vector_length(s7_pointer vec);                                    /* (vector-length vec) */
-int32_t s7_vector_rank(s7_pointer vect);                                        /* number of dimensions in vect */
+int32_t s7_vector_rank(s7_pointer vect);                                    /* number of dimensions in vect */
 s7_int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions (don't free the pointer) */
 s7_int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing (don't free) */
 s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
@@ -355,8 +355,8 @@ typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, unsigned char c, s7_pointer port));  
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port));
 
-int32_t s7_read_char(s7_scheme *sc, s7_pointer port);                           /* (read-char port) */
-int32_t s7_peek_char(s7_scheme *sc, s7_pointer port);                           /* (peek-char port) */
+int32_t s7_read_char(s7_scheme *sc, s7_pointer port);                       /* (read-char port) */
+int32_t s7_peek_char(s7_scheme *sc, s7_pointer port);                       /* (peek-char port) */
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port);                         /* (read port) */
 void s7_newline(s7_scheme *sc, s7_pointer port);                            /* (newline port) */
 void s7_write_char(s7_scheme *sc, int32_t c, s7_pointer port);                  /* (write-char c port) */
@@ -372,9 +372,9 @@ s7_pointer s7_closure_let(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_closure_args(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_funclet(s7_scheme *sc, s7_pointer p);                         /* (funclet x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
-s7_pointer s7_make_signature(s7_scheme *sc, int32_t len, ...);                  /* procedure-signature data */
+s7_pointer s7_make_signature(s7_scheme *sc, int32_t len, ...);              /* procedure-signature data */
 s7_pointer s7_make_circular_signature(s7_scheme *sc, int32_t cycle_point, int32_t len, ...);
-bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int32_t args);                 /* (aritable? x args) */
+bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int32_t args);             /* (aritable? x args) */
 s7_pointer s7_arity(s7_scheme *sc, s7_pointer x);                           /* (arity x) */
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
 s7_pointer s7_make_continuation(s7_scheme *sc);                             /* call/cc... (see example below) */

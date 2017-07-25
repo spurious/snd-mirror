@@ -189,7 +189,7 @@
   #define WITH_GMP 0
   /* this includes multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
    * WITH_GMP adds the following functions: bignum and bignum?, and (*s7* 'bignum-precision)
-   * using gmp with precision=128 is about 50 times slower than using C doubles and long long ints.
+   * using gmp with precision=128 is about 50 times slower than using C doubles and int64_ts.
    */
 #endif
 
@@ -9274,9 +9274,9 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 #endif
 
 #if (defined(__clang__) && ((__clang_major__ > 3) || (__clang_major__ == 3 && __clang_minor__ >= 4))) 
-  #define subtract_overflow(A, B, C)     __builtin_ssubll_overflow(A, B, C)
-  #define add_overflow(A, B, C)          __builtin_saddll_overflow(A, B, C)
-  #define multiply_overflow(A, B, C)     __builtin_smulll_overflow(A, B, C)
+  #define subtract_overflow(A, B, C)     __builtin_ssubll_overflow((long long)A, (long long)B, (long long *)C)
+  #define add_overflow(A, B, C)          __builtin_saddll_overflow((long long)A, (long long)B, (long long *)C)
+  #define multiply_overflow(A, B, C)     __builtin_smulll_overflow((long long)A, (long long)B, (long long *)C)
   #define int_subtract_overflow(A, B, C) __builtin_ssub_overflow(A, B, C)
   #define int_add_overflow(A, B, C)      __builtin_sadd_overflow(A, B, C)
   #define int_multiply_overflow(A, B, C) __builtin_smul_overflow(A, B, C)
@@ -15164,8 +15164,10 @@ static s7_int add_i_ii(s7_int i1, s7_int i2) {return(i1 + i2);}
 static s7_int add_i_iii(s7_int i1, s7_int i2, s7_int i3) {return(i1 + i2 + i3);}
 static s7_double add_d_id(s7_int x1, s7_double x2) {return((s7_double)x1 + x2);}
 
+#if (!WITH_GMP)
 static s7_pointer add_p_dd(s7_double x1, s7_double x2) {return(make_real(cur_sc, x1 + x2));}
 static s7_pointer add_p_ii(s7_int x1, s7_int x2) {return(make_integer(cur_sc, x1 + x2));}
+#endif
 static s7_pointer add_p_pp(s7_pointer p1, s7_pointer p2) {return(g_add_2(cur_sc, set_plist_2(cur_sc, p1, p2)));}
 
 
@@ -15746,10 +15748,11 @@ static s7_double subtract_d_ddd(s7_double x1, s7_double x2, s7_double x3) {retur
 static s7_double subtract_d_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 - x2 - x3 - x4);}
 
 static s7_double sub_d_id(s7_int x1, s7_double x2) {return((s7_double)x1 - x2);}
+#if (!WITH_GMP)
 static s7_pointer sub_p_dd(s7_double x1, s7_double x2) {return(make_real(cur_sc, x1 - x2));}
 static s7_pointer sub_p_ii(s7_int x1, s7_int x2) {return(make_integer(cur_sc, x1 - x2));}
+#endif
 static s7_pointer subtract_p_pp(s7_pointer p1, s7_pointer p2) {return(g_subtract_2(cur_sc, set_plist_2(cur_sc, p1, p2)));}
-
 
 
 /* ---------------------------------------- multiply ---------------------------------------- */
@@ -16325,10 +16328,10 @@ static s7_double multiply_d_dd(s7_double x1, s7_double x2) {return(x1 * x2);}
 static s7_double multiply_d_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 * x2 * x3);}
 static s7_double multiply_d_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 * x2 * x3 * x4);}
 static s7_double multiply_d_id(s7_int x1, s7_double x2) {return((s7_double)x1 * x2);}
+#if (!WITH_GMP)
 static s7_pointer mul_p_dd(s7_double x1, s7_double x2) {return(make_real(cur_sc, x1 * x2));}
 static s7_pointer mul_p_ii(s7_int x1, s7_int x2) {return(make_integer(cur_sc, x1 * x2));}
 
-#if (!WITH_GMP)
 static s7_pointer multiply_p_pp(s7_pointer x1, s7_pointer x2) {return(g_multiply_2(cur_sc, set_plist_2(cur_sc, x1, x2)));}
 #endif
 
@@ -17382,6 +17385,8 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_int object_length_to_int(s7_scheme *sc, s7_pointer obj);
+
 #if (!WITH_GMP)
 static s7_pointer equal_s_ic;
 static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
@@ -17405,8 +17410,6 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
     }
   return(sc->T);
 }
-
-static s7_int object_length_to_int(s7_scheme *sc, s7_pointer obj);
 
 static s7_pointer equal_length_ic;
 static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
@@ -19703,6 +19706,7 @@ static bool logbit_b_ii(s7_int i1, s7_int i2)
   return((((int64_t)(1LL << (int64_t)i2)) & (int64_t)i1) != 0);
 }
 
+#if (!WITH_GMP)
 static bool logbit_b_pp(s7_pointer p1, s7_pointer p2)
 {
   if (is_integer(p1))
@@ -19714,6 +19718,7 @@ static bool logbit_b_pp(s7_pointer p1, s7_pointer p2)
   simple_wrong_type_argument(cur_sc, cur_sc->logbit_symbol, p1, T_INTEGER);
   return(false);
 }
+#endif
 
 
 /* -------------------------------- ash -------------------------------- */
@@ -19763,9 +19768,11 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 }
 
 static s7_int ash_i_ii(s7_int i1, s7_int i2) {return(c_ash(cur_sc, i1, i2));}
+#if (!WITH_GMP)
 static s7_int rsh_i_ii_direct(s7_int i1, s7_int i2) {return(i1 >> (-i2));}
 static s7_int lsh_i_ii_direct(s7_int i1, s7_int i2) {return(i1 << i2);}
 static s7_int rsh_i_i2_direct(s7_int i1, s7_int i2) {return(i1 >> 1);}
+#endif
 
 
 /* ---------------------------------------- random ---------------------------------------- */
@@ -45965,7 +45972,9 @@ static s7_b_pp_t s7_b_pp_direct_function(s7_pointer f) {return((s7_b_pp_t)opt_fu
 static void s7_set_p_ii_function(s7_pointer f, s7_p_ii_t df) {add_opt_func(f, o_p_ii, (void *)df);}
 static s7_p_ii_t s7_p_ii_function(s7_pointer f) {return((s7_p_ii_t)opt_func(f, o_p_ii));}
 
+#if (!WITH_GMP)
 static void s7_set_p_dd_function(s7_pointer f, s7_p_dd_t df) {add_opt_func(f, o_p_dd, (void *)df);}
+#endif
 static s7_p_dd_t s7_p_dd_function(s7_pointer f) {return((s7_p_dd_t)opt_func(f, o_p_dd));}
 
 
@@ -46376,14 +46385,6 @@ static s7_int opt_i_ii_cf(void *p)
   return(o->v3.i_ii_f(o->v1.i, o1->v7.fi(o1)));
 }
 
-static s7_int opt_i_ii_fc(void *p)
-{
-  opt_info *o = (opt_info *)p;
-  opt_info *o1;
-  o1 = cur_sc->opts[++cur_sc->pc];
-  return(o->v3.i_ii_f(o1->v7.fi(o1), o->v2.i));
-}
-
 static s7_int opt_i_ii_sf(void *p)
 {
   opt_info *o = (opt_info *)p;
@@ -46401,6 +46402,15 @@ static s7_int opt_i_ii_ff(void *p)
   i1 = o1->v7.fi(o1);
   o1 = cur_sc->opts[++cur_sc->pc];
   return(o->v3.i_ii_f(i1, o1->v7.fi(o1)));
+}
+
+#if (!WITH_GMP)
+static s7_int opt_i_ii_fc(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  o1 = cur_sc->opts[++cur_sc->pc];
+  return(o->v3.i_ii_f(o1->v7.fi(o1), o->v2.i));
 }
 
 static s7_int opt_i_ii_fco(void *p)
@@ -46429,6 +46439,7 @@ static bool i_ii_fc_combinable(s7_scheme *sc, opt_info *opc)
     }
   return(false);
 }
+#endif
 
 static bool i_ii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer car_x)
 {
@@ -46579,6 +46590,7 @@ static bool i_ii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 		      pc_fallback(sc, start);
 		    }
 		  else
+#endif
 		    {
 		      if ((int_optimize(sc, cdr(car_x))) &&
 			  (int_optimize(sc, cddr(car_x))))
@@ -46588,7 +46600,6 @@ static bool i_ii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 			}
 		      pc_fallback(sc, start);
 		    }
-#endif
 		}
 	    }
 	}
@@ -48910,6 +48921,7 @@ static bool opt_b_p_f(void *p)
   return(o->v2.b_p_f(o1->v7.fp(o1)));
 }
 
+#if (!WITH_GMP)
 static bool opt_zero_mod(void *p)
 {
   opt_info *o = (opt_info *)p;
@@ -48917,6 +48929,7 @@ static bool opt_zero_mod(void *p)
   x = integer(slot_value(o->v1.p));
   return((x % o->v2.i) == 0);
 }
+#endif
 
 
 static bool b_idp_ok(s7_scheme *sc, s7_pointer s_func, s7_pointer car_x, s7_pointer arg_type)
@@ -48943,6 +48956,7 @@ static bool b_idp_ok(s7_scheme *sc, s7_pointer s_func, s7_pointer car_x, s7_poin
 	    }
 	  if (int_optimize(sc, cdr(car_x)))
 	    {
+#if (!WITH_GMP)
 	      opt_info *o1;
 	      o1 = sc->opts[sc->pc - 1];
 	      if ((o1->v7.fi == opt_i_ii_sc) &&
@@ -48953,7 +48967,9 @@ static bool b_idp_ok(s7_scheme *sc, s7_pointer s_func, s7_pointer car_x, s7_poin
 		  opc->v2.i = o1->v2.i;
 		  sc->pc--;
 		}
-	      else opc->v7.fb = opt_b_i_f;
+	      else 
+#endif
+		opc->v7.fb = opt_b_i_f;
 	      return(true);
 	    }
 	}
@@ -82542,7 +82558,6 @@ int main(int32_t argc, char **argv)
  *     a continuance of slot_set_value_with_hook
  * private let: block outlet of any let = shutlet?
  * doc tree*?
- * int64_t in snd
  *
  * --------------------------------------------------------------------
  *

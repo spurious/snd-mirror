@@ -24,6 +24,8 @@
 #endif
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #ifdef _MSC_VER
   #include <direct.h>
@@ -449,13 +451,13 @@ unsigned int mus_char_to_ulint(const unsigned char *inp)
 #if __GNUC__ && HAVE_BYTESWAP_H
     /* these work, but newer versions of gcc complain about strict aliasing rules
      *   #define big_endian_float(n)             ({unsigned int x; x = bswap_32((*((unsigned int *)n))); (*((float *)&x));})
-     *   #define big_endian_double(n)            ({unsigned long long int x; x = bswap_64((*((unsigned long long int *)n))); (*((double *)&x));})
+     *   #define big_endian_double(n)            ({uint64_t x; x = bswap_64((*((uint64_t *)n))); (*((double *)&x));})
      */
     typedef struct {union {unsigned int i; float f;} u;} uiflt;
-    typedef struct {union {unsigned long long int l; double d;} u;} uidbl;
+    typedef struct {union {uint64_t l; double d;} u;} uidbl;
 
     #define big_endian_float(n)                  ({uiflt x; x.u.i = bswap_32((*((unsigned int *)n))); x.u.f;})
-    #define big_endian_double(n)                 ({uidbl x; x.u.l = bswap_64((*((unsigned long long int *)n))); x.u.d;})
+    #define big_endian_double(n)                 ({uidbl x; x.u.l = bswap_64((*((uint64_t *)n))); x.u.d;})
 #else
     #define big_endian_float(n)                  (mus_char_to_bfloat(n))
     #define big_endian_double(n)                 (mus_char_to_bdouble(n))
@@ -526,7 +528,7 @@ unsigned int mus_char_to_ulint(const unsigned char *inp)
 
 #if __GNUC__ && HAVE_BYTESWAP_H
     #define little_endian_float(n)               ({unsigned int x; x = bswap_32((*((unsigned int *)n))); (*((float *)&x));})
-    #define little_endian_double(n)              ({unsigned long long int x; x = bswap_64((*((unsigned long long int *)n))); (*((double *)&x));})
+    #define little_endian_double(n)              ({uint64_t x; x = bswap_64((*((uint64_t *)n))); (*((double *)&x));})
 #else
     #define little_endian_float(n)               (mus_char_to_lfloat(n))
     #define little_endian_double(n)              (mus_char_to_ldouble(n))
@@ -1781,8 +1783,8 @@ mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t num, int chan
 
 static int checked_write(int tfd, char *buf, mus_long_t chars)
 {
-  long long int bytes;
-  bytes = (long long int)write(tfd, buf, chars);
+  int64_t bytes;
+  bytes = (int64_t)write(tfd, buf, chars);
   if (bytes != chars) 
     {
       io_fd *fd;
@@ -1795,7 +1797,7 @@ static int checked_write(int tfd, char *buf, mus_long_t chars)
 			 fd->name));
       else
 	return(mus_error(MUS_WRITE_ERROR,
-			 "mus_write: write error for %s%s%s: only %lld of %lld" " bytes written",
+			 "mus_write: write error for %s%s%s: only %" PRId64 " of %lld" " bytes written",
 			 fd->name, (errno) ? ": " : "", (errno) ? STRERROR(errno) : "",
 			 bytes, chars));
     }

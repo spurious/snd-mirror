@@ -21,6 +21,8 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #include "_sndlib.h"
 #include "xen.h"

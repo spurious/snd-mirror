@@ -24,13 +24,13 @@
 
 static char write_error_buffer[PRINT_BUFFER_SIZE];
 
-static long long int snd_checked_write(int fd, unsigned char *buf, long long int bytes, const char *filename)
+static int64_t snd_checked_write(int fd, unsigned char *buf, int64_t bytes, const char *filename)
 {
   /* io.c checked_write assumes its file descriptors are around */
   /* can't call mus_error here because we need to clean up first in case of error */
-  long long int bytes_written;
+  int64_t bytes_written;
   mus_long_t kfree;
-  kfree = (long long int)disk_kspace(filename);
+  kfree = (int64_t)disk_kspace(filename);
   if (kfree < 0) 
     {
       snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
@@ -41,7 +41,7 @@ static long long int snd_checked_write(int fd, unsigned char *buf, long long int
   if (kfree < (bytes >> 10))
     { 
       snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "only %lld bytes left on device (we need %lld bytes)",
+		   "only %lld bytes left on device (we need %" PRId64 " bytes)",
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }
@@ -49,7 +49,7 @@ static long long int snd_checked_write(int fd, unsigned char *buf, long long int
   if (bytes_written != bytes)
     {
       snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "write error (wrote %lld of requested %lld bytes): %s",
+		   "write error (wrote %" PRId64 " of requested %" PRId64 " bytes): %s",
 		   bytes_written, bytes, snd_io_strerror());
       return(MUS_ERROR);
     }
