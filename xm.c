@@ -16097,7 +16097,7 @@ static XtActionsRec *make_action_rec(int len, Xen larg2)
   Xen arg2;
   arg2 = Xen_copy_arg(larg2);
   gcloc = xm_protect(arg2);
-  act = (XtActionsRec *)calloc((unsigned int)len, sizeof(XtActionsRec));
+  act = (XtActionsRec *)calloc((size_t)len, sizeof(XtActionsRec));
   for (i = 0; i < len; i++, arg2 = Xen_cdr(arg2))
     {
       Xen pair;

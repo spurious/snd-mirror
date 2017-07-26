@@ -1978,7 +1978,7 @@ static s7_scheme *cur_sc = NULL;
  * don't reuse this bit if possible
  */
 
-#define T_GC_MARK                     0x8000000000000000            /* (1 << (TYPE_BITS + 23)) but that makes gcc unhappy */
+#define T_GC_MARK                     0x8000000000000000
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(_NFre(p)) |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
@@ -2854,31 +2854,6 @@ static void memclr(void *s, size_t n)
       n--;
     }
 }
-
-
-#define SHOW_DEBUG_HISTORY 0
-#if DEBUGGING && SHOW_DEBUG_HISTORY
-  #define DEBUG_HISTORY_SIZE 16
-  static char *debug_history[DEBUG_HISTORY_SIZE];
-  static int32_t debug_history_loc = 0;
-  static void add_debug_history(char *str)
-  {
-    if (debug_history[debug_history_loc])
-      free(debug_history[debug_history_loc]);
-    debug_history[debug_history_loc++] = copy_string(str);
-    if (debug_history_loc >= DEBUG_HISTORY_SIZE)
-      debug_history_loc = 0;
-  }
-  static void show_debug_history(void)
-  {
-    int32_t i;
-    for (i = debug_history_loc; i < DEBUG_HISTORY_SIZE; i++)
-      fprintf(stderr, "%s\n", debug_history[i]);
-    for (i = 0; i < debug_history_loc; i++)
-      fprintf(stderr, "%s\n", debug_history[i]);
-    fprintf(stderr, "\n");
-  }
-#endif
 
 
 /* ---------------- forward decls ---------------- */
@@ -4977,7 +4952,7 @@ static int32_t gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
-      fprintf(stdout, "freed %" PRId64 "/%" PRId64 " (free: " PD_U "), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
+      fprintf(stdout, "freed %" PRId64 "/%" PRId64 " (free: " PD_U "), time: %f\n", sc->gc_freed, sc->heap_size, (ptr_int)(sc->free_heap_top - sc->free_heap), secs);
 #else
       fprintf(stdout, "freed %" PRId64 "/%" PRId64 "\n", sc->gc_freed, sc->heap_size);
 #endif
@@ -9264,7 +9239,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer mpc_to_big_complex(s7_scheme *sc, mpc_t val);
 #endif
 
-#if ((defined(__clang__) && ((__clang_major__ > 3) || (__clang_major__ == 3 && __clang_minor__ >= 4))) || (defined(__GNUC__) && __GNUC__ >= 5))
+#if ((defined(__clang__) && (!POINTER_32) && ((__clang_major__ > 3) || (__clang_major__ == 3 && __clang_minor__ >= 4))) || (defined(__GNUC__) && __GNUC__ >= 5))
   #define HAVE_OVERFLOW_CHECKS 1
 #else
   #define HAVE_OVERFLOW_CHECKS 0
@@ -9273,7 +9248,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   #endif
 #endif
 
-#if (defined(__clang__) && ((__clang_major__ > 3) || (__clang_major__ == 3 && __clang_minor__ >= 4))) 
+#if (defined(__clang__) && (!POINTER_32) && ((__clang_major__ > 3) || (__clang_major__ == 3 && __clang_minor__ >= 4))) 
   #define subtract_overflow(A, B, C)     __builtin_ssubll_overflow((long long)A, (long long)B, (long long *)C)
   #define add_overflow(A, B, C)          __builtin_saddll_overflow((long long)A, (long long)B, (long long *)C)
   #define multiply_overflow(A, B, C)     __builtin_smulll_overflow((long long)A, (long long)B, (long long *)C)
@@ -23475,7 +23450,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, int64_t m
 	{
 	  char tmp[256];
 	  int32_t len;
-	  len = snprintf(tmp, 256, "(%s \"%s\") read %ld bytes of an expected %ld?", caller, name, (long)bytes, size);
+	  len = snprintf(tmp, 256, "(%s \"%s\") read %ld bytes of an expected %" PRId64 "?", caller, name, (long)bytes, size);
 	  port_write_string(sc->output_port)(sc, tmp, len, sc->output_port);
 	  size = bytes;
 	}
@@ -35192,16 +35167,6 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector_ref "(float-vector-ref v ...) returns an element of the float-vector v."
   #define Q_float_vector_ref s7_make_circular_signature(sc, 2, 3, s7_make_signature(sc, 2, sc->is_float_symbol, sc->is_float_vector_symbol), sc->is_float_vector_symbol, sc->is_integer_symbol)
-  /* fprintf(stderr, "%s\n", DISPLAY_80(current_code(sc))); */
-  /* (lambda (y) (> (magnitude (- y (* 0.5 (float-vector-ref vals (floor (-..
-     (do ((sum 0.0) (len (min (length v1) (length v2))) (mx (float-vector-peak...
-     (* (env e1) (oscil osc (float-vector-ref x 0)))
-     (= (float-vector-ref (cadr qr) 0) 0.0)
-     (let ((wkm-k (float-vector-ref wkm k)) (old-wk1 (copy wk1))) (do ((j 0 (+ j
-     (set! unclipped-max (max unclipped-max (float-vector-ref data i)))
-     (set! tj (if (zero? (float-vector-ref radii j)) 1e-10 (* (float-vector-ref...
-     */
-  /* we need do_let */
   return(univect_ref(sc, args, true));
 }
 
@@ -44181,67 +44146,10 @@ static s7_pointer g_type_of(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- s7-version -------------------------------- */
 
-#define WITH_OP_COUNTERS 0
-#if WITH_OP_COUNTERS
-#define CTR_DATA "ctrs.data"
-static int64_t op_ctrs[500], opt_ctrs[500];
-static void init_ctrs(void)
-{
-  int32_t i;
-  for (i = 0; i < 500; i++)
-    {
-      op_ctrs[i] = 0;
-      opt_ctrs[i] = 0;
-    }
-}
-static void add_op_ctr(opcode_t op) {op_ctrs[op]++;}
-static void add_opt_ctr(int32_t op) {opt_ctrs[op]++;}
-static void report_ctrs(void)
-{
-  int32_t i;
-  fprintf(stderr, "ops:\n");
-  for (i = 0; i < OP_MAX_DEFINED_1; i++)
-    if (op_ctrs[i] < 100)
-      fprintf(stderr, "%s: %" PRId64 "\n", op_names[i], op_ctrs[i]);
-  fprintf(stderr, "\nopts:\n");
-  for (i = 0; i < OP_MAX_DEFINED; i++)
-    if (opt_ctrs[i] < 100)
-      fprintf(stderr, "%s: %" PRId64 "\n", opt_names[i], opt_ctrs[i]);
-  fprintf(stderr, "\n");
-}
-#endif
-
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
   #define Q_s7_version pcl_s
-#if WITH_OP_COUNTERS
-  {
-    FILE *fp;
-    fp = fopen(CTR_DATA, "r");
-    if (fp)
-      {
-	int32_t i;
-	int64_t rop[500], ropt[500];
-	fread((void *)rop, 8, 500, fp);
-	fread((void *)ropt, 8, 500, fp);
-	fclose(fp);
-	for (i = 0; i < 500; i++)
-	  {
-	    op_ctrs[i] += rop[i];
-	    opt_ctrs[i] += ropt[i];
-	  }
-      }
-    fp = fopen(CTR_DATA, "w");
-    fwrite((void *)op_ctrs, 8, 500, fp);
-    fwrite((void *)opt_ctrs, 8, 500, fp);
-    fflush(fp);
-    fclose(fp);
-
-    report_ctrs();
-    init_ctrs();
-  }
-#endif
 
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
@@ -67560,15 +67468,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     START_WITHOUT_POP_STACK:
       /* fprintf(stderr, "%s (%d) %s\n", op_names[sc->op], (int)(sc->op), DISPLAY_80(sc->code)); */
-#if SHOW_DEBUG_HISTORY
-      add_debug_history((char *)op_names[sc->op]);
-#endif
 #if WITH_PROFILE
       profile_at_start = sc->code;
       profile(sc, sc->code);
-#endif
-#if WITH_OP_COUNTERS
-      add_op_ctr(sc->op);
 #endif
       switch (sc->op)
 	{
@@ -68863,9 +68765,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    OPT_EVAL:
 	     /* fprintf(stderr, "opt_eval: %s %s\n", opt_names[optimize_op(sc->code)], DISPLAY_80(sc->code)); */
 
-#if SHOW_DEBUG_HISTORY
-	      add_debug_history((char *)opt_names[optimize_op(sc->code)]);
-#endif
 #if WITH_PROFILE
 	      if (sc->code != profile_at_start)
 		profile(sc, sc->code);
@@ -68883,9 +68782,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *   be slower in the computed goto case -- some timing tests are actually slower with gotos).  Also 
 	       *   the lack of a default case means an error => segfault rather than printing some useless error message.
 	       */
-#if WITH_OP_COUNTERS
-	      add_opt_ctr(optimize_op(code));
-#endif
 	      switch (optimize_op(code))
 		{
 		  /* -------------------------------------------------------------------------------- */
@@ -73470,7 +73366,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  check_stack_size(sc);
 	  sc->code = opt_lambda(sc->code);
 	  new_frame_with_two_slots(sc, closure_let(sc->code), sc->envir, 
-				   car(closure_args(sc->code)), sc->args, cadr(closure_args(sc->code)), sc->value);
+				   car(closure_args(sc->code)), sc->args, 
+				   cadr(closure_args(sc->code)), sc->value);
 	  sc->code = _TPair(closure_body(sc->code));
 	  goto BEGIN1;
 	  
@@ -73483,7 +73380,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  check_stack_size(sc);
 	  sc->code = opt_lambda(sc->code);
 	  new_frame_with_two_slots(sc, closure_let(sc->code), sc->envir, 
-				   car(closure_args(sc->code)), sc->value, cadr(closure_args(sc->code)), sc->args);
+				   car(closure_args(sc->code)), sc->value, 
+				   cadr(closure_args(sc->code)), sc->args);
 	  sc->code = _TPair(closure_body(sc->code));
 	  goto BEGIN1;
 	  
@@ -80494,14 +80392,7 @@ s7_scheme *s7_init(void)
 	float_format_g = "%.*Lg";   /* long double (80-bit precision?) */
       else float_format_g = "%.*g"; /* float and double */
     }
-#if WITH_OP_COUNTERS
-  init_ctrs();
-#endif
-#if DEBUGGING && SHOW_DEBUG_HISTORY
-  for (i = 0; i < DEBUG_HISTORY_SIZE; i++)
-    debug_history[i] = NULL;
-  debug_history_loc = 0;
-#endif
+
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
   cur_sc = sc;                                    /* for gdb/debugging */
   sc->gc_off = true;                              /* sc->args and so on are not set yet, so a gc during init -> segfault */
@@ -81857,7 +81748,6 @@ s7_scheme *s7_init(void)
    *    current-error-port should simply be an s7 variable with a name like *error-port* and an accessor to
    *    ensure its new value, if any, is an output port.
    */
-  
 
   s7_function_set_setter(sc, "car",              "set-car!");
   s7_function_set_setter(sc, "cdr",              "set-cdr!");
@@ -82450,7 +82340,7 @@ s7_scheme *s7_init(void)
 
 #if (WITH_MAIN && (!USE_SND))
 
-int main(int32_t argc, char **argv)
+int main(int argc, char **argv)
 {
   s7_scheme *sc;
 
@@ -82522,40 +82412,27 @@ int main(int32_t argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * ruby version crashes in test 4|8 -- file_copy?
+ *   also some problem with ruby and the int64_t change
  *
- * ip for pi cases (b_ip, but it doesn't appear to happen much)
  * finish the t563.scm bugs: a couple number type problems 31905 30802 
  * weed out unused stuff -- choose.data/choose: simple_char_eq, is_eq_caar_q not_is_string|char|pair_car
  * map/for-each multi-expr bodies could be done in-place (rather than cons with begin)
  *   map/for-each/sort! in-place if c-func: p_pp 
  *   for-each+lambda also doable if lambda body is
- * varlet et al ok if let is not curlet or outlet(curlet) -- opt_chooser somehow?
+ * varlet et al ok if let is not curlet or outlet(curlet) -- opt_chooser somehow? (see tcopy)
  * need to test opt_sizes escape in sort et al
  *   perhaps save sc->envir, make sure it is ok if optimize fails
  * s7_macroexpand of multiple-value-set!? maybe disable values?
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
  * see g_float_vector_ref -- 3mil univects! [call/all] [all_x_c_ss and various all_x combinations]
- * need tests for cond/case in opt_dotimes_2
- * combine opts to reduce overhead?, d_vid_ssf+same(d_dd_ff_o1)[800000]
  * all_x_c_opsq_opsq continued: c_opsq, s_opssq (fvref) etc -- s_opssq has .5mil filters (as base), 1/4 as mul
  *   so where to choose if base as p_pd?
- * extend op_s_s business throughout (no trailers!) -- where are the most breaks? count clears in trailers?
- * if float|int-vector set and val is not vector, avoid univect?
  * all_x_if_a...?
  * opt let? opt_float_begin in s7_float_optimize for map-channel in snd?
  * g_multiply_2 (et al) where both args are known-to-be-numbers (either constant or func->num)
  *   how to make the output type recognition very fast? LLint with bit per type?
  *   then rather than s7_apply_function(symbol->value(func)) just check type&type != 0
  * tie in p_di|id?
- *
- * each symbol-access function could have a closure variable of watchers
- *   (let ((watchers ())) (lambda (sym val))...)
- *   ((outlet (symbol-access sym)) 'watcher) to get/set the list
- *   or slot-let = (inlet 'writer <func> 'watcher ...)
- *   so slot-access not symbol-access -- need to avoid circles -- slot_accessor uses expr -- accessor is already set on the slot for global_slot
- *   or no special marker --variable has an invisible dilambda or at least setter
- *   (set! var x): slot-set-value <find var slot> x -> slot-set-value function is slot-specific
- *     a continuance of slot_set_value_with_hook
  * private let: block outlet of any let = shutlet?
  * doc tree*?
  *
