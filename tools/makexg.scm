@@ -1466,6 +1466,8 @@
 
 (hey "#include <string.h>~%")
 (hey "#include <stdlib.h>~%~%")
+(hey "#include <stdint.h>~%~%")
+(hey "#include <inttypes.h>~%~%")
 
 (hey "#include <glib.h>~%")
 (hey "#include <gdk/gdk.h>~%")
@@ -3155,11 +3157,19 @@
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool xg_already_inited = false;~%~%")
+(hey "#if HAVE_SCHEME && (!USE_SND)~%")
+(hey "void Init_libxg(s7_scheme *sc);~%")
+(hey "void Init_libxg(s7_scheme *sc)~%")
+(hey "#else~%")
 (hey "void Init_libxg(void);~%")
 (hey "void Init_libxg(void)~%")
+(hey "#endif~%")
 (hey "{~%")
 (hey "  if (!xg_already_inited)~%")
 (hey "    {~%")
+(hey " #if HAVE_SCHEME && (!USE_SND)~%")
+(hey "      s7_xen_initialize(sc);~%")
+(hey " #endif~%")
 (hey "      define_symbols();~%")
 (hey "      define_xm_obj();~%")
 (hey "      define_integers();~%")

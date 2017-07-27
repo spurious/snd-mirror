@@ -11804,6 +11804,11 @@ static s7_double polynomial_d_pd(s7_pointer v, s7_double x)
   return(mus_polynomial(s7_float_vector_elements(v), x, s7_vector_length(v)));
 }
 
+static s7_double array_interp_d_pd(s7_pointer v, s7_double x)
+{
+  return(mus_array_interp(s7_float_vector_elements(v), x, s7_vector_length(v)));
+}
+
 
 #define DF_1(Call) static s7_double mus_ ## Call ## _d(s7_double x) {return((s7_double)mus_ ## Call((mus_float_t)x));}
 #define DF_2(Call) static s7_double mus_ ## Call ## _d(s7_double x1, s7_double x2) {return((s7_double)mus_ ## Call((mus_float_t)x1, (mus_float_t)x2));}
@@ -12079,6 +12084,7 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_p_function(s7_name_to_value(sc, S_pink_noise), mus_pink_noise);
   s7_set_d_pd_function(s7_name_to_value(sc, S_piano_noise), piano_noise_d_pd);
   s7_set_d_pd_function(s7_name_to_value(sc, S_polynomial), polynomial_d_pd);
+  s7_set_d_pd_function(s7_name_to_value(sc, S_array_interp), array_interp_d_pd);
 
   s7_set_d_vid_function(s7_name_to_value(sc, S_locsig), locsig_d_vid);
   s7_set_d_vid_function(s7_name_to_value(sc, S_locsig_set), locsig_set_d_vid);

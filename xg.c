@@ -110,6 +110,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <stdint.h>
+
+#include <inttypes.h>
+
 #include <glib.h>
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
@@ -47478,11 +47482,19 @@ static void define_lint(void)
 
 static bool xg_already_inited = false;
 
+#if HAVE_SCHEME && (!USE_SND)
+void Init_libxg(s7_scheme *sc);
+void Init_libxg(s7_scheme *sc)
+#else
 void Init_libxg(void);
 void Init_libxg(void)
+#endif
 {
   if (!xg_already_inited)
     {
+ #if HAVE_SCHEME && (!USE_SND)
+      s7_xen_initialize(sc);
+ #endif
       define_symbols();
       define_xm_obj();
       define_integers();
@@ -47504,7 +47516,7 @@ void Init_libxg(void)
           Xen_provide_feature("gtk2");
         #endif
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("25-Jul-17"));
+      Xen_define("xg-version", C_string_to_Xen_string("26-Jul-17"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
