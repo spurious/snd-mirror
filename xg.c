@@ -47482,7 +47482,7 @@ static void define_lint(void)
 
 static bool xg_already_inited = false;
 
-#if HAVE_SCHEME && (!USE_SND)
+#if HAVE_SCHEME
 void Init_libxg(s7_scheme *sc);
 void Init_libxg(s7_scheme *sc)
 #else
@@ -47492,7 +47492,7 @@ void Init_libxg(void)
 {
   if (!xg_already_inited)
     {
- #if HAVE_SCHEME && (!USE_SND)
+ #if HAVE_SCHEME
       s7_xen_initialize(sc);
  #endif
       define_symbols();
@@ -47516,7 +47516,7 @@ void Init_libxg(void)
           Xen_provide_feature("gtk2");
         #endif
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("26-Jul-17"));
+      Xen_define("xg-version", C_string_to_Xen_string("27-Jul-17"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

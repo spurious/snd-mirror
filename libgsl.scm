@@ -754,7 +754,7 @@
 	 
 	 (in-C "static s7_pointer g_gsl_sf_result_make(s7_scheme *sc, s7_pointer args)
                 {
-                  return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(gsl_sf_result))));
+                  return(s7_make_c_pointer_with_type(sc, (void *)calloc(1, sizeof(gsl_sf_result)), s7_make_symbol(sc, \"gsl_sf_result*\"), s7_f(sc)));
                 }
                 static s7_pointer g_gsl_sf_result_val(s7_scheme *sc, s7_pointer args)
                 {
@@ -766,12 +766,12 @@
                 }
                 static s7_pointer g_gsl_sf_result_e10_make(s7_scheme *sc, s7_pointer args)
                 {
-                  return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(gsl_sf_result_e10))));
+                  return(s7_make_c_pointer_with_type(sc, (void *)calloc(1, sizeof(gsl_sf_result_e10)), s7_make_symbol(sc, \"gsl_sf_result_e10*\"), s7_f(sc)));
                 }
                 static s7_pointer g_to_doubles(s7_scheme *sc, s7_pointer args)
                 {
                   if (s7_is_vector(s7_car(args)))
-                    return(s7_make_c_pointer(sc, (void *)s7_float_vector_elements(s7_car(args))));
+                    return(s7_make_c_pointer_with_type(sc, (void *)s7_float_vector_elements(s7_car(args)), s7_make_symbol(sc, \"double*\"), s7_f(sc)));
                   return(s7_car(args));
                 }
                 ")
@@ -967,37 +967,38 @@
 	 (double gsl_stats_median_from_sorted_data (double* size_t size_t))
 	 (double gsl_stats_quantile_from_sorted_data (double* size_t size_t double))
 	 
-	 (c-pointer (gsl_interp_linear gsl_interp_polynomial gsl_interp_cspline gsl_interp_cspline_periodic gsl_interp_akima
-		     gsl_interp_akima_periodic gsl_min_fminimizer_goldensection gsl_min_fminimizer_brent gsl_min_fminimizer_quad_golden
-		     gsl_multimin_fminimizer_nmsimplex gsl_multimin_fminimizer_nmsimplex2 gsl_multimin_fminimizer_nmsimplex2rand
-		     gsl_multiroot_fsolver_dnewton gsl_multiroot_fsolver_broyden gsl_multiroot_fsolver_hybrid gsl_multiroot_fsolver_hybrids
-		     gsl_prec_eps gsl_prec_sqrt_eps
-		     gsl_prec_root3_eps gsl_prec_root4_eps gsl_prec_root5_eps gsl_prec_root6_eps gsl_root_fsolver_bisection gsl_root_fsolver_brent
-		     gsl_root_fsolver_falsepos gsl_version
-		     gsl_wavelet_daubechies gsl_wavelet_daubechies_centered gsl_wavelet_haar gsl_wavelet_haar_centered gsl_wavelet_bspline
-		     gsl_wavelet_bspline_centered))
+	 (gsl_interp_type* (gsl_interp_linear gsl_interp_polynomial gsl_interp_cspline gsl_interp_cspline_periodic 
+			    gsl_interp_akima gsl_interp_akima_periodic))
+	 (gsl_min_fminimizer_type* (gsl_min_fminimizer_goldensection gsl_min_fminimizer_brent gsl_min_fminimizer_quad_golden))
+	 (gsl_multimin_fminimizer_type* (gsl_multimin_fminimizer_nmsimplex gsl_multimin_fminimizer_nmsimplex2 gsl_multimin_fminimizer_nmsimplex2rand))
+	 (gsl_multiroot_fsolver_type* (gsl_multiroot_fsolver_dnewton gsl_multiroot_fsolver_broyden gsl_multiroot_fsolver_hybrid gsl_multiroot_fsolver_hybrids))
+	 (double* (gsl_prec_eps gsl_prec_sqrt_eps gsl_prec_root3_eps gsl_prec_root4_eps gsl_prec_root5_eps gsl_prec_root6_eps))
+	 (gsl_root_fsolver_type* (gsl_root_fsolver_bisection gsl_root_fsolver_brent gsl_root_fsolver_falsepos))
+	 (char* (gsl_version))
+	 (gsl_wavelet_type* (gsl_wavelet_daubechies gsl_wavelet_daubechies_centered gsl_wavelet_haar gsl_wavelet_haar_centered gsl_wavelet_bspline
+			     gsl_wavelet_bspline_centered))
 	 
 	 (reader-cond ((>= gsl-version 1.16)
-		       (c-pointer (gsl_multifit_robust_default gsl_multifit_robust_bisquare gsl_multifit_robust_cauchy gsl_multifit_robust_fair
-				   gsl_multifit_robust_huber gsl_multifit_robust_ols gsl_multifit_robust_welsch))))
+		       (gsl_multifit_robust_type* (gsl_multifit_robust_default gsl_multifit_robust_bisquare gsl_multifit_robust_cauchy gsl_multifit_robust_fair
+				                   gsl_multifit_robust_huber gsl_multifit_robust_ols gsl_multifit_robust_welsch))))
 	 
 	 (reader-cond ((>= gsl-version 2.0)
-		       (c-pointer gsl_interp_steffen)))
+		       (gsl_interp_type* (gsl_interp_steffen))))
 	 
 	 (int (gsl_message_mask gsl_check_range))
 	 
 	 ;; randist, rng
-	 (c-pointer (gsl_qrng_niederreiter_2 gsl_qrng_sobol gsl_qrng_halton gsl_qrng_reversehalton
-		     gsl_rng_borosh13 gsl_rng_coveyou gsl_rng_cmrg gsl_rng_fishman18 gsl_rng_fishman20 gsl_rng_fishman2x gsl_rng_gfsr4 
-		     gsl_rng_knuthran gsl_rng_knuthran2 gsl_rng_knuthran2002 gsl_rng_lecuyer21 gsl_rng_minstd gsl_rng_mrg gsl_rng_mt19937 
-		     gsl_rng_mt19937_1999 gsl_rng_mt19937_1998 gsl_rng_r250 gsl_rng_ran0 gsl_rng_ran1 gsl_rng_ran2 gsl_rng_ran3 gsl_rng_rand 
-		     gsl_rng_rand48 gsl_rng_random128_bsd gsl_rng_random128_glibc2 gsl_rng_random128_libc5 gsl_rng_random256_bsd 
-		     gsl_rng_random256_glibc2 gsl_rng_random256_libc5 gsl_rng_random32_bsd gsl_rng_random32_glibc2 gsl_rng_random32_libc5 
-		     gsl_rng_random64_bsd gsl_rng_random64_glibc2 gsl_rng_random64_libc5 gsl_rng_random8_bsd gsl_rng_random8_glibc2 
-		     gsl_rng_random8_libc5 gsl_rng_random_bsd gsl_rng_random_glibc2 gsl_rng_random_libc5 gsl_rng_randu 
-		     gsl_rng_ranf gsl_rng_ranlux gsl_rng_ranlux389 gsl_rng_ranlxd1 gsl_rng_ranlxd2 gsl_rng_ranlxs0 gsl_rng_ranlxs1 
-		     gsl_rng_ranlxs2 gsl_rng_ranmar gsl_rng_slatec gsl_rng_taus gsl_rng_taus2 gsl_rng_taus113 gsl_rng_transputer 
-		     gsl_rng_tt800 gsl_rng_uni gsl_rng_uni32 gsl_rng_vax gsl_rng_waterman14 gsl_rng_zuf gsl_rng_default gsl_rng_default_seed))
+	 (gsl_qrng_type* (gsl_qrng_niederreiter_2 gsl_qrng_sobol gsl_qrng_halton gsl_qrng_reversehalton))
+	 (gsl_rng_type* (gsl_rng_default gsl_rng_borosh13 gsl_rng_coveyou gsl_rng_cmrg gsl_rng_fishman18 gsl_rng_fishman20 gsl_rng_fishman2x gsl_rng_gfsr4 
+		         gsl_rng_knuthran gsl_rng_knuthran2 gsl_rng_knuthran2002 gsl_rng_lecuyer21 gsl_rng_minstd gsl_rng_mrg gsl_rng_mt19937 
+			 gsl_rng_mt19937_1999 gsl_rng_mt19937_1998 gsl_rng_r250 gsl_rng_ran0 gsl_rng_ran1 gsl_rng_ran2 gsl_rng_ran3 gsl_rng_rand 
+			 gsl_rng_rand48 gsl_rng_random128_bsd gsl_rng_random128_glibc2 gsl_rng_random128_libc5 gsl_rng_random256_bsd 
+			 gsl_rng_random256_glibc2 gsl_rng_random256_libc5 gsl_rng_random32_bsd gsl_rng_random32_glibc2 gsl_rng_random32_libc5 
+			 gsl_rng_random64_bsd gsl_rng_random64_glibc2 gsl_rng_random64_libc5 gsl_rng_random8_bsd gsl_rng_random8_glibc2 
+			 gsl_rng_random8_libc5 gsl_rng_random_bsd gsl_rng_random_glibc2 gsl_rng_random_libc5 gsl_rng_randu 
+			 gsl_rng_ranf gsl_rng_ranlux gsl_rng_ranlux389 gsl_rng_ranlxd1 gsl_rng_ranlxd2 gsl_rng_ranlxs0 gsl_rng_ranlxs1 
+			 gsl_rng_ranlxs2 gsl_rng_ranmar gsl_rng_slatec gsl_rng_taus gsl_rng_taus2 gsl_rng_taus113 gsl_rng_transputer 
+			 gsl_rng_tt800 gsl_rng_uni gsl_rng_uni32 gsl_rng_vax gsl_rng_waterman14 gsl_rng_zuf gsl_rng_default_seed))
 	 
 	 (gsl_qrng* gsl_qrng_alloc (gsl_qrng_type* int))
 	 (int gsl_qrng_memcpy (gsl_qrng* gsl_qrng*))
@@ -2661,14 +2662,18 @@
                 static gsl_multimin_function gsl_mmf;
                 static double gsl_mmf_caller(const gsl_vector *x, void *p) 
                 {
-                  return(s7_real(s7_call(gsl_mmf_s7, (s7_pointer)p, s7_cons(gsl_mmf_s7, s7_make_c_pointer(gsl_mmf_s7, (void *)x), s7_nil(gsl_mmf_s7)))));
+                  return(s7_real(s7_call(gsl_mmf_s7, (s7_pointer)p, 
+                                         s7_cons(gsl_mmf_s7, 
+                                                 s7_make_c_pointer_with_type(gsl_mmf_s7, (void *)x, s7_make_symbol(gsl_mmf_s7, \"gsl_vector*\"), s7_f(gsl_mmf_s7)),
+                                                 s7_nil(gsl_mmf_s7)))));
                 }
                 #define make_gsl_mm_function(Args, Size) do {gsl_mmf.f = gsl_mmf_caller; gsl_mmf.n = Size; gsl_mmf.params = (void *)Args; gsl_mmf_s7 = sc;} while (0)
                 static s7_pointer g_gsl_multimin_fminimizer_set(s7_scheme *sc, s7_pointer args)
                 {
                   make_gsl_mm_function(s7_cadr(args), ((gsl_vector *)s7_c_pointer(s7_caddr(args)))->size);
                   return(s7_make_integer(sc, gsl_multimin_fminimizer_set((gsl_multimin_fminimizer *)s7_c_pointer(s7_car(args)),
-                                                &gsl_mmf, (gsl_vector *)s7_c_pointer(s7_caddr(args)), (gsl_vector *)s7_c_pointer(s7_cadddr(args)))));
+                                                &gsl_mmf, (gsl_vector *)s7_c_pointer(s7_caddr(args)), 
+                                                          (gsl_vector *)s7_c_pointer(s7_cadddr(args)))));
                 }
                 static s7_pointer g_gsl_multimin_diff(s7_scheme *sc, s7_pointer args)
                 {
@@ -2689,8 +2694,9 @@
                 static int gsl_rf_caller(const gsl_vector *x, void *p, gsl_vector *y) 
                 {
                   return(s7_integer(s7_call(gsl_rf_s7, (s7_pointer)p, 
-                          s7_cons(gsl_rf_s7, s7_make_c_pointer(gsl_rf_s7, (void *)x), 
-                             s7_cons(gsl_rf_s7, s7_make_c_pointer(gsl_rf_s7, (void *)y), s7_nil(gsl_rf_s7))))));
+                          s7_cons(gsl_rf_s7, s7_make_c_pointer_with_type(gsl_rf_s7, (void *)x, s7_make_symbol(gsl_rf_s7, \"gsl_vector*\"), s7_f(gsl_rf_s7)),
+                             s7_cons(gsl_rf_s7, s7_make_c_pointer_with_type(gsl_rf_s7, (void *)y, s7_make_symbol(gsl_rf_s7, \"gsl_vector*\"), s7_f(gsl_rf_s7)),
+                                     s7_nil(gsl_rf_s7))))));
                 }
                 #define make_gsl_rf_function(Args, Size) do {gsl_rf.f = gsl_rf_caller; gsl_rf.n = Size; gsl_rf.params = (void *)Args; gsl_rf_s7 = sc;} while (0)
                 static s7_pointer g_gsl_multiroot_fsolver_set(s7_scheme *sc, s7_pointer args)
@@ -2840,7 +2846,7 @@
 		       (size_t gsl_spblas_scatter (gsl_spmatrix* size_t double size_t* double* size_t gsl_spmatrix* size_t))
 		       
 		       ;; splinalg
-		       (c-pointer gsl_splinalg_itersolve_gmres)
+		       (gsl_splinalg_itersolve_type* gsl_splinalg_itersolve_gmres)
 		       
 		       (gsl_splinalg_itersolve* gsl_splinalg_itersolve_alloc (gsl_splinalg_itersolve_type* size_t size_t))
 		       (void gsl_splinalg_itersolve_free (gsl_splinalg_itersolve*))
@@ -2874,7 +2880,7 @@
 		       (int gsl_spmatrix_transpose_memcpy (gsl_spmatrix* gsl_spmatrix*))
 		       
 		       ;; interp2d
-		       (c-pointer (gsl_interp2d_bilinear gsl_interp2d_bicubic))
+		       (gsl_interp2d_type* (gsl_interp2d_bilinear gsl_interp2d_bicubic))
 		       
 		       (gsl_interp2d* gsl_interp2d_alloc (gsl_interp2d_type* size_t size_t))
 		       (char* gsl_interp2d_name (gsl_interp2d*))

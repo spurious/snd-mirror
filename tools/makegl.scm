@@ -934,8 +934,13 @@
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool gl_already_inited = false;~%~%")
+(hey "#if HAVE_SCHEME~%")
+(hey "void Init_libgl(s7_scheme *sc);~%")
+(hey "void Init_libgl(s7_scheme *sc)~%")
+(hey "#else~%")
 (hey "void Init_libgl(void);~%")
 (hey "void Init_libgl(void)~%")
+(hey "#endif~%")
 (hey "{~%")
 (hey "  if (!gl_already_inited)~%")
 (hey "    {~%")

@@ -2650,17 +2650,25 @@ Xen_wrap_1_arg(g_i0_w, g_i0)
 #endif
 
 
-
+#if HAVE_SCHEME
+#if USE_MOTIF
+  void Init_libxm(s7_scheme *sc);
+#else
+  void Init_libxg(s7_scheme *sc);
+#endif
+#if HAVE_GL
+ void Init_libgl(s7_scheme *sc);
+#endif
+#else
 #if USE_MOTIF
   void Init_libxm(void);
 #else
   void Init_libxg(void);
 #endif
-
 #if HAVE_GL
  void Init_libgl(void);
 #endif
-
+#endif
 
 static char *legalize_path(const char *in_str)
 { 
@@ -3048,7 +3056,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
     s7_define_constant(s7, "*motif*", motif = s7_inlet(s7, s7_nil(s7)));
     old_shadow = s7_shadow_rootlet(s7);
     s7_set_shadow_rootlet(s7, motif);
-    Init_libxm();
+    Init_libxm(s7);
     s7_set_shadow_rootlet(s7, old_shadow);
   }
 #else
@@ -3066,7 +3074,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
     s7_define_constant(s7, "*gtk*", gtk = s7_inlet(s7, s7_nil(s7)));
     old_shadow = s7_shadow_rootlet(s7);
     s7_set_shadow_rootlet(s7, gtk);
-    Init_libxg();
+    Init_libxg(s7);
     s7_set_shadow_rootlet(s7, old_shadow);
   }
 #else
@@ -3084,7 +3092,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
     s7_define_constant(s7, "*gl*", gl = s7_inlet(s7, s7_nil(s7)));
     old_shadow = s7_shadow_rootlet(s7);
     s7_set_shadow_rootlet(s7, gl);
-    Init_libgl();
+    Init_libgl(s7);
     s7_set_shadow_rootlet(s7, old_shadow);
   }
 #else

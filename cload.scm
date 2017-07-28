@@ -136,7 +136,7 @@
 
 			 '(string s7_is_string s7_string s7_make_string char*)
 			 (list 'character 's7_is_character 's7_character 's7_make_character (symbol "unsigned char"))
-			 '(c_pointer s7_is_c_pointer s7_c_pointer s7_make_c_pointer void*)
+			 '(c_pointer s7_is_c_pointer s7_c_pointer s7_make_c_pointer_with_type void*)
 			 '(s7_pointer #f #f #f s7_pointer)
 			 ))
 
@@ -320,22 +320,29 @@
 		(let* ((nominal-type ((if (pair? (car type)) caar car) type))  ; double in the example
 		       (true-type    ((if (pair? (car type)) cadar car) type))
 		       (s7-type      (C-type->s7-type true-type)))                    ; real
+		  ;(format *stderr* "~A(~D): ~A ~A ~A~%" func-name i nominal-type true-type s7-type)
 		  (if (eq? true-type 's7_pointer)
 		      (format p "    ~A_~D = s7_car(arg);~%" base-name i)
-		      (begin
-			(format p "  if (~A(s7_car(arg)))~%" (checker true-type))
-			(format p "    ~A_~D = (~A)~A(~As7_car(arg));~%"
-				base-name i
-				nominal-type
-				(s7->C true-type)                               ; s7_number_to_real which requires 
-				(if (memq s7-type '(boolean real))              ;   the extra sc arg
-				    "sc, " ""))
-			(format p "  else return(s7_wrong_type_arg_error(sc, ~S, ~D, s7_car(arg), ~S));~%"
-				func-name 
-				(if (= num-args 1) 0 (+ i 1))
-				(if (symbol? s7-type) 
-				    (symbol->string s7-type) 
-				    (error 'bad-arg (format #f "in ~S, ~S is not a symbol~%" name s7-type))))))
+		      (if (eq? s7-type 'c_pointer)
+			  (begin
+			    (format p "  if (s7_is_c_pointer_of_type(s7_car(arg), s7_make_symbol(sc, ~S)))~%" (symbol->string nominal-type))
+			    (format p "    ~A_~D = (~A)s7_c_pointer(s7_car(arg));~%" base-name i nominal-type)
+			    (format p "  else return(s7_wrong_type_arg_error(sc, ~S, ~D, s7_car(arg), ~S));~%"
+				func-name (if (= num-args 1) 0 (+ i 1)) (symbol->string nominal-type)))
+			  (begin
+			    (format p "  if (~A(s7_car(arg)))~%" (checker true-type))
+			    (format p "    ~A_~D = (~A)~A(~As7_car(arg));~%"
+				    base-name i
+				    nominal-type
+				    (s7->C true-type)                               ; s7_number_to_real which requires 
+				    (if (memq s7-type '(boolean real))              ;   the extra sc arg
+					"sc, " ""))
+			    (format p "  else return(s7_wrong_type_arg_error(sc, ~S, ~D, s7_car(arg), ~S));~%"
+				    func-name 
+				    (if (= num-args 1) 0 (+ i 1))
+				    (if (symbol? s7-type) 
+					(symbol->string s7-type) 
+					(error 'bad-arg (format #f "in ~S, ~S is not a symbol~%" name s7-type)))))))
 		  (if (< i (- num-args 1))
 		      (format p "  arg = s7_cdr(arg);~%")))))
 	    
@@ -343,6 +350,7 @@
 	    (if (pair? return-type) 
 		(set! return-type (cadr return-type)))
 	    (let ((return-translator (C->s7 return-type)))
+	      ;(format *stderr* "return ~A ~A~%" return-type return-translator)
 	      (format p "  ")
 	      (if (not (eq? return-translator #t))
 		  (format p "return("))
@@ -355,8 +363,11 @@
 	      (if (positive? num-args)
 		  (format p "~A_~D" base-name (- num-args 1)))
 	      (format p ")")
-	      (if (symbol? return-translator)
-		  (format p ")"))
+
+	      (if (eq? return-translator 's7_make_c_pointer_with_type)
+		  (format p ", s7_make_symbol(sc, ~S), s7_f(sc))" (symbol->string return-type))
+		  (if (symbol? return-translator)
+		      (format p ")")))
 	      (format p (if (not (eq? return-translator #t))
 			    ");~%"
 			    ";~%  return(s7_unspecified(sc));~%"))
@@ -486,12 +497,20 @@
 	       (lambda (c)
 		 (let* ((type (c 0))
 			(c-name (c 1))
-			(scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name)))
-		   (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
-			   scheme-name
-			   (C->s7 type)
-			   (C->s7-cast type)
-			   c-name)))
+			(scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name))
+			(trans (C->s7 type)))
+		   (if (eq? trans 's7_make_c_pointer_with_type)
+		       (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A, s7_make_symbol(sc, ~S), s7_f(sc)));~%" 
+			       scheme-name
+			       trans
+			       (C->s7-cast type)
+			       c-name
+			       (if (eq? type 'c-pointer) "void*" (symbol->string type)))
+		       (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
+			       scheme-name
+			       trans
+			       (C->s7-cast type)
+			       c-name))))
 	       constants)))
 	
 	;; C macros -- need #ifdef name #endif wrapper
@@ -502,13 +521,19 @@
 	       (lambda (c)
 		 (let* ((type (c 0))
 			(c-name (c 1))
-			(scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name)))
+			(scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") c-name))
+			(trans (C->s7 type)))
 		   (format p "#ifdef ~A~%" c-name)
-		   (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
-			   scheme-name
-			   (C->s7 type)
-			   (C->s7-cast type)
-			   c-name)
+		   (if (eq? trans 's7_make_c_pointer_with_type)
+		       (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), s7_make_c_pointer(sc, (~A)~A));~%" 
+			       scheme-name
+			       (C->s7-cast type)
+			       c-name)
+		       (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
+			       scheme-name
+			       trans
+			       (C->s7-cast type)
+			       c-name))
 		   (format p "#endif~%")))
 	       macros)))
 	

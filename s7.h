@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "5.7"
-#define S7_DATE "24-July-17"
+#define S7_VERSION "5.8"
+#define S7_DATE "28-July-17"
 
 #include <stdint.h>           /* for int64_t */
 
@@ -56,8 +56,11 @@ bool s7_is_null(s7_scheme *sc, s7_pointer p);                        /* null? */
 
 bool s7_is_valid(s7_scheme *sc, s7_pointer arg);                     /* does 'arg' look like an s7 object? */
 bool s7_is_c_pointer(s7_pointer arg);
+bool s7_is_c_pointer_of_type(s7_pointer arg, s7_pointer type);
 void *s7_c_pointer(s7_pointer p);
+s7_pointer s7_c_pointer_type(s7_pointer p);
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);              /* these are for passing uninterpreted C pointers through Scheme */
+s7_pointer s7_make_c_pointer_with_type(s7_scheme *sc, void *ptr, s7_pointer type, s7_pointer info);
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str);         /* (eval-string str) */
 s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_pointer e);
@@ -854,6 +857,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 28-Jul:    s7_make_c_pointer_with_type and s7_c_pointer_type.
  * 24-Jul:    int64_t rather than long long int, and various related changes.
  * 18-Jul:    s7_make_object_with_let.
  * 8-July:    s7_define_typed_function_star, s7_make_function_star. s7_apply_function_star.

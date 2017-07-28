@@ -13,10 +13,12 @@
 #define HAVE_XP 0
 
 
-#define XM_DATE "27-Dec-16"
+#define XM_DATE "27-Jul-17"
 
 /* HISTORY: 
  *
+ *   27-Jul-17: updated Init_libxm to pass s7 pointer in scheme.
+ *   --------
  *   27-Dec-16: changed XmNuserData type (in XtGetValues) to long long int.
  *   --------
  *   29-Oct-15: removed ->string.
@@ -42,7 +44,7 @@
  *   16-Oct:    removed Gauche support.
  *   1-Oct:     XtAppAddInput condition arg is a mess.
  *   10-Sep:    XtAppAddInput condition arg is an int.
- *   1-Sep-08:  S7 support.
+ *   1-Sep-08:  s7 support.
  *   --------
  *   26-Aug:    removed WITH_GTK_AND_X11 switch.
  *   21-Apr:    Gauche additions.
@@ -25561,8 +25563,13 @@ static void define_Atoms(void)
 
 static bool xm_already_inited = false;
 
+#if HAVE_SCHEME
+void Init_libxm(s7_scheme *sc);
+void Init_libxm(s7_scheme *sc)
+#else
 void Init_libxm(void);
 void Init_libxm(void)
+#endif
 {
   /* perhaps nicer here to check the features list for 'xm */
   if (!xm_already_inited)
@@ -25603,7 +25610,6 @@ void Init_libxm(void)
       xm_already_inited = true;
     }
 }
-
 #else
 void Init_libxm(void);
 void Init_libxm(void)

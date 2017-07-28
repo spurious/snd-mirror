@@ -21,7 +21,7 @@
 	(set! *libraries* (cons (cons "libc.scm" (curlet)) *libraries*))
 	
 	;; -------- stddef.h --------
-	(define NULL (c-pointer 0))
+	(define NULL (c-pointer 0 'void*))
 	(define (c-null? p) (equal? p NULL))
 
 	;; -------- stdbool.h --------
@@ -91,7 +91,7 @@
 			  INTPTR_MAX UINTPTR_MAX INTMAX_MIN INTMAX_MAX UINTMAX_MAX PTRDIFF_MIN PTRDIFF_MAX SIG_ATOMIC_MIN SIG_ATOMIC_MAX 
 			  SIZE_MAX WCHAR_MIN WCHAR_MAX WINT_MIN WINT_MAX )))
 	   
-	   (c-pointer (stdin stdout stderr))
+	   (FILE* (stdin stdout stderr))
 	   
 	   ;; -------- endian.h --------
 	   ;; also has htobe16 etc
@@ -103,7 +103,7 @@
                   static s7_pointer g_string_to_c_pointer(s7_scheme *sc, s7_pointer args)
                   {
                    if (s7_is_string(s7_car(args)))
-                     return(s7_make_c_pointer(sc, (void *)s7_string(s7_car(args))));
+                     return(s7_make_c_pointer_with_type(sc, (void *)s7_string(s7_car(args)), s7_make_symbol(sc, \"void*\"), s7_f(sc)));
                    return(s7_car(args));
                   }")
 	   
@@ -574,7 +574,9 @@
                   static int internal_ftw_function(const char *fpath, const struct stat *sb, int typeflag)
                   {
                     s7_list_set(internal_ftw_sc, internal_ftw_arglist, 0, s7_make_string(internal_ftw_sc, fpath));
-                    s7_list_set(internal_ftw_sc, internal_ftw_arglist, 1, s7_make_c_pointer(internal_ftw_sc, (void *)sb));
+                    s7_list_set(internal_ftw_sc, internal_ftw_arglist, 1, 
+                                s7_make_c_pointer_with_type(internal_ftw_sc, (void *)sb, 
+                                                            s7_make_symbol(internal_ftw_sc, \"void*\"), s7_f(internal_ftw_sc)));
                     s7_list_set(internal_ftw_sc, internal_ftw_arglist, 2, s7_make_integer(internal_ftw_sc, typeflag));
                     return((int)s7_integer(s7_call(internal_ftw_sc, internal_ftw_closure, internal_ftw_arglist)));
                   }
@@ -700,7 +702,7 @@
                     time_t *tm;
                     tm = (time_t *)calloc(1, sizeof(time_t));
                     (*tm) = (time_t)s7_integer(s7_car(args));
-                    return(s7_make_c_pointer(sc, (void *)tm));
+                    return(s7_make_c_pointer_with_type(sc, (void *)tm, s7_make_symbol(sc, \"time_t*\"), s7_f(sc)));
                   }
                   static s7_pointer g_strftime(s7_scheme *sc, s7_pointer args) 
                   {

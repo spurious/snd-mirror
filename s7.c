@@ -318,6 +318,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <setjmp.h>
 
 #if WITH_MULTITHREAD_CHECKS
   #include <pthread.h>
@@ -347,14 +348,7 @@
 #endif
 #endif
 
-#include <setjmp.h>
-
 #include "s7.h"
-
-
-enum {NO_JUMP, CALL_WITH_EXIT_JUMP, THROW_JUMP, CATCH_JUMP, ERROR_JUMP, ERROR_QUIT_JUMP};
-enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP, EVAL_SET_JUMP};
-
 
 #ifndef M_PI
   #define M_PI 3.1415926535897932384626433832795029L
@@ -702,9 +696,12 @@ typedef struct s7_cell {
       char c_name[12];
     } chr;
 
-    void *c_pointer;               /* c-pointers */
+    struct {                       /* c-pointers */
+      void *c_pointer; 
+      s7_pointer c_type, info;
+    } cptr;
 
-    int32_t baffle_key;                /* baffles */
+    int32_t baffle_key;            /* baffles */
 
     struct {                       /* vectors */
       s7_int length;
@@ -2600,7 +2597,10 @@ static int32_t num_object_types = 0;
 #define c_object_scheme_name(p)       _TStr(c_object_info(p)->scheme_name)
 /* #define c_object_outer_type(p)     c_object_info(p)->outer_type */
 
-#define raw_pointer(p)                (_TPtr(p))->object.c_pointer
+#define raw_pointer(p)                (_TPtr(p))->object.cptr.c_pointer
+#define raw_pointer_type(p)           (_TPtr(p))->object.cptr.c_type
+#define raw_pointer_info(p)           (_TPtr(p))->object.cptr.info
+#define is_c_pointer(p)               (type(p) == T_C_POINTER)
 
 #define is_counter(p)                 (type(p) == T_COUNTER)
 #define counter_result(p)             (_TCtr(p))->object.ctr.result
@@ -2795,9 +2795,6 @@ static bool local_strncmp(const char *s1, const char *s2, uint32_t n)
 #if S7_ALIGNED
   return(strncmp(s1, s2, n) == 0);
 #else
-#if defined(__SIZEOF_INT__) && (__SIZEOF_INT__ != 4) /* sheesh... */
-  return(strncmp(s1, s2, n) == 0);
-#else
 #if (defined(__x86_64__) || defined(__i386__)) /* unaligned accesses are safe on i386 hardware, sez everyone */
   if (n >= 4)
     {
@@ -2818,7 +2815,6 @@ static bool local_strncmp(const char *s1, const char *s2, uint32_t n)
     }
   return(true);
 #endif
-#endif
 }
 
 #define strings_are_equal_with_length(Str1, Str2, Len) (local_strncmp(Str1, Str2, Len))
@@ -2828,9 +2824,6 @@ static void memclr(void *s, size_t n)
 {
   unsigned char *s2;
 #if S7_ALIGNED
-  s2 = (unsigned char *)s;
-#else    
-#if defined(__SIZEOF_INT__) && (__SIZEOF_INT__ != 4)
   s2 = (unsigned char *)s;
 #else
 #if (defined(__x86_64__) || defined(__i386__))
@@ -2845,7 +2838,6 @@ static void memclr(void *s, size_t n)
   else s2 = (unsigned char *)s;
 #else
   s2 = (unsigned char *)s;
-#endif
 #endif
 #endif
   while (n > 0)
@@ -4390,6 +4382,13 @@ static void just_mark(s7_pointer p)
   set_mark(p);
 }
 
+static void mark_c_pointer(s7_pointer p)
+{
+  set_mark(p);
+  S7_MARK(raw_pointer_type(p));
+  S7_MARK(raw_pointer_info(p));
+}
+
 static void mark_c_proc_star(s7_pointer p)
 {
   set_mark(p);
@@ -4612,7 +4611,7 @@ static void init_mark_functions(void)
   mark_function[T_OPTLIST]             = just_mark;
   mark_function[T_BAFFLE]              = just_mark;
   mark_function[T_C_MACRO]             = just_mark;
-  mark_function[T_C_POINTER]           = just_mark;
+  mark_function[T_C_POINTER]           = mark_c_pointer;
   mark_function[T_C_FUNCTION]          = just_mark;
   mark_function[T_C_FUNCTION_STAR]     = just_mark;  /* changes to mark_c_proc_star if defaults involve an expression */
   mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
@@ -8567,9 +8566,13 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_c_pointer(s7_pointer arg)
 {
-  return(type(arg) == T_C_POINTER);
+  return(is_c_pointer(arg));
 }
 
+bool s7_is_c_pointer_of_type(s7_pointer arg, s7_pointer type)
+{
+  return((is_c_pointer(arg)) && (raw_pointer_type(arg) == type));
+}
 
 void *s7_c_pointer(s7_pointer p)
 {
@@ -8577,47 +8580,76 @@ void *s7_c_pointer(s7_pointer p)
       (s7_integer(p) == 0))
     return(NULL); /* special case where the null pointer has been cons'd up by hand */
 
-  if (type(p) != T_C_POINTER)
+  if (!is_c_pointer(p))
     return(NULL);
 
   return(raw_pointer(p));
 }
 
+s7_pointer s7_c_pointer_type(s7_pointer p)
+{
+  if (!is_c_pointer(p))
+    return(NULL); /* as above */
+  return(raw_pointer_type(p));
+}
 
-s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
+s7_pointer s7_make_c_pointer_with_type(s7_scheme *sc, void *ptr, s7_pointer type, s7_pointer info)
 {
   s7_pointer x;
   new_cell(sc, x, T_C_POINTER);
   raw_pointer(x) = ptr;
+  raw_pointer_type(x) = type;
+  raw_pointer_info(x) = info;
   return(x);
 }
 
+s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr) {return(s7_make_c_pointer_with_type(sc, ptr, sc->F, sc->F));}
 
 static s7_pointer g_is_c_pointer(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_c_pointer "(c-pointer? obj) returns #t if obj is a C pointer being held in s7."
-  #define Q_is_c_pointer pl_bt
+  #define H_is_c_pointer "(c-pointer? obj type) returns #t if obj is a C pointer being held in s7.  If type is given, the c_pointer's type is also checked."
+  #define Q_is_c_pointer s7_make_signature(sc, 3, sc->is_boolean_symbol, sc->T, sc->T)
 
-  check_boolean_method(sc, s7_is_c_pointer, sc->is_c_pointer_symbol, args);
+  s7_pointer p;
+  p = car(args);
+  if (!is_c_pointer(p))
+    {
+      if (!has_methods(p)) return(sc->F);
+      return(apply_boolean_method(sc, p, sc->is_c_pointer_symbol));
+    }
+  if (is_pair(cdr(args)))
+    return(make_boolean(sc, raw_pointer_type(p) == cadr(args)));
+  return(sc->T);
 }
 
 static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 {
-  #define H_c_pointer "(c-pointer int) returns a c-pointer object."
-  #define Q_c_pointer s7_make_signature(sc, 2, sc->is_c_pointer_symbol, sc->is_integer_symbol)
+  #define H_c_pointer "(c-pointer int type info) returns a c-pointer object. The type and info args are optional, defaulting to #f."
+  #define Q_c_pointer s7_make_signature(sc, 4, sc->is_c_pointer_symbol, sc->is_integer_symbol, sc->T, sc->T)
 
-  s7_pointer arg;
+  s7_pointer arg, type, info;
   ptr_int p;
 
   arg = car(args);
   if (!s7_is_integer(arg))
     method_or_bust(sc, arg, sc->c_pointer_symbol, list_1(sc, arg), T_INTEGER, 1);
   p = (ptr_int)s7_integer(arg);             /* (c-pointer (bignum "1234")) */
-  return(s7_make_c_pointer(sc, (void *)p));
+  info = sc->F;
+  if (is_pair(cdr(args)))
+    {
+      type = cadr(args);
+      if (is_pair(cddr(args)))
+	info = caddr(args);
+    }
+  else type = sc->F;
+  return(s7_make_c_pointer_with_type(sc, (void *)p, type, info));
 }
 
 
 /* -------------------------------- continuations and gotos -------------------------------- */
+
+enum {NO_JUMP, CALL_WITH_EXIT_JUMP, THROW_JUMP, CATCH_JUMP, ERROR_JUMP, ERROR_QUIT_JUMP};
+enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP, EVAL_SET_JUMP};
 
 static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
 {
@@ -28435,9 +28467,24 @@ static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, us
   char buf[64];
 
   if (use_write == USE_READABLE_WRITE)
-    nlen = snprintf(buf, 64, "(c-pointer " INT_FORMAT ")", (ptr_int)raw_pointer(obj));
-  else nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
-  port_write_string(port)(sc, buf, nlen, port);
+    {
+      nlen = snprintf(buf, 64, "(c-pointer " INT_FORMAT, (ptr_int)raw_pointer(obj));
+      port_write_string(port)(sc, buf, nlen, port);
+      if ((raw_pointer_type(obj) != sc->F) ||
+	  (raw_pointer_info(obj) != sc->F))
+	{
+	  port_write_character(port)(sc, ' ', port);
+	  object_to_port_with_circle_check(sc, raw_pointer_type(obj), port, use_write, ci);
+	  port_write_character(port)(sc, ' ', port);
+	  object_to_port_with_circle_check(sc, raw_pointer_info(obj), port, use_write, ci);
+	}
+      port_write_character(port)(sc, ')', port);
+    }
+  else 
+    {
+      nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
+      port_write_string(port)(sc, buf, nlen, port);
+    }
 }
 
 static void rng_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
@@ -39061,7 +39108,10 @@ static bool unspecified_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_
 
 static bool c_pointer_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
-  return((s7_is_c_pointer(y)) && (raw_pointer(x) == raw_pointer(y)));
+  return((s7_is_c_pointer(y)) && 
+	 (raw_pointer(x) == raw_pointer(y)) &&
+	 (raw_pointer_type(x) == raw_pointer_type(y)) &&
+	 (raw_pointer_info(x) == raw_pointer_info(y)));    /* should these use s7_is_equal? */
 }
 
 static bool string_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
@@ -40039,7 +40089,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 #endif
 	  
 	case T_C_POINTER:
-	  return(s7_make_c_pointer(sc, s7_c_pointer(source)));
+	  return(s7_make_c_pointer_with_type(sc, raw_pointer(source), raw_pointer_type(source), raw_pointer_info(source)));
 	}
       return(source);
     }
@@ -41246,11 +41296,11 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 				    ((vector_has_dimensional_info(obj)) && (is_normal_vector(shared_vector(obj)))) ? shared_vector(obj) : sc->F)));
 
     case T_C_POINTER:
-      return(s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj, 
+      return(s7_inlet(sc, s7_list(sc, 10, sc->value_symbol, obj, 
 				  sc->type_symbol, sc->is_c_pointer_symbol,
-				  s7_make_symbol(sc, "s7-value"),
-				    ((is_decodable(sc, (s7_pointer)raw_pointer(obj))) && 
-				     (!is_free(obj))) ? g_object_to_let(sc, cons(sc, (s7_pointer)raw_pointer(obj), sc->nil)) : sc->F)));
+				  s7_make_symbol(sc, "c-pointer"), s7_make_integer(sc, (s7_int)raw_pointer(obj)),
+				  s7_make_symbol(sc, "c-type"), raw_pointer_type(obj),
+				  s7_make_symbol(sc, "info"), raw_pointer_info(obj))));
 
     case T_CONTINUATION:
       {
@@ -60767,7 +60817,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	    body = cddr(x);
 	    if (is_symbol(vars))
 	      {
-		if (vars == func)        /* named let shadows caller */
+		if (!is_pair(body)) return(UNSAFE_BODY); /* (let name . res) */
+		if (vars == func)                        /* named let shadows caller */
 		  {
 		    free_syms(split_slist(top, main_args));
 		    return(UNSAFE_BODY);
@@ -81088,7 +81139,7 @@ s7_scheme *s7_init(void)
   sc->is_iterator_symbol =           defun("iterator?",	        is_iterator,		1, 0, false);
   sc->is_constant_symbol =           defun("constant?",	        is_constant,		1, 0, false);
   sc->is_macro_symbol =              defun("macro?",		is_macro,		1, 0, false);
-  sc->is_c_pointer_symbol =          defun("c-pointer?",	is_c_pointer,		1, 0, false);
+  sc->is_c_pointer_symbol =          defun("c-pointer?",	is_c_pointer,		1, 1, false);
   sc->is_c_object_symbol =           defun("c-object?",	        is_c_object,		1, 0, false);
   sc->is_input_port_symbol =         defun("input-port?",	is_input_port,		1, 0, false);
   sc->is_output_port_symbol =        defun("output-port?",	is_output_port,		1, 0, false);
@@ -81184,7 +81235,7 @@ s7_scheme *s7_init(void)
   sc->provide_symbol =               defun("provide",		provide,		1, 0, false);
   sc->is_defined_symbol =            defun("defined?",		is_defined,		1, 2, false);
 
-  sc->c_pointer_symbol =             defun("c-pointer",	        c_pointer,		1, 0, false);
+  sc->c_pointer_symbol =             defun("c-pointer",	        c_pointer,		1, 2, false);
 
   sc->port_line_number_symbol =      defun("port-line-number",  port_line_number,	0, 1, false);
   sc->port_filename_symbol =         defun("port-filename",	port_filename,		0, 1, false);
@@ -82448,13 +82499,21 @@ int main(int argc, char **argv)
  * tie in p_di|id?
  * private let: block outlet of any let = shutlet?
  * doc tree*?
- * add grepl.c to s7? or glistener?  libxm and gl need init func fixups.
+ * there's confusion about where .so files place there names upon load:
+ *   cload uses (outlet (curlet))?? xg/xm use rootlet etc
+ *   ideally all would allow (load "a.so" (define *a* (inlet 'init_func 'init_a))) and the like
+ *   either we need settable (shadow-rootlet) or all should use curlet
+ * grepl:
  *   grepl.scm for debugger.  also how to build xg.so outside libxm.
+ *      add libgtk_s7.c to makexg, libgl_s7.c to makegl
  *   in gdb -- window showing text (via emacs? and auto decode gdb output
  *   in repl auto s7let? or begin-hook for that? or begin_hook for trace? symbol-access for set!
  *   also on-going profile? room/gc stats? stacktrace?
  *   added glistener commands: M-. 
- *   repol as break etc
+ *   repl as break etc
+ *   in glistener, hover/select op, give doc string, var, highlight def? and box->inspect
+ *   as typed, run lint? or display op args, check types etc
+ *   if undef name, search libs and give correct/closest?
  *
  * --------------------------------------------------------------------
  *
@@ -82479,7 +82538,7 @@ int main(int argc, char **argv)
  * bench         |      |      |      || 17.3 | 15.7  15.4  14.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7
- *                                    || 145  | 135   132   93.4
+ *                                    || 145  | 135   132   93.2
  * 
  * --------------------------------------------------------------------
  * safe lets saved across calls gains nothing! ~/old/has-olets(2)-s7.c.

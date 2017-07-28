@@ -15,7 +15,7 @@ static s7_scheme *s7;
 
 static s7_pointer wrap_glistener(glistener *g)
 {
-  return(s7_make_c_pointer(s7, (void *)g));
+  return(s7_make_c_pointer_with_type(s7, (void *)g, s7_make_symbol(s7, "glistener*"), s7_f(s7)));
 }
 
 static glistener *unwrap_glistener(s7_pointer p)
@@ -219,9 +219,9 @@ int main(int argc, char **argv)
   gtk_widget_show(frame);
   gtk_container_add(GTK_CONTAINER(vb), frame);
 
-  s7_define_variable(s7, "grepl:vbox", s7_make_c_pointer(s7, vb));
-  s7_define_variable(s7, "grepl:shell", s7_make_c_pointer(s7, shell));
-  s7_define_variable(s7, "grepl:frame", s7_make_c_pointer(s7, frame));
+  s7_define_variable(s7, "grepl:vbox", s7_list(s7, 2, s7_make_symbol(s7, "GtkBox_"), s7_make_c_pointer(s7, vb)));
+  s7_define_variable(s7, "grepl:shell", s7_list(s7, 2, s7_make_symbol(s7, "GtkWindow_"), s7_make_c_pointer(s7, shell)));
+  s7_define_variable(s7, "grepl:frame", s7_list(s7, 2, s7_make_symbol(s7, "GtkFrame_"), s7_make_c_pointer(s7, frame)));
 
   g1 = glistener_new(frame, listener_init);
   glistener_set_evaluator(g1, evaluator);
@@ -232,7 +232,7 @@ int main(int argc, char **argv)
   arrow_cursor = GDK_CURSOR_NEW(GDK_LEFT_PTR);
 
   gtk_widget_show(shell);
-  gdk_window_resize(gtk_widget_get_window(shell), 500, 300);
+  gtk_window_resize(GTK_WINDOW(shell), 500, 300);
 
   gtk_main();
 }
@@ -243,4 +243,7 @@ int main(int argc, char **argv)
    in gtk-3: gcc grepl.c -o grepl s7.o glistener.o -Wl,-export-dynamic `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
 */
 /* (load "/home/bil/test/libxm/xg.so" (inlet 'init_func 'Init_libxg))
+ *   previous: (gtk_window_resize (GTK_WINDOW (list 'GtkContainer_ grepl:shell)) 600 600)
+ *   the list is for xg (ancient type checking kludge)
+ * (gtk_window_resize (GTK_WINDOW grepl:shell) 600 600)
  */
