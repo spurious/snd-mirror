@@ -1,12 +1,32 @@
 ;;; makexg.scm creates the gtk2|3/gdk/pango/glib/cairo bindings using xgdata.scm, writes xg.c
 
 (define xg-file (open-output-file "xg.c"))
+(define lib-file (open-output-file "libgtk_s7.c"))
 
-(define-macro (hey . args)
-  (cons 'format (cons 'xg-file args)))
+(define (hey . args)
+  (apply format xg-file args))
 
 (define (heyc arg)
   (display arg xg-file))
+
+
+;;; ----------------
+(define (hay . args)
+  (apply format lib-file args))
+
+(define (hayc arg)
+  (display arg lib-file))
+
+
+(define (hoy . args)
+  (apply format xg-file args)
+  (apply format lib-file args))
+
+(define (hoyc arg)
+  (display arg xg-file)
+  (display arg lib-file))
+;;; ----------------
+
 
 (define names (make-hash-table))
 (define types ())
@@ -1131,29 +1151,29 @@
 	  (len (length args))
 	  (typed #f)
 	  (help-max 100))
-      (hey initial)
+      (hoy initial)
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(let ((ch (args i)))
 	  (if (char=? ch #\space)
 	      (if typed
 		  (begin
-		    (heyc ", ")
+		    (hoyc ", ")
 		    (set! line-len (+ line-len 2))
 		    (if (> line-len help-max)
 			(begin
-			  (hey "\\~%")
+			  (hoy "\\~%")
 			  (set! line-len 0)))
 		    (set! typed #f))
 		  (begin
 		    (set! line-len (+ 1 line-len))
-		    (heyc " ")
+		    (hoyc " ")
 		    (set! typed #t)))
 	      (if (not (memv ch '(#\@ #\#)))
 		  (begin
 		    (set! line-len (+ 1 line-len))
-		    (heyc ch))))))
-      (hey ")\"~%"))))
+		    (hoyc ch))))))
+      (hoy ")\"~%"))))
 
 (define (CATOM name)
   (if (hash-table-ref names name)
@@ -1467,8 +1487,8 @@
 ;(hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")
 
 (hey "#include <string.h>~%")
-(hey "#include <stdlib.h>~%~%")
-(hey "#include <stdint.h>~%~%")
+(hey "#include <stdlib.h>~%")
+(hey "#include <stdint.h>~%")
 (hey "#include <inttypes.h>~%~%")
 
 (hey "#include <glib.h>~%")
@@ -1564,6 +1584,36 @@
 (hey "#endif~%")
 (hey "~%")
 
+;;; ----------------
+(hay "/* libgtk_s7.c */~%~%")
+(hay "#include <stdlib.h>~%")
+(hay "#include <stdio.h>~%")
+(hay "#include <string.h>~%")
+(hay "#include <math.h>~%")
+(hay "#include \"s7.h\"~%~%")
+(hay "#define HAVE_CAIRO_1_8    ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))~%")
+(hay "#define HAVE_CAIRO_1_9_12 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))~%~%")
+
+(hay "#if ((!__NetBSD__) && ((_MSC_VER) || (!defined(__STC__)) || (defined(__STDC_VERSION__) && (__STDC_VERSION__ < 199901L))))~%")
+(hay "  #define __func__ __FUNCTION__~%")
+(hay "#endif~%~%")
+(hay "#include <string.h>~%")
+(hay "#include <stdlib.h>~%")
+(hay "#include <stdint.h>~%")
+(hay "#include <inttypes.h>~%~%")
+(hay "#include <glib.h>~%")
+(hay "#include <gdk/gdk.h>~%")
+(hay "#include <gtk/gtk.h>~%")
+(hay "#if (!GTK_CHECK_VERSION(3, 0, 0))~%")
+(hay "  #include <gdk/gdkkeysyms.h>~%")
+(hay "#endif~%")
+(hay "#include <glib-object.h>~%")
+(hay "#include <pango/pango.h>~%")
+(with-cairo #f (lambda () (hay "#include <cairo/cairo.h>~%")))
+(hay "~%~%")
+;;; ----------------
+
+
 (hey "static Xen xg_~A_symbol" (no-stars (car all-types)))
 (for-each
  (lambda (typ)
@@ -1588,6 +1638,20 @@
  other-types)
  
 (hey ";~%~%")
+
+;;; ----------------
+(hay "static s7_pointer libgtk_~A_symbol" (no-stars (car all-types)))
+(for-each
+ (lambda (typ)
+   (hay ", libgtk_~A_symbol" (no-stars typ)))
+ (cdr all-types))
+(for-each
+ (lambda (typ)
+   (if (not (member typ all-types))
+       (hay ", libgtk_~A_symbol" typ)))
+ other-types)
+(hay ";~%~%")
+;;; ----------------
 
 
 (hey "#define wrap_for_Xen(Name, Value) Xen_list_2(xg_ ## Name ## _symbol, Xen_wrap_C_pointer(Value))~%")
@@ -1882,22 +1946,18 @@
 	    (arg-start 0)
 	    (line-len 0))
 	
-	(define (hey-start)
-	  ;; start of checked line
+	(define (hey-start)  ; start of checked line
 	  (set! line-len 0))
 	
-	(define (hey-mark)
-	  ;; start of checked line
+	(define (hey-mark)   ; start of checked line
 	  (set! arg-start line-len))
 	
-	(define (hey-on . args)
-	  ;; no cr -- just append
+	(define (hey-on . args)	  ; no cr -- just append
 	  (let ((line (apply format #f args)))
 	    (set! line-len (+ line-len (length line)))
 	    (heyc line)))
 	
-	(define* (hey-ok (arg ", "))
-	  ;; cr ok after arg
+	(define* (hey-ok (arg ", ")) ; cr ok after arg
 	  (set! line-len (+ line-len (length arg)))
 	  (heyc arg)
 	  (when (> line-len 120) ; line-max originally
@@ -1905,16 +1965,15 @@
 	    (set! line-len arg-start)))
 	
 	(hey "static Xen gxg_~A(" name)
+	(hay "static s7_pointer lg_~A(s7_scheme *sc, s7_pointer args)~%" name)
 	(if (null? args)
 	    (heyc "void")
-	    (if (>= (length args) max-args)
+	    (if (>= cargs max-args)
 		(heyc "Xen arglist")
 		(let ((previous-arg #f))
 		  (for-each 
 		   (lambda (arg)
-		     (let ((argname (cadr arg))
-					;(argtype (car arg))
-			   )
+		     (let ((argname (cadr arg)))
 		       (if previous-arg (heyc ", "))
 		       (set! previous-arg #t)
 		       (if (and (ref-arg? arg)
@@ -1923,16 +1982,36 @@
 			   (hey "Xen ~A" argname))))
 		   args))))
 	(hey ")~%{~%")
+	(hay "{~%")
 	(helpify name return-type argstr)
+	(when (> cargs 1)
+	  (hay "  s7_pointer _p;~%"))
+	
+	;; ----------------
+	(when (pair? args)
+	  (hay "  s7_pointer ")
+	  (let ((previous-arg #f))
+	    (for-each 
+	     (lambda (arg)
+	       (let ((argname (cadr arg)))
+		 (unless (or (ref-arg? arg)
+			     (member name '("gdk_init" "gdk_init_check" "gtk_init" "gtk_init_check" "gtk_parse_args")))
+		   (if previous-arg (hay ", "))
+		   (hay "~A" argname)
+		   (set! previous-arg #t))))
+	     args)
+	    (hay ";~%")))
+	;; ----------------
+
 	(if (> refargs 0)
 	    (for-each
 	     (lambda (arg)
 	       (if (ref-arg? arg)
 		   (if (has-stars (deref-type arg))
-		       (hey "  ~A ~A = NULL;~%" (deref-type arg) (deref-name arg))
-		       (hey "  ~A ~A;~%" (deref-type arg) (deref-name arg)))))
+		       (hoy "  ~A ~A = NULL;~%" (deref-type arg) (deref-name arg))
+		       (hoy "  ~A ~A;~%" (deref-type arg) (deref-name arg)))))
 	     args))
-	(if (and (>= (length args) max-args)
+	(if (and (>= cargs max-args)
 		 (> xgargs 0))
 	    (begin
 	      (heyc "  Xen ")
@@ -1952,31 +2031,55 @@
 		       (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
 		   (set! ctr (+ ctr 1)))
 		 args))))
+
 	(when (pair? args)
 	  (let ((ctr 1)
 		(argc #f))
+	    (when (> cargs 1)
+	      (hay "  _p = args;~%"))
 	    (for-each
 	     (lambda (arg)
 	       (let ((argname (cadr arg))
 		     (argtype (car arg)))
 		 (if (not (ref-arg? arg))
-		     (if (null-arg? arg)
-			 (hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
-			      (no-stars argtype) argname argname argname ctr name argtype)
-			 (if (opt-arg? arg)
-			     (begin
-			       (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
-			       (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
-				    (no-stars argtype) argname argname ctr name argtype))
-			     (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
-				  (no-stars argtype) argname argname ctr name argtype)))
+		     (begin
+		       (if (> cargs 1)
+			   (hay "  ~A = s7_car(_p); _p = s7_cdr(_p);~%" argname)
+			   (hay "  ~A = s7_car(args);~%" argname))
+
+		       (if (null-arg? arg)
+			   (begin
+			     (hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
+				  (no-stars argtype) argname argname argname ctr name argtype)
+			     (hay "  if ((!lg_is_~A(~A)) && (~A != s7_f(sc))) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
+				  (no-stars argtype) argname argname
+				  name ctr argname argtype))
+			   
+			   (if (opt-arg? arg)
+			       (begin
+				 (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
+				 (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
+				      (no-stars argtype) argname argname ctr name argtype)
+				 (hay "  if ((!lg_is_~A(~A)) && (~A != s7_f(sc))) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
+				      (no-stars argtype) argname argname
+				      name ctr argname argtype))
+			       
+			       (begin
+				 (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
+				      (no-stars argtype) argname argname ctr name argtype)
+				 (hay "  if (!lg_is_~A(~A)) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
+				      (no-stars argtype) argname
+				      name ctr argname argtype)))))
+
 		     (if (>= (length arg) 3)
 			 (if (char=? ((arg 2) 0) #\{)
 			     (begin
 			       (set! argc (deref-name arg))
-			       (hey "  ~A = Xen_to_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
+			       (hey "  ~A = Xen_to_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname)
+			       (hay "  ~A = lg_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
+
 			     (when (char=? ((arg 2) 0) #\|)
-			       (hey "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
+			       (hoy "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
 				    (deref-name arg)
 				    (deref-type arg)
 				    argc
@@ -1986,9 +2089,18 @@
 				    argc
 				    (deref-name arg)
 				    (no-stars (deref-element-type arg)))
-			       (hey "  }~%")))))
+			       (hey "  }~%")
+
+			       (hay "  {~%    int i;~%    s7_pointer lst;~%    lst = ~A;~%" argname)
+			       (hay "    for (i = 0; i < ~A; i++, lst = s7_cdr(lst)) ~A[i] = s7_~A(s7_car(lst));~%"
+				    argc
+				    (deref-name arg)
+				    (no-stars (deref-element-type arg)))
+			       (hay "  }~%")))))
+
 		 (set! ctr (+ ctr 1))))
 	     args)))
+
 	(let ((using-result #f))
 	  (if (eq? lambda-type 'fnc)
 	      (begin 
@@ -2247,7 +2359,7 @@
 				  (hey "  return(Xen_false);~%"))))))))
 	  (if (eq? spec 'free)
 	      (hey "   rtn = C_to_Xen_~A(result);~%   g_free(result);~%   return(rtn);~%  }~%" (no-stars return-type)))
-	  (hey "}~%~%"))))))
+	  (hoy "}~%~%"))))))
   
 
 (for-each handle-func (reverse funcs))
@@ -2708,7 +2820,6 @@
 
 
 ;;; --------------------------------------------------------------------------------
-(hey "#if HAVE_SCHEME~%")
 
 (define (gtk-type->s7-type gtk)
   (cond ((member gtk declared-names (lambda (a b)
@@ -2759,8 +2870,14 @@
 
 ;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
 
-(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_gtk_enum_t, s_pair_false;~%")
-(hey "static s7_pointer ")
+;;; --------------------------------------------------------------------------------
+(hey "static void define_functions(void)~%")
+(hay "static void define_functions(s7_scheme *sc)~%")
+(hoy "{~%")
+(hey "#if HAVE_SCHEME~%")
+
+(hoy "  s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_gtk_enum_t, s_pair_false;~%")
+(hoy "  s7_pointer ")
 
 (define (sig-name sig)
   (call-with-output-string
@@ -2791,15 +2908,14 @@
 (for-each
  (lambda (sigc)
    (let ((sig (car sigc)))
-     (hey (sig-name sig))
-     (hey ", ")))
+     (hoy (sig-name sig))
+     (hoy ", ")))
  signatures)
-(hey "pl_bpt;~%")
+(hoy "pl_bpt;~%")
 (hey "#endif~%~%")
-
-;;; --------------------------------------------------------------------------------
-(hey "static void define_functions(void)~%")
-(hey "{~%")
+(hay "~%")
+(hay "  s7_pointer cur_env;~%")
+(hay "  cur_env = s7_curlet(sc);~%~%")
 
 (hey "  xm_gc_table = Xen_make_vector(1, Xen_false);~%")
 (hey "  Xen_GC_protect(xm_gc_table);~%")
@@ -2808,28 +2924,28 @@
 (hey "  Xen_vector_set(xm_gc_table, 0, xm_protected);~%~%")
 
 (hey "#if HAVE_SCHEME~%")
-(hey "  s_boolean = s7_make_symbol(s7, \"boolean?\");~%")
-(hey "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
-(hey "  s_real = s7_make_symbol(s7, \"real?\");~%")
-(hey "  s_float = s7_make_symbol(s7, \"float?\");~%")
-(hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
-(hey "  s_pair = s7_make_symbol(s7, \"pair?\");~%")
-(hey "  s_pair_false = s7_make_signature(s7, 2, s_pair, s_boolean);~%")
-(hey "  s_gtk_enum_t = s7_make_symbol(s7, \"gtk_enum_t?\");~%")
-(hey "  s_any = s7_t(s7);~%~%")
+(hoy "  s_boolean = s7_make_symbol(s7, \"boolean?\");~%")
+(hoy "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
+(hoy "  s_real = s7_make_symbol(s7, \"real?\");~%")
+(hoy "  s_float = s7_make_symbol(s7, \"float?\");~%")
+(hoy "  s_string = s7_make_symbol(s7, \"string?\");~%")
+(hoy "  s_pair = s7_make_symbol(s7, \"pair?\");~%")
+(hoy "  s_pair_false = s7_make_signature(s7, 2, s_pair, s_boolean);~%")
+(hoy "  s_gtk_enum_t = s7_make_symbol(s7, \"gtk_enum_t?\");~%")
+(hoy "  s_any = s7_t(s7);~%~%")
 
 (for-each
  (lambda (sigc)
    (let ((sig (car sigc)))
-     (hey "  ")
-     (hey (sig-name sig))
-     (hey " = s7_make_circular_signature(s7, ")
+     (hoy "  ")
+     (hoy (sig-name sig))
+     (hoy " = s7_make_circular_signature(s7, ")
      (let ((len (length sig)))
-       (hey (number->string (- len 1)))
-       (hey ", ")
-       (hey (number->string len))
-       (hey ", ")
-       (hey (case (car sig)
+       (hoy (number->string (- len 1)))
+       (hoy ", ")
+       (hoy (number->string len))
+       (hoy ", ")
+       (hoy (case (car sig)
 	      ((integer?)    "s_integer")
 	      ((boolean?)    "s_boolean")
 	      ((real?)       "s_float")
@@ -2837,12 +2953,12 @@
 	      ((pair?)       "s_pair")
 	      ((gtk_enum_t?) "s_gtk_enum_t")
 	      (else          "s_any")))
-       (if (> len 1) (hey ", "))
+       (if (> len 1) (hoy ", "))
        (do ((i 1 (+ i 1))
 	    (s (cdr sig) (cdr s)))
 	   ((= i len))
 	 (let ((typ (car s)))
-	   (hey (case typ
+	   (hoy (case typ
 		  ((integer?)    "s_integer")
 		  ((boolean?)    "s_boolean")
 		  ((real?)       "s_real")
@@ -2850,11 +2966,12 @@
 		  ((pair?)       "s_pair_false")
 		  ((gtk_enum_t?) "s_gtk_enum_t")
 		  (else       "s_any"))))
-	 (if (< i (- len 1)) (hey ", "))))
-     (hey ");~%")))
+	 (if (< i (- len 1)) (hoy ", "))))
+     (hoy ");~%")))
  signatures)
-(hey "  pl_bpt = s7_make_signature(s7, 2, s_pair_false, s_any);~%")
+(hoy "  pl_bpt = s7_make_signature(s7, 2, s_pair_false, s_any);~%")
 (hey "#endif~%~%")
+(hay "~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
@@ -2869,14 +2986,20 @@
 	 (if (>= cargs max-args) 0 refargs)
 	 (if (>= cargs max-args) 1 0)
 	 (car func)
+	 (sig-name (make-signature func)))
+    (hay "  s7_define_typed_function(sc, \"~A\", lg_~A, ~D, ~D, ~D, H_~A, ~A);~%"
+	 (car func) (car func) 
+	 (if (>= cargs max-args) 0 args)
+	 (if (>= cargs max-args) 0 refargs)
+	 (if (>= cargs max-args) 1 0)
+	 (car func)
 	 (sig-name (make-signature func)))))
-
 
 (for-each defun (reverse funcs))
 (for-each
  (lambda (func-list with-func)
    (if (pair? func-list) 
-       (with-func hey (lambda () 
+       (with-func hoy (lambda () 
 			(for-each defun (reverse func-list))))))
  all-funcs all-func-withs)
 
@@ -2886,15 +3009,22 @@
 	 (no-arg f)
 	 (no-arg f)
 	 (no-arg f)
+	 (no-arg f))
+    (hay "  s7_define_typed_function(sc, \"~A\", lg_~A, 1, 0, 0, \"(~A obj) casts obj to ~A\", pl_bpt);~%" 
+	 (no-arg f)
+	 (no-arg f)
+	 (no-arg f)
 	 (no-arg f))))
 
+
 (hey "  Xg_define_procedure(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, \"(GPOINTER obj) casts obj to GPOINTER\", NULL);~%")
+(hay "  s7_define_typed_function(sc, \"GPOINTER\", lg_GPOINTER, 1, 0, 0, \"(GPOINTER obj) casts obj to GPOINTER\", NULL);~%")
 
 (for-each cast-out (reverse casts))
 (for-each
  (lambda (cast-list cast-func)
    (if (pair? cast-list) 
-       (cast-func hey (lambda () 
+       (cast-func hoy (lambda () 
 			(for-each cast-out (reverse cast-list))))))
  all-casts all-cast-withs)
 
@@ -2921,13 +3051,19 @@
        (no-arg f)
        22 #\space
        (no-arg f)
+       (no-arg f))
+    (hay "  s7_define_typed_function(\"~A\", lg_~A, 1, 0, 0,~%~NC\"(~A obj): #t if obj is a ~A\", pl_bt);~%" 
+       (no-arg f)
+       (no-arg f)
+       22 #\space
+       (no-arg f)
        (no-arg f))))
 
 (for-each check-out (reverse checks))
 (for-each
  (lambda (check-list check-func)
    (if (pair? check-list) 
-       (check-func hey (lambda () 
+       (check-func hoy (lambda () 
 			 (for-each check-out (reverse check-list))))))
  all-checks all-check-withs)
 
@@ -2936,7 +3072,7 @@
 (hey "Xg_define_procedure(free_cairo, gxg_free_cairo_w, 1, 0, 0, H_free_cairo, pl_pu);~%")
 (hey "#endif~%")
 
-(hey "}~%~%")
+(hoy "}~%~%")
 
 
 
@@ -2976,19 +3112,63 @@
  (reverse dbls))
 (hey "}~%~%")
 
+;;; ----------------
+(hay "static void define_integers(s7_scheme *sc)~%")
+(hay "{~%")
+(hay "  s7_pointer cur_env;~%")
+(hay "  cur_env = s7_curlet(sc);~%~%")
+(hay "#if !GLIB_CHECK_VERSION(2,35,0)~%")
+(hay "  g_type_init();~%")
+(hay "#endif~%")
+(for-each 
+ (lambda (val) 
+   (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_integer(sc, ~A));~%" val val))
+ (reverse ints))
+(for-each
+ (lambda (ints-list with-ints)
+   (if (pair? ints-list)
+       (with-ints hay (lambda () 
+			(for-each (lambda (val) 
+				    (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_integer(sc, ~A));~%" val val))
+				  (reverse ints-list))))))
+ all-ints all-int-withs)
+(hay "}~%~%")
+(hay "static void define_doubles(s7_scheme *sc)~%")
+(hay "{~%")
+(hay "  s7_pointer cur_env;~%")
+(hay "  cur_env = s7_curlet(sc);~%~%")
+(for-each
+ (lambda (val)
+   (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_real(sc, ~A));~%" val val))
+ (reverse dbls))
+(hay "}~%~%")
+;;; ----------------
+
 
 (hey "/* -------------------------------- predefined Atoms -------------------------------- */~%")
 (hey "~%")
 (hey "static void define_atoms(void)~%")
 (hey "{~%")
-(hey "#define define_atom(Name) Xen_define(Xg_pre #Name Xg_post, C_to_Xen_GdkAtom(Name))~%")
-(hey "~%")
-
+(hey "#define define_atom(Name) Xen_define(Xg_pre #Name Xg_post, C_to_Xen_GdkAtom(Name))~%~%")
 (for-each
  (lambda (atom)
    (hey "  define_atom(~A);~%" atom))
  (reverse atoms))
 (hey "}~%~%")
+
+;;; ----------------
+(hay "~%")
+(hay "static void define_atoms(s7_scheme *sc)~%")
+(hay "{~%")
+(hay "  s7_pointer cur_env, gdkatom_symbol;~%")
+(hay "  cur_env = s7_curlet(sc);~%")
+(hay "  gdkatom_symbol = s7_make_symbol(sc, \"GdkAtom\");~%~%")
+(for-each
+ (lambda (atom)
+   (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_c_pointer_with_type(sc, ~A, gdkatom_symbol, s7_f(sc)));~%" atom atom))
+ (reverse atoms))
+(hay "}~%~%")
+;;; ----------------
 
 
 (hey "/* -------------------------------- symbols -------------------------------- */~%")
@@ -3005,6 +3185,21 @@
    (hey "  xg_~A_symbol = C_string_to_Xen_symbol(\"~A\");~%" typ typ))
  other-types)
 (hey "}~%~%")
+
+;;; ----------------
+(hay "~%")
+(hay "static void define_symbols(s7_scheme *sc)~%")
+(hay "{~%")
+(for-each
+ (lambda (typ)
+   (hay "  libgtk_~A_symbol = s7_make_symbol(sc, \"~A\");~%" (no-stars typ) (no-stars typ)))
+ all-types)
+(for-each
+ (lambda (typ)
+   (hay "  libgtk_~A_symbol = s7_make_symbol(sc, \"~A\");~%" typ typ))
+ other-types)
+(hay "}~%~%")
+;;; ----------------
 
 
 (hey "/* -------------------------------- strings -------------------------------- */~%")
@@ -3026,135 +3221,160 @@
 
 (hey "}~%~%")
 
+;;; ----------------
+(hay "~%")
+(hay "static void define_strings(s7_scheme *sc)~%")
+(hay "{~%")
+(hay "  s7_pointer cur_env;~%")
+(hay "  cur_env = s7_curlet(sc);~%~%")
+(for-each (lambda (str) 
+	    (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_string(sc, ~A));~%" str str))
+(reverse strings))
+(for-each
+ (lambda (strings-list with-strings)
+   (if (pair? strings-list)
+       (with-strings hay (lambda () 
+			   (for-each (lambda (str) 
+				       (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_string(sc, ~A));~%" str str))
+				     (reverse strings-list))))))
+ all-strings all-string-withs)
+(hay "}~%~%")
+;;; ----------------
 
 (hey "/* -------------------------------- lint -------------------------------- */~%")
 (hey "~%")
 (hey "#if HAVE_SCHEME~%")
-(hey "typedef struct {const char *name, *type; int64_t value;} enummer_t;~%")
-(hey "static enummer_t enum_info[] = {~%")
+(hoy "typedef struct {const char *name, *type; int64_t value;} enummer_t;~%")
+(hoy "static enummer_t enum_info[] = {~%")
 (set! declared-names (sort! declared-names (lambda (a b)
 					     (string<? (caddr a) (caddr b)))))
 (do ((version "")
      (names declared-names (cdr names)))
     ((null? names)
-     (hey "#endif~%~NC{NULL, NULL, 0}};~%~%" 8 #\space)) ; end marker
+     (hoy "#endif~%~NC{NULL, NULL, 0}};~%~%" 8 #\space)) ; end marker
   (unless (string=? (caddar names) version)
     (if (> (length version) 0)
-	(hey "#endif~%"))
+	(hoy "#endif~%"))
     (set! version (caddar names))
-    (hey (string-append "#if GTK_CHECK_VERSION(" (substring version 0 1) ", " (substring version 2) ", 0)~%")))
-  (hey "~NC{~S, ~S, ~A},~%" 8 #\space (caar names) (cadar names) (caar names)))
+    (hoy (string-append "#if GTK_CHECK_VERSION(" (substring version 0 1) ", " (substring version 2) ", 0)~%")))
+  (hoy "~NC{~S, ~S, ~A},~%" 8 #\space (caar names) (cadar names) (caar names)))
 
-(hey "static s7_pointer enum_value_to_name(s7_scheme *sc, int64_t val, const char *type) ~%")
-(hey "{ ~%")
-(hey "  int k; ~%")
-(hey "  int64_t range_min = 0, range_max = 0; ~%")
-(hey "  bool range_set = false; ~%")
-(hey "  for (k = 0; ; k++) ~%")
-(hey "    { ~%")
-(hey "      enummer_t nt; ~%")
-(hey "      nt = enum_info[k]; ~%")
-(hey "      if (!nt.name) ~%")
-(hey "	break; ~%")
-(hey "      if (strcmp(nt.type, type) == 0) ~%")
-(hey "	{ ~%")
-(hey "	  if (nt.value == val)        /* ... value should be <nt.name> */ ~%")
-(hey "	    return(s7_make_string(sc, nt.name)); ~%")
-(hey "	  if (!range_set) ~%")
-(hey "	    { ~%")
-(hey "	      range_min = nt.value; ~%")
-(hey "	      range_max = nt.value; ~%")
-(hey "	      range_set = true; ~%")
-(hey "	    } ~%")
-(hey "	  else ~%")
-(hey "	    { ~%")
-(hey "	      if (range_min > nt.value) range_min = nt.value; ~%")
-(hey "	      if (range_max < nt.value) range_max = nt.value; ~%")
-(hey "	    } ~%")
-(hey "	} ~%")
-(hey "    } ~%")
-(hey "  if (range_set)       /* here we found a matching name, its type is wrong, and it's out of range */ ~%")
-(hey "    { ~%")
-(hey "      char *range_string; ~%")
-(hey "      s7_pointer str; ~%")
-(hey "      range_string = (char *)malloc(256 * sizeof(char)); ~%")
-(hey "      snprintf(range_string, 256, \"between %\" PRId64 \" and %\" PRId64, range_min, range_max); ~%")
-(hey "      str = s7_make_string(sc, range_string); ~%")
-(hey "      free(range_string); ~%")
-(hey "      return(str);                            /* ... value should be between <min> and <max> */ ~%")
-(hey "    } ~%")
-(hey "  return(s_integer); ~%")
-(hey "}~%~%")
+(hoy "static s7_pointer enum_value_to_name(s7_scheme *sc, int64_t val, const char *type) ~%")
+(hoy "{ ~%")
+(hoy "  int k; ~%")
+(hoy "  int64_t range_min = 0, range_max = 0; ~%")
+(hoy "  bool range_set = false; ~%")
+(hoy "  for (k = 0; ; k++) ~%")
+(hoy "    { ~%")
+(hoy "      enummer_t nt; ~%")
+(hoy "      nt = enum_info[k]; ~%")
+(hoy "      if (!nt.name) ~%")
+(hoy "	break; ~%")
+(hoy "      if (strcmp(nt.type, type) == 0) ~%")
+(hoy "	{ ~%")
+(hoy "	  if (nt.value == val)        /* ... value should be <nt.name> */ ~%")
+(hoy "	    return(s7_make_string(sc, nt.name)); ~%")
+(hoy "	  if (!range_set) ~%")
+(hoy "	    { ~%")
+(hoy "	      range_min = nt.value; ~%")
+(hoy "	      range_max = nt.value; ~%")
+(hoy "	      range_set = true; ~%")
+(hoy "	    } ~%")
+(hoy "	  else ~%")
+(hoy "	    { ~%")
+(hoy "	      if (range_min > nt.value) range_min = nt.value; ~%")
+(hoy "	      if (range_max < nt.value) range_max = nt.value; ~%")
+(hoy "	    } ~%")
+(hoy "	} ~%")
+(hoy "    } ~%")
+(hoy "  if (range_set)       /* here we found a matching name, its type is wrong, and it's out of range */ ~%")
+(hoy "    { ~%")
+(hoy "      char *range_string; ~%")
+(hoy "      s7_pointer str; ~%")
+(hoy "      range_string = (char *)malloc(256 * sizeof(char)); ~%")
+(hoy "      snprintf(range_string, 256, \"between %\" PRId64 \" and %\" PRId64, range_min, range_max); ~%")
+(hoy "      str = s7_make_string(sc, range_string); ~%")
+(hoy "      free(range_string); ~%")
+(hoy "      return(str);                            /* ... value should be between <min> and <max> */ ~%")
+(hoy "    } ~%")
+(hoy "  return(s7_make_symbol(sc, \"integer?\")); ~%")
+(hoy "}~%~%")
 
-(hey "static s7_pointer g_gtk_enum_t(s7_scheme *sc, s7_pointer args) ~%")
-(hey "{ ~%")
-(hey "  s7_pointer form, argn, func, arg; ~%")
-(hey "  const char *doc_string, *p; ~%")
-(hey "  int arg_number; ~%")
-(hey "  form = s7_car(args);  ~%")
-(hey "  argn = s7_cadr(args); ~%")
-(hey "  arg_number = s7_integer(argn); ~%")
-(hey "  arg = s7_list_ref(sc, form, arg_number); ~%")
-(hey "  if ((!s7_is_integer(arg)) && ~%")
-(hey "      (!s7_is_symbol(arg))) ~%")
-(hey "    return(s_integer); ~%")
-(hey "  func = s7_car(form); ~%")
-(hey "  doc_string = s7_procedure_documentation(sc, func); ~%")
-(hey "  p = strchr(doc_string, (int)'('); ~%")
-(hey "  if (p) ~%")
-(hey "    { ~%")
-(hey "      int i; ~%")
-(hey "      for (i = 1; i < arg_number; i++) ~%")
-(hey "	p = strchr((char *)(p + 1), (int)','); ~%")
-(hey "      if (p) ~%")
-(hey "	{ ~%")
-(hey "	  const char *e; ~%")
-(hey "	  p += 2; /* past comma and space */ ~%")
-(hey "	  e = strchr(p, (int)' '); ~%")
-(hey "	  if (e) ~%")
-(hey "	    { ~%")
-(hey "	      int len; ~%")
-(hey "	      char *type; ~%")
-(hey "	      len = e - p + 1; ~%")
-(hey "	      type = (char *)malloc(len * sizeof(char)); ~%")
-(hey "	      for (i = 0; i < len; i++) type[i] = p[i]; ~%")
-(hey "	      type[len - 1] = '\\0'; ~%")
-(hey "	      if (s7_is_symbol(arg)) ~%")
-(hey "		{ ~%")
-(hey "		  const char *arg_name; ~%")
-(hey "		  arg_name = s7_symbol_name(arg); /* no free */ ~%")
-(hey "		  for (i = 0; ; i++) ~%")
-(hey "		    { ~%")
-(hey "		      enummer_t et; ~%")
-(hey "		      et = enum_info[i]; ~%")
-(hey "		      if (!et.name) ~%")
-(hey "			break; ~%")
-(hey "		      if (strcmp(et.name, arg_name) == 0) ~%")
-(hey "			{ ~%")
-(hey "			  if (strcmp(et.type, type) == 0)                 /* success -- name and type match */ ~%")
-(hey "			    { ~%")
-(hey "			      free(type); ~%")
-(hey "			      return(s7_t(sc)); ~%")
-(hey "			    } ~%")
-(hey "			  return(enum_value_to_name(sc, et.value, type)); /* here the type is wrong, so try to find the correct name */ ~%")
-(hey "			} ~%")
-(hey "		    } ~%")
-(hey "		  return(s_integer);                                      /* here we got no matches, so return 'integer? */ ~%")
-(hey "		} ~%")
-(hey "	      return(enum_value_to_name(sc, s7_integer(arg), type));      /* here arg is an integer */ ~%")
-(hey "	    } ~%")
-(hey "	} ~%")
-(hey "    } ~%")
-(hey "  return(s_integer); ~%")
-(hey "}~%~%")
+(hoy "static s7_pointer g_gtk_enum_t(s7_scheme *sc, s7_pointer args) ~%")
+(hoy "{ ~%")
+(hoy "  s7_pointer form, argn, func, arg; ~%")
+(hoy "  const char *doc_string, *p; ~%")
+(hoy "  int arg_number; ~%")
+(hoy "  form = s7_car(args);  ~%")
+(hoy "  argn = s7_cadr(args); ~%")
+(hoy "  arg_number = s7_integer(argn); ~%")
+(hoy "  arg = s7_list_ref(sc, form, arg_number); ~%")
+(hoy "  if ((!s7_is_integer(arg)) && ~%")
+(hoy "      (!s7_is_symbol(arg))) ~%")
+(hoy "    return(s7_make_symbol(sc, \"integer?\")); ~%")
+(hoy "  func = s7_car(form); ~%")
+(hoy "  doc_string = s7_procedure_documentation(sc, func); ~%")
+(hoy "  p = strchr(doc_string, (int)'('); ~%")
+(hoy "  if (p) ~%")
+(hoy "    { ~%")
+(hoy "      int i; ~%")
+(hoy "      for (i = 1; i < arg_number; i++) ~%")
+(hoy "	p = strchr((char *)(p + 1), (int)','); ~%")
+(hoy "      if (p) ~%")
+(hoy "	{ ~%")
+(hoy "	  const char *e; ~%")
+(hoy "	  p += 2; /* past comma and space */ ~%")
+(hoy "	  e = strchr(p, (int)' '); ~%")
+(hoy "	  if (e) ~%")
+(hoy "	    { ~%")
+(hoy "	      int len; ~%")
+(hoy "	      char *type; ~%")
+(hoy "	      len = e - p + 1; ~%")
+(hoy "	      type = (char *)malloc(len * sizeof(char)); ~%")
+(hoy "	      for (i = 0; i < len; i++) type[i] = p[i]; ~%")
+(hoy "	      type[len - 1] = '\\0'; ~%")
+(hoy "	      if (s7_is_symbol(arg)) ~%")
+(hoy "		{ ~%")
+(hoy "		  const char *arg_name; ~%")
+(hoy "		  arg_name = s7_symbol_name(arg); /* no free */ ~%")
+(hoy "		  for (i = 0; ; i++) ~%")
+(hoy "		    { ~%")
+(hoy "		      enummer_t et; ~%")
+(hoy "		      et = enum_info[i]; ~%")
+(hoy "		      if (!et.name) ~%")
+(hoy "			break; ~%")
+(hoy "		      if (strcmp(et.name, arg_name) == 0) ~%")
+(hoy "			{ ~%")
+(hoy "			  if (strcmp(et.type, type) == 0)                 /* success -- name and type match */ ~%")
+(hoy "			    { ~%")
+(hoy "			      free(type); ~%")
+(hoy "			      return(s7_t(sc)); ~%")
+(hoy "			    } ~%")
+(hoy "			  return(enum_value_to_name(sc, et.value, type)); /* here the type is wrong, so try to find the correct name */ ~%")
+(hoy "			} ~%")
+(hoy "		    } ~%")
+(hoy "		  return(s7_make_symbol(sc, \"integer?\"));               /* here we got no matches, so return 'integer? */ ~%")
+(hoy "		} ~%")
+(hoy "	      return(enum_value_to_name(sc, s7_integer(arg), type));      /* here arg is an integer */ ~%")
+(hoy "	    } ~%")
+(hoy "	} ~%")
+(hoy "    } ~%")
+(hoy "  return(s7_make_symbol(sc, \"integer?\")); ~%")
+(hoy "}~%~%")
 
 (hey "static void define_lint(void)~%")
 (hey "{~%")
-(hey "  s7_define_typed_function(s7, \"gtk_enum_t?\", g_gtk_enum_t, 2, 0, 0, \"lint helper\", pl_bti);~%")
+(hey "  s7_define_safe_function(s7, \"gtk_enum_t?\", g_gtk_enum_t, 2, 0, 0, \"lint helper\");~%")
 (hey "}~%")
 (hey "#endif~%")
-
 (hey "~%~%")
+
+;;; ----------------
+(hay "static void define_lint(s7_scheme *sc)~%")
+(hay "{~%")
+(hay "  s7_define_safe_function(sc, \"gtk_enum_t?\", g_gtk_enum_t, 2, 0, 0, \"lint helper\");~%")
+(hay "}~%~%")
+;;; ----------------
 
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
@@ -3226,7 +3446,45 @@
 (hey "}~%")
 (hey "#endif~%") ; have_extension_language
 
+;;; ----------------
+(hay "void libgtk_s7_init(s7_scheme *sc);~%")
+(hay "void libgtk_s7_init(s7_scheme *sc)~%")
+(hay "{~%")
+(hay "  s7_pointer cur_env;~%")
+(hay "  cur_env = s7_curlet(sc);~%~%")
+(hay "  define_integers(sc);~%")
+(hay "  define_doubles(sc);~%")
+(hay "  define_atoms(sc);~%")
+(hay "  define_strings(sc);~%")
+(hay "  define_symbols(sc);~%")
+(hay "  define_lint(sc);~%")
+
+;;; functions structs
+;;; xm_obj?  used to free the struct in GC?
+;;; signals?
+;;; how to load gtk itself into repl -- or does the load below handle that?
+
+(hay "~%")
+(hay "  s7_provide(sc, \"libgtk\");~%")
+(hay "  #if GTK_CHECK_VERSION(3, 90, 0)~%")
+(hay "    s7_provide(sc, \"gtk4\");~%")
+(hay "  #else~%")
+(hay "    #if GTK_CHECK_VERSION(3, 0, 0)~%")
+(hay "      s7_provide(sc, \"gtk3\");~%")
+(hay "    #else~%")
+(hay "      s7_provide(sc, \"gtk2\");~%")
+(hay "    #endif~%")
+(hay "  #endif~%")
+(hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"libgtk-version\"), s7_make_string(sc, \"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
+(hay "}~%")
+
+(hay "/* gcc -c libgtk_s7.c -o libgtk_s7.o -I. -fPIC `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl */~%")
+(hay "/* gcc libgtk_s7.o -shared -o libgtk_s7.so */~%")
+(hay "/* (load \"libgtk_s7.so\" (define *gtk* (inlet 'init_func 'libgtk_s7_init))) */~%")
+;;; ----------------
+
 (close-output-port xg-file)
+(close-output-port lib-file)
 
 ;(format *stderr* "declared types: ~A ~A~%" (length declared-types) (length declared-names)) 157 1288
 #|

@@ -480,11 +480,11 @@ typedef struct {
    *   (rather than an integer for both, indexing from the base string) was not faster.
    */
   s7_pointer orig_str;                                                   /* GC protection for string port string */
-  int32_t (*read_character)(s7_scheme *sc, s7_pointer port);                 /* function to read a character */
-  void (*write_character)(s7_scheme *sc, int32_t c, s7_pointer port);        /* function to write a character */
+  int32_t (*read_character)(s7_scheme *sc, s7_pointer port);             /* function to read a character */
+  void (*write_character)(s7_scheme *sc, int32_t c, s7_pointer port);    /* function to write a character */
   void (*write_string)(s7_scheme *sc, const char *str, int32_t len, s7_pointer port); /* function to write a string of known length */
   token_t (*read_semicolon)(s7_scheme *sc, s7_pointer port);             /* internal skip-to-semicolon reader */
-  int32_t (*read_white_space)(s7_scheme *sc, s7_pointer port);               /* internal skip white space reader */
+  int32_t (*read_white_space)(s7_scheme *sc, s7_pointer port);           /* internal skip white space reader */
   s7_pointer (*read_name)(s7_scheme *sc, s7_pointer pt);                 /* internal get-next-name reader */
   s7_pointer (*read_sharp)(s7_scheme *sc, s7_pointer pt);                /* internal get-next-sharp-constant reader */
   s7_pointer (*read_line)(s7_scheme *sc, s7_pointer pt, bool eol_case, bool copied);  /* function to read a string up to \n */
@@ -760,7 +760,7 @@ typedef struct s7_cell {
       s7_pointer unused_car, unused_cdr;
       uint64_t hash;
       const char *fstr;
-      uint32_t op, line;         /* op=optimize_op, line=pair_line or saved symbol_ctr */
+      uint32_t op, line;             /* op=optimize_op, line=pair_line or saved symbol_ctr */
     } sym_cons;
 
     struct {                        /* scheme functions */
@@ -33046,8 +33046,13 @@ static s7_pointer c_provide(s7_scheme *sc, s7_pointer sym)
 	slot_set_value(p, cons(sc, sym, lst));
     }
 
+  /* require looks up its symbol argument to see if the associated code (dsp.scm etc) has been autoloaded,
+   *   so here we're defining the provided symbol for that possibility.  Perhaps better would be to forgo
+   *   the definition here, and in require check *features* -- it is local to the current env.
+   */
   if (!is_slot(find_symbol(sc, sym))) /* *features* name might be the same as an existing function */
     s7_define(sc, sc->envir, sym, sym);
+
   return(sym);
 }
 
@@ -54878,20 +54883,37 @@ static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 static bool is_simple_code(s7_scheme *sc, s7_pointer form)
 {
   /* TODO: perhaps tree_memq here? the cycle check below is inadequate, and the last check looks dumb */
-  s7_pointer tmp;
-  for (tmp = form; is_pair(tmp); tmp = cdr(tmp))
-    if (is_pair(car(tmp)))
-      {
-	if ((tmp == car(tmp)) || /* try to protect against #1=(#1) -- do we actually need cyclic_sequences here? */
-	    (!is_simple_code(sc, car(tmp))))
-	  return(false);
-      }
-    else
-      {
-	if ((car(tmp) == sc->unquote_symbol) ||
-	    ((is_null(car(tmp))) && (is_null(cdr(tmp)))))
-	  return(false);
-      }
+  s7_pointer tmp, sp;
+  for (tmp = form, sp = form; is_pair(tmp); tmp = cdr(tmp), sp = cdr(sp))
+    {
+      if (is_pair(car(tmp)))
+	{
+	  if ((tmp == car(tmp)) || /* try to protect against #1=(#1) -- do we actually need cyclic_sequences here? */
+	      (!is_simple_code(sc, car(tmp))))
+	    return(false);
+	}
+      else
+	{
+	  if ((car(tmp) == sc->unquote_symbol) ||
+	      ((is_null(car(tmp))) && (is_null(cdr(tmp)))))
+	    return(false);
+	}
+      tmp = cdr(tmp);
+      if (!is_pair(tmp)) break;
+      if (tmp == sp) return(false);
+      if (is_pair(car(tmp)))
+	{
+	  if ((tmp == car(tmp)) || /* try to protect against #1=(#1) -- do we actually need cyclic_sequences here? */
+	      (!is_simple_code(sc, car(tmp))))
+	    return(false);
+	}
+      else
+	{
+	  if ((car(tmp) == sc->unquote_symbol) ||
+	      ((is_null(car(tmp))) && (is_null(cdr(tmp)))))
+	    return(false);
+	}
+    }
   return(is_null(tmp));
 }
 
@@ -54903,6 +54925,7 @@ comma (\"unquote\") and comma-atsign (\"apply values\") to pre-evaluate portions
 unquoted expressions are evaluated and plugged into the list, apply-values evaluates the expression \
 and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -> (1 2 3 4)."
 
+  /* fprintf(stderr, "g_quasiquote_1: form: %s %s\n", DISPLAY(form), type_name(sc, form, NO_ARTICLE)); */
   if (!is_pair(form))
     {
       if ((is_symbol(form)) &&
@@ -60809,7 +60832,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	case OP_LETREC:
 	case OP_LETREC_STAR:
 	  {
-	    bool follow = true;
+	    bool follow = false;
 	    s7_pointer vars, body, let_name, sp;
 	    slist *top, *locals;
 	    top = main_args;
@@ -60829,8 +60852,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	      }
 	    else let_name = func;
 
-	    sp = vars;
-	    for (; is_pair(vars); vars = cdr(vars))
+	    for (sp = NULL; is_pair(vars); vars = cdr(vars))
 	      {
 		s7_pointer let_var, var_name;
 		
@@ -60862,10 +60884,16 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 			return(UNSAFE_BODY);
 		      }
 		  }
-		if (sp != vars)
+		follow = (!follow);
+		if (follow)
 		  {
-		    follow = (!follow);
-		    if (follow) {sp = cdr(sp); if (vars == sp) return(UNSAFE_BODY);}
+		    if (!sp)
+		      sp = vars;
+		    else
+		      {
+			sp = cdr(sp); 
+			if (vars == sp) return(UNSAFE_BODY);
+		      }
 		  }
 	      }
 	    result = min_body(result, body_is_safe(sc, let_name, body, top, at_end));
@@ -66755,6 +66783,7 @@ static void apply_c_any_args_function(s7_scheme *sc)                /* -------- 
 static void apply_c_macro(s7_scheme *sc)  	                    /* -------- C-based macro -------- */
 {
   int32_t len;
+  /* fprintf(stderr, "apply_c_macro: args: %s %s\n", DISPLAY(sc->args), type_name(sc, car(sc->args), NO_ARTICLE)); */
   len = s7_list_length(sc, sc->args);
   
   if (len < (int)c_macro_required_args(sc->code))
@@ -66763,7 +66792,9 @@ static void apply_c_macro(s7_scheme *sc)  	                    /* -------- C-bas
   if ((int)c_macro_all_args(sc->code) < len)
     s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, sc->code, sc->args));
   
+  /* fprintf(stderr, "code: %s, args: %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
   sc->code = c_macro_call(sc->code)(sc, sc->args);
+  /* fprintf(stderr, "  code: %s\n", DISPLAY(sc->code)); */
   if (is_multiple_value(sc->code)) /* can this happen? s7_values splices before returning, and `(values ...) is handled later */
     {
       push_stack(sc, OP_EVAL_MACRO_MV, sc->nil, cdr(sc->code));
@@ -67876,6 +67907,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer x, y, iterators, saved_args;
 	    iterators = car(sc->args);
 	    saved_args = cdr(sc->args);
+	    /* fprintf(stderr, "op_for_each: %s %s\n", DISPLAY(iterators), DISPLAY(saved_args)); */
 	    for (x = saved_args, y = iterators; is_pair(x); x = cdr(x), y = cdr(y))
 	      {
 		set_car(x, s7_iterate(sc, car(y)));
@@ -67887,10 +67919,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto START;
 		  }
 	      }
+	    /* fprintf(stderr, "push %s %s\n", DISPLAY(sc->args), DISPLAY(sc->code)); */
 	    push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
 	    sc->args = saved_args;
 	    if (needs_copied_args(sc->code))
 	      sc->args = copy_list(sc, sc->args);
+	    /* fprintf(stderr, "goto apply: %s %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
 	    goto APPLY;
 	  }
 	  
@@ -82503,6 +82537,8 @@ int main(int argc, char **argv)
  *   cload uses (outlet (curlet))?? xg/xm use rootlet etc
  *   ideally all would allow (load "a.so" (define *a* (inlet 'init_func 'init_a))) and the like
  *   either we need settable (shadow-rootlet) or all should use curlet
+ *   (libm -> snd results in two versions of each??)
+ *   libgtk uses curlet which seems to work as intended
  * grepl:
  *   grepl.scm for debugger.  also how to build xg.so outside libxm.
  *      add libgtk_s7.c to makexg, libgl_s7.c to makegl
