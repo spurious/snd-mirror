@@ -28464,11 +28464,11 @@ static void baffle_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int32_t nlen;
-  char buf[64];
+  char buf[128];
 
   if (use_write == USE_READABLE_WRITE)
     {
-      nlen = snprintf(buf, 64, "(c-pointer " INT_FORMAT, (ptr_int)raw_pointer(obj));
+      nlen = snprintf(buf, 128, "(c-pointer " INT_FORMAT, (ptr_int)raw_pointer(obj));
       port_write_string(port)(sc, buf, nlen, port);
       if ((raw_pointer_type(obj) != sc->F) ||
 	  (raw_pointer_info(obj) != sc->F))
@@ -28482,7 +28482,9 @@ static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, us
     }
   else 
     {
-      nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
+      if (is_symbol(raw_pointer_type(obj)))
+	nlen = snprintf(buf, 128, "#<%s %p>", symbol_name(raw_pointer_type(obj)), raw_pointer(obj));
+      else nlen = snprintf(buf, 128, "#<c_pointer %p>", raw_pointer(obj));
       port_write_string(port)(sc, buf, nlen, port);
     }
 }
@@ -82533,15 +82535,15 @@ int main(int argc, char **argv)
  * tie in p_di|id?
  * private let: block outlet of any let = shutlet?
  * doc tree*?
- * there's confusion about where .so files place there names upon load:
+ * there's confusion about where .so files place their names upon load:
  *   cload uses (outlet (curlet))?? xg/xm use rootlet etc
  *   ideally all would allow (load "a.so" (define *a* (inlet 'init_func 'init_a))) and the like
  *   either we need settable (shadow-rootlet) or all should use curlet
  *   (libm -> snd results in two versions of each??)
  *   libgtk uses curlet which seems to work as intended
  * grepl:
- *   grepl.scm for debugger.  also how to build xg.so outside libxm.
- *      add libgtk_s7.c to makexg, libgl_s7.c to makegl
+ *   grepl.scm for debugger.
+ *      libgl_s7.c to makegl
  *   in gdb -- window showing text (via emacs? and auto decode gdb output
  *   in repl auto s7let? or begin-hook for that? or begin_hook for trace? symbol-access for set!
  *   also on-going profile? room/gc stats? stacktrace?
@@ -82550,6 +82552,12 @@ int main(int argc, char **argv)
  *   in glistener, hover/select op, give doc string, var, highlight def? and box->inspect
  *   as typed, run lint? or display op args, check types etc
  *   if undef name, search libs and give correct/closest?
+ * libgtk: c_pointer wrap and unwrap with type (currently unchecked)
+ *   autotest generation -- but how to get C-side values running makexg?
+ *   no need for xm_obj -- either use vector or c_pointer type/info=array
+ *   no need for define_structs -- these can use accessor of ^ (and special makers for iters)
+ *   callback funcs, signals
+ *   need (starred) types passed to make_c_pointer
  *
  * --------------------------------------------------------------------
  *

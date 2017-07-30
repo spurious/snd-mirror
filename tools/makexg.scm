@@ -223,15 +223,15 @@
 		    (remove-if p (cdr lst))))))
 
 (define (ref-arg? arg)
-  (and (= (length arg) 3)
+  (and (eqv? (length arg) 3)
        (string? (caddr arg))))
 
 (define (null-arg? arg)
-  (and (= (length arg) 3)
+  (and (eqv? (length arg) 3)
        (eq? (caddr arg) 'null)))
 
 (define (opt-arg? arg)
-  (and (= (length arg) 3)
+  (and (eqv? (length arg) 3)
        (eq? (caddr arg) 'opt)))
 
 (define (ref-args args)
@@ -572,6 +572,7 @@
 	(cons "cairo_extend_t" "INT")
 	(cons "cairo_filter_t" "INT")
 	(cons "cairo_bool_t" "INT")
+	(cons "cairo_text_cluster_flags_t" "INT")
 
 	(cons "bool" "BOOLEAN")
 	
@@ -611,6 +612,15 @@
 	(cons "GdkDevicePadFeature" "INT")
 	(cons "GdkAnchorHints" "INT")
 	(cons "GtkPadActionType" "INT")
+
+	(cons "GtkUnit" "INT")
+	(cons "GtkPropagationPhase" "INT")
+	(cons "GtkPageOrientation" "INT")
+	(cons "GtkEventSequenceState" "INT")
+	(cons "GtkPageSet" "INT")
+	(cons "GtkPrintPages" "INT")
+	(cons "GtkPrintDuplex" "INT")
+	(cons "GtkPrintQuality" "INT")
 	))
 
 (define (c-to-xen-macro-name type str)
@@ -1610,6 +1620,8 @@
 (hay "#include <glib-object.h>~%")
 (hay "#include <pango/pango.h>~%")
 (with-cairo #f (lambda () (hay "#include <cairo/cairo.h>~%")))
+(hay "static s7_pointer lg_true, lg_false;~%")
+(hay "static bool lg_boolean(s7_pointer val) {return(val != lg_false);}~%")
 (hay "~%~%")
 ;;; ----------------
 
@@ -1640,17 +1652,28 @@
 (hey ";~%~%")
 
 ;;; ----------------
-(hay "static s7_pointer libgtk_~A_symbol" (no-stars (car all-types)))
-(for-each
- (lambda (typ)
-   (hay ", libgtk_~A_symbol" (no-stars typ)))
- (cdr all-types))
-(for-each
- (lambda (typ)
-   (if (not (member typ all-types))
-       (hay ", libgtk_~A_symbol" typ)))
- other-types)
-(hay ";~%~%")
+(let ((ctr 0))
+  (hay "static s7_pointer ~A_sym" (no-stars (car all-types)))
+  (for-each
+   (lambda (typ)
+     (set! ctr (+ ctr 1))
+     (if (zero? (modulo ctr 5))
+	 (begin
+	   (set! ctr 0)
+	   (hay ",~%~NC~A_sym" 18 #\space (no-stars typ)))
+	 (hay ", ~A_sym" (no-stars typ))))
+   (cdr all-types))
+  (for-each
+   (lambda (typ)
+     (unless (member typ all-types)
+       (set! ctr (+ ctr 1))
+       (if (zero? (modulo ctr 5))
+	   (begin
+	     (set! ctr 0)
+	     (hay ",~%~NC~A_sym" 18 #\space typ))
+	   (hay ", ~A_sym" typ))))
+   other-types)
+  (hay ";~%~%"))
 ;;; ----------------
 
 
@@ -1759,6 +1782,12 @@
 (hey "#define XLG(a, b) Xen_to_C_GType(Xen_list_ref(a, b))~%")
 (hey "#define XLT(a, b) Xen_to_C_GtkTextTag_(Xen_list_ref(a, b))~%")
 (hey "#define XLA(a, b) ((Xen_is_integer(Xen_list_ref(a, b))) ? ((gpointer)XLL(a, b)) : ((Xen_is_string(Xen_list_ref(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))~%~%")
+
+(hay "static bool is_wrong_type(s7_pointer type, s7_pointer obj)~%")
+(hay "{~%")
+(hay "  return(s7_is_c_pointer_of_type(obj, type));~%")
+(hay "}~%~%")
+
 
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
@@ -1924,6 +1953,49 @@
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")
 
+(define c->s7 (make-hash-table))
+(define (typer typ)
+  (cond ((assoc typ direct-types) 
+	 => (lambda (val)
+	      (cond ((equal? (cdr val) "INT")	     's7_make_integer)
+		    ((equal? (cdr val) "ULONG")	     's7_make_integer)
+		    ((equal? (cdr val) "DOUBLE")     's7_make_real)
+		    ((equal? (cdr val) "BOOLEAN")    's7_make_boolean)
+		    ((equal? (cdr val) "CHAR")       's7_make_character)
+		    ((equal? (cdr val) "String")     's7_make_string)
+		    (else                            's7_make_c_pointer))))
+	(else 
+	 (if (member typ '("gchar_" "char_"))
+	     's7_make_string
+	     (if (equal? typ "time_t")
+		 's7_make_integer
+		 's7_make_c_pointer)))))
+
+(define (untyper typ)
+  (cond ((assoc typ direct-types) 
+	 => (lambda (val)
+	      (cond ((equal? (cdr val) "INT")	     's7_integer)
+		    ((equal? (cdr val) "ULONG")	     's7_integer)
+		    ((equal? (cdr val) "DOUBLE")     's7_real)
+		    ((equal? (cdr val) "BOOLEAN")    'lg_boolean)
+		    ((equal? (cdr val) "CHAR")       's7_character)
+		    ((equal? (cdr val) "String")     's7_string)
+		    (else                            's7_c_pointer))))
+	(else 
+	 (if (member typ '("gchar_" "char_"))
+	     's7_string
+	     's7_c_pointer))))
+
+(for-each
+ (lambda (typ)
+   (hash-table-set! c->s7 (no-stars typ) (typer (no-stars typ))))
+ all-types)
+(for-each
+ (lambda (typ)
+   (hash-table-set! c->s7 typ (typer typ)))
+ other-types)
+
+
 (define max-args 8)
 
 (define (handle-func data)
@@ -1957,7 +2029,7 @@
 	    (set! line-len (+ line-len (length line)))
 	    (heyc line)))
 	
-	(define* (hey-ok (arg ", ")) ; cr ok after arg
+	(define (hey-ok arg) ; cr ok after arg
 	  (set! line-len (+ line-len (length arg)))
 	  (heyc arg)
 	  (when (> line-len 120) ; line-max originally
@@ -1965,7 +2037,6 @@
 	    (set! line-len arg-start)))
 	
 	(hey "static Xen gxg_~A(" name)
-	(hay "static s7_pointer lg_~A(s7_scheme *sc, s7_pointer args)~%" name)
 	(if (null? args)
 	    (heyc "void")
 	    (if (>= cargs max-args)
@@ -1982,25 +2053,35 @@
 			   (hey "Xen ~A" argname))))
 		   args))))
 	(hey ")~%{~%")
-	(hay "{~%")
-	(helpify name return-type argstr)
-	(when (> cargs 1)
-	  (hay "  s7_pointer _p;~%"))
 	
-	;; ----------------
-	(when (pair? args)
-	  (hay "  s7_pointer ")
-	  (let ((previous-arg #f))
-	    (for-each 
-	     (lambda (arg)
-	       (let ((argname (cadr arg)))
-		 (unless (or (ref-arg? arg)
-			     (member name '("gdk_init" "gdk_init_check" "gtk_init" "gtk_init_check" "gtk_parse_args")))
-		   (if previous-arg (hay ", "))
-		   (hay "~A" argname)
-		   (set! previous-arg #t))))
-	     args)
-	    (hay ";~%")))
+	(hay "static s7_pointer lg_~A(s7_scheme *sc, s7_pointer args)~%" name)
+	(hay "{~%")
+
+	(helpify name return-type argstr)
+	(when (member name '("gdk_init" "gdk_init_check" "gtk_init" "gtk_init_check" "gtk_parse_args"))
+	  (hay "  s7_pointer argc, argv;~%"))
+
+	(let ((any-args #f))
+	  (when (pair? args)
+	    (let ((previous-arg #f))
+	      (when (> cargs 1)
+		(hay "  s7_pointer _p;~%"))
+	      (for-each 
+	       (lambda (arg)
+		 (let ((argname (cadr arg)))
+		   (unless (ref-arg? arg) ;(or (ref-arg? arg)
+			       ;(member name '("gdk_init" "gdk_init_check" "gtk_init" "gtk_init_check" "gtk_parse_args")))
+		     (unless any-args
+		       (hay "  s7_pointer ")
+		       (set! any-args #t))
+		     (if previous-arg (hay ", "))
+		     (hay "~A" argname)
+		     (set! previous-arg #t))))
+	       args)
+	      (if any-args (hay ";~%")))))
+
+	(when (member name '("gdk_init" "gdk_init_check" "gtk_init" "gtk_init_check" "gtk_parse_args"))
+	  (hay "  argc = s7_car(args);~%  argv = s7_cadr(args);~%"))
 	;; ----------------
 
 	(if (> refargs 0)
@@ -2051,7 +2132,7 @@
 			   (begin
 			     (hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
 				  (no-stars argtype) argname argname argname ctr name argtype)
-			     (hay "  if ((!lg_is_~A(~A)) && (~A != s7_f(sc))) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
+			     (hay "  if ((is_wrong_type(~A_sym, ~A)) && (~A != lg_false)) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
 				  (no-stars argtype) argname argname
 				  name ctr argname argtype))
 			   
@@ -2060,14 +2141,14 @@
 				 (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
 				 (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
 				      (no-stars argtype) argname argname ctr name argtype)
-				 (hay "  if ((!lg_is_~A(~A)) && (~A != s7_f(sc))) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
+				 (hay "  if ((is_wrong_type(~A_sym, ~A)) && (~A != lg_false)) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
 				      (no-stars argtype) argname argname
 				      name ctr argname argtype))
 			       
 			       (begin
 				 (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
 				      (no-stars argtype) argname argname ctr name argtype)
-				 (hay "  if (!lg_is_~A(~A)) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
+				 (hay "  if (is_wrong_type(~A_sym, ~A)) s7_wrong_type_arg_error(sc, ~S, ~D, ~A, ~S);~%" 
 				      (no-stars argtype) argname
 				      name ctr argname argtype)))))
 
@@ -2076,7 +2157,7 @@
 			     (begin
 			       (set! argc (deref-name arg))
 			       (hey "  ~A = Xen_to_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname)
-			       (hay "  ~A = lg_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
+			       (hay "  ~A = (~A)s7_integer(~A);~%" (deref-name arg) (deref-type arg) argname))
 
 			     (when (char=? ((arg 2) 0) #\|)
 			       (hoy "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
@@ -2092,10 +2173,10 @@
 			       (hey "  }~%")
 
 			       (hay "  {~%    int i;~%    s7_pointer lst;~%    lst = ~A;~%" argname)
-			       (hay "    for (i = 0; i < ~A; i++, lst = s7_cdr(lst)) ~A[i] = s7_~A(s7_car(lst));~%"
+			       (hay "    for (i = 0; i < ~A; i++, lst = s7_cdr(lst)) ~A[i] = (~A)s7_string(s7_car(lst));~%"
 				    argc
 				    (deref-name arg)
-				    (no-stars (deref-element-type arg)))
+				    (deref-element-type arg))
 			       (hay "  }~%")))))
 
 		 (set! ctr (+ ctr 1))))
@@ -2107,27 +2188,37 @@
 		(set! using-result (and (> refargs 0)
 					(not return-type-void)))
 		(when using-result
-		  (hey "  {~%")
-		  (hey "    Xen result;~%"))
+		  (hoy "  {~%")
+		  (hey "    Xen result;~%")
+		  (hay "    s7_pointer result;~%"))
 		(hey-start)
 		
 		(cond ((eq? spec 'etc))
 		      
 		      (return-type-void 
-		       (hey-on "  "))
+		       (hey-on "  ")
+		       (hay "  "))
 		      
 		      ((not (= refargs 0))
-		       (hey-on "    result = C_to_Xen_~A(" (no-stars return-type)))
+		       (hey-on "    result = C_to_Xen_~A(" (no-stars return-type))
+		       (hay "    result = ~A(sc, " (hash-table-ref c->s7 (no-stars return-type))))
 		      
 		      (else 
 		       (case spec
-			 ((free)         (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type))
-			 ((const-return) (hey "    return(C_to_Xen_~A((~A)" (no-stars return-type) return-type))
+			 ((free) 
+			  (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type)
+			  (hay "  {~%    ~A result;~%    s7_pointer rtn;~%    result = " return-type))
+
+			 ((const-return) 
+			  (hey "    return(C_to_Xen_~A((~A)" (no-stars return-type) return-type)
+			  (hay "    return(~A(sc, (~A)" (hash-table-ref c->s7 (no-stars return-type)) return-type))
+
 			 (else
 			  (when (member name idlers)
 			    (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args))
 			    (set! idlers (remove-if (lambda (x) (string=? x name)) idlers)))
-			  (hey-on "  return(C_to_Xen_~A(" (no-stars return-type)))))))
+			  (hey-on "  return(C_to_Xen_~A(" (no-stars return-type))
+			  (hay "  return(~A(sc, " (hash-table-ref c->s7 (no-stars return-type))))))))
 	      
 	      (let ((using-loc (or (eq? lambda-type 'GCallback)
 				   (and callback-data
@@ -2135,40 +2226,62 @@
 		;; lambda-type != 'fnc
 		(set! using-result (not (or return-type-void
 					    (eq? lambda-type 'lambda))))
-		(hey "  {~%")
-		(if using-result (hey "    Xen result;~%"))
-		(if using-loc (hey "    int loc;~%"))
+		(hoy "  {~%")
+		(when using-result 
+		  (hey "    Xen result;~%")
+		  (hay "    s7_pointer result;~%"))
+
+		(if using-loc (hoy "    int loc;~%"))
+
 		(hey "    Xen gxg_ptr = Xen_list_5(~A, func_info, Xen_false, Xen_false, Xen_false);~%"
 		     (call-with-exit
 		      (lambda (name-it)
 			(for-each
 			 (lambda (arg)
-			   (let ((argname (cadr arg))
-					;(argtype (car arg))
-				 )
+			   (let ((argname (cadr arg)))
 			     (if (string=? argname "func")
 				 (name-it "func"))))
 			 args)
 			"Xen_false")))
+		(hay "    s7_pointer lg_ptr = s7_list(sc, 5, ~A, func_info, lg_false, lg_false, lg_false);~%"
+		     (call-with-exit
+		      (lambda (name-it)
+			(for-each
+			 (lambda (arg)
+			   (let ((argname (cadr arg)))
+			     (if (string=? argname "func")
+				 (name-it "func"))))
+			 args)
+			"lg_false")))
+
 		(if using-loc
 		    (begin
 		      (hey "    loc = xm_protect(gxg_ptr);~%")
-		      (hey "    Xen_list_set(gxg_ptr, 2, C_int_to_Xen_integer(loc));~%"))
+		      (hey "    Xen_list_set(gxg_ptr, 2, C_int_to_Xen_integer(loc));~%")
+		      (hay "    s7_list_set(sc, lg_ptr, 2, s7_make_integer(sc, loc));~%"))
 		    (begin
 		      (hey "    xm_protect(gxg_ptr);~%")
-		      (if (eq? lambda-type 'GtkClipboardGetFunc)
-			  (hey "    Xen_list_set(gxg_ptr, 2, clear_func);~%"))))
+		      (when (eq? lambda-type 'GtkClipboardGetFunc)
+			(hey "    Xen_list_set(gxg_ptr, 2, clear_func);~%")
+			(hay "    s7_list_set(sc, lg_ptr, 2, clear_func);~%"))))
+
 		(for-each
 		 (lambda (arg)
 		   (let ((argname (cadr arg))
 			 (argtype (car arg)))
-		     (if (string=? argtype "GtkDestroyNotify")
-			 (hey "    Xen_list_set(gxg_ptr, 3, ~A);~%" argname))))
+		     (when (string=? argtype "GtkDestroyNotify")
+		       (hey "    Xen_list_set(gxg_ptr, 3, ~A);~%" argname)
+		       (hay "    s7_list_set(sc, lg_ptr, 3, ~A);~%" argname))))
 		 args)
 		(hey-start)
 		(if using-result
-		    (hey-on "    result = C_to_Xen_~A(" (no-stars return-type))
-		    (heyc "    "))))
+		    (begin
+		      (hey-on "    result = C_to_Xen_~A(" (no-stars return-type))
+		      (let ((call (hash-table-ref c->s7 (no-stars return-type))))
+			(hay "     result = ~A(sc, " call)))
+		    (begin
+		      (heyc "    ")
+		      (hay "    ")))))
 	  
 	  ;; pass args
 	  (if (eq? spec 'etc)
@@ -2183,38 +2296,50 @@
 					       (null? (cdr types))
 					       (string=? (car types) "GType")))))
 		      (modlen (length types)))
-		  (hey "  {~%")
-		  (hey "    int etc_len = 0;~%")
+		  (hoy "  {~%")
+		  (hoy "    int etc_len = 0;~%")
 		  (if (not return-type-void)
-		      (hey "    ~A result = ~A;~%" return-type (if (has-stars return-type) "NULL" "0")))
+		      (hoy "    ~A result = ~A;~%" return-type (if (has-stars return-type) "NULL" "0")))
 		  (do ((i 0 (+ i 1)))
 		      ((= i (- cargs 1)))
 		    (let ((arg (args i)))
-		      (hey "    ~A p_arg~D;~%" (car arg) i)))
+		      (hoy "    ~A p_arg~D;~%" (car arg) i)))
 		  (hey "    if (Xen_is_list(~A)) etc_len = Xen_list_length(~A);~%" list-name list-name)
-		  (if (> min-len 0)
-		      (hey "    if (etc_len < ~D) Xen_out_of_range_error(~S, ~A, ~A, \"... list must have at least ~D entr~A\");~%"
-			   min-len name (- cargs 1) list-name min-len (if (= min-len 1) "y" "ies")))
+		  (hay "    if (s7_is_list(sc, ~A)) etc_len = s7_list_length(sc, ~A);~%" list-name list-name)
+		  (when (> min-len 0)
+		    (hey "    if (etc_len < ~D) Xen_out_of_range_error(~S, ~A, ~A, \"... list must have at least ~D entr~A\");~%"
+			 min-len name (- cargs 1) list-name min-len (if (= min-len 1) "y" "ies"))
+		    (hay "    if (etc_len < ~D) s7_out_of_range_error(sc, ~S, ~A, ~A, \"... list must have at least ~D entr~A\");~%"
+			 min-len name (- cargs 1) list-name min-len (if (= min-len 1) "y" "ies")))
+
 		  (hey "    if (etc_len > ~D) Xen_out_of_range_error(~S, ~A, ~A, \"... list too long (max len: ~D)\");~%"
 		       max-len name (- cargs 1) list-name max-len)
-		  (if (not (= modlen 1))
-		      (hey "    if ((etc_len % ~D) != 0) Xen_out_of_range_error(~S, ~A, ~A, \"... list len must be multiple of ~D\");~%"
-			   modlen name (- cargs 1) list-name modlen))
+		  (hay "    if (etc_len > ~D) s7_out_of_range_error(sc, ~S, ~A, ~A, \"... list too long (max len: ~D)\");~%"
+		       max-len name (- cargs 1) list-name max-len)
+
+		  (when (not (= modlen 1))
+		    (hey "    if ((etc_len % ~D) != 0) Xen_out_of_range_error(~S, ~A, ~A, \"... list len must be multiple of ~D\");~%"
+			 modlen name (- cargs 1) list-name modlen)
+		    (hay "    if ((etc_len % ~D) != 0) s7_out_of_range_error(sc, ~S, ~A, ~A, \"... list len must be multiple of ~D\");~%"
+			 modlen name (- cargs 1) list-name modlen))
+
 		  (do ((i 0 (+ i 1)))
 		      ((= i (- cargs 1)))
 		    (let ((arg (args i)))
-		      (hey "    p_arg~D = Xen_to_C_~A(~A);~%" i (no-stars (car arg)) (cadr arg))))
-		  (hey "    switch (etc_len)~%")
-		  (hey "      {~%")
+		      (hey "    p_arg~D = Xen_to_C_~A(~A);~%" i (no-stars (car arg)) (cadr arg))
+		      (hay "    p_arg~D = (~A)~A(~A);~%" i (car arg) (untyper (no-stars (car arg))) (cadr arg))))
+
+		  (hoy "    switch (etc_len)~%")
+		  (hoy "      {~%")
 		  (do ((name-is-file-chooser (string=? name "gtk_file_chooser_dialog_new"))
 		       (i min-len (+ i modlen)))
 		      ((> i max-len))
 		    (if (not return-type-void)
-			(hey "        case ~D: result = ~A(" i name)
-			(hey "        case ~D: ~A(" i name))
+			(hoy "        case ~D: result = ~A(" i name)
+			(hoy "        case ~D: ~A(" i name))
 		    (do ((j 0 (+ 1 j)))
 			((= j (- cargs 1)))
-		      (hey "p_arg~D, " j))
+		      (hoy "p_arg~D, " j))
 		    ;; assume ending null for now
 		    (do ((modctr 0)
 			 (j 0 (+ 1 j)))
@@ -2227,70 +2352,105 @@
 						  ("GtkTextTag*" . "XLT(") 
 						  ("GType" . "XLG("))
 					   string=?) => cdr)
-				   (else "XLA("))))
-		      (hey "~A, ~D)" list-name j)
+				   (else "XLA(")))
+			(hay (cond ((assoc type '(("int" . "s7_integer(s7_list_ref(sc, ") 
+						  ("gchar*" . "s7_string(s7_list_ref(sc, "))
+					   string=?) => cdr)
+				   (else "s7_c_pointer(s7_list_ref(sc, "))))
+
+		      (hoy "~A, ~D)" list-name j)
+		      (hay ")")
 		      (if (or with-null with-minus-one (< j (- i 1)))
-			  (hey ", ")))
+			  (hoy ", ")))
 		    (if with-null
 			(if (and (= i 0)
 				 name-is-file-chooser)
-			    (hey "NULL, NULL); break;~%") ; extra NULL needed I guess for the valist pass-through -- gcc 4.1 grumbles about it
-			    (hey "NULL); break;~%"))
+			    (hoy "NULL, NULL); break;~%") ; extra NULL needed I guess for the valist pass-through -- gcc 4.1 grumbles about it
+			    (hoy "NULL); break;~%"))
 			(if with-minus-one
-			    (hey "-1); break;~%")
-			    (hey "); break;~%"))))
-		  (hey "      }~%")
+			    (hoy "-1); break;~%")
+			    (hoy "); break;~%"))))
+		  (hoy "      }~%")
 		  
 		  (if return-type-void
-		      (hey "    return(Xen_false);~%")
-		      (hey "    return(C_to_Xen_~A(result));~%" (no-stars return-type)))
-		  (hey "  }~%")))
+		      (begin
+			(hey "    return(Xen_false);~%")
+			(hay "    return(lg_false);~%"))
+		      (begin
+			(hey "    return(C_to_Xen_~A(result));~%" (no-stars return-type))
+			(hay "    return(~A(sc, result));~%" (typer (no-stars return-type)))))
+		  (hoy "  }~%")))
 	      
 	      ;; not eq? spec 'etc
 	      (if (eq? lambda-type 'lambda)
 		  (begin ; 'lambda (see line 1846)
 		    (hey "if (Xen_is_aritable(func, 2))~%")
+		    (hay "if (s7_is_aritable(sc, func, 2))~%")
 		    (hey-start)
 		    (if return-type-void
-			(hey-on "       ~A(" name)
-			(hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name))
+			(begin
+			  (hey-on "       ~A(" name)
+			  (hay "       ~A(" name))
+			(begin
+			  (hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name)
+			  (let ((call (typer (no-stars return-type))))
+			    (hay "       return(~A(sc, ~A(" (typer (no-stars return-type)) name))))
 		    (hey-mark)
 		    (let ((previous-arg #f))
 		      (for-each
 		       (lambda (arg)
 			 (let ((argname (cadr arg))
 			       (argtype (car arg)))
-			   (if previous-arg (hey-ok))
+			   (when previous-arg 
+			     (hey-ok ", ")
+			     (hay ", "))
 			   (set! previous-arg #t)
-			   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)))
+			   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)
+			   (if (equal? argtype "char*")
+			       (hay "(char*)~A(~A)" (untyper (no-stars argtype)) argname)
+			       (hay "~A(~A)" (untyper (no-stars argtype)) argname))))
 		       args))
 		    (if return-type-void
-			(hey ");~%")
-			(hey ")));~%"))
-		    (hey "     else~%")
+			(hoy ");~%")
+			(hoy ")));~%"))
+		    (hoy "     else~%")
 		    (hey-start)
 		    (if return-type-void
-			(hey-on "       ~A(" name)
-			(hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name))
+			(begin
+			  (hey-on "       ~A(" name)
+			  (hay "       ~A(" name))
+			(begin
+			  (hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name)
+			  (let ((call (typer (no-stars return-type))))
+			    (hay "       return(~A(sc, ~A(" call name))))
 		    (hey-mark)
 		    (let ((previous-arg #f))
 		      (for-each
 		       (lambda (arg)
 			 (let ((argname (cadr arg))
 			       (argtype (car arg)))
-			   (if previous-arg (hey-ok))
+			   (when previous-arg 
+			     (hey-ok ", ")
+			     (hay ", "))
 			   (set! previous-arg #t)
-			   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)))
+			   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)
+			   (if (equal? argtype "char*")
+			       (hay "(char*)~A(~A)" (untyper (no-stars argtype)) argname)
+			       (hay "~A(~A)" (untyper (no-stars argtype)) argname))))
 		       args))
 		    (if return-type-void
 			(begin
-			  (hey ");~%")
-			  (hey "    return(Xen_false);~%"))
-			(hey ")));~%"))
-		    (hey "  }~%")) ;'lambda
+			  (hoy ");~%")
+			  (hey "    return(Xen_false);~%")
+			  (hay "    return(lg_false);~%"))
+			(hoy ")));~%"))
+		    (hoy "  }~%")) ;'lambda
 		  
 		  (begin
 		    (hey-on "~A(" name)
+		    (if (member name (list "gtk_selection_data_get_data_with_length" "gtk_selection_data_get_data"))
+			(hay "(void *)~A(" name)
+			(hay "~A(" name))
 		    (hey-mark)
 		    (if (pair? args)
 			(let ((previous-arg #f))
@@ -2298,22 +2458,34 @@
 			   (lambda (arg)
 			     (let ((argname (cadr arg))
 				   (argtype (car arg)))
-			       (if previous-arg (hey-ok))
+			       (when previous-arg 
+				 (hey-ok ", ")
+				 (hay ", "))
 			       (if (and (eq? spec 'const)
 					(member argtype '("char**" "gchar**" "gchar*" "char*" "GValue*") string=?))
-				   (hey "(const ~A)" argtype))
+				   (hoy "(const ~A)" argtype))
 			       (set! previous-arg #t)
 			       (if (ref-arg? arg)
-				   (hey-on "&~A" (deref-name arg))
-				   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname))))
+				   (begin
+				     (hey-on "&~A" (deref-name arg))
+				     (hay "&~A" (deref-name arg)))
+				   (begin
+				     (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)
+				     (if (equal? argtype "char*")
+					 (hay "(char*)~A(~A)" (untyper (no-stars argtype)) argname)
+					 (hay "~A(~A)" (untyper (no-stars argtype)) argname))))))
 			   args)))
 		    (if (not return-type-void)
 			(if (not (and (eq? lambda-type 'fnc)
 				      (= refargs 0)))
-			    (heyc ")")
-			    (if (not (eq? spec 'free)) 
-				(heyc "))"))))
-		    (hey ");~%")
+			    (begin
+			      (heyc ")")
+			      (hay ")"))
+			    (if (not (eq? spec 'free))
+				(begin
+				  (heyc "))")
+				  (hay "))")))))
+		    (hoy ");~%")
 		    (if (not (eq? lambda-type 'fnc))
 			(begin
 			  (if (and callback-data
@@ -2324,41 +2496,66 @@
 			      (hey "    Xen_list_set(gxg_ptr, 2, Xen_list_3(xg_idler_symbol, ~A, C_int_to_Xen_integer(loc)));~%"
 				   (if return-type-void "Xen_false" "result")))
 			  (if using-result
-			      (hey "    return(result);~%")
-			      (hey "    return(Xen_false);~%"))
-			  (hey "   }~%"))
+			      (hoy "    return(result);~%")
+			      (begin
+				(hey "    return(Xen_false);~%")
+				(hay "    return(lg_false);~%")))
+			  (hoy "   }~%"))
 			
 			(if (> refargs 0)
 			    (let ((previous-arg using-result))
-			      (if using-result (heyc "  "))
+			      (when using-result 
+				(heyc "  ")
+				(hay "  "))
 			      (if (string=? name "gdk_property_get")   ; special case -- type returned is dependent to some extent on atom
-				  (hey "  {~%      Xen data_val = Xen_false;~%\
+				  (begin
+				    
+				    (hey "  {~%      Xen data_val = Xen_false;~%\
       if (ref_actual_property_type == GDK_TARGET_STRING)~%\
 	data_val = C_string_to_Xen_string((char *)ref_data);~%\
       else if (ref_actual_length > 0) data_val = C_string_to_Xen_string_with_length((char *)ref_data, ref_actual_length * ref_actual_format / 8);~%\
      return(Xen_list_5(result, C_to_Xen_GdkAtom(ref_actual_property_type), C_to_Xen_gint(ref_actual_format), ~%\
                        C_to_Xen_gint(ref_actual_length), data_val));~%\
     }~%  }~%")
+				    (hay "  {~%      s7_pointer data_val = lg_false;~%\
+      if (ref_actual_property_type == GDK_TARGET_STRING)~%\
+	data_val = s7_make_string(sc, (char *)ref_data);~%\
+      else if (ref_actual_length > 0) data_val = s7_make_string_with_length(sc, (char *)ref_data, ref_actual_length * ref_actual_format / 8);~%\
+     return(s7_list(sc, 5, result, s7_make_c_pointer(sc, ref_actual_property_type), s7_make_integer(sc, ref_actual_format), ~%\
+                       s7_make_integer(sc, ref_actual_length), data_val));~%\
+    }~%  }~%"))
+
 				  (begin
 				    (hey "  return(Xen_list_~D(" (if using-result (+ refargs 1) refargs))
-				    (if using-result (heyc "result"))
+				    (hay "    return(s7_list(sc, ~D, " (if using-result (+ refargs 1) refargs))
+				    (when using-result 
+				      (heyc "result")
+				      (hay "result"))
 				    (for-each 
 				     (lambda (arg)
 				       (when (ref-arg? arg)
-					 (if previous-arg (heyc ", "))
+					 (when previous-arg 
+					   (heyc ", ")
+					   (hay ", "))
 					 (hey "C_to_Xen_~A(~A)" (no-stars (deref-type arg)) (deref-name arg))
+					 (let ((call (typer (no-stars (deref-type arg)))))
+					   (hay "~A(sc, ~A)" call (deref-name arg)))
 					 (set! previous-arg #t)))
 				     args)
-				    (hey "));~%")
-				    (if using-result (hey "   }~%")))))
+				    (hoy "));~%")
+				    (when using-result
+				      (hoy "   }~%")))))
 			    ;; refargs = 0
 			    (begin
 			      (if (member name idlers)
 				  (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args)))
 			      (if return-type-void
-				  (hey "  return(Xen_false);~%"))))))))
-	  (if (eq? spec 'free)
-	      (hey "   rtn = C_to_Xen_~A(result);~%   g_free(result);~%   return(rtn);~%  }~%" (no-stars return-type)))
+				  (begin
+				    (hey "  return(Xen_false);~%")
+				    (hay "  return(lg_false);~%")))))))))
+	  (when (eq? spec 'free)
+	    (hey "   rtn = C_to_Xen_~A(result);~%   g_free(result);~%   return(rtn);~%  }~%" (no-stars return-type))
+	    (hay "    rtn = ~A(sc, result);~%    g_free(result);~%    return(rtn);~%  }~%" (typer (no-stars return-type))))
 	  (hoy "}~%~%"))))))
   
 
@@ -2366,42 +2563,56 @@
 (for-each
  (lambda (func-list with-func)
    (if (pair? func-list) 
-       (with-func hey (lambda () 
+       (with-func hoy (lambda () 
 			(for-each handle-func (reverse func-list))))))
  all-funcs all-func-withs)
 
 
 (hey "#define Xen_is_wrapped_object(Obj) (Xen_is_list(Obj) && (Xen_list_length(Obj) >= 2) && (Xen_is_symbol(Xen_car(Obj))))~%~%")
 
-(define cast-it
-  (lambda (cast)
-    (let ((cast-name (car cast))
-	  (cast-type (cadr cast)))
-      (hey "static Xen gxg_~A(Xen obj)" (no-arg cast-name))
-      (hey " {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_~A_symbol, Xen_cadr(obj)) : Xen_false);}~%" (no-stars cast-type)))))
+(define (cast-it cast)
+  (let ((cast-name (car cast))
+	(cast-type (cadr cast)))
+    (hey "static Xen gxg_~A(Xen obj)" (no-arg cast-name))
+    (hey " {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_~A_symbol, Xen_cadr(obj)) : Xen_false);}~%" (no-stars cast-type))
+    (hay "static s7_pointer lg_~A(s7_scheme *sc, s7_pointer args) {return(s7_make_c_pointer_with_type(sc, s7_car(args), ~A_sym, lg_false));}~%"
+	 (no-arg cast-name) (no-stars cast-type))))
 
 (hey "static Xen gxg_GPOINTER(Xen obj)")
 (hey " {return(Xen_list_2(xg_gpointer_symbol, (Xen_is_wrapped_object(obj)) ? Xen_cadr(obj) : Xen_wrap_C_pointer(obj)));}~%")
+
+(hay "static s7_pointer lg_GPOINTER(s7_scheme *sc, s7_pointer args)~%")
+(hay "{~%")
+(hay "  s7_pointer obj;~%")
+(hay "  obj = s7_car(args);~%")
+(hay "  return(s7_make_c_pointer_with_type(sc, (s7_is_c_pointer(obj)) ? s7_c_pointer(obj) : obj, gpointer_sym, lg_false));~%")
+(hay "}~%")
 
 (for-each cast-it (reverse casts))
 (for-each
  (lambda (cast-list cast-func)
    (if (pair? cast-list) 
-       (cast-func hey (lambda () 
-			(for-each cast-it (reverse cast-list))))))
+       (cast-func hoy
+		  (lambda () 
+		    (for-each cast-it (reverse cast-list))))))
  all-casts all-cast-withs)
+
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 
 (define (make-check func)
   (hey "static Xen gxg_~A(Xen obj)" (no-arg (car func)))
-  (hey " {return(C_bool_to_Xen_boolean(Xen_is_wrapped_object(obj) && ~A((GTypeInstance *)Xen_unwrap_C_pointer(Xen_cadr(obj)))));}~%" (no-arg (car func))))
+  (hey " {return(C_bool_to_Xen_boolean(Xen_is_wrapped_object(obj) && ~A((GTypeInstance *)Xen_unwrap_C_pointer(Xen_cadr(obj)))));}~%" (no-arg (car func)))
+  (hay "static s7_pointer lg_~A(s7_scheme *sc, s7_pointer args)~%" (no-arg (car func)))
+  (hay "{~%")
+  (hay "  return(((s7_is_c_pointer(s7_car(args))) && (~A((GTypeInstance *)s7_c_pointer(s7_car(args))))) ? lg_true : lg_false);~%" (no-arg (car func)))
+  (hay "}~%"))
 
 (for-each make-check (reverse checks))
 (for-each
  (lambda (check-list check-func)
    (if (pair? check-list) 
-       (check-func hey (lambda () 
+       (check-func hoy (lambda () 
 			 (for-each make-check (reverse check-list))))))
  all-checks all-check-withs)
 
@@ -2924,22 +3135,33 @@
 (hey "  Xen_vector_set(xm_gc_table, 0, xm_protected);~%~%")
 
 (hey "#if HAVE_SCHEME~%")
-(hoy "  s_boolean = s7_make_symbol(s7, \"boolean?\");~%")
-(hoy "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
-(hoy "  s_real = s7_make_symbol(s7, \"real?\");~%")
-(hoy "  s_float = s7_make_symbol(s7, \"float?\");~%")
-(hoy "  s_string = s7_make_symbol(s7, \"string?\");~%")
-(hoy "  s_pair = s7_make_symbol(s7, \"pair?\");~%")
-(hoy "  s_pair_false = s7_make_signature(s7, 2, s_pair, s_boolean);~%")
-(hoy "  s_gtk_enum_t = s7_make_symbol(s7, \"gtk_enum_t?\");~%")
-(hoy "  s_any = s7_t(s7);~%~%")
+(hey "  s_boolean = s7_make_symbol(s7, \"boolean?\");~%")
+(hey "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
+(hey "  s_real = s7_make_symbol(s7, \"real?\");~%")
+(hey "  s_float = s7_make_symbol(s7, \"float?\");~%")
+(hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
+(hey "  s_pair = s7_make_symbol(s7, \"pair?\");~%")
+(hey "  s_pair_false = s7_make_signature(s7, 2, s_pair, s_boolean);~%")
+(hey "  s_gtk_enum_t = s7_make_symbol(s7, \"gtk_enum_t?\");~%")
+(hey "  s_any = s7_t(s7);~%~%")
+
+(hay "  s_boolean = s7_make_symbol(sc, \"boolean?\");~%")
+(hay "  s_integer = s7_make_symbol(sc, \"integer?\");~%")
+(hay "  s_real = s7_make_symbol(sc, \"real?\");~%")
+(hay "  s_float = s7_make_symbol(sc, \"float?\");~%")
+(hay "  s_string = s7_make_symbol(sc, \"string?\");~%")
+(hay "  s_pair = s7_make_symbol(sc, \"pair?\");~%")
+(hay "  s_pair_false = s7_make_signature(sc, 2, s_pair, s_boolean);~%")
+(hay "  s_gtk_enum_t = s7_make_symbol(sc, \"gtk_enum_t?\");~%")
+(hay "  s_any = s7_t(sc);~%~%")
 
 (for-each
  (lambda (sigc)
    (let ((sig (car sigc)))
      (hoy "  ")
      (hoy (sig-name sig))
-     (hoy " = s7_make_circular_signature(s7, ")
+     (hey " = s7_make_circular_signature(s7, ")
+     (hay " = s7_make_circular_signature(sc, ")
      (let ((len (length sig)))
        (hoy (number->string (- len 1)))
        (hoy ", ")
@@ -2969,7 +3191,8 @@
 	 (if (< i (- len 1)) (hoy ", "))))
      (hoy ");~%")))
  signatures)
-(hoy "  pl_bpt = s7_make_signature(s7, 2, s_pair_false, s_any);~%")
+(hey "  pl_bpt = s7_make_signature(s7, 2, s_pair_false, s_any);~%")
+(hay "  pl_bpt = s7_make_signature(sc, 2, s_pair_false, s_any);~%")
 (hey "#endif~%~%")
 (hay "~%")
 
@@ -3024,8 +3247,9 @@
 (for-each
  (lambda (cast-list cast-func)
    (if (pair? cast-list) 
-       (cast-func hoy (lambda () 
-			(for-each cast-out (reverse cast-list))))))
+       (cast-func hoy 
+		  (lambda () 
+		    (for-each cast-out (reverse cast-list))))))
  all-casts all-cast-withs)
 
 
@@ -3045,19 +3269,18 @@
 (hey "#endif~%")
 
 (define (check-out func)
-  (let ((f (car func)))
-    (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0,~%~NC\"(~A obj): \" PROC_TRUE \" if obj is a ~A\", pl_bt);~%" 
+  (let ((f (car func))
+	(typ (cadr func)))
+    (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj): \" PROC_TRUE \" if obj is a ~A\", pl_bt);~%" 
        (no-arg f)
        (no-arg f)
-       22 #\space
        (no-arg f)
-       (no-arg f))
-    (hay "  s7_define_typed_function(\"~A\", lg_~A, 1, 0, 0,~%~NC\"(~A obj): #t if obj is a ~A\", pl_bt);~%" 
+       typ)
+    (hay "  s7_define_typed_function(sc, \"~A\", lg_~A, 1, 0, 0, \"(~A obj): #t if obj is a ~A\", pl_bt);~%" 
        (no-arg f)
        (no-arg f)
-       22 #\space
        (no-arg f)
-       (no-arg f))))
+       typ)))
 
 (for-each check-out (reverse checks))
 (for-each
@@ -3128,7 +3351,7 @@
  (lambda (ints-list with-ints)
    (if (pair? ints-list)
        (with-ints hay (lambda () 
-			(for-each (lambda (val) 
+			(for-each (lambda (val)
 				    (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_integer(sc, ~A));~%" val val))
 				  (reverse ints-list))))))
  all-ints all-int-withs)
@@ -3165,7 +3388,7 @@
 (hay "  gdkatom_symbol = s7_make_symbol(sc, \"GdkAtom\");~%~%")
 (for-each
  (lambda (atom)
-   (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_c_pointer_with_type(sc, ~A, gdkatom_symbol, s7_f(sc)));~%" atom atom))
+   (hay "  s7_define(sc, cur_env, s7_make_symbol(sc, \"~A\"), s7_make_c_pointer_with_type(sc, ~A, gdkatom_symbol, lg_false));~%" atom atom))
  (reverse atoms))
 (hay "}~%~%")
 ;;; ----------------
@@ -3192,11 +3415,11 @@
 (hay "{~%")
 (for-each
  (lambda (typ)
-   (hay "  libgtk_~A_symbol = s7_make_symbol(sc, \"~A\");~%" (no-stars typ) (no-stars typ)))
+   (hay "  ~A_sym = s7_make_symbol(sc, \"~A\");~%" (no-stars typ) (no-stars typ)))
  all-types)
 (for-each
  (lambda (typ)
-   (hay "  libgtk_~A_symbol = s7_make_symbol(sc, \"~A\");~%" typ typ))
+   (hay "  ~A_sym = s7_make_symbol(sc, \"~A\");~%" typ typ))
  other-types)
 (hay "}~%~%")
 ;;; ----------------
@@ -3452,17 +3675,19 @@
 (hay "{~%")
 (hay "  s7_pointer cur_env;~%")
 (hay "  cur_env = s7_curlet(sc);~%~%")
+(hay "  lg_true = s7_t(sc);~%")
+(hay "  lg_false = s7_f(sc);~%")
 (hay "  define_integers(sc);~%")
 (hay "  define_doubles(sc);~%")
 (hay "  define_atoms(sc);~%")
 (hay "  define_strings(sc);~%")
 (hay "  define_symbols(sc);~%")
 (hay "  define_lint(sc);~%")
+(hay "  define_functions(sc);~%")
 
-;;; functions structs
+;;; structs
 ;;; xm_obj?  used to free the struct in GC?
 ;;; signals?
-;;; how to load gtk itself into repl -- or does the load below handle that?
 
 (hay "~%")
 (hay "  s7_provide(sc, \"libgtk\");~%")
@@ -3503,3 +3728,5 @@
 |#
 
 (exit)
+
+;;; gcc -c libgtk_s7.c -o libgtk_s7.o -I. -fPIC `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl

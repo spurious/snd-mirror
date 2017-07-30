@@ -219,9 +219,9 @@ int main(int argc, char **argv)
   gtk_widget_show(frame);
   gtk_container_add(GTK_CONTAINER(vb), frame);
 
-  s7_define_variable(s7, "grepl:vbox", s7_list(s7, 2, s7_make_symbol(s7, "GtkBox_"), s7_make_c_pointer(s7, vb)));
-  s7_define_variable(s7, "grepl:shell", s7_list(s7, 2, s7_make_symbol(s7, "GtkWindow_"), s7_make_c_pointer(s7, shell)));
-  s7_define_variable(s7, "grepl:frame", s7_list(s7, 2, s7_make_symbol(s7, "GtkFrame_"), s7_make_c_pointer(s7, frame)));
+  s7_define_variable(s7, "grepl:vbox", s7_make_c_pointer_with_type(s7, vb, s7_make_symbol(s7, "GtkBox*"), s7_f(s7)));
+  s7_define_variable(s7, "grepl:shell", s7_make_c_pointer_with_type(s7, shell, s7_make_symbol(s7, "GtkWindow*"), s7_f(s7)));
+  s7_define_variable(s7, "grepl:frame", s7_make_c_pointer_with_type(s7, frame, s7_make_symbol(s7, "GtkFrame*"), s7_f(s7)));
 
   g1 = glistener_new(frame, listener_init);
   glistener_set_evaluator(g1, evaluator);
@@ -232,7 +232,7 @@ int main(int argc, char **argv)
   arrow_cursor = GDK_CURSOR_NEW(GDK_LEFT_PTR);
 
   gtk_widget_show(shell);
-  gtk_window_resize(GTK_WINDOW(shell), 500, 300);
+  gtk_window_resize(GTK_WINDOW(shell), 600, 400);
 
   gtk_main();
 }
@@ -246,4 +246,5 @@ int main(int argc, char **argv)
  *   previous: (gtk_window_resize (GTK_WINDOW (list 'GtkContainer_ grepl:shell)) 600 600)
  *   the list is for xg (ancient type checking kludge)
  * (gtk_window_resize (GTK_WINDOW grepl:shell) 600 600)
+ * (load "libgtk_s7.so" (define *gtk* (inlet 'init_func 'libgtk_s7_init)))
  */

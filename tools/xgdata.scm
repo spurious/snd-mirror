@@ -6080,8 +6080,8 @@
 (CCAST "GTK_PRINT_OPERATION(obj)" "GtkPrintOperation*")
 (CCHK "GTK_IS_PRINT_OPERATION(obj)" "GtkPrintOperation*")
 
-(CCAST "GTK_PRINT_OPERATION_PREVIEW(obj)" "GtkPrintOperationPreview*")
-(CCHK "GTK_IS_PRINT_OPERATION_PREVIEW(obj)" "GtkPrintOperationPreview*")
+;(CCAST "GTK_PRINT_OPERATION_PREVIEW(obj)" "GtkPrintOperationPreview*")
+;(CCHK "GTK_IS_PRINT_OPERATION_PREVIEW(obj)" "GtkPrintOperationPreview*")
 
 (CCAST "GTK_PRINT_SETTINGS(obj)" "GtkPrintSettings*")
 (CCHK "GTK_IS_PRINT_SETTINGS(obj)" "GtkPrintSettings*")
@@ -6225,9 +6225,11 @@
 (CFNC "GtkPageSetup* gtk_print_run_page_setup_dialog GtkWindow* parent GtkPageSetup* page_setup GtkPrintSettings* settings")
 (CFNC "void gtk_print_run_page_setup_dialog_async GtkWindow* parent GtkPageSetup* page_setup GtkPrintSettings* settings GtkPageSetupDoneFunc done_cb gpointer data")
 ;;;;(CFNC "GType gtk_print_operation_preview_get_type void")
-(CFNC "void gtk_print_operation_preview_render_page GtkPrintOperationPreview* preview gint page_nr")
-(CFNC "void gtk_print_operation_preview_end_preview GtkPrintOperationPreview* preview")
-(CFNC "gboolean gtk_print_operation_preview_is_selected GtkPrintOperationPreview* preview gint page_nr")
+
+;(CFNC "void gtk_print_operation_preview_render_page GtkPrintOperationPreview* preview gint page_nr")
+;(CFNC "void gtk_print_operation_preview_end_preview GtkPrintOperationPreview* preview")
+;(CFNC "gboolean gtk_print_operation_preview_is_selected GtkPrintOperationPreview* preview gint page_nr")
+
 ;;;;(CFNC "GType gtk_print_settings_get_type void")
 (CFNC "GtkPrintSettings* gtk_print_settings_new void")
 (CFNC "GtkPrintSettings* gtk_print_settings_copy GtkPrintSettings* other")
@@ -8969,6 +8971,12 @@
 (CFNC-3.14 "GtkPropagationPhase gtk_event_controller_get_propagation_phase GtkEventController* controller")
 (CFNC-3.14 "void gtk_event_controller_set_propagation_phase GtkEventController* controller GtkPropagationPhase phase")
 
+(CINT "GTK_PHASE_NONE" "GtkPropagationPhase")
+(CINT "GTK_PHASE_CAPTURE" "GtkPropagationPhase")
+(CINT "GTK_PHASE_BUBBLE" "GtkPropagationPhase")
+(CINT "GTK_PHASE_TARGET" "GtkPropagationPhase")
+
+
 ;;; 3.13.3: nothing new
 
 ;;; 3.13.4:
@@ -9532,8 +9540,8 @@
 (CFNC-3.99 "GdkWindow* gdk_window_new_toplevel GdkDisplay* display gint event_mask int width int height")
 (CFNC-3.99 "GdkWindow* gdk_window_new_popup GdkDisplay* display gint event_mask GdkRectangle* position")
 (CFNC-3.99 "GdkWindow* gdk_window_new_temp GdkDisplay* display")
-(CFNC-3.99 "GdkWindow* gdk_window_new_child GdkWindow* parent gint event_mask const GdkRectangle* position")
-(CFNC-3.99 "GdkWindow* gdk_window_new_input GdkWindow* parent gint event_mask const GdkRectangle* position")
+(CFNC-3.99 "GdkWindow* gdk_window_new_child GdkWindow* parent gint event_mask GdkRectangle* position")
+(CFNC-3.99 "GdkWindow* gdk_window_new_input GdkWindow* parent gint event_mask GdkRectangle* position")
 (CFNC-3.99 "void gtk_button_set_icon_name GtkButton* button char* icon_name")
 (CFNC-3.99 "char* gtk_button_get_icon_name GtkButton* button" 'const)
 (CFNC-3.99 "void gtk_drawing_area_set_content_width GtkDrawingArea* self int width")
