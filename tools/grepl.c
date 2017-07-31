@@ -247,4 +247,5 @@ int main(int argc, char **argv)
  *   the list is for xg (ancient type checking kludge)
  * (gtk_window_resize (GTK_WINDOW grepl:shell) 600 600)
  * (load "libgtk_s7.so" (define *gtk* (inlet 'init_func 'libgtk_s7_init)))
+ * (load "/home/bil/cl/libgtk_s7.so" (define *gtk* (inlet 'init_func 'libgtk_s7_init)))
  */

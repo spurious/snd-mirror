@@ -33290,7 +33290,9 @@ static s7_pointer make_simple_vector(s7_scheme *sc, s7_int len) /* len >= 0 and 
   s7_pointer x;
   new_cell(sc, x, T_VECTOR | T_SAFE_PROCEDURE);
   vector_length(x) = len;
-  vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
+  if (len > 0)
+    vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
+  else vector_elements(x) = NULL;
   vector_dimension_info(x) = NULL;
   vector_getter(x) = default_vector_getter;
   vector_setter(x) = default_vector_setter;
@@ -33303,7 +33305,9 @@ static s7_pointer make_simple_float_vector(s7_scheme *sc, s7_int len) /* len >= 
   s7_pointer x;
   new_cell(sc, x, T_FLOAT_VECTOR | T_SAFE_PROCEDURE);
   vector_length(x) = len;
-  vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_double));
+  if (len > 0)
+    float_vector_elements(x) = (s7_double *)malloc(len * sizeof(s7_double));
+  else float_vector_elements(x) = NULL;
   vector_dimension_info(x) = NULL;
   vector_getter(x) = float_vector_getter;
   vector_setter(x) = float_vector_setter;
@@ -42084,6 +42088,9 @@ static const char *type_name_from_type(s7_scheme *sc, int32_t typ, int32_t artic
   static const char *functions[2] =      {"function",           "a function"};
   static const char *function_stars[2] = {"function*",          "a function*"};
   static const char *rngs[2] =           {"random-state",       "a random-state"};
+  static const char *inputs[2] =         {"input port",         "an input port"};
+  static const char *outputs[2] =        {"output port",        "an output port"};
+  static const char *c_objects[2] =      {"c_object",           "a c_object"};
 
   switch (typ)
     {
@@ -42134,6 +42141,9 @@ static const char *type_name_from_type(s7_scheme *sc, int32_t typ, int32_t artic
     case T_BIG_RATIO:       return(big_ratios[article]);
     case T_BIG_REAL:        return(big_reals[article]);
     case T_BIG_COMPLEX:     return(big_complexes[article]);
+    case T_INPUT_PORT:      return(inputs[article]);
+    case T_OUTPUT_PORT:     return(outputs[article]);
+    case T_C_OBJECT:        return(c_objects[article]);
     }
   return(NULL);
 }
@@ -79913,12 +79923,15 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
     for (i = 0; i < NUM_TYPES; i++)
       {
 	if ((i % 10) == 0) fprintf(stderr, "\n ");
-	fprintf(stderr, " %d", ts[i]);
+	if (ts[i] > 100)
+	  fprintf(stderr, " (%s): %d", type_name_from_type(sc, i, NO_ARTICLE), ts[i]);
+	else fprintf(stderr, " %d", ts[i]);
       }
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "permanent cells: %d (%" PRId64 " bytes)\n", permanent_cells, (s7_int)(permanent_cells * sizeof(s7_cell)));
-
+  fprintf(stderr, "gc protected size: %u, unused: %d\n", sc->protected_objects_size, sc->gpofl_loc);
+      
   for (i = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       syms++;
@@ -79948,9 +79961,42 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
     for (i = 0; i < (int)(gp->loc); i++)
       len += (hash_table_mask(gp->list[i]) + 1);
     
-    fprintf(stderr, "hash tables: %d (entries in use: %d, free: %d), ", (int)(gp->loc), len, hs);
+    fprintf(stderr, "hash tables: %d (entries in use: %d, free: %d)\n", (int)(gp->loc), len, hs);
   }
-
+  {
+    int64_t len = 0, flen = 0, ilen = 0;
+    gp = sc->vectors;
+    for (i = 0; i < (int)(gp->loc); i++)
+      {
+	s7_pointer v;
+	v = gp->list[i];
+	if (is_float_vector(v))
+	  flen += vector_length(v);
+	else
+	  {
+	    if (is_int_vector(v))
+	      ilen += vector_length(v);
+	    else len += vector_length(v);
+	  }
+      }
+    fprintf(stderr, "vectors: %u (%" PRId64 " %" PRId64 " %" PRId64 ")\n", sc->vectors->loc, len, flen, ilen);
+  }
+  {
+    int64_t len = 0, flen = 0;
+    gp = sc->input_ports;
+    for (i = 0; i < (int)(gp->loc); i++)
+      {
+	s7_pointer v;
+	v = gp->list[i];
+	if (port_data(v))
+	  {
+	    flen += port_data_size(v);
+	    if (port_needs_free(v))
+	      len += port_data_size(v);
+	  }
+      }
+    fprintf(stderr, "input ports: %d (%" PRId64 " %" PRId64 ")\n", sc->input_ports->loc, len, flen);
+  }
   {
     int32_t fs;
     uint32_t cc_stacks;
@@ -79961,8 +80007,8 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
       if (is_continuation(gp->list[i]))
 	cc_stacks += continuation_stack_size(gp->list[i]);
 
-    fprintf(stderr, "vectors: %u, input: %u, output: %u, free port: %d\ncontinuations: %u (total stack: %u), c_objects: %u, gensyms: %u, setters: %u, optlists: %u\n",
-	    sc->vectors->loc, sc->input_ports->loc, sc->output_ports->loc, fs, 
+    fprintf(stderr, "output ports: %u, free port: %d\ncontinuations: %u (total stack: %u), c_objects: %u, gensyms: %u, setters: %u, optlists: %u\n",
+	    sc->output_ports->loc, fs, 
 	    gp->loc, cc_stacks,
 	    sc->c_objects->loc, sc->gensyms->loc, sc->setters_loc, sc->optlists->loc);
   }
@@ -82552,12 +82598,10 @@ int main(int argc, char **argv)
  *   in glistener, hover/select op, give doc string, var, highlight def? and box->inspect
  *   as typed, run lint? or display op args, check types etc
  *   if undef name, search libs and give correct/closest?
- * libgtk: c_pointer wrap and unwrap with type (currently unchecked)
- *   autotest generation -- but how to get C-side values running makexg?
- *   no need for xm_obj -- either use vector or c_pointer type/info=array
- *   no need for define_structs -- these can use accessor of ^ (and special makers for iters)
- *   callback funcs, signals
- *   need (starred) types passed to make_c_pointer
+ * libgtk:
+ *   callback funcs -- 5 list as fields of c-pointer?
+ *   several more special funcs
+ *   finish lint changes to makexg.scm
  *
  * --------------------------------------------------------------------
  *
