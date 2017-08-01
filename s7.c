@@ -23016,6 +23016,10 @@ static void input_write_string(s7_scheme *sc, const char *str, int32_t len, s7_p
 
 static void closed_port_write_string(s7_scheme *sc, const char *str, int32_t len, s7_pointer port)
 {
+#if DEBUGGING
+  if (safe_strlen(str) != len)
+    fprintf(stderr, "%s: %d %d\n", str, len, safe_strlen(str));
+#endif
   simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, an_open_port_string);
 }
 
@@ -82565,7 +82569,6 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * ruby version crashes in test 4|8 -- file_copy?
- *   also some problem with ruby and the int64_t change
  *
  * finish the t563.scm bugs: a couple number type problems 31905 30802 
  * weed out unused stuff -- choose.data/choose: simple_char_eq, is_eq_caar_q not_is_string|char|pair_car
@@ -82590,7 +82593,7 @@ int main(int argc, char **argv)
  * grepl:
  *   grepl.scm for debugger.
  *      libgl_s7.c to makegl
- *   in gdb -- window showing text (via emacs? and auto decode gdb output
+ *   in gdb -- window showing text (via emacs?) and auto decode gdb output
  *   in repl auto s7let? or begin-hook for that? or begin_hook for trace? symbol-access for set!
  *   also on-going profile? room/gc stats? stacktrace?
  *   added glistener commands: M-. 
@@ -82599,13 +82602,12 @@ int main(int argc, char **argv)
  *   as typed, run lint? or display op args, check types etc
  *   if undef name, search libs and give correct/closest?
  * libgtk:
- *   callback funcs -- 5 list as fields of c-pointer?
+ *   callback funcs need calling check -- 5 list as fields of c-pointer?
  *   several more special funcs
- *   finish lint changes to makexg.scm
  *
  * --------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6
+ *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
  * tmac          |      |      |      || 9052 |  615   259   261
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125

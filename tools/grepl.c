@@ -23,6 +23,18 @@ static glistener *unwrap_glistener(s7_pointer p)
   return((glistener *)s7_c_pointer(p));
 }
 
+
+static s7_pointer g_glistener_text_widget(s7_scheme *sc, s7_pointer args) 
+{
+  return(s7_make_c_pointer_with_type(sc, glistener_text_widget(unwrap_glistener(s7_car(args))), s7_make_symbol(sc, "GtkWidget*"), s7_f(sc)));
+}
+
+static s7_pointer g_glistener_text_buffer(s7_scheme *sc, s7_pointer args) 
+{
+  return(s7_make_c_pointer_with_type(sc, glistener_text_buffer(unwrap_glistener(s7_car(args))), s7_make_symbol(sc, "GtkTextBuffer*"), s7_f(sc)));
+}
+
+
 static s7_pointer g_evaluate(s7_scheme *sc, s7_pointer args)
 {
   char *str;
@@ -107,6 +119,8 @@ static s7_pointer g_set_prompt(s7_scheme *sc, s7_pointer args)
 
 static void glistener_init(glistener *g1)
 {
+  s7_define_function(s7, "glistener-text-widget", g_glistener_text_widget, 1, 0, false, "(glistener-text-widget g)");
+  s7_define_function(s7, "glistener-text-buffer", g_glistener_text_buffer, 1, 0, false, "(glistener-text-buffer g)");
   s7_define_function(s7, "append-text", g_append_text, 2, 0, false, "(append-text g txt)");
   s7_define_function(s7, "insert-text", g_insert_text, 2, 0, false, "(insert-text g txt)");
   s7_define_function(s7, "cursor-position", g_cursor_position, 1, 0, false, "(cursor-position g)");
@@ -119,7 +133,7 @@ static void glistener_init(glistener *g1)
   s7_define_function(s7, "complete", g_complete, 1, 0, false, "(complete g)");
   s7_define_function(s7, "scroll", g_scroll_to_end, 1, 0, false, "(scroll g)");
   s7_define_function(s7, "clear", g_clear, 1, 0, false, "(clear g)");
-  s7_define_variable(s7, "*g1*", wrap_glistener(g1));
+  s7_define_variable(s7, "*g*", wrap_glistener(g1));
 }
 
 static GdkCursor *arrow_cursor;
@@ -191,9 +205,10 @@ static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name,
   s7_for_each_symbol_name(s7, symbol_func, data);
 }
 
-int main(int argc, char **argv)
+
+int main(int argc, char **argv) 
 {
-  GtkWidget *shell, *frame, *vb;
+  GtkWidget *shell, *frame, *vb, *hb;
 
   s7 = s7_init();  
 
@@ -206,12 +221,12 @@ int main(int argc, char **argv)
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
 
-#if (!GTK_CHECK_VERSION(3, 0, 0))
-  vb = gtk_vbox_new(false, 0);
-#else
+  hb = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_container_add(GTK_CONTAINER(shell), hb);
+  gtk_widget_show(hb);
+
   vb = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-#endif
-  gtk_container_add(GTK_CONTAINER(shell), vb);
+  gtk_container_add(GTK_CONTAINER(hb), vb);
   gtk_widget_show(vb);
 
   frame = gtk_frame_new(NULL);
@@ -219,6 +234,7 @@ int main(int argc, char **argv)
   gtk_widget_show(frame);
   gtk_container_add(GTK_CONTAINER(vb), frame);
 
+  s7_define_variable(s7, "grepl:hbox", s7_make_c_pointer_with_type(s7, hb, s7_make_symbol(s7, "GtkBox*"), s7_f(s7)));
   s7_define_variable(s7, "grepl:vbox", s7_make_c_pointer_with_type(s7, vb, s7_make_symbol(s7, "GtkBox*"), s7_f(s7)));
   s7_define_variable(s7, "grepl:shell", s7_make_c_pointer_with_type(s7, shell, s7_make_symbol(s7, "GtkWindow*"), s7_f(s7)));
   s7_define_variable(s7, "grepl:frame", s7_make_c_pointer_with_type(s7, frame, s7_make_symbol(s7, "GtkFrame*"), s7_f(s7)));

@@ -577,6 +577,10 @@ static bool is_prompt_end(glistener *g, int end_pos)
 
 /* ---------------- listener text ---------------- */
 
+GtkWidget *glistener_text_widget(glistener *g) {return(g->text);}
+GtkTextBuffer *glistener_text_buffer(glistener *g) {return(g->buffer);}
+
+
 static void remember_listener_string(glistener *g, const char *str)
 {
   int i, top, len;
@@ -2875,6 +2879,8 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
 }
 
 /* changes:
+ * 31-Jul-17: added access to text and buffer.
+ * --------
  * 19-Mar-15: changed strcopy macro.
  * 7-June:    added keyer function.
  * 4-June:    added colorizer function.

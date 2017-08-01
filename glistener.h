@@ -82,6 +82,10 @@ char *glistener_evaluate           (glistener *g);
 char *glistener_complete           (glistener *g);
 
 
+GtkWidget *glistener_text_widget(glistener *g);
+GtkTextBuffer *glistener_text_buffer(glistener *g);
+
+
 /* -------------------------------------------------------------------------------- */
 /* an annotated version of the same info:
  *
