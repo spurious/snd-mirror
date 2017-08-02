@@ -1,11 +1,15 @@
-Snd 17.5:
+Snd 17.6.
 
-s7: s7_history and s7_add_to_history (Kjetil's suggestion).
-    (*s7* 'history) for non-error scheme-side access to the history info
-    lambda* keyword argument handling changed slightly.
-    multithread sanity-checks thanks to Kjetil.
-    Kjetil also ported s7 to mingw.
+s7: (*s7* 'heap-size) is settable
+    added s7_define_typed_function_star to s7.h
+    changed to the new (c99?) int64_t style int types.
+    added two optional args to c-pointer: type, info
+      and added s7_is_c_pointer_of_type.
+    libgtk_s7.c (in-progress)
 
-checked: gtk 3.91.0, sbcl 1.3.18, FC 26 (gcc 7.1.1)
+clm: removed clm-default-frequency
+     object->let support for generators
 
-Thanks!: Kjetil Matheussen, Rick Taube
+checked: sbcl 1.3.19|20, gtk 3.91.1
+
+Thanks!: Mike Scholz, James Hearon
