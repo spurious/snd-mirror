@@ -8971,10 +8971,10 @@
 (CFNC-3.14 "GtkPropagationPhase gtk_event_controller_get_propagation_phase GtkEventController* controller")
 (CFNC-3.14 "void gtk_event_controller_set_propagation_phase GtkEventController* controller GtkPropagationPhase phase")
 
-(CINT "GTK_PHASE_NONE" "GtkPropagationPhase")
-(CINT "GTK_PHASE_CAPTURE" "GtkPropagationPhase")
-(CINT "GTK_PHASE_BUBBLE" "GtkPropagationPhase")
-(CINT "GTK_PHASE_TARGET" "GtkPropagationPhase")
+(CINT-3.14 "GTK_PHASE_NONE" "GtkPropagationPhase")
+(CINT-3.14 "GTK_PHASE_CAPTURE" "GtkPropagationPhase")
+(CINT-3.14 "GTK_PHASE_BUBBLE" "GtkPropagationPhase")
+(CINT-3.14 "GTK_PHASE_TARGET" "GtkPropagationPhase")
 
 
 ;;; 3.13.3: nothing new

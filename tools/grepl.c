@@ -117,10 +117,17 @@ static s7_pointer g_set_prompt(s7_scheme *sc, s7_pointer args)
   return(s7_cadr(args));
 }
 
+static s7_pointer g_glistener_set_font(s7_scheme *sc, s7_pointer args)
+{
+  glistener_set_font(unwrap_glistener(s7_car(args)), pango_font_description_from_string(s7_string(s7_cadr(args))));
+  return(s7_cadr(args));
+}
+
 static void glistener_init(glistener *g1)
 {
   s7_define_function(s7, "glistener-text-widget", g_glistener_text_widget, 1, 0, false, "(glistener-text-widget g)");
   s7_define_function(s7, "glistener-text-buffer", g_glistener_text_buffer, 1, 0, false, "(glistener-text-buffer g)");
+  s7_define_function(s7, "glistener-set-font", g_glistener_set_font, 2, 0, false, "(glistener-set-font g font)");
   s7_define_function(s7, "append-text", g_append_text, 2, 0, false, "(append-text g txt)");
   s7_define_function(s7, "insert-text", g_insert_text, 2, 0, false, "(insert-text g txt)");
   s7_define_function(s7, "cursor-position", g_cursor_position, 1, 0, false, "(cursor-position g)");
@@ -264,4 +271,9 @@ int main(int argc, char **argv)
  * (gtk_window_resize (GTK_WINDOW grepl:shell) 600 600)
  * (load "libgtk_s7.so" (define *gtk* (inlet 'init_func 'libgtk_s7_init)))
  * (load "/home/bil/cl/libgtk_s7.so" (define *gtk* (inlet 'init_func 'libgtk_s7_init)))
+ * (glistener-set-font *g* "Monospace 14")
+ *
+ * gcc -c libgtk_s7.c -o libgtk_s7.o -I. -fPIC `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl
+ * gcc libgtk_s7.o -shared -o libgtk_s7.so
+ * (load "libgtk_s7.so" (define *gtk* (inlet 'init_func 'libgtk_s7_init)))
  */

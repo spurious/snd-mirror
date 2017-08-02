@@ -23016,10 +23016,6 @@ static void input_write_string(s7_scheme *sc, const char *str, int32_t len, s7_p
 
 static void closed_port_write_string(s7_scheme *sc, const char *str, int32_t len, s7_pointer port)
 {
-#if DEBUGGING
-  if (safe_strlen(str) != len)
-    fprintf(stderr, "%s: %d %d\n", str, len, safe_strlen(str));
-#endif
   simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, an_open_port_string);
 }
 
@@ -23060,8 +23056,7 @@ static void stderr_write_string(s7_scheme *sc, const char *str, int32_t len, s7_
 
 static void string_write_string(s7_scheme *sc, const char *str, int32_t len, s7_pointer pt)
 {
-  uint32_t new_len;  /* len is known to be non-zero */
-
+  uint32_t new_len;  /* len is known to be non-zero, str may not be 0-terminated */
   new_len = port_position(pt) + (uint32_t)len;
   if (new_len >= port_data_size(pt))
     resize_port_data(pt, new_len * 2);

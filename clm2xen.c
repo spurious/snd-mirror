@@ -6593,7 +6593,7 @@ static s7_pointer g_make_polywave(s7_scheme *sc, s7_pointer args)
   mus_float_t freq;
   mus_float_t *xcoeffs = NULL, *ycoeffs = NULL;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND; /* 1 clm.h */
-  s7_pointer vx, vy, p, px, py, pr, pf, pt;
+  s7_pointer vx = NULL, vy = NULL, p, px, py, pr, pf, pt;
   int error = NO_PROBLEM_IN_LIST;
 
   pr = s7_cadr(args);

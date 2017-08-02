@@ -35088,7 +35088,7 @@ static Xen gxg_gtk_init(Xen argc, Xen argv)
   if (Xen_is_bound(argv)) 
     { 
       if (Xen_is_bound(argc) && Xen_is_integer(argc) && Xen_to_C_int(argc) <= Xen_list_length(argv)) 
-	ref_argc = Xen_to_C_int(argc); 
+         ref_argc = Xen_to_C_int(argc); 
       else ref_argc = Xen_list_length(argv); 
     } 
   ref_argv = (char**)calloc(ref_argc, sizeof(char*)); 
@@ -35136,8 +35136,8 @@ static Xen gxg_gtk_init_check(Xen argc, Xen argv)
     result = C_to_Xen_gboolean(gtk_init_check(&ref_argc, &ref_argv));
     return(Xen_list_3(result, C_to_Xen_int(ref_argc), C_to_Xen_char__(ref_argv)));
   }
-#endif
 }
+#endif
 
 static Xen gxg_make_target_entry(Xen lst)
 {
@@ -44794,10 +44794,6 @@ static void define_integers(void)
   define_integer(GTK_DRAG_RESULT_TIMEOUT_EXPIRED);
   define_integer(GTK_DRAG_RESULT_GRAB_BROKEN);
   define_integer(GTK_DRAG_RESULT_ERROR);
-  define_integer(GTK_PHASE_NONE);
-  define_integer(GTK_PHASE_CAPTURE);
-  define_integer(GTK_PHASE_BUBBLE);
-  define_integer(GTK_PHASE_TARGET);
 #if GTK_CHECK_VERSION(2, 14, 0)
   define_integer(GTK_CALENDAR_SHOW_DETAILS);
   define_integer(GDK_CROSSING_GTK_GRAB);
@@ -45190,6 +45186,10 @@ static void define_integers(void)
 #endif
 
 #if GTK_CHECK_VERSION(3, 14, 0)
+  define_integer(GTK_PHASE_NONE);
+  define_integer(GTK_PHASE_CAPTURE);
+  define_integer(GTK_PHASE_BUBBLE);
+  define_integer(GTK_PHASE_TARGET);
   define_integer(GTK_TEXT_VIEW_LAYER_BELOW);
   define_integer(GTK_TEXT_VIEW_LAYER_ABOVE);
 #endif
@@ -46904,10 +46904,6 @@ static enummer_t enum_info[] = {
         {"GTK_DRAG_RESULT_TIMEOUT_EXPIRED", "GtkDragResult", GTK_DRAG_RESULT_TIMEOUT_EXPIRED},
         {"GTK_DRAG_RESULT_GRAB_BROKEN", "GtkDragResult", GTK_DRAG_RESULT_GRAB_BROKEN},
         {"GTK_DRAG_RESULT_ERROR", "GtkDragResult", GTK_DRAG_RESULT_ERROR},
-        {"GTK_PHASE_NONE", "GtkPropagationPhase", GTK_PHASE_NONE},
-        {"GTK_PHASE_CAPTURE", "GtkPropagationPhase", GTK_PHASE_CAPTURE},
-        {"GTK_PHASE_BUBBLE", "GtkPropagationPhase", GTK_PHASE_BUBBLE},
-        {"GTK_PHASE_TARGET", "GtkPropagationPhase", GTK_PHASE_TARGET},
 #endif
 #if GTK_CHECK_VERSION(2, 14, 0)
         {"GTK_CALENDAR_SHOW_DETAILS", "GtkCalendarDisplayOptions", GTK_CALENDAR_SHOW_DETAILS},
@@ -46995,6 +46991,10 @@ static enummer_t enum_info[] = {
         {"GTK_STACK_TRANSITION_TYPE_OVER_UP_DOWN", "GtkStackTransitionType", GTK_STACK_TRANSITION_TYPE_OVER_UP_DOWN},
 #endif
 #if GTK_CHECK_VERSION(3, 14, 0)
+        {"GTK_PHASE_NONE", "GtkPropagationPhase", GTK_PHASE_NONE},
+        {"GTK_PHASE_CAPTURE", "GtkPropagationPhase", GTK_PHASE_CAPTURE},
+        {"GTK_PHASE_BUBBLE", "GtkPropagationPhase", GTK_PHASE_BUBBLE},
+        {"GTK_PHASE_TARGET", "GtkPropagationPhase", GTK_PHASE_TARGET},
         {"GTK_TEXT_VIEW_LAYER_BELOW", "GtkTextViewLayer", GTK_TEXT_VIEW_LAYER_BELOW},
         {"GTK_TEXT_VIEW_LAYER_ABOVE", "GtkTextViewLayer", GTK_TEXT_VIEW_LAYER_ABOVE},
 #endif
@@ -47310,7 +47310,7 @@ void Init_libxg(void)
           Xen_provide_feature("gtk2");
         #endif
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("31-Jul-17"));
+      Xen_define("xg-version", C_string_to_Xen_string("01-Aug-17"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
