@@ -2307,8 +2307,13 @@ static Xen s7_xen_sound_fill(s7_scheme *sc, Xen args)
 static void init_xen_sound(void)
 {
 #if HAVE_SCHEME
-  xen_sound_tag = s7_new_type_x(s7, "<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, 
-				NULL, NULL, NULL, s7_xen_sound_length, s7_xen_sound_copy, NULL, s7_xen_sound_fill);
+  xen_sound_tag = s7_make_c_type(s7, "<sound>");
+  s7_c_type_set_print(s7, xen_sound_tag, print_xen_sound);
+  s7_c_type_set_free(s7, xen_sound_tag, free_xen_sound);
+  s7_c_type_set_equal(s7, xen_sound_tag, s7_xen_sound_equalp);
+  s7_c_type_set_length(s7, xen_sound_tag, s7_xen_sound_length);
+  s7_c_type_set_copy(s7, xen_sound_tag, s7_xen_sound_copy);
+  s7_c_type_set_fill(s7, xen_sound_tag, s7_xen_sound_fill);
 #else
 #if HAVE_RUBY
   xen_sound_tag = Xen_make_object_type("XenSound", sizeof(xen_sound));
@@ -4346,9 +4351,6 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   return(args[orig_arg[0] - 1]);
 }
 
-
-static Xen g_new_sound(Xen arglist)
-{
   #if HAVE_SCHEME
     #define new_sound_example "(" S_new_sound " \"test.snd\" 1 22050 " S_mus_bshort " " S_mus_next " \"no comment\" 1000)"
   #endif
@@ -4363,6 +4365,139 @@ static Xen g_new_sound(Xen arglist)
 creates a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
 The 'size' argument sets the number of samples (zeros) in the newly created sound. \n  " new_sound_example
 
+#if HAVE_SCHEME
+static s7_pointer g_new_sound(s7_scheme *sc, s7_pointer args)
+{
+  snd_info *sp = NULL; 
+  mus_header_t ht;
+  mus_sample_t df;
+  char *str;
+  int sr, ch, chan;
+  mus_long_t size, len;
+  const char *com, *file;
+  io_error_t io_err;
+  s7_pointer p, fp;
+
+  fp = s7_car(args);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_string(fp))
+	return(s7_wrong_type_arg_error(sc, S_new_sound, 1, fp, "a string (a filename)"));
+      file = s7_string(fp);
+      str = mus_expand_filename(file);
+      if (!str)
+	Xen_out_of_range_error(S_new_sound, 1, fp, "bad file name?");
+    }
+  else str = snd_tempnam();
+  mus_sound_forget(str);
+
+  fp = s7_cadr(args);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_new_sound, 2, fp, "an integer (channels)"));
+      ch = s7_integer(fp);
+      if (ch <= 0)
+	Xen_out_of_range_error(S_new_sound, 2, fp, "channels <= 0?");
+    }
+  else ch = default_output_chans(ss);
+
+  p = s7_cddr(args);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_new_sound, 3, fp, "an integer (srate)"));
+      sr = s7_integer(fp);
+      if (sr <= 0)
+	Xen_out_of_range_error(S_new_sound, 3, fp, "srate <= 0?");
+    }
+  else sr = default_output_srate(ss);
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_new_sound, 4, fp, "an integer (sample type)"));
+      df = (mus_sample_t)s7_integer(fp);
+      if (!(mus_is_sample_type(df)))
+	Xen_out_of_range_error(S_new_sound, 4, fp, "invalid sample type");
+    }
+  else df = default_output_sample_type(ss);
+
+  p = s7_cddr(p);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_new_sound, 5, fp, "an integer (header type)"));
+      ht = (mus_header_t)s7_integer(fp);
+      if (!(mus_is_header_type(ht)))
+	Xen_out_of_range_error(S_new_sound, 5, fp, "invalid header type");
+      if (!(mus_header_writable(ht, df)))
+	Xen_error(BAD_HEADER,
+		  Xen_list_3(C_string_to_Xen_string(S_new_sound ": can't write ~A data to a ~A header"),
+			     C_string_to_Xen_string(mus_sample_type_short_name(df)),
+			     C_string_to_Xen_string(mus_header_type_name(ht))));
+    }
+  else ht = default_output_header_type(ss);
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_string(fp))
+	return(s7_wrong_type_arg_error(sc, S_new_sound, 6, fp, "a string"));
+      com = s7_string(fp);
+    }
+  else com = NULL;
+  
+  fp = s7_caddr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_new_sound, 7, fp, "an integer (initial file size)"));
+      len = s7_integer(fp);
+      if (len < 0)
+	Xen_out_of_range_error(S_new_sound, 7, fp, "size < 0?");
+    }
+  else len = 1;
+
+  io_err = snd_write_header(str, ht, sr, ch, len * ch, df, com, NULL); /* last arg is loop info */
+  if (io_err != IO_NO_ERROR)
+    {
+      s7_pointer filep;
+      filep = s7_make_string(sc, str);
+      if (str) {free(str); str = NULL;}
+      Xen_error(Xen_make_error_type("IO-error"),
+		Xen_list_3(C_string_to_Xen_string(S_new_sound ": ~S, ~A"),
+			   filep,
+			   C_string_to_Xen_string(snd_io_strerror())));
+    }
+
+  chan = snd_reopen_write(str);
+  lseek(chan, mus_header_data_location(), SEEK_SET);
+
+  size = ch * mus_samples_to_bytes(df, len);
+  if (size > 0)
+    {
+      unsigned char *buf;
+      buf = (unsigned char *)calloc(size, sizeof(unsigned char));
+      if (write(chan, buf, size) != size) fprintf(stderr, "new-sound %s write error", str);
+      free(buf);
+    }
+
+  snd_close(chan, str);
+  ss->open_requestor = FROM_NEW_SOUND;
+
+  sp = sound_is_silence(snd_open_file(str, FILE_READ_WRITE));
+
+  if (str) free(str);
+  if (sp) return(C_int_to_Xen_sound(sp->index));
+  return(Xen_false);
+}
+#else
+static Xen g_new_sound(Xen arglist)
+{
   snd_info *sp = NULL; 
   mus_header_t ht;
   mus_sample_t df;
@@ -4470,7 +4605,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   if (sp) return(C_int_to_Xen_sound(sp->index));
   return(Xen_false);
 }
-
+#endif
 
 static Xen g_speed_control_style(Xen snd)
 {
@@ -5831,7 +5966,6 @@ Xen_wrap_1_optional_arg(g_update_sound_w, g_update_sound)
 Xen_wrap_1_optional_arg(g_save_sound_w, g_save_sound)
 Xen_wrap_1_arg(g_open_sound_w, g_open_sound)
 Xen_wrap_1_arg(g_view_sound_w, g_view_sound)
-Xen_wrap_any_args(g_new_sound_w, g_new_sound)
 Xen_wrap_1_optional_arg(g_revert_sound_w, g_revert_sound)
 Xen_wrap_any_args(g_save_sound_as_w, g_save_sound_as)
 Xen_wrap_4_optional_args(g_apply_controls_w, g_apply_controls)
@@ -5920,6 +6054,7 @@ Xen_wrap_2_optional_args(g_status_report_w, g_status_report)
 #define g_set_speed_control_style_w g_set_speed_control_style_reversed
 #define g_set_speed_control_tones_w g_set_speed_control_tones_reversed
 #else
+Xen_wrap_any_args(g_new_sound_w, g_new_sound)
 Xen_wrap_any_args(g_open_raw_sound_w, g_open_raw_sound)
 Xen_wrap_2_optional_args(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
 Xen_wrap_2_optional_args(g_set_read_only_w, g_set_read_only)
@@ -6076,13 +6211,14 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_unsafe_typed_procedure(S_save_sound,     g_save_sound_w,         0, 1, 0, H_save_sound,        s7_make_signature(s7, 2, sd, t));
   Xen_define_unsafe_typed_procedure(S_open_sound,     g_open_sound_w,         1, 0, 0, H_open_sound,        s7_make_signature(s7, 2, sd, s));
   Xen_define_unsafe_typed_procedure(S_view_sound,     g_view_sound_w,         1, 0, 0, H_view_sound,        s7_make_signature(s7, 2, sd, s));
-  Xen_define_unsafe_typed_procedure(S_new_sound,      g_new_sound_w,          0, 0, 1, H_new_sound,         s7_make_circular_signature(s7, 0, 1, t));
   Xen_define_unsafe_typed_procedure(S_revert_sound,   g_revert_sound_w,       0, 1, 0, H_revert_sound,      s7_make_signature(s7, 2, sd, sd));
   Xen_define_unsafe_typed_procedure(S_save_sound_as,  g_save_sound_as_w,      0, 0, 1, H_save_sound_as,     s7_make_circular_signature(s7, 0, 1, t));
 
 #if HAVE_SCHEME
+  s7_define_function_star(s7, S_new_sound, g_new_sound, "file channels srate sample-type header-type comment size", H_new_sound);
   s7_define_function_star(s7, S_open_raw_sound, g_open_raw_sound, "file channels srate sample-type", H_open_raw_sound);
 #else
+  Xen_define_unsafe_typed_procedure(S_new_sound,      g_new_sound_w,          0, 0, 1, H_new_sound,         s7_make_circular_signature(s7, 0, 1, t));
   Xen_define_unsafe_typed_procedure(S_open_raw_sound, g_open_raw_sound_w,     0, 0, 1, H_open_raw_sound,    s7_make_circular_signature(s7, 0, 1, t));
 #endif
 

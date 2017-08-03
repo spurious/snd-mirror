@@ -10,11 +10,13 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 26
-#define XEN_VERSION "3.26"
+#define XEN_MINOR_VERSION 27
+#define XEN_VERSION "3.27"
 
 /* HISTORY:
  *
+ *  2-Aug-17:  changed XEN_MAKE_OBJECT_TYPE in s7.
+ *  --------
  *  29-Jul-16: Xen_define_unsafe_typed_procedure.
  *  --------
  *  20-Aug-15: Xen_define_typed_procedure, Xen_define_typed_dilambda.
@@ -1203,16 +1205,29 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 
 #define XEN_MARK_OBJECT_TYPE                                          void
 #define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Reverse, Fill) \
-                                                                      s7_new_type_x(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Reverse, Fill)
+  ({ int32_t tag;							\
+     tag = s7_make_c_type(s7, Name);					\
+     if (Print) s7_c_type_set_print(s7, tag, Print);			\
+     if (Free) s7_c_type_set_free(s7, tag, Free);			\
+     if (Equal) s7_c_type_set_equal(s7, tag, Equal);			\
+     if (Gc_Mark) s7_c_type_set_mark(s7, tag, Gc_Mark);			\
+     if (Apply) s7_c_type_set_apply(s7, tag, Apply);			\
+     if (Set) s7_c_type_set_set(s7, tag, Set);				\
+     if (Length) s7_c_type_set_length(s7, tag, Length);			\
+     if (Copy) s7_c_type_set_copy(s7, tag, Copy);			\
+     if (Reverse) s7_c_type_set_reverse(s7, tag, Reverse);		\
+     if (Fill) s7_c_type_set_fill(s7, tag, Fill);			\
+  tag; })
+
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
                                                                       static void Wrapped_Free(void *obj) {Original_Free((Type *)obj);}
 #define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
                                                                       static char *Wrapped_Print(s7_scheme *sc, void *obj) {return(Original_Print((Type *)obj));}
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)                return(s7_make_object(s7, Tag, Val))
-#define XEN_MAKE_OBJECT(Tag, Val, ig1, ig2)                           s7_make_object(s7, Tag, Val)
-#define XEN_OBJECT_REF(Arg)                                           s7_object_value(Arg)
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)                return(s7_make_c_object(s7, Tag, Val))
+#define XEN_MAKE_OBJECT(Tag, Val, ig1, ig2)                           s7_make_c_object(s7, Tag, Val)
+#define XEN_OBJECT_REF(Arg)                                           s7_c_object_value(Arg)
 #define XEN_OBJECT_TYPE                                               int /* tag type */
-#define XEN_OBJECT_TYPE_P(Obj, Tag)                                   (s7_object_type(Obj) == Tag)
+#define XEN_OBJECT_TYPE_P(Obj, Tag)                                   (s7_c_object_type(Obj) == Tag)
 
 #define XEN_HOOK_P(Arg)                                               ((Arg) != XEN_FALSE)
 #define XEN_DEFINE_HOOK(Name, Descr, Arity, Help)                     s7_define_constant_with_documentation(s7, Name, s7_eval_c_string(s7, Descr), Help)

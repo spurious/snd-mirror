@@ -142,7 +142,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) \
   do {if (s7_is_integer(Xen_Arg)) C_Val = s7_integer(Xen_Arg); else {C_Val = 0.0; Xen_check_type(false, Xen_Arg, ArgNum, Caller, "an integer");}} while (0)
 
-#define Xen_object_ref_checked(Obj, Type) s7_object_value_checked(Obj, Type)
+#define Xen_object_ref_checked(Obj, Type) s7_c_object_value_checked(Obj, Type)
 #define XEN_NULL NULL
 #endif
 
@@ -1551,7 +1551,7 @@ static s7_pointer g_clm_let;
 Xen mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 {
 #if HAVE_SCHEME
-  return(s7_make_object_with_let(s7, mus_xen_tag, gn, g_clm_let));
+  return(s7_make_c_object_with_let(s7, mus_xen_tag, gn, g_clm_let));
 #else
   return(Xen_make_object(mus_xen_tag, gn, mark_mus_xen, free_mus_xen));
 #endif
@@ -11529,7 +11529,7 @@ static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL)
   static s7_double mus_ ## Type ## _dp(s7_pointer p)			\
   {									\
     mus_xen *gn;							\
-    gn = (mus_xen *)s7_object_value(p);					\
+    gn = (mus_xen *)s7_c_object_value(p);				\
     return(Func(gn->gen));						\
   }
 
@@ -11546,7 +11546,7 @@ static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL)
   static s7_double mus_ ## Type ## _dp(s7_pointer p)			\
   {									\
     mus_xen *gn;							\
-    gn = (mus_xen *)s7_object_value(p);					\
+    gn = (mus_xen *)s7_c_object_value(p);				\
     return(Func1(gn->gen));						\
   }									\
   static s7_double mus_ ## Type ## _dvd(void *o, s7_double d)		\
@@ -11556,7 +11556,7 @@ static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL)
   }									\
   static s7_double mus_ ## Type ## _dpd(s7_pointer p, s7_double d)	\
   {									\
-    mus_xen *gn = (mus_xen *)s7_object_value(p);			\
+    mus_xen *gn = (mus_xen *)s7_c_object_value(p);			\
     return(Func2(gn->gen, d));						\
   }
 
@@ -11573,7 +11573,7 @@ static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL)
   static s7_double mus_ ## Type ## _dp(s7_pointer p)			\
   {									\
     mus_xen *gn;							\
-    gn = (mus_xen *)s7_object_value(p);					\
+    gn = (mus_xen *)s7_c_object_value(p);				\
     return(Func1(gn->gen));						\
   }									\
   static s7_double mus_ ## Type ## _dvd(void *o, s7_double d)		\
@@ -11583,7 +11583,7 @@ static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL)
   }									\
   static s7_double mus_ ## Type ## _dpd(s7_pointer p, s7_double d)	\
   {									\
-    mus_xen *gn = (mus_xen *)s7_object_value(p);			\
+    mus_xen *gn = (mus_xen *)s7_c_object_value(p);			\
     return(Func2(gn->gen, d));						\
   }									\
   static s7_double mus_ ## Type ## _dvdd(void *o, s7_double x1, s7_double x2)		\
@@ -11752,7 +11752,7 @@ static s7_double mus_formant_bank_dvd(void *o, s7_double x)
 
 static s7_double mus_formant_bank_dpd(s7_pointer p, s7_double x)
 {
-  mus_xen *gn = (mus_xen *)s7_object_value(p);
+  mus_xen *gn = (mus_xen *)s7_c_object_value(p);
   return(mus_formant_bank(gn->gen, x));
 }
 
@@ -11764,7 +11764,7 @@ static s7_double mus_formant_bank_dv(void *o)
 
 static s7_double mus_formant_bank_dp(s7_pointer p)
 {
-  mus_xen *gn = (mus_xen *)s7_object_value(p);
+  mus_xen *gn = (mus_xen *)s7_c_object_value(p);
   return(mus_formant_bank(gn->gen, 0.0));
 }
 
@@ -11776,7 +11776,7 @@ static s7_double mus_set_formant_frequency_dvd(void *o, s7_double x)
 
 static s7_double mus_set_formant_frequency_dpd(s7_pointer p, s7_double x)
 {
-  mus_xen *gn = (mus_xen *)s7_object_value(p);
+  mus_xen *gn = (mus_xen *)s7_c_object_value(p);
   return(mus_set_formant_frequency(gn->gen, x));
 }
 
@@ -11795,7 +11795,7 @@ static s7_double out_bank_d_pid(s7_pointer gens, s7_int loc, s7_double x)
   els = s7_vector_elements(gens);
   len = s7_vector_length(gens);
   for (i = 0; i < len; i++)
-    out_any_2(loc, mus_apply(((mus_xen *)(s7_object_value(els[i])))->gen, x, 0.0), i, S_out_bank);
+    out_any_2(loc, mus_apply(((mus_xen *)(s7_c_object_value(els[i])))->gen, x, 0.0), i, S_out_bank);
   return(x);
 }
 
@@ -12527,7 +12527,7 @@ static s7_pointer generator_to_let(s7_scheme *sc, s7_pointer args)
 
   gen = s7_car(args);
   let = s7_cadr(args);
-  gn = (mus_xen *)s7_object_value(gen);
+  gn = (mus_xen *)s7_c_object_value(gen);
   g = gn->gen;  /* gn->nvcts and gn->vcts hold the arrays and functions */
 
   if (mus_name_exists(g)) 
@@ -12863,9 +12863,15 @@ static void mus_xen_init(void)
   current_connect_func = Xen_false;
 
 #if HAVE_SCHEME
-  mus_xen_tag = s7_new_type_x(s7, "<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
-			      mus_xen_apply, NULL, s7_mus_length, s7_mus_copy, NULL, NULL);
-  s7_set_object_print_readably(mus_xen_tag, mus_generator_to_readable_string);
+  mus_xen_tag = s7_make_c_type(s7, "<generator>");
+  s7_c_type_set_print(s7, mus_xen_tag, print_mus_xen);
+  s7_c_type_set_free(s7, mus_xen_tag, free_mus_xen);
+  s7_c_type_set_equal(s7, mus_xen_tag, s7_equalp_mus_xen);
+  s7_c_type_set_mark(s7, mus_xen_tag, mark_mus_xen);
+  s7_c_type_set_apply(s7, mus_xen_tag, mus_xen_apply);
+  s7_c_type_set_length(s7, mus_xen_tag, s7_mus_length);
+  s7_c_type_set_copy(s7, mus_xen_tag, s7_mus_copy);
+  s7_c_type_set_print_readably(s7, mus_xen_tag, mus_generator_to_readable_string);
 
   mus_error_symbol = s7_make_symbol(s7, "mus-error");
   clm_error_info = s7_list(s7, 4, s7_make_string(s7, "~A: ~A ~A"), s7_nil(s7), s7_nil(s7), s7_nil(s7));

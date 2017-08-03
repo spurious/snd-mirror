@@ -98,7 +98,7 @@ static bool equal_dax(void *val1, void *val2)
 static void mark_dax(void *val)
 {
   dax *o = (dax *)val;
-  if (o) s7_mark_object(o->data);
+  if (o) s7_mark_c_object(o->data);
 }
 
 static int dax_type_tag = 0;
@@ -111,27 +111,27 @@ static s7_pointer make_dax(s7_scheme *sc, s7_pointer args)
   if (s7_cdr(args) != s7_nil(sc))
     o->data = s7_car(s7_cdr(args));
   else o->data = s7_nil(sc);
-  return(s7_make_object(sc, dax_type_tag, (void *)o));
+  return(s7_make_c_object(sc, dax_type_tag, (void *)o));
 }
 
 static s7_pointer is_dax(s7_scheme *sc, s7_pointer args)
 {
   return(s7_make_boolean(sc, 
-			 s7_is_object(s7_car(args)) &&
-			 s7_object_type(s7_car(args)) == dax_type_tag));
+			 s7_is_c_object(s7_car(args)) &&
+			 s7_c_object_type(s7_car(args)) == dax_type_tag));
 }
 
 static s7_pointer dax_x(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
-  o = (dax *)s7_object_value(s7_car(args));
+  o = (dax *)s7_c_object_value(s7_car(args));
   return(s7_make_real(sc, o->x));
 }
 
 static s7_pointer set_dax_x(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
-  o = (dax *)s7_object_value(s7_car(args));
+  o = (dax *)s7_c_object_value(s7_car(args));
   o->x = s7_real(s7_car(s7_cdr(args)));
   return(s7_car(s7_cdr(args)));
 }
@@ -139,14 +139,14 @@ static s7_pointer set_dax_x(s7_scheme *sc, s7_pointer args)
 static s7_pointer dax_data(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
-  o = (dax *)s7_object_value(s7_car(args));
+  o = (dax *)s7_c_object_value(s7_car(args));
   return(o->data);
 }
 
 static s7_pointer set_dax_data(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
-  o = (dax *)s7_object_value(s7_car(args));
+  o = (dax *)s7_c_object_value(s7_car(args));
   o->data = s7_car(s7_cdr(args));
   return(o->data);
 }
@@ -271,21 +271,21 @@ static s7_pointer g_make_block(s7_scheme *sc, s7_pointer args)
   g = (g_block *)calloc(1, sizeof(g_block));
   g->size = (size_t)s7_integer(s7_car(args));
   g->data = (double *)calloc(g->size, sizeof(double));
-  new_g = s7_make_object(sc, g_block_type, (void *)g);
-  s7_object_set_let(new_g, g_block_methods);
+  new_g = s7_make_c_object(sc, g_block_type, (void *)g);
+  s7_c_object_set_let(new_g, g_block_methods);
   s7_openlet(sc, new_g);
   return(new_g);
 }
 
 static s7_pointer g_to_block(s7_scheme *sc, s7_pointer args)
 {
-  #define g_block_help "(block ...) returns a block object with the arguments as its contents."
+#define g_block_help "(block ...) returns a block c_object with the arguments as its contents."
   s7_pointer p, b;
   size_t i, len;
   g_block *gb;
   len = s7_list_length(sc, args);
   b = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, len), s7_nil(sc)));
-  gb = (g_block *)s7_object_value(b);
+  gb = (g_block *)s7_c_object_value(b);
   for (i = 0, p = args; i < len; i++, p = s7_cdr(p))
     gb->data[i] = s7_number_to_real(sc, s7_car(p));
   return(b);
@@ -315,7 +315,7 @@ static void g_block_mark(void *val)
 
 static s7_pointer g_block_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
-  g_block *g = (g_block *)s7_object_value(obj);
+  g_block *g = (g_block *)s7_c_object_value(obj);
   size_t index;
   index = (size_t)s7_integer(s7_car(args));
   if (index < g->size)
@@ -325,7 +325,7 @@ static s7_pointer g_block_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
 static s7_pointer g_block_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
-  g_block *g = (g_block *)s7_object_value(obj);
+  g_block *g = (g_block *)s7_c_object_value(obj);
   s7_int index;
   index = s7_integer(s7_car(args));
   if ((index >= 0) && (index < g->size))
@@ -338,7 +338,7 @@ static s7_pointer g_block_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
 static s7_pointer g_block_length(s7_scheme *sc, s7_pointer obj)
 {
-  g_block *g = (g_block *)s7_object_value(obj);
+  g_block *g = (g_block *)s7_c_object_value(obj);
   return(s7_make_integer(sc, g->size));
 }
 
@@ -347,9 +347,9 @@ static s7_pointer g_block_copy(s7_scheme *sc, s7_pointer args)
   s7_pointer obj, new_g;
   g_block *g, *g1;
   obj = s7_car(args);
-  g = (g_block *)s7_object_value(obj);
+  g = (g_block *)s7_c_object_value(obj);
   new_g = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, g->size), s7_nil(sc)));
-  g1 = (g_block *)s7_object_value(new_g);
+  g1 = (g_block *)s7_c_object_value(new_g);
   memcpy((void *)(g1->data), (void *)(g->data), g->size * sizeof(double));
   return(new_g);
 }
@@ -357,11 +357,11 @@ static s7_pointer g_block_copy(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_block_reverse(s7_scheme *sc, s7_pointer obj)
 {
   size_t i, j;
-  g_block *g = (g_block *)s7_object_value(obj);
+  g_block *g = (g_block *)s7_c_object_value(obj);
   g_block *g1;
   s7_pointer new_g;
   new_g = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, g->size), s7_nil(sc)));
-  g1 = (g_block *)s7_object_value(new_g);
+  g1 = (g_block *)s7_c_object_value(new_g);
   for (i = 0, j = g->size - 1; i < g->size; i++, j--)
     g1->data[i] = g->data[j];
   return(new_g);
@@ -374,7 +374,7 @@ static s7_pointer g_block_fill(s7_scheme *sc, s7_pointer args)
   double fill_val;
   g_block *g;
   obj = s7_car(args);
-  g = (g_block *)s7_object_value(obj);
+  g = (g_block *)s7_c_object_value(obj);
   fill_val = s7_number_to_real(sc, s7_cadr(args));
   for (i = 0; i < g->size; i++)
     g->data[i] = fill_val;
@@ -962,7 +962,12 @@ int main(int argc, char **argv)
     {fprintf(stderr, "%d: %s is not 32?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
 
-  dax_type_tag = s7_new_type("dax", print_dax, free_dax, equal_dax, mark_dax, NULL, NULL);
+  dax_type_tag = s7_make_c_type(sc, "dax");
+  s7_c_type_set_print(sc, dax_type_tag, print_dax);
+  s7_c_type_set_free(sc, dax_type_tag, free_dax);
+  s7_c_type_set_equal(sc, dax_type_tag, equal_dax);
+  s7_c_type_set_mark(sc, dax_type_tag, mark_dax);
+
   s7_define_function(sc, "make-dax", make_dax, 2, 0, false, "(make-dax x data) makes a new dax");
   s7_define_function(sc, "dax?", is_dax, 1, 0, false, "(dax? anything) returns #t if its argument is a dax object");
 
@@ -978,12 +983,12 @@ int main(int argc, char **argv)
   p = make_dax(sc, s7_cons(sc, s7_make_real(sc, 1.0), s7_cons(sc, TO_S7_INT(2), s7_nil(sc))));
   gc_loc = s7_gc_protect(sc, p);
 
-  if (!s7_is_object(p))
-    {fprintf(stderr, "%d: %s is not an object?\n", __LINE__, s1 = TO_STR(p)); free(s1);}    
+  if (!s7_is_c_object(p))
+    {fprintf(stderr, "%d: %s is not a c_object?\n", __LINE__, s1 = TO_STR(p)); free(s1);}    
 
   p1 = s7_apply_function(sc, s7_name_to_value(sc, "dax?"), s7_cons(sc, p, s7_nil(sc)));
   if (p1 != s7_t(sc))
-    {fprintf(stderr, "%d: %s is not a dax object?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+    {fprintf(stderr, "%d: %s is not a dax c_object?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
   s1 = TO_STR(p);
   if (strcmp(s1, "#<dax 1.000 2>") != 0)
@@ -1486,11 +1491,17 @@ int main(int argc, char **argv)
       fprintf(stderr, "%d: %s should be #<eof> and iter should be done\n", __LINE__, TO_STR(x));
   }
 
-  g_block_type = s7_new_type_x(sc, "#<block>", 
-			       g_block_display, g_block_free, 
-			       g_block_is_equal, g_block_mark,
-			       g_block_ref, g_block_set, g_block_length, 
-			       g_block_copy, g_block_reverse, g_block_fill);
+  g_block_type = s7_make_c_type(sc, "#<block>");
+  s7_c_type_set_print(sc, g_block_type, g_block_display);
+  s7_c_type_set_free(sc, g_block_type, g_block_free);
+  s7_c_type_set_equal(sc, g_block_type, g_block_is_equal);
+  s7_c_type_set_mark(sc, g_block_type, g_block_mark);
+  s7_c_type_set_apply(sc, g_block_type, g_block_ref);
+  s7_c_type_set_set(sc, g_block_type, g_block_set);
+  s7_c_type_set_length(sc, g_block_type, g_block_length);
+  s7_c_type_set_copy(sc, g_block_type, g_block_copy);
+  s7_c_type_set_reverse(sc, g_block_type, g_block_reverse);
+  s7_c_type_set_fill(sc, g_block_type, g_block_fill);
 
   s7_define_function(sc, "make-block", g_make_block, 1, 0, false, g_make_block_help);
   s7_define_function(sc, "block", g_to_block, 0, 0, true, g_block_help);
@@ -1504,13 +1515,13 @@ int main(int argc, char **argv)
 
     gp = g_make_block(sc, s7_list(sc, 1, TO_S7_INT(32)));
     gc_loc = s7_gc_protect(sc, gp);
-    if (!s7_is_object(gp))
-      {fprintf(stderr, "%d: g_block %s is not an object?\n", __LINE__, s1 = TO_STR(gp)); free(s1);}
-    g = (g_block *)s7_object_value(gp);
-    if (s7_object_type(gp) != g_block_type)
-      {fprintf(stderr, "%d: g_block types: %d %d\n", __LINE__, g_block_type, s7_object_type(gp));}
-    if (s7_object_value_checked(gp, g_block_type) != g)
-      {fprintf(stderr, "%d: checked g_block types: %d %d\n", __LINE__, g_block_type, s7_object_type(gp));}
+    if (!s7_is_c_object(gp))
+      {fprintf(stderr, "%d: g_block %s is not a c_object?\n", __LINE__, s1 = TO_STR(gp)); free(s1);}
+    g = (g_block *)s7_c_object_value(gp);
+    if (s7_c_object_type(gp) != g_block_type)
+      {fprintf(stderr, "%d: g_block types: %d %d\n", __LINE__, g_block_type, s7_c_object_type(gp));}
+    if (s7_c_object_value_checked(gp, g_block_type) != g)
+      {fprintf(stderr, "%d: checked g_block types: %d %d\n", __LINE__, g_block_type, s7_c_object_type(gp));}
 
     s7_gc_unprotect_at(sc, gc_loc);
   }

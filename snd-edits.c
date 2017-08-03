@@ -6731,7 +6731,7 @@ static bool s7_equalp_sf(void *s1, void *s2)
 static s7_pointer length_sf(s7_scheme *sc, s7_pointer obj)
 {
   snd_fd *fd;
-  fd = (snd_fd *)s7_object_value(obj);
+  fd = (snd_fd *)s7_c_object_value(obj);
   return(s7_make_integer(sc, current_samples(fd->cp)));
 }
 #endif
@@ -9144,7 +9144,12 @@ void g_init_edits(void)
   /* pl_fx = s7_make_signature(s7, 2, f, x); */
   pl_fx = s7_make_signature(s7, 2, f, smp);
 
-  sf_tag = s7_new_type_x(s7, "<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, length_sf, NULL, NULL, NULL);
+  sf_tag = s7_make_c_type(s7, "<sampler>");
+  s7_c_type_set_print(s7, sf_tag, print_sf);
+  s7_c_type_set_free(s7, sf_tag, free_sf);
+  s7_c_type_set_equal(s7, sf_tag, s7_equalp_sf);
+  s7_c_type_set_apply(s7, sf_tag, s7_read_sample);
+  s7_c_type_set_length(s7, sf_tag, length_sf);
 #else
   sf_tag = Xen_make_object_type("Sampler", sizeof(snd_fd));
 #endif

@@ -44,11 +44,13 @@ static bool s7_equalp_xm(void *x1, void *x2)
 }
 static s7_pointer make_xm_obj(s7_scheme *sc, void *ptr)
 {
-  return(s7_make_object(sc, xm_obj_tag, ptr));
+  return(s7_make_c_object(sc, xm_obj_tag, ptr));
 }
 static void define_xm_obj(s7_scheme *sc)
 {
- xm_obj_tag = s7_new_type_x(sc, "<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  xm_obj_tag = s7_make_c_type(sc, "<XmObj>");
+  s7_c_type_set_free(sc, xm_obj_tag, xm_obj_free);
+  s7_c_type_set_equal(sc, xm_obj_tag, s7_equalp_xm);
 }  
 
 static s7_pointer GtkCenterBox__sym, GtkCheckButton__sym, GdkDrawContext__sym, GtkDrawingAreaDrawFunc_sym, GtkShortcutLabel__sym,
@@ -563,6 +565,18 @@ static gboolean lg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint p
                                              s7_make_integer(cbsc, page_nr),
                                              s7_cadr((s7_pointer)data))) != lg_false);
 }
+
+#if (!GTK_CHECK_VERSION(3, 90, 0))
+static s7_pointer lg_gtk_widget_set_events(s7_scheme *sc, s7_pointer args)
+{
+  #define H_gtk_widget_set_events "void gtk_widget_set_events(GtkWidget* widget, gint events)"
+  s7_pointer widget, events;
+  widget = s7_car(args);
+  events = s7_cadr(args);
+  gtk_widget_set_events((GtkWidget*)s7_c_pointer(widget), (gint)s7_integer(events));
+  return(lg_false);
+}
+#endif
 
 static s7_pointer lg_g_unichar_validate(s7_scheme *sc, s7_pointer args)
 {
@@ -52264,6 +52278,7 @@ static void define_functions(s7_scheme *sc)
 #else
   s7_define_function(sc, "gtk_init", lg_gtk_init, 0, 2, 0, NULL);
   s7_define_function(sc, "gtk_init_check", lg_gtk_init_check, 0, 2, 0, NULL);
+  s7_define_function(sc, "gtk_widget_set_events", lg_gtk_widget_set_events, 2, 0, 0, H_gtk_widget_set_events);
 #endif
   s7_define_typed_function(sc, "GDK_IS_DRAG_CONTEXT", lg_GDK_IS_DRAG_CONTEXT, 1, 0, 0, "(GDK_IS_DRAG_CONTEXT obj): #t if obj is a GdkDragContext*", pl_bt);
   s7_define_typed_function(sc, "GDK_IS_DEVICE", lg_GDK_IS_DEVICE, 1, 0, 0, "(GDK_IS_DEVICE obj): #t if obj is a GdkDevice*", pl_bt);
@@ -55545,7 +55560,7 @@ void libgtk_s7_init(s7_scheme *sc)
       s7_provide(sc, "gtk2");
     #endif
   #endif
-  s7_define(sc, cur_env, s7_make_symbol(sc, "libgtk-version"), s7_make_string(sc, "01-Aug-17"));
+  s7_define(sc, cur_env, s7_make_symbol(sc, "libgtk-version"), s7_make_string(sc, "02-Aug-17"));
 }
 /* gcc -c libgtk_s7.c -o libgtk_s7.o -I. -fPIC `pkg-config --libs gtk+-3.0 --cflags` -lm -ldl */
 /* gcc libgtk_s7.o -shared -o libgtk_s7.so */

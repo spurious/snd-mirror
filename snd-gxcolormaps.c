@@ -1001,8 +1001,12 @@ static Xen s7_colormap_apply(s7_scheme *sc, Xen obj, Xen args)
 static void init_xen_colormap(void)
 {
 #if HAVE_SCHEME
-  xen_colormap_tag = s7_new_type_x(s7, "<colormap>", print_xen_colormap, free_xen_colormap, s7_xen_colormap_equalp, 
-				   NULL, s7_colormap_apply, NULL, s7_xen_colormap_length, NULL, NULL, NULL);
+  xen_colormap_tag = s7_make_c_type(s7, "<colormap>");
+  s7_c_type_set_print(s7, xen_colormap_tag, print_xen_colormap);
+  s7_c_type_set_free(s7, xen_colormap_tag, free_xen_colormap);
+  s7_c_type_set_equal(s7, xen_colormap_tag, s7_xen_colormap_equalp);
+  s7_c_type_set_length(s7, xen_colormap_tag, s7_xen_colormap_length);
+  s7_c_type_set_apply(s7, xen_colormap_tag, s7_colormap_apply);
 #else
 #if HAVE_RUBY
   xen_colormap_tag = Xen_make_object_type("XenColormap", sizeof(xen_colormap));

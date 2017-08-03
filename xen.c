@@ -1376,7 +1376,7 @@ void xen_repl(int argc, char **argv)
 
 void xen_gc_mark(Xen val)
 {
-  s7_mark_object(val);
+  s7_mark_c_object(val);
 }
 
 

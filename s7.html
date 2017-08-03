@@ -2859,7 +2859,7 @@ is intended as a debugging aid, underlying a debugger's "inspect" for example.
 <em class="gray">(inlet 'value #&lt;iterator: string&gt; 'type iterator? 'at-end #f 'sequence "1234" 'length 4 'position 2)</em>
 </pre>
 
-<p>A c-object (in the sense of s7_new_type), can add its own info to this namespace via an object-&gt;let
+<p>A c-object (in the sense of s7_make_c_type), can add its own info to this namespace via an object-&gt;let
 method in its local environment.  snd-marks.c has a simple example using a class-wide environment (g_mark_methods),
 holding as the value of its 'object-&gt;let field the function s7_mark_to_let.  The latter uses s7_varlet to
 add information to the namespace created by <code>(object-&gt;let mark)</code>.
@@ -5832,7 +5832,7 @@ autoloading?                  #t
 history			      a circular buffer of recent eval entries stored backwards
 catches                       a list of the currently active catch tags
 exits                         a list of active call-with-exit exit functions
-c-types                       a list of c-object type names (from s7_new_type, etc)
+c-types                       a list of c-object type names (from s7_make_c_type, etc)
 input-ports, output-ports, strings, gensyms, vectors, hash-tables, continuations
 
 stack-top                     current stack location
@@ -5899,7 +5899,7 @@ pass them around in s7 code. The function c-pointer returns a wrapped pointer,
 and c-pointer? returns #t if passed one.  <code>(define NULL (c-pointer 0))</code>.
 c-object? returns the object's type tag if passed such an object (otherwise #f of course).  This tag is also the position
 of the object's type in the (*s7* 'c-types) list. 
-(*s7* 'c-types) returns a list of the types created by s7_new_type_x and friends.
+(*s7* 'c-types) returns a list of the types created by s7_make_c_type.
 </p>
 
 
@@ -7551,7 +7551,7 @@ static bool equal_dax(void *val1, void *val2)
 static void mark_dax(void *val)
 {
   dax *o = (dax *)val;
-  if (o) s7_mark_object(o-&gt;data);
+  if (o) s7_mark_c_object(o-&gt;data);
 }
 
 static int dax_type_tag = 0;
@@ -7564,27 +7564,27 @@ static s7_pointer make_dax(s7_scheme *sc, s7_pointer args)
   if (s7_cdr(args) != s7_nil(sc))
     o-&gt;data = s7_cadr(args);
   else o-&gt;data = s7_nil(sc);
-  return(<em class=red>s7_make_object</em>(sc, dax_type_tag, (void *)o));
+  return(<em class=red>s7_make_c_object</em>(sc, dax_type_tag, (void *)o));
 }
 
 static s7_pointer is_dax(s7_scheme *sc, s7_pointer args)
 {
   return(s7_make_boolean(sc, 
-			 <em class=red>s7_is_object</em>(s7_car(args)) &amp;&amp;
-			 <em class=red>s7_object_type</em>(s7_car(args)) == dax_type_tag));
+			 <em class=red>s7_is_c_object</em>(s7_car(args)) &amp;&amp;
+			 <em class=red>s7_c_object_type</em>(s7_car(args)) == dax_type_tag));
 }
 
 static s7_pointer dax_x(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
-  o = (dax *)<em class=red>s7_object_value</em>(s7_car(args));
+  o = (dax *)<em class=red>s7_c_object_value</em>(s7_car(args));
   return(s7_make_real(sc, o-&gt;x));
 }
 
 static s7_pointer set_dax_x(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
-  o = (dax *)s7_object_value(s7_car(args));
+  o = (dax *)s7_c_object_value(s7_car(args));
   o-&gt;x = s7_real(s7_cadr(args));
   return(s7_cadr(args));
 }
@@ -7592,14 +7592,14 @@ static s7_pointer set_dax_x(s7_scheme *sc, s7_pointer args)
 static s7_pointer dax_data(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
-  o = (dax *)s7_object_value(s7_car(args));
+  o = (dax *)s7_c_object_value(s7_car(args));
   return(o-&gt;data);
 }
 
 static s7_pointer set_dax_data(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
-  o = (dax *)s7_object_value(s7_car(args));
+  o = (dax *)s7_c_object_value(s7_car(args));
   o-&gt;data = s7_cadr(args);
   return(o-&gt;data);
 }
@@ -7614,7 +7614,11 @@ int main(int argc, char **argv)
   
   s7_define_variable(s7, "*listener-prompt*", s7_make_string(s7, "&gt;"));
 
-  dax_type_tag = <em class=red>s7_new_type</em>("dax", print_dax, free_dax, equal_dax, mark_dax, NULL, NULL);
+  dax_type_tag = <em class=red>s7_make_c_type</em>(s7, "dax");
+  s7_c_type_set_print(s7, dax_type_tag, print_dax);
+  s7_c_type_set_free(s7, dax_type_tag, free_dax);
+  s7_c_type_set_equal(s7, dax_type_tag, equal_dax);
+  s7_c_type_set_mark(s7, dax_type_tag, mark_dax);
   s7_define_function(s7, "make-dax", make_dax, 2, 0, false, "(make-dax x data) makes a new dax");
   s7_define_function(s7, "dax?", is_dax, 1, 0, false, "(dax? anything) returns #t if its argument is a dax object");
 

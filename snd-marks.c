@@ -2055,7 +2055,7 @@ Xen new_xen_mark(int n)
   {
     s7_pointer m;
     m = Xen_make_object(xen_mark_tag, mx, 0, free_xen_mark);
-    s7_object_set_let(m, g_mark_methods);
+    s7_c_object_set_let(m, g_mark_methods);
     return(m);
   }
 #else
@@ -2098,11 +2098,13 @@ static s7_pointer mark_to_let_func = NULL;
 static void init_xen_mark(void)
 {
 #if HAVE_SCHEME
-  {
-    g_mark_methods = s7_openlet(s7, s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "object->let"), mark_to_let_func)));
-    s7_gc_protect(s7, g_mark_methods);
-    xen_mark_tag = s7_new_type_x(s7, "<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL, NULL);
-  }
+  g_mark_methods = s7_openlet(s7, s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "object->let"), mark_to_let_func)));
+  s7_gc_protect(s7, g_mark_methods);
+  xen_mark_tag = s7_make_c_type(s7, "<mark>");
+  s7_c_type_set_print(s7, xen_mark_tag, print_xen_mark);
+  s7_c_type_set_free(s7, xen_mark_tag, free_xen_mark);
+  s7_c_type_set_equal(s7, xen_mark_tag, s7_xen_mark_equalp);
+  s7_c_type_set_copy(s7, xen_mark_tag, s7_xen_mark_copy);
 #else
 #if HAVE_RUBY
   xen_mark_tag = Xen_make_object_type("XenMark", sizeof(xen_mark));

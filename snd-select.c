@@ -1038,10 +1038,13 @@ static Xen s7_xen_selection_fill(s7_scheme *sc, Xen args)
 static void init_xen_selection(void)
 {
 #if HAVE_SCHEME
-  xen_selection_tag = s7_new_type_x(s7, "<selection>", 
-				    print_xen_selection, free_xen_selection, s7_xen_selection_equalp, 
-				    NULL, NULL, NULL, s7_xen_selection_length, 
-				    s7_xen_selection_copy, NULL, s7_xen_selection_fill);
+  xen_selection_tag = s7_make_c_type(s7, "<selection>");
+  s7_c_type_set_print(s7, xen_selection_tag, print_xen_selection);
+  s7_c_type_set_free(s7, xen_selection_tag, free_xen_selection);
+  s7_c_type_set_equal(s7, xen_selection_tag, s7_xen_selection_equalp);
+  s7_c_type_set_length(s7, xen_selection_tag, s7_xen_selection_length);
+  s7_c_type_set_copy(s7, xen_selection_tag, s7_xen_selection_copy);
+  s7_c_type_set_fill(s7, xen_selection_tag, s7_xen_selection_fill);
 #else
 #if HAVE_RUBY
   xen_selection_tag = Xen_make_object_type("XenSelection", sizeof(xen_selection));

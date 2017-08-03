@@ -387,7 +387,9 @@ static Xen make_xm_obj(void *ptr)
 static void define_xm_obj(void)
 {
 #if HAVE_SCHEME
-  xm_obj_tag = s7_new_type_x(s7, "<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  xm_obj_tag = s7_make_c_type(s7, "<XmObj>");
+  s7_c_type_set_free(s7, xm_obj_tag, xm_obj_free);
+  s7_c_type_set_equal(s7, xm_obj_tag, s7_equalp_xm);
 #else
   xm_obj_tag = Xen_make_object_type("XmObj", sizeof(void *));
 #endif

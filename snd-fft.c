@@ -2217,8 +2217,11 @@ static Xen s7_xen_transform_length(s7_scheme *sc, Xen obj)
 static void init_xen_transform(void)
 {
 #if HAVE_SCHEME
-  xen_transform_tag = s7_new_type_x(s7, "<transform>", print_xen_transform, free_xen_transform, s7_xen_transform_equalp, 
-				    NULL, NULL, NULL, s7_xen_transform_length, NULL, NULL, NULL);
+  xen_transform_tag = s7_make_c_type(s7, "<transform>");
+  s7_c_type_set_print(s7, xen_transform_tag, print_xen_transform);
+  s7_c_type_set_free(s7, xen_transform_tag, free_xen_transform);
+  s7_c_type_set_equal(s7, xen_transform_tag, s7_xen_transform_equalp);
+  s7_c_type_set_length(s7, xen_transform_tag, s7_xen_transform_length);
 #else
 #if HAVE_RUBY
   xen_transform_tag = Xen_make_object_type("XenTransform", sizeof(xen_transform));

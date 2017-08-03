@@ -177,7 +177,9 @@ static Xen make_xm_obj(void *ptr)
 static void define_xm_obj(void)
 {
 #if HAVE_SCHEME
- xm_obj_tag = s7_new_type_x(s7, "<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+  xm_obj_tag = s7_make_c_type(s7, "<XmObj>");
+  s7_c_type_set_free(s7, xm_obj_tag, xm_obj_free);
+  s7_c_type_set_equal(s7, xm_obj_tag, s7_equalp_xm);
 #else
   xm_obj_tag = Xen_make_object_type("XmObj", sizeof(void *));
 #endif
@@ -1501,6 +1503,17 @@ static gboolean gxg_func4(GtkPrintOperation *op, GtkPrintContext *context, gint 
                                      Xen_cadr((Xen)data),
                                      __func__)));
 }
+
+#if (!GTK_CHECK_VERSION(3, 90, 0))
+static Xen gxg_gtk_widget_set_events(Xen widget, Xen events)
+{
+  #define H_gtk_widget_set_events "void gtk_widget_set_events(GtkWidget* widget, gint events)"
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_set_events", "GtkWidget*");
+  Xen_check_type(Xen_is_gint(events), events, 2, "gtk_widget_set_events", "gint");
+  gtk_widget_set_events(Xen_to_C_GtkWidget_(widget), Xen_to_C_gint(events));
+  return(Xen_false);
+}
+#endif
 
 
 
@@ -39160,6 +39173,7 @@ Xen_wrap_no_args(gxg_gtk_init_check_w, gxg_gtk_init_check)
 #else
 Xen_wrap_2_optional_args(gxg_gtk_init_w, gxg_gtk_init)
 Xen_wrap_2_optional_args(gxg_gtk_init_check_w, gxg_gtk_init_check)
+Xen_wrap_2_args(gxg_gtk_widget_set_events_w, gxg_gtk_widget_set_events)
 #endif
 Xen_wrap_1_arg(gxg_GDK_DRAG_CONTEXT_w, gxg_GDK_DRAG_CONTEXT)
 Xen_wrap_1_arg(gxg_GDK_DEVICE_w, gxg_GDK_DEVICE)
@@ -43827,6 +43841,7 @@ static void define_functions(void)
 #else
   Xg_define_procedure(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init, NULL);
   Xg_define_procedure(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check, NULL);
+  Xg_define_procedure(gtk_widget_set_events, gxg_gtk_widget_set_events_w, 2, 0, 0, H_gtk_widget_set_events, pl_tui);
 #endif
   Xg_define_procedure(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_IS_DRAG_CONTEXT obj): " PROC_TRUE " if obj is a GdkDragContext*", pl_bt);
   Xg_define_procedure(GDK_IS_DEVICE, gxg_GDK_IS_DEVICE_w, 1, 0, 0, "(GDK_IS_DEVICE obj): " PROC_TRUE " if obj is a GdkDevice*", pl_bt);
@@ -47310,7 +47325,7 @@ void Init_libxg(void)
           Xen_provide_feature("gtk2");
         #endif
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("01-Aug-17"));
+      Xen_define("xg-version", C_string_to_Xen_string("02-Aug-17"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

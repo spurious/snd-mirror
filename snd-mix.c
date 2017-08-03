@@ -2787,7 +2787,7 @@ Xen new_xen_mix(int n)
   {
     s7_pointer m;
     m = Xen_make_object(xen_mix_tag, mx, 0, free_xen_mix);
-    s7_object_set_let(m, g_mix_methods);
+    s7_c_object_set_let(m, g_mix_methods);
     return(m);
   }
 #else
@@ -2824,7 +2824,12 @@ static void init_xen_mix(void)
 #if HAVE_SCHEME
   g_mix_methods = s7_openlet(s7, s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "object->let"), mix_to_let_func)));
   s7_gc_protect(s7, g_mix_methods);
-  xen_mix_tag = s7_new_type_x(s7, "<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, s7_xen_mix_copy, NULL, NULL);
+  xen_mix_tag = s7_make_c_type(s7, "<mix>");
+  s7_c_type_set_print(s7, xen_mix_tag, print_xen_mix);
+  s7_c_type_set_free(s7, xen_mix_tag, free_xen_mix);
+  s7_c_type_set_equal(s7, xen_mix_tag, s7_xen_mix_equalp);
+  s7_c_type_set_length(s7, xen_mix_tag, s7_xen_mix_length);
+  s7_c_type_set_copy(s7, xen_mix_tag, s7_xen_mix_copy);
 #else
 #if HAVE_RUBY
   xen_mix_tag = Xen_make_object_type("XenMix", sizeof(xen_mix));
@@ -3750,7 +3755,7 @@ Xen g_make_mix_sampler(Xen mix_id, Xen ubeg)
 	  {
 	    s7_pointer m;
 	    m = Xen_make_object(mf_tag, mf, 0, free_mf);
-	    s7_object_set_let(m, g_mix_sampler_methods);
+	    s7_c_object_set_let(m, g_mix_sampler_methods);
 	    return(m);
 	  }
 #else
@@ -4215,7 +4220,11 @@ void g_init_mix(void)
 #if HAVE_SCHEME
   g_mix_sampler_methods = s7_openlet(s7, s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "object->let"), mix_sampler_to_let_func)));
   s7_gc_protect(s7, g_mix_sampler_methods);
-  mf_tag = s7_new_type_x(s7, "<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL, NULL);
+  mf_tag = s7_make_c_type(s7, "<mix-sampler>");
+  s7_c_type_set_print(s7, mf_tag, print_mf);
+  s7_c_type_set_free(s7, mf_tag, free_mf);
+  s7_c_type_set_equal(s7, mf_tag, s7_equalp_mf);
+  s7_c_type_set_apply(s7, mf_tag, s7_read_mix_sample);
 #else
   mf_tag = Xen_make_object_type("MixSampler", sizeof(mix_fd));
 #endif
