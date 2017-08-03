@@ -1068,7 +1068,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 
 #define XEN_ULONG_LONG_P(Arg)                      s7_is_ulong_long(Arg) 
 #define XEN_TO_C_ULONG_LONG(Arg)                   s7_ulong_long(Arg) 
-#define C_TO_XEN_ULONG_LONG(Arg)                   s7_make_ulong_long(s7, (unsigned long long)Arg) 
+#define C_TO_XEN_ULONG_LONG(Arg)                   s7_make_ulong_long(s7, (uint64_t)Arg) 
 
 #define C_TO_XEN_LONG_LONG(Arg)                    s7_make_integer(s7, Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    s7_integer(Arg)
@@ -1510,10 +1510,10 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
   #define XEN_UNWRAP_C_POINTER(a)         s7_c_pointer(a)
 #else
   #if (SIZEOF_VOID_P == 4) 
-    #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned int)a))) 
+    #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned long)a))) 
     #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a) 
   #else 
-    #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_ULONG_LONG((unsigned long long int)(a)) 
+    #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_ULONG_LONG((uint64_t)(a)) 
     #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG_LONG(a) 
   #endif
 #endif

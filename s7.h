@@ -471,17 +471,13 @@ s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer func);
 s7_pointer s7_make_signature(s7_scheme *sc, int32_t len, ...);              /* procedure-signature data */
 s7_pointer s7_make_circular_signature(s7_scheme *sc, int32_t cycle_point, int32_t len, ...);
 
-s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, 
-			    int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc);
-s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function fnc, 
-				 int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc);
+s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc);
+s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_make_typed_function(s7_scheme *sc, const char *name, s7_function f, 
 				  int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc, s7_pointer signature);
 
-s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, 
-			      int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc);
-s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, 
-				   int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc);
+s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc);
+s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int32_t required_args, int32_t optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
 				    int32_t required_args, int32_t optional_args, bool rest_arg, 
 				    const char *doc, s7_pointer signature);
@@ -630,7 +626,7 @@ void s7_c_type_set_fill(          s7_scheme *sc, int32_t tag, s7_pointer (*fill)
 void s7_c_type_set_reverse(       s7_scheme *sc, int32_t tag, s7_pointer (*reverse)(s7_scheme *sc, s7_pointer args));
 
 
-/* #if (!DISABLE_DEPRECATED) */
+#if (!DISABLE_DEPRECATED) 
 int32_t s7_new_type(const char *name,
 		char *(*print)(s7_scheme *sc, void *value), 
 		void (*free)(void *value), 
@@ -666,7 +662,7 @@ void s7_object_type_set_direct(int32_t tag,
 #define s7_object_let                s7_c_object_let
 #define s7_object_set_let            s7_c_object_set_let
 #define s7_set_object_print_readably s7_c_type_set_print_readably
-/* #endif */
+#endif
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
@@ -885,7 +881,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 3-Aug:     first object->c_object name changes.
+ * 3-Aug:     object->c_object name changes.
  * 28-Jul:    s7_make_c_pointer_with_type and s7_c_pointer_type.
  * 24-Jul:    int64_t rather than long long int, and various related changes.
  * 18-Jul:    s7_make_object_with_let.

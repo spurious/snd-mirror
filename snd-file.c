@@ -2691,7 +2691,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* samples */
-  snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%lld samples, %lld bytes total)",
+  snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%" PRId64 " samples, %" PRId64 " bytes total)",
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));
@@ -2699,7 +2699,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   nsamp = swap_mus_long_t(hdr->samples);
   if (nsamp < mus_sound_length(filename))
     {
-      snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %lld" , nsamp);
+      snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %" PRId64 , nsamp);
       reason_str = mus_strcat(reason_str, tmp_str, &len);
       if ((better_chans) && (better_srate))
 	{
@@ -2712,13 +2712,13 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
     }
 
   /* data location */
-  snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: %lld", hdr->data_location);
+  snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: %" PRId64, hdr->data_location);
   reason_str = mus_strcat(reason_str, tmp_str, &len);
   nsamp = swap_mus_long_t(hdr->data_location);
   if ((nsamp > 0) && 
       (nsamp <= 1024)) 
     {
-      snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %lld)", nsamp);
+      snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %" PRId64 ")", nsamp);
       reason_str = mus_strcat(reason_str, tmp_str, &len);
     }
   (*info) = reason_str;
@@ -2813,7 +2813,7 @@ void display_info(snd_info *sp)
       buffer = (char *)calloc(INFO_BUFFER_SIZE, sizeof(char));
 
       snprintf(buffer, INFO_BUFFER_SIZE, 
-		   "srate: %d\nchans: %d\nlength: %.3f (%lld %s)\n%s\n",
+		   "srate: %d\nchans: %d\nlength: %.3f (%" PRId64 " %s)\n%s\n",
 		   snd_srate(sp),
 		   sp->nchans,
 		   (double)(current_samples(sp->chans[0])) / (double)snd_srate(sp),

@@ -4174,7 +4174,7 @@ static char *describe_wt(mus_any *ptr)
 {
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: %lld, interp: %s",
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: %" PRId64 ", interp: %s",
 	       mus_name(ptr),
 	       mus_frequency(ptr), 
 	       mus_phase(ptr), 
@@ -9787,7 +9787,7 @@ static char *describe_env(mus_any *ptr)
   seg *e = (seg *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: %lld (dur: %lld), index: %d, scaler: %.4f, offset: %.4f, data: %s",
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: %" PRId64 " (dur: %" PRId64 "), index: %d, scaler: %.4f, offset: %.4f, data: %s",
 	   mus_name(ptr),
 	   ((e->style == MUS_ENV_LINEAR) ? "linear" : ((e->style == MUS_ENV_EXPONENTIAL) ? "exponential" : "step")),
 	   (e->locs) ? (e->locs[e->index] - e->loc) : -1,
@@ -10672,7 +10672,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
 
       gen->file_end = mus_sound_framples(gen->file_name);
       if (gen->file_end < 0) 
-	mus_error(MUS_NO_LENGTH, S_make_file_to_sample ": %s framples: %lld", filename, gen->file_end);
+	mus_error(MUS_NO_LENGTH, S_make_file_to_sample ": %s framples: %" PRId64, filename, gen->file_end);
 
       if (buffer_size < gen->file_end)
 	gen->file_buffer_size = buffer_size;
@@ -10718,7 +10718,7 @@ static char *describe_readin(mus_any *ptr)
   rdin *gen = (rdin *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s[chan %d], loc: %lld, dir: %d", 
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s[chan %d], loc: %" PRId64 ", dir: %d", 
 	       mus_name(ptr),
 	       gen->file_name, gen->chan, gen->loc, gen->dir);
   return(describe_buffer);
@@ -11205,7 +11205,7 @@ static void flush_buffers(rdout *gen)
 	      mus_sound_close_input(fd);
 	      old_file_buffer_size = clm_file_buffer_size;
 	      clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
-	      mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (%lld) is too large: we can't allocate the output buffers!", old_file_buffer_size);
+	      mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (%" PRId64 ") is too large: we can't allocate the output buffers!", old_file_buffer_size);
 	      return;
 	    }
 	}
@@ -11219,7 +11219,7 @@ static void flush_buffers(rdout *gen)
        */
       if (framples_to_add >= clm_file_buffer_size) 
 	{
-	  mus_print("clm-file-buffer-size changed? %lld <= %lld (start: %lld, end: %lld, %lld)",
+	  mus_print("clm-file-buffer-size changed? %" PRId64 " <= %" PRId64 " (start: %" PRId64 ", end: %" PRId64 ", %" PRId64 ")",
 		    clm_file_buffer_size, framples_to_add, gen->data_start, gen->data_end, gen->out_end);
 	  
 	  framples_to_add = clm_file_buffer_size - 1;
@@ -12618,7 +12618,7 @@ static char *describe_move_sound(mus_any *ptr)
   char *allstr = NULL;
   int len;
 
-  starts = mus_format("%s start: %lld, end: %lld, out chans %d, rev chans: %d",
+  starts = mus_format("%s start: %" PRId64 ", end: %" PRId64 ", out chans %d, rev chans: %d",
 		      mus_name(ptr),
 		      gen->start, 
 		      gen->end, 
@@ -15314,7 +15314,7 @@ static char *describe_convolve(mus_any *ptr)
   conv *gen = (conv *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %lld", 
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %" PRId64, 
 	       mus_name(ptr),
 	       gen->fftsize);
   return(describe_buffer);

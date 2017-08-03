@@ -1417,7 +1417,7 @@ static void display_selection_transform_size(chan_info *cp, axis_info *fap, grap
   y0 = fap->height + fap->y_offset + SELECTION_FFT_LABEL_OFFSET;
   x0 = fap->x_axis_x0 + 20;
   snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
-	       "(len: %lld/%lld)", 
+	       "(len: %" PRId64 "/%" PRId64 ")", 
 	       selection_len(), 
 	       cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
@@ -4782,14 +4782,14 @@ void show_cursor_info(chan_info *cp)
   expr_str = (char *)calloc(len, sizeof(char));
 
   if (sp->nchans == 1)
-    snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %lld) = %s",
+    snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %" PRId64 ") = %s",
 		 s1 = x_axis_location_to_string(cp, (double)samp / (double)snd_srate(sp)),
 		 samp,
 		 s2 = prettyf(y, digits));
   else
     {
       if (sp->sync == 0)
-	snprintf(expr_str, PRINT_BUFFER_SIZE, "chan %d, cursor at %s (sample %lld) = %s",
+	snprintf(expr_str, PRINT_BUFFER_SIZE, "chan %d, cursor at %s (sample %" PRId64 ") = %s",
 		     cp->chan + 1,
 		     s1 = x_axis_location_to_string(cp, (double)samp / (double)snd_srate(sp)),
 		     samp,
@@ -4798,7 +4798,7 @@ void show_cursor_info(chan_info *cp)
 	{
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
-	  snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %lld): %s",
+	  snprintf(expr_str, PRINT_BUFFER_SIZE, "cursor at %s (sample %" PRId64 "): %s",
 		       s1 = x_axis_location_to_string(cp, (double)samp / (double)snd_srate(sp)),
 		       samp,
 		       s2 = prettyf(y, digits));
@@ -5696,13 +5696,13 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  samp = mark_sample(mouse_mark);
 			  sync = mark_sync(mouse_mark);
 			  if (sync == 0)
-			    status_report(sp, "mark %d at sample %lld (%3f secs): %3f", 
+			    status_report(sp, "mark %d at sample %" PRId64 " (%3f secs): %3f", 
 						 mark_to_int(mouse_mark), 
 						 samp,
 						 (double)samp / (double)(snd_srate(sp)),
 						 chn_sample(samp, cp, cp->edit_ctr));
 			  else
-			    status_report(sp, "mark %d at sample %lld (%3f secs): %3f, (sync: %d)", 
+			    status_report(sp, "mark %d at sample %" PRId64 " (%3f secs): %3f, (sync: %d)", 
 						 mark_to_int(mouse_mark), 
 						 samp,
 						 (double)samp / (double)(snd_srate(sp)),
@@ -7592,7 +7592,7 @@ static Xen g_maxamp(Xen snd, Xen chn_n, Xen edpos)
 	if (save_maxamp)
 	  {
 	    mus_long_t *times = NULL;
-	    /* fprintf(stderr, "save g_maxamp for %s (%d %lld)\n", sp->filename, mus_sound_maxamp_exists(sp->filename), sp->chans[0]->edits[0]->samples); */
+	    /* fprintf(stderr, "save g_maxamp for %s (%d %" PRId64 ")\n", sp->filename, mus_sound_maxamp_exists(sp->filename), sp->chans[0]->edits[0]->samples); */
 	    vals = (mus_float_t *)calloc(sp->nchans, sizeof(mus_float_t));
 	    times = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
 	    for (i = 0; i < sp->nchans; i++)
@@ -9024,7 +9024,7 @@ void write_transform_peaks(FILE *fd, chan_info *ucp)
 		{
 		  fprintf(fd, "%s", sp->short_filename);
 		  if (sp->nchans > 1) fprintf(fd, ": chan %d", cp->chan);
-		  fprintf(fd, ", fft %lld points beginning at sample %lld (%.3f secs), %s\n\n",
+		  fprintf(fd, ", fft %" PRId64 " points beginning at sample %" PRId64 " (%.3f secs), %s\n\n",
 			  fp->current_size, 
 			  ap->losamp, 
 			  (float)((double)(ap->losamp) / (double)srate),

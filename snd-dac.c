@@ -2768,7 +2768,11 @@ static Xen s7_xen_player_length(s7_scheme *sc, Xen player)
 static void init_xen_player(void)
 {
 #if HAVE_SCHEME
-  xen_player_tag = s7_new_type_x(s7, "<player>", print_xen_player, free_xen_player, s7_xen_player_equalp, NULL, NULL, NULL, s7_xen_player_length, NULL, NULL, NULL);
+  xen_player_tag = s7_make_c_type(s7, "<player>");
+  s7_c_type_set_print(s7, xen_player_tag, print_xen_player);
+  s7_c_type_set_free(s7, xen_player_tag, free_xen_player);
+  s7_c_type_set_equal(s7, xen_player_tag, s7_xen_player_equalp);
+  s7_c_type_set_length(s7, xen_player_tag, s7_xen_player_length);
 #else
 #if HAVE_RUBY
   xen_player_tag = Xen_make_object_type("XenPlayer", sizeof(xen_player));
@@ -2823,7 +2827,7 @@ static Xen play_file(const char *play_name, mus_long_t start, mus_long_t end, in
   return(Xen_false);
 }
 
-
+#if (!HAVE_SCHEME)
 static Xen kw_start, kw_end, kw_channel, kw_wait, kw_edit_position, kw_stop, kw_out_channel, kw_with_sync, kw_srate, kw_channels;
 
 static void init_play_keywords(void)
@@ -2839,9 +2843,8 @@ static void init_play_keywords(void)
   kw_srate = Xen_make_keyword("srate");
   kw_channels = Xen_make_keyword("channels");
 }
+#endif
 
-static Xen g_play(Xen arglist)
-{
   #if HAVE_SCHEME
     #define play_example "(play \"oboe.snd\")"
   #endif
@@ -2852,13 +2855,124 @@ static Xen g_play(Xen arglist)
     #define play_example "\"oboe.snd\" play"
   #endif
 
-  #define H_play "(" S_play " object :start :end :channel :edit-position :out-channel :with-sync :wait :stop): \
+#define H_play "(" S_play " object start end channel edit-position out-channel with-sync wait stop srate channels): \
 play the object from start to end.  If channel is not given, play all channels.  If with-sync, play all objects sync'd \
 to the current object.  If wait, wait for the play process to finish before going on.  If out-channel, send the samples \
 to that DAC channel.  If edit-position, play that member of the edit list, otherwise play the current state of the object. \
 If stop, call that function when the play process finishes.  \
 If object is a string, it is assumed to be a file name: \n    " play_example "\n."
 
+#if HAVE_SCHEME
+static s7_pointer g_play(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer object, p, fp;
+  mus_long_t start, end; 
+  int channel, out_channel, srate, channels, edpos_argpos = 4, channel_argpos = 3;
+  bool with_sync;
+#if (!USE_NO_GUI)
+  bool wait;
+#endif
+  s7_pointer stop_func, edit_position, channel_arg;
+  play_process_t background;
+  snd_info *sp;
+
+  object = s7_car(args);
+  args = s7_cdr(args);
+
+  fp = s7_car(args);
+  if (fp == Xen_false)
+    start = 0;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_play, 1, fp, "an integer (start)"));
+      start = s7_integer(fp);
+      if (start < 0) 
+	Xen_out_of_range_error(S_play, 1, fp, "start is negative?");
+    }
+  
+  fp = s7_cadr(args);
+  if (fp == Xen_false)
+    end = NO_END_SPECIFIED;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_play, 2, fp, "an integer (end)"));
+      end = s7_integer(fp);
+      if (end < -1)
+	Xen_out_of_range_error(S_play, 2, fp, "end is negative?");
+    }
+
+  p = s7_cddr(args);
+  fp = s7_car(p);
+  channel_arg = fp;
+  if (fp == Xen_false)
+    channel = -1;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_play, 3, fp, "an integer (channel)"));
+      channel = s7_integer(fp);
+    }
+
+  edit_position = s7_cadr(p);
+
+  p = s7_cddr(p);
+  fp = s7_car(p);
+  if (fp == Xen_false)
+    out_channel = -1;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_play, 5, fp, "an integer (out channel)"));
+      out_channel = s7_integer(fp);
+    }
+
+  fp = s7_cadr(p);
+  with_sync = (fp != Xen_false);
+
+  p = s7_cddr(p);
+#if (!USE_NO_GUI)
+  fp = s7_car(p);
+  wait = (fp != Xen_false);
+#endif
+
+  stop_func = s7_cadr(p);
+  if ((stop_func != Xen_false) && 
+      (!s7_is_procedure(stop_func)))
+    return(s7_wrong_type_arg_error(sc, S_play, 8, stop_func, "a procedure (stop)"));
+  if ((s7_is_procedure(stop_func)) && 
+      (!s7_is_aritable(sc, stop_func, 1)))
+    Xen_bad_arity_error(S_play, 8, fp, "stop function should take 1 argument");
+
+  p = s7_cddr(p);
+  fp = s7_car(p);
+  if (fp == Xen_false)
+    srate = 44100;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_play, 9, fp, "an integer (srate)"));
+      srate = s7_integer(fp);
+      if (srate <= 0) 
+	Xen_out_of_range_error(S_play, 9, fp, "srate <= 0?");
+    }
+
+  fp = s7_cadr(p);
+  if (fp == Xen_false)
+    channels = 2;
+  else
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_play, 10, fp, "an integer (channels)"));
+      channels = s7_integer(fp);
+      if (channels <= 0)
+	Xen_out_of_range_error(S_play, 10, fp, "channels <= 0?");
+    }
+
+#else
+static Xen g_play(Xen arglist)
+{
   Xen object = Xen_undefined;
   mus_long_t start = 0, end = NO_END_SPECIFIED;
   int channel = -1, out_channel = -1, srate = 44100, channels = 2, edpos_argpos = 0, channel_argpos = 0;
@@ -2934,6 +3048,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 	    Xen_out_of_range_error(S_play, orig_arg[9], keys[9], "channels <= 0?");
 	}
     }
+#endif
 
 #if USE_NO_GUI
   background = NOT_IN_BACKGROUND;
@@ -3434,7 +3549,9 @@ static Xen g_set_with_tracking_cursor(Xen on)
 
 Xen_wrap_no_args(g_with_tracking_cursor_w, g_with_tracking_cursor)
 Xen_wrap_1_arg(g_set_with_tracking_cursor_w, g_set_with_tracking_cursor)
+#if (!HAVE_SCHEME)
 Xen_wrap_any_args(g_play_w, g_play)
+#endif
 Xen_wrap_1_optional_arg(g_stop_playing_w, g_stop_playing)
 Xen_wrap_2_optional_args(g_make_player_w, g_make_player)
 Xen_wrap_6_optional_args(g_add_player_w, g_add_player)
@@ -3480,9 +3597,13 @@ void g_init_dac(void)
 #endif
 
   init_xen_player();
+#if (!HAVE_SCHEME)
   init_play_keywords();
-
   Xen_define_typed_procedure(S_play,           g_play_w,           0, 0, 1, H_play,          pcl_t);
+#else
+  s7_define_function_star(s7, S_play, g_play, "(object #<undefined>) start end channel edit-position out-channel with-sync wait stop srate channels", H_play);
+#endif
+
   Xen_define_typed_procedure(S_stop_playing,   g_stop_playing_w,   0, 1, 0, H_stop_playing,  s7_make_signature(s7, 2, b, t));
   Xen_define_typed_procedure(S_make_player,    g_make_player_w,    0, 2, 0, H_make_player,   s7_make_signature(s7, 3, pl, t, t));
   Xen_define_typed_procedure(S_add_player,     g_add_player_w,     1, 5, 0, H_add_player,    s7_make_signature(s7, 7, pl, pl, i, i, t, t, i));

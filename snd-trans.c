@@ -41,7 +41,7 @@ static int64_t snd_checked_write(int fd, unsigned char *buf, int64_t bytes, cons
   if (kfree < (bytes >> 10))
     { 
       snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
-		   "only %lld bytes left on device (we need %" PRId64 " bytes)",
+		   "only %" PRId64 " bytes left on device (we need %" PRId64 " bytes)",
 		   kfree << 10, bytes);
       return(MUS_ERROR);
     }

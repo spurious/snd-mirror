@@ -909,7 +909,7 @@ void widget_mus_long_t_to_text(GtkWidget *w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(8, sizeof(char));
-  snprintf(str, 8, "%lld", val);
+  snprintf(str, 8, "%" PRId64, val);
   gtk_entry_set_text(GTK_ENTRY(w), str);
   free(str);
 }

@@ -1,6 +1,8 @@
 #include "snd.h"
 
 #include <X11/IntrinsicP.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #if __GNUC__
 #ifdef LESSTIF_VERSION
@@ -596,7 +598,7 @@ static void widget_mus_long_t_to_text(Widget w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(32, sizeof(char));
-  snprintf(str, 32, "%lld", val);
+  snprintf(str, 32, "%" PRId64, val);
   XmTextFieldSetString(w, str);
   free(str);
 }
@@ -9128,7 +9130,7 @@ static void sort_files_and_redisplay(file_pattern_info *fp);
 static void file_list_item_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_popup_info *fd = (file_popup_info *)context;
-  pointer_or_int_t data;
+  intptr_t data;
   int choice;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   choice = (int)data;
@@ -14763,8 +14765,8 @@ static void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
-	    msg = mus_format("%s mixed in at %lld", vdat->names[vdat->selected_files[0]], vdat->beg);
-	  else msg = mus_format("selected files mixed in at %lld", vdat->beg);
+	    msg = mus_format("%s mixed in at %" PRId64, vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format("selected files mixed in at %" PRId64, vdat->beg);
 	  vf_post_error(msg, vdat);
 	  vdat->has_error = false;
 	  free(msg);
@@ -14847,8 +14849,8 @@ static void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
-	    msg = mus_format("%s inserted at %lld", vdat->names[vdat->selected_files[0]], vdat->beg);
-	  else msg = mus_format("selected files inserted at %lld", vdat->beg);
+	    msg = mus_format("%s inserted at %" PRId64, vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format("selected files inserted at %" PRId64, vdat->beg);
 	  vf_post_error(msg, vdat);
 	  vdat->has_error = false;
 	  free(msg);
@@ -15608,7 +15610,7 @@ static void sort_view_files_small_to_big(Widget w, XtPointer context, XtPointer 
 
 static void sort_view_files_xen(Widget w, XtPointer context, XtPointer info) 
 {
-  pointer_or_int_t index;
+  intptr_t index;
   XtVaGetValues(w, XmNuserData, &index, NULL); /* index is location in list of file-sorters */
   sort_vf((view_files_info *)context, (int)index);
 }
@@ -17669,7 +17671,7 @@ static void set_radio_button(prefs_info *prf, int which)
 
 static int which_radio_button(prefs_info *prf)
 {
-  pointer_or_int_t which = 0;
+  intptr_t which = 0;
   XtVaGetValues(prf->radio_button, XmNuserData, &which, NULL);
   return(which);
 }
@@ -19968,7 +19970,7 @@ widget_t make_preferences_dialog(void)
     fft_label = make_top_level_label("transform options", fft_box);
 
     rts_fft_size = transform_size(ss);
-    str = mus_format("%lld", rts_fft_size);
+    str = mus_format("%" PRId64, rts_fft_size);
     prf = prefs_row_with_number("size", S_transform_size,
 				str, 12, 
 				fft_box, fft_label, 
@@ -22343,7 +22345,7 @@ void hide_toolbar(void)
 
 static void menu_callback(Widget w, XtPointer info, XtPointer context) 
 {
-  pointer_or_int_t callb;
+  intptr_t callb;
   XtVaGetValues(w, XmNuserData, &callb, NULL);
   g_menu_callback(call_index(callb)); /* menu option activate callback */
 }
@@ -22351,7 +22353,7 @@ static void menu_callback(Widget w, XtPointer info, XtPointer context)
 
 static void GHC_callback(Widget w, XtPointer info, XtPointer context) 
 {
-  pointer_or_int_t slot;
+  intptr_t slot;
   XtVaGetValues(w, XmNuserData, &slot, NULL);
   g_menu_callback(call_index(slot)); /* main menu cascading callback */
 }
@@ -22406,7 +22408,7 @@ static bool clobber_menu(Widget w, const char *name)
       (mus_strcmp(name, wname)) &&
       (XtIsManaged(w)))
     {
-      pointer_or_int_t slot;
+      intptr_t slot;
       XtVaGetValues(w, XmNuserData, &slot, NULL);
       unprotect_callback(call_index(slot));
       XtUnmanageChild(w);
@@ -23398,7 +23400,7 @@ static void listener_return(widget_t w, int last_prompt)
 static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   int completer;
-  pointer_or_int_t data;
+  intptr_t data;
 
   XtVaGetValues(w, XmNuserData, &data, NULL);
   completer = (int)data;
@@ -25425,7 +25427,7 @@ static Xen mouse_leave_graph_hook;
 
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  pointer_or_int_t data;
+  intptr_t data;
   XEnterWindowEvent *ev = (XEnterWindowEvent *)event;
 
   if (with_pointer_focus(ss))
@@ -25445,7 +25447,7 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
 
 static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  pointer_or_int_t data;
+  intptr_t data;
   XLeaveWindowEvent *ev = (XLeaveWindowEvent *)event;
 
   XtVaGetValues(w, XmNuserData, &data, NULL);
@@ -25786,8 +25788,8 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
 
 static void channel_drop_watcher(Widget w, const char *str, Position x, Position y, void *context)
 {
-  pointer_or_int_t data;
-  data = (pointer_or_int_t)context;
+  intptr_t data;
+  data = (intptr_t)context;
   drag_and_drop_mix_at_x_y((int)data, str, x, y);
 }
 
@@ -25795,7 +25797,7 @@ static void channel_drop_watcher(Widget w, const char *str, Position x, Position
 static void channel_drag_watcher(Widget w, const char *str, Position x, Position y, drag_style_t dtype, void *context)
 {
   int snd, chn;
-  pointer_or_int_t data;
+  intptr_t data;
   snd_info *sp;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   chn = unpack_channel(data);
@@ -26078,12 +26080,12 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_graph], PointerMotionMask, false, graph_mouse_motion, (XtPointer)cp);
       if (!main)
 	{
-	  pointer_or_int_t data;
+	  intptr_t data;
 	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, false, graph_mouse_leave, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, false, cp_graph_key_press, (XtPointer)cp);
 
-	  data = (pointer_or_int_t)pack_sound_and_channel(sp->index, cp->chan);
+	  data = (intptr_t)pack_sound_and_channel(sp->index, cp->chan);
 	  add_drag_and_drop(cw[W_graph], channel_drop_watcher, channel_drag_watcher, (void *)data);
 	}
 
@@ -30230,7 +30232,7 @@ static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointe
       if (page)
 	{
 	  int index;
-	  pointer_or_int_t data;
+	  intptr_t data;
 	  XtVaGetValues(page, XmNuserData, &data, NULL);
 	  index = (int)data;
 	  if ((index < ss->max_sounds) && 

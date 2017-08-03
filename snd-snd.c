@@ -1749,19 +1749,19 @@ static bool apply_controls(apply_state *ap)
 	      else filterstr = mus_strdup(PROC_FALSE);
 #if HAVE_FORTH
 	      if (orig_apply_dur == 0)
-	      ap->origin = mus_format(" '( %s %s %s %s %s %s ) %lld" PROC_SEP PROC_FALSE " %s", 
+	      ap->origin = mus_format(" '( %s %s %s %s %s %s ) %" PRId64 PROC_SEP PROC_FALSE " %s", 
 				      ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr, 
 				      apply_beg, S_controls_to_channel);
-	      else ap->origin = mus_format(" '( %s %s %s %s %s %s ) %lld" PROC_SEP "%lld %s",
+	      else ap->origin = mus_format(" '( %s %s %s %s %s %s ) %" PRId64 PROC_SEP "%" PRId64 " %s",
 					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
 					   apply_beg, apply_dur, S_controls_to_channel);
 #else
 	      if (orig_apply_dur == 0)
-	      ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
+	      ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP "%" PRId64 PROC_SEP PROC_FALSE, 
 				      to_proc_name(S_controls_to_channel),
 				      ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr, 
 				      apply_beg);
-	      else ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP "%lld" PROC_SEP "%lld",
+	      else ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP "%" PRId64 PROC_SEP "%" PRId64,
 					   to_proc_name(S_controls_to_channel),
 					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
 					   apply_beg, apply_dur);
@@ -3968,7 +3968,7 @@ open filename (as if opened from File:Open menu option), and return the new soun
   return(Xen_false);
 }
 
-
+#if (!HAVE_SCHEME)
 static Xen kw_header_type, kw_file, kw_srate, kw_channel, kw_sound, kw_edit_position, kw_channels, kw_size, kw_comment, kw_sample_type;
 
 static void init_sound_keywords(void)
@@ -3984,6 +3984,7 @@ static void init_sound_keywords(void)
   kw_size = Xen_make_keyword("size");
   kw_comment = Xen_make_keyword("comment");
 }
+#endif
 
 #define H_open_raw_sound "(" S_open_raw_sound " file channels srate sample-type): \
 open file assuming the data matches the attributes indicated unless the file actually has a header"
@@ -4165,9 +4166,6 @@ static Xen g_view_sound(Xen filename)
   return(Xen_false);
 }
 
-
-static Xen g_save_sound_as(Xen arglist)
-{
   #if HAVE_SCHEME
     #define save_as_example "(" S_save_sound_as " \"test.snd\" index 44100 " S_mus_bshort " " S_mus_next ")"
   #endif
@@ -4182,6 +4180,97 @@ static Xen g_save_sound_as(Xen arglist)
 save sound in file using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
 Omitted arguments take their value from the sound being saved.\n  " save_as_example
   
+#if HAVE_SCHEME
+static s7_pointer g_save_sound_as(s7_scheme *sc, s7_pointer args)
+{
+  snd_info *sp = NULL; 
+  file_info *hdr;
+  mus_header_t ht;
+  mus_sample_t df;
+  char *fname = NULL;
+  int sr, chan;
+  const char *outcom, *file;
+  io_error_t io_err = IO_NO_ERROR;
+  s7_pointer p, fp, index, edpos, pchan, filep;
+  bool free_outcom = false;
+  int i, edit_position = AT_CURRENT_EDIT_POSITION;
+
+  /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, args)); */
+
+  fp = s7_car(args);
+  filep = fp;
+  if (fp != Xen_false)
+    {
+      if (!s7_is_string(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_sound_as, 1, fp, "a string (a filename)"));
+      file = s7_string(fp);
+    }
+  else file = NULL;
+
+  index = s7_cadr(args);
+  Snd_assert_sound(S_save_sound_as, index, 2);
+  sp = get_sp(index);
+  if (!sp) 
+    return(snd_no_such_sound_error(S_save_sound_as, index));
+  hdr = sp->hdr;
+
+  p = s7_cddr(args);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_sound_as, 3, fp, "an integer (srate)"));
+      sr = s7_integer(fp);
+      if (sr <= 0)
+	Xen_error(Xen_make_error_type("cannot-save"),
+		  Xen_list_2(C_string_to_Xen_string(S_save_sound_as ": srate (~A) can't be <= 0"), fp));
+    }
+  else sr = -1;
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_sound_as, 4, fp, "an integer (sample type)"));
+      df = (mus_sample_t)s7_integer(fp);
+    }
+  else df = MUS_UNKNOWN_SAMPLE;
+
+  p = s7_cddr(p);
+  fp = s7_car(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_sound_as, 5, fp, "an integer (header type)"));
+      ht = (mus_header_t)s7_integer(fp);
+    }
+  else ht = MUS_UNKNOWN_HEADER;
+
+  fp = s7_cadr(p);
+  pchan = fp;
+  if (fp != Xen_false)
+    {
+      if (!s7_is_integer(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_sound_as, 6, fp, "an integer (channel)"));
+      chan = s7_integer(fp);
+    }
+  else chan = -1;
+
+  p = s7_cddr(p);
+  edpos = s7_car(p);
+
+  fp = s7_cadr(p);
+  if (fp != Xen_false)
+    {
+      if (!s7_is_string(fp))
+	return(s7_wrong_type_arg_error(sc, S_save_sound_as, 8, fp, "a string"));
+      outcom = s7_string(fp);
+    }
+  else outcom = NULL;
+
+#else
+static Xen g_save_sound_as(Xen arglist)
+{
   snd_info *sp;
   file_info *hdr;
   mus_header_t ht = MUS_UNKNOWN_HEADER;
@@ -4194,8 +4283,8 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   Xen keys[8];
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len;
-  Xen edpos = Xen_undefined, index = Xen_undefined;
-  bool got_edpos = false, free_outcom = false;
+  Xen edpos = Xen_undefined, index = Xen_undefined, pchan;
+  bool free_outcom = false, filep;
 
   keys[0] = kw_file;
   keys[1] = kw_sound;
@@ -4228,14 +4317,12 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 			     C_int_to_Xen_integer(sr)));
 
       chan = mus_optkey_to_int(keys[5], S_save_sound_as, orig_arg[5], chan);
-      if (!(Xen_is_keyword(keys[6]))) 
-	{
-	  edpos = keys[6];
-	  if ((Xen_is_integer(edpos)) || (Xen_is_procedure(edpos)))
-	    got_edpos = true;
-	}
+      if (!(Xen_is_keyword(keys[6])))
+	edpos = keys[6];
       outcom = mus_optkey_to_string(keys[7], S_save_sound_as, orig_arg[7], NULL);
     }
+  pchan = keys[5];
+#endif
 
   if ((!file) || 
       (is_directory(file)))
@@ -4296,9 +4383,9 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 			 C_string_to_Xen_string(mus_header_type_name(ht))));
 
   if (chan >= (int)(sp->nchans))
-    return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
+    return(snd_no_such_channel_error(S_save_sound_as, index, pchan));
 
-  if (got_edpos)
+  if (Xen_is_integer(edpos))
     {
       edit_position = to_c_edit_position(sp->chans[(chan >= 0) ? chan : 0], edpos, S_save_sound_as, 7);
       for (i = 0; i < (int)sp->nchans; i++)
@@ -4348,7 +4435,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     }
 
   if (fname) free(fname);
-  return(args[orig_arg[0] - 1]);
+  return(filep);
 }
 
   #if HAVE_SCHEME
@@ -5213,22 +5300,22 @@ where each inner list entry can also be " PROC_FALSE "."
 #if HAVE_EXTENSION_LANGUAGE
 #if HAVE_FORTH
       if (!(Xen_is_number(dur)))
-	ap->origin = mus_format("%s %lld" PROC_SEP PROC_FALSE " %s", 
+	ap->origin = mus_format("%s %" PRId64 PROC_SEP PROC_FALSE " %s", 
 				Xen_object_to_C_string(settings), 
 				apply_beg, S_controls_to_channel);
-      else ap->origin = mus_format("%s " PROC_SEP "%lld" PROC_SEP "%lld %s", 
+      else ap->origin = mus_format("%s " PROC_SEP "%" PRId64 PROC_SEP "%" PRId64 " %s", 
 				   Xen_object_to_C_string(settings), 
 				   apply_beg, apply_dur, S_controls_to_channel);
 #else
       {
 	char *temp = NULL;
 	if (!(Xen_is_number(dur)))
-	  ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP "%lld" PROC_SEP PROC_FALSE, 
+	  ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP "%" PRId64 PROC_SEP PROC_FALSE, 
 				  to_proc_name(S_controls_to_channel), 
 				  PROC_QUOTE,
 				  temp = Xen_object_to_C_string(settings), 
 				  apply_beg);
-	else ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP "%lld" PROC_SEP "%lld", 
+	else ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP "%" PRId64 PROC_SEP "%" PRId64, 
 				     to_proc_name(S_controls_to_channel), 
 				     PROC_QUOTE,
 				     temp = Xen_object_to_C_string(settings), 
@@ -5967,7 +6054,6 @@ Xen_wrap_1_optional_arg(g_save_sound_w, g_save_sound)
 Xen_wrap_1_arg(g_open_sound_w, g_open_sound)
 Xen_wrap_1_arg(g_view_sound_w, g_view_sound)
 Xen_wrap_1_optional_arg(g_revert_sound_w, g_revert_sound)
-Xen_wrap_any_args(g_save_sound_as_w, g_save_sound_as)
 Xen_wrap_4_optional_args(g_apply_controls_w, g_apply_controls)
 Xen_wrap_6_optional_args(g_controls_to_channel_w, g_controls_to_channel)
 Xen_wrap_1_optional_arg(g_filter_control_envelope_w, g_filter_control_envelope)
@@ -6054,6 +6140,7 @@ Xen_wrap_2_optional_args(g_status_report_w, g_status_report)
 #define g_set_speed_control_style_w g_set_speed_control_style_reversed
 #define g_set_speed_control_tones_w g_set_speed_control_tones_reversed
 #else
+Xen_wrap_any_args(g_save_sound_as_w, g_save_sound_as)
 Xen_wrap_any_args(g_new_sound_w, g_new_sound)
 Xen_wrap_any_args(g_open_raw_sound_w, g_open_raw_sound)
 Xen_wrap_2_optional_args(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
@@ -6151,7 +6238,9 @@ void g_init_snd(void)
 #endif
 
   init_xen_sound();
+#if (!HAVE_SCHEME)
   init_sound_keywords();
+#endif
 
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \
 If it returns " PROC_TRUE ", the usual informative status babbling is squelched."
@@ -6212,14 +6301,15 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_unsafe_typed_procedure(S_open_sound,     g_open_sound_w,         1, 0, 0, H_open_sound,        s7_make_signature(s7, 2, sd, s));
   Xen_define_unsafe_typed_procedure(S_view_sound,     g_view_sound_w,         1, 0, 0, H_view_sound,        s7_make_signature(s7, 2, sd, s));
   Xen_define_unsafe_typed_procedure(S_revert_sound,   g_revert_sound_w,       0, 1, 0, H_revert_sound,      s7_make_signature(s7, 2, sd, sd));
-  Xen_define_unsafe_typed_procedure(S_save_sound_as,  g_save_sound_as_w,      0, 0, 1, H_save_sound_as,     s7_make_circular_signature(s7, 0, 1, t));
 
 #if HAVE_SCHEME
   s7_define_function_star(s7, S_new_sound, g_new_sound, "file channels srate sample-type header-type comment size", H_new_sound);
+  s7_define_function_star(s7, S_save_sound_as, g_save_sound_as, "file sound srate sample-type header-type channel edit-position comment", H_save_sound_as);
   s7_define_function_star(s7, S_open_raw_sound, g_open_raw_sound, "file channels srate sample-type", H_open_raw_sound);
 #else
   Xen_define_unsafe_typed_procedure(S_new_sound,      g_new_sound_w,          0, 0, 1, H_new_sound,         s7_make_circular_signature(s7, 0, 1, t));
   Xen_define_unsafe_typed_procedure(S_open_raw_sound, g_open_raw_sound_w,     0, 0, 1, H_open_raw_sound,    s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_unsafe_typed_procedure(S_save_sound_as,  g_save_sound_as_w,      0, 0, 1, H_save_sound_as,     s7_make_circular_signature(s7, 0, 1, t));
 #endif
 
   Xen_define_typed_procedure(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls,         s7_make_signature(s7, 5, t, t, i, i, i));

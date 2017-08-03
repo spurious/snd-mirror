@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/types.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 /* not sure how to handle this one cleanly: */
 #ifndef __cplusplus
@@ -23,7 +25,7 @@
 #endif
 
 typedef double mus_float_t;
-typedef long long int mus_long_t;
+typedef int64_t mus_long_t;
 
 #if defined(__sun) && defined(__SVR4)
   #define HAVE_SUN 1

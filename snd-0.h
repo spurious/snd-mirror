@@ -9,12 +9,6 @@
   #define DISPLAY(Obj) s7_object_to_c_string(s7, Obj)
 #endif
 
-#if (SIZEOF_VOID_P == 4)
-  typedef int pointer_or_int_t;
-#else
-  typedef long long int pointer_or_int_t;
-#endif
-
 #ifndef STRFTIME_FORMAT
   #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 #endif

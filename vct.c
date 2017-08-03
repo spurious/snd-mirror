@@ -239,7 +239,7 @@ Xen_wrap_free(vct, free_vct, vct_free)
 
 static char *mus_vct_to_string(vct *v)
 {
-  int len, size;
+  mus_lont_t len, size;
   char *buf;
   char flt[VCT_PRINT_BUFFER_SIZE];
   mus_float_t *d;
@@ -250,7 +250,7 @@ static char *mus_vct_to_string(vct *v)
   d = mus_vct_data(v);
   size = (len + 1) * VCT_PRINT_BUFFER_SIZE;
   buf = (char *)calloc(size, sizeof(char));
-  snprintf(buf, size, "#<vct[len=%lld" "]", mus_vct_length(v));
+  snprintf(buf, size, "#<vct[len=%" PRId64 "]", mus_vct_length(v));
 
   if ((len > 0) && (d))
     {
