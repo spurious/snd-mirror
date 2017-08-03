@@ -239,7 +239,7 @@ Xen_wrap_free(vct, free_vct, vct_free)
 
 static char *mus_vct_to_string(vct *v)
 {
-  mus_lont_t len, size;
+  mus_long_t len, size;
   char *buf;
   char flt[VCT_PRINT_BUFFER_SIZE];
   mus_float_t *d;

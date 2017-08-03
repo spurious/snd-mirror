@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 16
-#define MUS_DATE "18-Jul-17"
+#define MUS_REVISION 17
+#define MUS_DATE "3-Aug-17"
 
 /* isn't mus_env_interp backwards? */
 
@@ -616,6 +616,7 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
+ * 3-Aug:      mus_long_t is now int64_t.
  * 18-Jul:     mus_<method>_exists.
  * 13-Jul:     mus_run1_function.
  * 11-Jul-17:  removed *clm-default-frequency*.
