@@ -10147,18 +10147,18 @@
 						     ""))))
 		      (if (and (pair? op)
 			       (member checker op any-compatible?))
-			  (if (and *report-sloppy-assoc*
-				   (not (var-member :catch env))   ; (round (char-position #\a "asb"))
-				   (or (not (pair? arg))
-				       (not (memq (car arg) '(int-vector-ref float-vector-ref)))))
-			      (lint-format "in ~A,~%~NC~A's argument ~Ashould be ~A, but ~A might also be ~A" caller
-					   (truncated-list->string form)
-					   (+ lint-left-margin 4) #\space
-					   head
-					   (prettify-arg-number arg-number)
-					   (prettify-checker-unq checker)
-					   (truncated-list->string arg)
-					   (car (remove-if (lambda (o) (any-compatible? checker o)) op))))
+			  (unless (or (not *report-sloppy-assoc*)
+				      (var-member :catch env)   ; (round (char-position #\a "asb"))
+				      (and (pair? arg)
+					   (memq (car arg) '(int-vector-ref float-vector-ref system))))
+				(lint-format "in ~A,~%~NC~A's argument ~Ashould be ~A, but ~A might also be ~A" caller
+					     (truncated-list->string form)
+					     (+ lint-left-margin 4) #\space
+					     head
+					     (prettify-arg-number arg-number)
+					     (prettify-checker-unq checker)
+					     (truncated-list->string arg)
+					     (car (remove-if (lambda (o) (any-compatible? checker o)) op))))
 			  (lint-format "in ~A,~%~NC~A's argument ~Ashould be ~A, but ~A is ~A" caller
 				       (truncated-list->string form)
 				       (+ lint-left-margin 4) #\space
