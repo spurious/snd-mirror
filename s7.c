@@ -773,7 +773,7 @@ typedef struct s7_cell {
 	int32_t temp_len;
       } str_ext;
       char *svalue;
-      uint64_t hash;  /* string hash-index */
+      uint64_t hash;                /* string hash-index */
       s7_pointer initial_slot;
       union {
 	char *documentation;
@@ -799,7 +799,7 @@ typedef struct s7_cell {
 
     struct {                       /* environments (frames, lets) */
       s7_pointer slots, nxt;
-      int64_t id;            /* id of rootlet is -1 */
+      int64_t id;                  /* id of rootlet is -1 */
       union {
 	struct {
 	  s7_pointer function;     /* __func__ (code) if this is a funclet */
@@ -826,7 +826,7 @@ typedef struct s7_cell {
 
     struct {                        /* counter (internal) */
       s7_pointer result, list, env, slots; /* env = counter_let (curlet after map/for-each frame created) */
-      uint64_t cap;          /* sc->capture_let_counter for frame reuse */
+      uint64_t cap;                 /* sc->capture_let_counter for frame reuse */
     } ctr;
 
     struct {                        /* random-state */
@@ -861,7 +861,7 @@ typedef struct s7_cell {
       s7_pointer handler;
     } rcatch; /* C++ reserves "catch" I guess */
 
-    struct {                       /* dynamic-wind */
+    struct {                        /* dynamic-wind */
       s7_pointer in, out, body;
       uint32_t state;
     } winder;
@@ -2987,7 +2987,8 @@ enum {OP_NO_OP, OP_GC_PROTECT,
       OP_WITH_LET, OP_WITH_LET1, OP_WITH_LET_UNCHECKED, OP_WITH_LET_S,
       OP_WITH_BAFFLE, OP_WITH_BAFFLE_UNCHECKED, OP_EXPANSION,
       OP_FOR_EACH, OP_FOR_EACH_1, OP_FOR_EACH_2, OP_FOR_EACH_3,
-      OP_MAP, OP_MAP_1, OP_MAP_GATHER, OP_MAP_GATHER_1, OP_BARRIER, OP_DEACTIVATE_GOTO,
+      OP_MAP, OP_MAP_1, OP_MAP_2, OP_MAP_GATHER, OP_MAP_GATHER_1, OP_MAP_GATHER_2, OP_MAP_GATHER_3, 
+      OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR,
       OP_GET_OUTPUT_STRING, OP_GET_OUTPUT_STRING_1,
@@ -3215,7 +3216,8 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "with_let", "with_let1", "with_let_unchecked", "with_let_s",
       "with_baffle", "with_baffle_unchecked", "expansion",
       "for_each", "for_each_1", "for_each_2", "for_each_3", 
-      "map", "map_1", "map_gather", "map_gather_1", "barrier", "deactivate_goto",
+      "map", "map_1", "map_2", "map_gather", "map_gather_1", "map_gather_2", "map_gather_3", 
+      "barrier", "deactivate_goto",
 
       "define_bacro", "define_bacro*",
       "get_output_string", "get_output_string_1",
@@ -39119,16 +39121,15 @@ static bool floats_are_morally_equal(s7_scheme *sc, s7_double x, s7_double y)
   return(fabs(x - y) <= sc->morally_equal_float_epsilon);
 }
 
-static bool eq_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool eq_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   return(x == y);
 }
 
-static bool symbol_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool symbol_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   if (x == y) return(true);
   if (!is_symbol(y)) return(false);                   /* (morally-equal? ''(1) '(1)) */
-  if (!morally) return(false);
   return((is_slot(global_slot(x))) &&                 /* the optimizer can replace the original symbol with its own */
 	 (is_syntax(slot_value(global_slot(x)))) &&
 	 (is_slot(global_slot(y))) &&
@@ -39136,12 +39137,18 @@ static bool symbol_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info 
 	 (syntax_symbol(slot_value(global_slot(x))) == syntax_symbol(slot_value(global_slot(y)))));
 }
 
-static bool unspecified_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool unspecified_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   return(is_unspecified(y));
 }
 
-static bool c_pointer_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool c_pointer_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  return((s7_is_c_pointer(y)) && 
+	 (raw_pointer(x) == raw_pointer(y)));
+}
+
+static bool c_pointer_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   return((s7_is_c_pointer(y)) && 
 	 (raw_pointer(x) == raw_pointer(y)) &&
@@ -39149,25 +39156,30 @@ static bool c_pointer_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_in
 	 (raw_pointer_info(x) == raw_pointer_info(y)));    /* should these use s7_is_equal? */
 }
 
-static bool string_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool string_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   return((is_string(y)) && (scheme_strings_are_equal(x, y)));
 }
 
-static bool syntax_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool syntax_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   return((is_syntax(y)) && (syntax_symbol(x) == syntax_symbol(y)));
 }
 
-static bool c_object_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool c_object_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   return((is_c_object(y)) && (c_objects_are_equal(sc, x, y)));
 }
 
-static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  return(x == y);
+}
+
+static bool port_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   if (x == y) return(true);
-  if ((!morally) || (type(x) != type(y)) || (port_type(x) != port_type(y))) return(false);
+  if ((type(x) != type(y)) || (port_type(x) != port_type(y))) return(false);
   if ((port_is_closed(x)) && (port_is_closed(y))) return(true);
   return((is_string_port(x)) &&
 	 (port_position(x) == port_position(y)) &&
@@ -39209,9 +39221,10 @@ static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
   } while (0)
 
 
-static bool s7_is_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally);
+static bool s7_is_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
+static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 
-static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool hash_table_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   hash_entry_t **lists;
   int32_t i, len;
@@ -39221,7 +39234,7 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
     return(true);
   if (!is_hash_table(y))
     {
-      if ((morally) && (has_methods(y)))
+      if (has_methods(y))
 	{
 	  s7_pointer equal_func;
 	  equal_func = find_method(sc, find_let(sc, y), sc->is_morally_equal_symbol);
@@ -39237,8 +39250,43 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
     return(false);
   if (hash_table_entries(x) == 0)
     return(true);
-  if ((!morally) &&
-      ((hash_table_checker_locked(x)) || (hash_table_checker_locked(y))))
+  len = hash_table_mask(x) + 1;
+  lists = hash_table_elements(x);
+  if (!nci) nci = new_shared_info(sc);
+
+  for (i = 0; i < len; i++)
+    {
+      hash_entry_t *p;
+      for (p = lists[i]; p; p = p->next)
+	{
+	  hash_entry_t *y_val;
+	  y_val = (*hash_table_checker(y))(sc, y, p->key);
+
+	  if ((!y_val) ||
+	      (!s7_is_morally_equal_1(sc, p->value, y_val->value, nci)))
+	    return(false);
+	}
+    }
+  return(true);
+}
+
+static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  hash_entry_t **lists;
+  int32_t i, len;
+  shared_info *nci = ci;
+
+  if (x == y)
+    return(true);
+  if (!is_hash_table(y)) return(false);
+  if (ci)
+    equal_ref(sc, x, y, ci);
+
+  if (hash_table_entries(x) != hash_table_entries(y))
+    return(false);
+  if (hash_table_entries(x) == 0)
+    return(true);
+  if ((hash_table_checker_locked(x)) || (hash_table_checker_locked(y)))
     {
       if (hash_table_checker(x) != hash_table_checker(y))
 	return(false);
@@ -39259,7 +39307,7 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
 	  y_val = (*hash_table_checker(y))(sc, y, p->key);
 
 	  if ((!y_val) ||
-	      (!s7_is_equal_1(sc, p->value, y_val->value, nci, morally)))
+	      (!s7_is_equal_1(sc, p->value, y_val->value, nci)))
 	    return(false);
 	}
     }
@@ -39270,45 +39318,32 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
 }
 
 
-static bool slots_match(s7_scheme *sc, s7_pointer px, s7_pointer y, bool morally, shared_info *nci)
+static bool slots_match(s7_scheme *sc, s7_pointer px, s7_pointer y, shared_info *nci)
 {
   s7_pointer ey, py;
   for (ey = y; (is_let(ey)) && (ey != sc->rootlet); ey = outlet(ey))
     for (py = let_slots(ey); is_slot(py); py = next_slot(py))
       if (slot_symbol(px) == slot_symbol(py)) /* we know something will match */
-	return(s7_is_equal_1(sc, slot_value(px), slot_value(py), nci, morally));
+	return(s7_is_equal_1(sc, slot_value(px), slot_value(py), nci));
   return(false);
 }
 
-static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool slots_morally_match(s7_scheme *sc, s7_pointer px, s7_pointer y, shared_info *nci)
 {
-  /* x == y if all unshadowed vars match, leaving aside the rootlet, so that for any local variable,
-   *   we get the same value in either x or y.
-   */
+  s7_pointer ey, py;
+  for (ey = y; (is_let(ey)) && (ey != sc->rootlet); ey = outlet(ey))
+    for (py = let_slots(ey); is_slot(py); py = next_slot(py))
+      if (slot_symbol(px) == slot_symbol(py)) /* we know something will match */
+	return(s7_is_morally_equal_1(sc, slot_value(px), slot_value(py), nci));
+  return(false);
+}
 
+static bool let_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+{
   s7_pointer ex, ey, px, py;
   shared_info *nci = ci;
   int32_t x_len, y_len;
 
-  if (x == y)
-    return(true);
-
-  if (morally)
-    {
-      s7_pointer equal_func;
-      if (has_methods(x))
-	{
-	  equal_func = find_method(sc, find_let(sc, x), sc->is_morally_equal_symbol);
-	  if (equal_func != sc->undefined)
-	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
-	}
-      if (has_methods(y))
-	{
-	  equal_func = find_method(sc, find_let(sc, y), sc->is_morally_equal_symbol);
-	  if (equal_func != sc->undefined)
-	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, y, x))));
-	}
-    }
   if (!is_let(y))
     return(false);
   if ((x == sc->rootlet) || (y == sc->rootlet))
@@ -39349,13 +39384,47 @@ static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci
       if (symbol_tag(slot_symbol(px)) == 0)                /* unshadowed */
 	{
 	  symbol_set_tag(slot_symbol(px), sc->syms_tag);      /* values don't match */
-	  if (!slots_match(sc, px, y, morally, nci))
+	  if (((!morally) && (!slots_match(sc, px, y, nci))) ||
+	      ((morally) && (!slots_morally_match(sc, px, y, nci))))
 	    return(false);
 	}
   return(true);
 }
 
-static bool closure_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+
+static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  /* x == y if all unshadowed vars match, leaving aside the rootlet, so that for any local variable,
+   *   we get the same value in either x or y.
+   */
+  if (x == y)
+    return(true);
+  return(let_equal_1(sc, x, y, ci, false));
+}
+
+static bool let_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  s7_pointer equal_func;
+
+  if (x == y)
+    return(true);
+
+  if (has_methods(x))
+    {
+      equal_func = find_method(sc, find_let(sc, x), sc->is_morally_equal_symbol);
+      if (equal_func != sc->undefined)
+	return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
+    }
+  if (has_methods(y))
+    {
+      equal_func = find_method(sc, find_let(sc, y), sc->is_morally_equal_symbol);
+      if (equal_func != sc->undefined)
+	return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, y, x))));
+    }
+  return(let_equal_1(sc, x, y, ci, true));
+}
+
+static bool closure_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   if (x == y)
     return(true);
@@ -39365,28 +39434,70 @@ static bool closure_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info
       (has_methods(y)))
     {
       s7_pointer equal_func;
-      equal_func = find_method(sc, closure_let(x), (morally) ? sc->is_morally_equal_symbol : sc->is_equal_symbol);
+      equal_func = find_method(sc, closure_let(x), sc->is_equal_symbol);
+      if (equal_func != sc->undefined)
+	return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
+    }
+  return(false);
+}
+
+static bool closure_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  if (x == y)
+    return(true);
+  if (type(x) != type(y))
+    return(false);
+  if ((has_methods(x)) &&
+      (has_methods(y)))
+    {
+      s7_pointer equal_func;
+      equal_func = find_method(sc, closure_let(x), sc->is_morally_equal_symbol);
       if (equal_func != sc->undefined)
 	return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
     }
   /* not sure about this -- we can't simply check let_equal(closure_let(x), closure_let(y))
    *   because locally defined constant functions on the second pass find the outer let.
    */
-  return((morally) &&
-	 (s7_is_equal_1(sc, closure_args(x), closure_args(y), ci, morally)) &&
-	 (s7_is_equal_1(sc, closure_body(x), closure_body(y), ci, morally)));
+  return((s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), ci)) &&
+	 (s7_is_morally_equal_1(sc, closure_body(x), closure_body(y), ci)));
 }
 
-static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
+  shared_info *nci;
   s7_pointer px, py;
-  shared_info *nci = ci;
+
+  if (x == y)
+    return(true);
+  if (!is_pair(y))
+    return(false);
+
+  if (ci)
+    {
+      nci = ci;
+      equal_ref(sc, x, y, ci);
+    }
+  else nci = new_shared_info(sc);
+  
+  if (!s7_is_equal_1(sc, car(x), car(y), nci)) return(false);
+  for (px = cdr(x), py = cdr(y); (is_pair(px)) && (is_pair(py)); px = cdr(px), py = cdr(py))
+    {
+      if (!s7_is_equal_1(sc, car(px), car(py), nci)) return(false);
+      equal_ref(sc, px, py, nci);
+    }
+  return(s7_is_equal_1(sc, px, py, nci));
+}
+
+static bool pair_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  shared_info *nci;
+  s7_pointer px, py;
 
   if (x == y)
     return(true);
   if (!is_pair(y))
     {
-      if ((morally) && (has_methods(y)))
+      if (has_methods(y))
 	{
 	  s7_pointer equal_func;
 	  equal_func = find_method(sc, find_let(sc, y), sc->is_morally_equal_symbol);
@@ -39395,17 +39506,21 @@ static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
 	}
       return(false);
     }
-  if (ci)
-    equal_ref(sc, x, y, ci);
-  else nci = new_shared_info(sc);
 
-  if (!s7_is_equal_1(sc, car(x), car(y), nci, morally)) return(false);
+  if (ci)
+    {
+      nci = ci;
+      equal_ref(sc, x, y, ci);
+    }
+  else nci = new_shared_info(sc);
+  
+  if (!s7_is_morally_equal_1(sc, car(x), car(y), nci)) return(false);
   for (px = cdr(x), py = cdr(y); (is_pair(px)) && (is_pair(py)); px = cdr(px), py = cdr(py))
     {
-      if (!s7_is_equal_1(sc, car(px), car(py), nci, morally)) return(false);
+      if (!s7_is_morally_equal_1(sc, car(px), car(py), nci)) return(false);
       equal_ref(sc, px, py, nci);
     }
-  return(s7_is_equal_1(sc, px, py, nci, morally));
+  return(s7_is_morally_equal_1(sc, px, py, nci));
 }
 
 static bool vector_rank_match(s7_scheme *sc, s7_pointer x, s7_pointer y)
@@ -39432,91 +39547,36 @@ static bool vector_rank_match(s7_scheme *sc, s7_pointer x, s7_pointer y)
   return(true);
 }
 
-
-static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   s7_int i, len;
   shared_info *nci = ci;
 
   if (x == y)
     return(true);
-  if (!s7_is_vector(y))
-    {
-      if ((morally) && (has_methods(y)))
-	{
-	  s7_pointer equal_func;
-	  equal_func = find_method(sc, find_let(sc, y), sc->is_morally_equal_symbol);
-	  if (equal_func != sc->undefined)
-	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, y, x))));
-	}
-      return(false);
-    }
+  if (!s7_is_vector(y)) return(false);
+
   len = vector_length(x);
   if (len != vector_length(y)) return(false);
   if (len == 0)
-    {
-      if (morally) return(true);
-      if (!vector_rank_match(sc, x, y))
-	return(false);
-      return(true);
-    }
+    return(vector_rank_match(sc, x, y));
+
+  if (type(x) != type(y))
+    return(false);
   if (!vector_rank_match(sc, x, y))
     return(false);
 
-  if (type(x) != type(y))
-    {
-      if (!morally) return(false);
-      /* (morally-equal? (make-int-vector 3 0) (make-vector 3 0)) -> #t
-       * (morally-equal? (make-float-vector 3 1.0) (vector 1 1 1)) -> #t
-       */
-      for (i = 0; i < len; i++)
-	if (!s7_is_equal_1(sc, vector_getter(x)(sc, x, i), vector_getter(y)(sc, y, i), NULL, true)) /* this could be greatly optimized */
-	  return(false);
-      return(true);
-    }
-
   if (is_float_vector(x))
     {
-      if (!morally)
+      for (i = 0; i < len; i++)
 	{
-	  for (i = 0; i < len; i++)
-	    {
-	      s7_double z;
-	      z = float_vector_element(x, i);
-	      if ((is_NaN(z)) ||
-		  (z != float_vector_element(y, i)))
-		return(false);
-	    }
-	  return(true);
+	  s7_double z;
+	  z = float_vector_element(x, i);
+	  if ((is_NaN(z)) ||
+	      (z != float_vector_element(y, i)))
+	    return(false);
 	}
-      else
-	{
-	  s7_double *arr1, *arr2;
-	  s7_double fudge;
-	  arr1 = float_vector_elements(x);
-	  arr2 = float_vector_elements(y);
-	  fudge = sc->morally_equal_float_epsilon;
-	  if (fudge == 0.0)
-	    {
-	      for (i = 0; i < len; i++)
-		if ((arr1[i] != arr2[i]) &&
-		    ((!is_NaN(arr1[i])) || (!is_NaN(arr2[i]))))
-		  return(false);
-	    }
-	  else
-	    {
-	      for (i = 0; i < len; i++)
-		{
-		  s7_double diff;
-		  diff = fabs(arr1[i] - arr2[i]);
-		  if (diff > fudge) return(false);
-		  if ((is_NaN(diff)) &&
-		      ((!is_NaN(arr1[i])) || (!is_NaN(arr2[i]))))
-		    return(false);
-		}
-	    }
-	  return(true);
-	}
+      return(true);
     }
 
   if (is_int_vector(x))
@@ -39532,12 +39592,94 @@ static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info 
   else nci = new_shared_info(sc);
 
   for (i = 0; i < len; i++)
-    if (!(s7_is_equal_1(sc, vector_element(x, i), vector_element(y, i), nci, morally)))
+    if (!(s7_is_equal_1(sc, vector_element(x, i), vector_element(y, i), nci)))
       return(false);
   return(true);
 }
 
-static bool iterator_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool vector_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  s7_int i, len;
+  shared_info *nci = ci;
+
+  if (x == y)
+    return(true);
+  if (!s7_is_vector(y))
+    {
+      if (has_methods(y))
+	{
+	  s7_pointer equal_func;
+	  equal_func = find_method(sc, find_let(sc, y), sc->is_morally_equal_symbol);
+	  if (equal_func != sc->undefined)
+	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, y, x))));
+	}
+      return(false);
+    }
+  len = vector_length(x);
+  if (len != vector_length(y)) return(false);
+  if (len == 0) return(true);
+  if (!vector_rank_match(sc, x, y))
+    return(false);
+
+  if (type(x) != type(y))
+    {
+      /* (morally-equal? (make-int-vector 3 0) (make-vector 3 0)) -> #t
+       * (morally-equal? (make-float-vector 3 1.0) (vector 1 1 1)) -> #t
+       */
+      for (i = 0; i < len; i++)
+	if (!s7_is_morally_equal_1(sc, vector_getter(x)(sc, x, i), vector_getter(y)(sc, y, i), NULL)) /* this could be greatly optimized */
+	  return(false);
+      return(true);
+    }
+
+  if (is_float_vector(x))
+    {
+      s7_double *arr1, *arr2;
+      s7_double fudge;
+      arr1 = float_vector_elements(x);
+      arr2 = float_vector_elements(y);
+      fudge = sc->morally_equal_float_epsilon;
+      if (fudge == 0.0)
+	{
+	  for (i = 0; i < len; i++)
+	    if ((arr1[i] != arr2[i]) &&
+		((!is_NaN(arr1[i])) || (!is_NaN(arr2[i]))))
+	      return(false);
+	}
+      else
+	{
+	  for (i = 0; i < len; i++)
+	    {
+	      s7_double diff;
+	      diff = fabs(arr1[i] - arr2[i]);
+	      if (diff > fudge) return(false);
+	      if ((is_NaN(diff)) &&
+		  ((!is_NaN(arr1[i])) || (!is_NaN(arr2[i]))))
+		return(false);
+	    }
+	}
+      return(true);
+    }
+
+  if (is_int_vector(x))
+    {
+      for (i = 0; i < len; i++)
+	if (int_vector_element(x, i) != int_vector_element(y, i))
+	  return(false);
+      return(true);
+    }
+
+  if (ci)
+    equal_ref(sc, x, y, ci);
+  else nci = new_shared_info(sc);
+
+  for (i = 0; i < len; i++)
+    if (!(s7_is_morally_equal_1(sc, vector_element(x, i), vector_element(y, i), nci)))
+      return(false);
+  return(true);
+}
+
+static bool iterator_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
   if (x == y) return(true);
   if (!is_iterator(y)) return(false);
@@ -39547,14 +39689,15 @@ static bool iterator_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_inf
     case T_STRING:
       return((is_string(iterator_sequence(y))) &&
 	     (iterator_position(x) == iterator_position(y)) &&
-	     (string_equal(sc, iterator_sequence(x), iterator_sequence(y), ci, morally)));
+	     (string_equal(sc, iterator_sequence(x), iterator_sequence(y), ci)));
 
     case T_VECTOR:
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
       return((s7_is_vector(iterator_sequence(y))) &&
 	     (iterator_position(x) == iterator_position(y)) &&
-	     (vector_equal(sc, iterator_sequence(x), iterator_sequence(y), ci, morally)));
+	     ((morally) ? (vector_morally_equal(sc, iterator_sequence(x), iterator_sequence(y), ci)) : 
+	                  (vector_equal(sc, iterator_sequence(x), iterator_sequence(y), ci))));
 
     case T_PAIR:
       return((iterator_sequence(x) == iterator_sequence(y)) &&
@@ -39574,31 +39717,56 @@ static bool iterator_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_inf
   return(false);
 }
 
-static bool bignum_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool iterator_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  return(iterator_equal_1(sc, x, y, ci, false));
+}
+
+static bool iterator_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  return(iterator_equal_1(sc, x, y, ci, true));
+}
+
+static bool bignum_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   if (!s7_is_number(y)) return(false);
 #if WITH_GMP
-  if (!morally)
-    return(big_numbers_are_eqv(x, y));
+  return(big_numbers_are_eqv(x, y));
+#else
+  return(false);
+#endif
+}
+
+static bool bignum_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  if (!s7_is_number(y)) return(false);
+#if WITH_GMP
   return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
 #else
   return(false);
 #endif
 }
 
-static bool integer_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool integer_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
 #if WITH_GMP
   if (is_big_number(y))
-    {
-      if (!morally)
-	return(big_numbers_are_eqv(x, y));
-      return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
-    }
+    return(big_numbers_are_eqv(x, y));
 #endif
   if (is_integer(y))
     return(integer(x) == integer(y));
-  if ((!morally) || (!is_number(y)))
+  return(false);
+}
+
+static bool integer_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+#if WITH_GMP
+  if (is_big_number(y))
+    return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
+#endif
+  if (is_integer(y))
+    return(integer(x) == integer(y));
+  if (!is_number(y))
     return(false);
 
   if (is_t_real(y))
@@ -39615,21 +39783,23 @@ static bool integer_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info
 }
 
 /* apparently ratio_equal is predefined in g++ -- name collision on mac */
-static bool fraction_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool fraction_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
 #if WITH_GMP
   if (is_big_number(y))
-    {
-      if (!morally)
-	return(big_numbers_are_eqv(x, y));
-      return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
-    }
+    return(big_numbers_are_eqv(x, y));
 #endif
-  if (!morally)
-    return((s7_is_ratio(y)) &&
-	   (numerator(x) == numerator(y)) &&
-	   (denominator(x) == denominator(y)));
+  return((s7_is_ratio(y)) &&
+	 (numerator(x) == numerator(y)) &&
+	 (denominator(x) == denominator(y)));
+}
 
+static bool fraction_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+#if WITH_GMP
+  if (is_big_number(y))
+    return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
+#endif
   if (is_t_ratio(y))
     return(s7_fabsl(fraction(x) - fraction(y)) <= sc->morally_equal_float_epsilon);
 
@@ -39647,19 +39817,22 @@ static bool fraction_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_inf
   return(false);
 }
 
-static bool real_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool real_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
 #if WITH_GMP
   if (is_big_number(y))
-    {
-      if (!morally)
-	return(big_numbers_are_eqv(x, y));
-      return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
-    }
+    return(big_numbers_are_eqv(x, y));
 #endif
-  if (!morally)
-    return((is_t_real(y)) &&
-	   (real(x) == real(y)));
+  return((is_t_real(y)) &&
+	 (real(x) == real(y)));
+}
+
+static bool real_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+#if WITH_GMP
+  if (is_big_number(y))
+    return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
+#endif
   if (!is_number(y)) return(false);
 
   if (is_t_real(y))
@@ -39684,22 +39857,25 @@ static bool real_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
 	 (fabs(imag_part(y)) <= sc->morally_equal_float_epsilon));
 }
 
-static bool complex_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool complex_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
 #if WITH_GMP
   if (is_big_number(y))
-    {
-      if (!morally)
-	return(big_numbers_are_eqv(x, y));
-      return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
-    }
+    return(big_numbers_are_eqv(x, y));
 #endif
-  if (!morally)
-    return((is_t_complex(y)) &&
-	   (!is_NaN(real_part(x))) &&
-	   (!is_NaN(imag_part(x))) &&
-	   (real_part(x) == real_part(y)) &&
-	   (imag_part(x) == imag_part(y)));
+  return((is_t_complex(y)) &&
+	 (!is_NaN(real_part(x))) &&
+	 (!is_NaN(imag_part(x))) &&
+	 (real_part(x) == real_part(y)) &&
+	 (imag_part(x) == imag_part(y)));
+}
+
+static bool complex_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+#if WITH_GMP
+  if (is_big_number(y))
+    return(big_equal(sc, set_plist_2(sc, x, y)) != sc->F);
+#endif
   if (!is_number(y)) return(false);
 
   if (is_integer(y))
@@ -39748,7 +39924,7 @@ static bool complex_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info
 	  (fabs(imag_part(x) - imag_part(y)) <= sc->morally_equal_float_epsilon)));
 }
 
-static bool rng_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool rng_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
 #if WITH_GMP
   return(x == y);
@@ -39760,15 +39936,14 @@ static bool rng_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci
 #endif
 }
 
-
-
-static bool (*equals[NUM_TYPES])(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally);
+static bool (*equals[NUM_TYPES])(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
+static bool (*morally_equals[NUM_TYPES])(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 
 static void init_equals(void)
 {
   int32_t i;
-  for (i = 0; i < NUM_TYPES; i++) equals[i] = eq_equal;
-  equals[T_SYMBOL] =       symbol_equal;
+  for (i = 0; i < NUM_TYPES; i++) {equals[i] = eq_equal; morally_equals[i] = eq_equal;}
+  equals[T_SYMBOL] =       eq_equal;
   equals[T_C_POINTER] =    c_pointer_equal;
   equals[T_UNSPECIFIED] =  unspecified_equal;
   equals[T_STRING] =       string_equal;
@@ -39798,21 +39973,57 @@ static void init_equals(void)
   equals[T_BIG_RATIO] =    bignum_equal;
   equals[T_BIG_REAL] =     bignum_equal;
   equals[T_BIG_COMPLEX] =  bignum_equal;
+
+  morally_equals[T_SYMBOL] =       symbol_morally_equal;
+  morally_equals[T_C_POINTER] =    c_pointer_morally_equal;
+  morally_equals[T_UNSPECIFIED] =  unspecified_equal;
+  morally_equals[T_STRING] =       string_equal;
+  morally_equals[T_SYNTAX] =       syntax_equal;
+  morally_equals[T_C_OBJECT] =     c_object_equal;
+  morally_equals[T_RANDOM_STATE] = rng_equal;
+  morally_equals[T_ITERATOR] =     iterator_morally_equal;
+  morally_equals[T_INPUT_PORT] =   port_morally_equal;
+  morally_equals[T_OUTPUT_PORT] =  port_morally_equal;
+  morally_equals[T_MACRO] =        closure_morally_equal;
+  morally_equals[T_MACRO_STAR] =   closure_morally_equal;
+  morally_equals[T_BACRO] =        closure_morally_equal;
+  morally_equals[T_BACRO_STAR] =   closure_morally_equal;
+  morally_equals[T_CLOSURE] =      closure_morally_equal;
+  morally_equals[T_CLOSURE_STAR] = closure_morally_equal;
+  morally_equals[T_HASH_TABLE] =   hash_table_morally_equal;
+  morally_equals[T_LET] =          let_morally_equal;
+  morally_equals[T_PAIR] =         pair_morally_equal;
+  morally_equals[T_VECTOR] =       vector_morally_equal;
+  morally_equals[T_INT_VECTOR] =   vector_morally_equal;
+  morally_equals[T_FLOAT_VECTOR] = vector_morally_equal;
+  morally_equals[T_INTEGER] =      integer_morally_equal;
+  morally_equals[T_RATIO] =        fraction_morally_equal;
+  morally_equals[T_REAL] =         real_morally_equal;
+  morally_equals[T_COMPLEX] =      complex_morally_equal;
+  morally_equals[T_BIG_INTEGER] =  bignum_morally_equal;
+  morally_equals[T_BIG_RATIO] =    bignum_morally_equal;
+  morally_equals[T_BIG_REAL] =     bignum_morally_equal;
+  morally_equals[T_BIG_COMPLEX] =  bignum_morally_equal;
 }
 
-static bool s7_is_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool s7_is_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
-  return((*(equals[type(x)]))(sc, x, y, ci, morally));
+  return((*(equals[type(x)]))(sc, x, y, ci));
 }
 
 bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
-  return(s7_is_equal_1(sc, x, y, NULL, false));
+  return(s7_is_equal_1(sc, x, y, NULL));
+}
+
+static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  return((*(morally_equals[type(x)]))(sc, x, y, ci));
 }
 
 bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
-  return(s7_is_equal_1(sc, x, y, NULL, true));
+  return(s7_is_morally_equal_1(sc, x, y, NULL));
 }
 
 static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
@@ -39839,7 +40050,10 @@ static s7_pointer is_morally_equal_p_pp(s7_pointer a, s7_pointer b) {return((s7_
 
 /* ---------------------------------------- length, copy, fill ---------------------------------------- */
 
-static inline s7_pointer pair_length(s7_scheme *sc, s7_pointer a)
+static s7_pointer (*length_functions[256])(s7_scheme *sc, s7_pointer obj);
+static s7_pointer any_length(s7_scheme *sc, s7_pointer obj) {return(sc->F);}
+
+static s7_pointer pair_length(s7_scheme *sc, s7_pointer a)
 {
   int32_t i;
   s7_pointer slow, fast;
@@ -39857,43 +40071,61 @@ static inline s7_pointer pair_length(s7_scheme *sc, s7_pointer a)
   return(real_infinity);
 }
 
+static s7_pointer nil_length(s7_scheme *sc, s7_pointer lst) {return(small_int(0));}
+static s7_pointer v_length(s7_scheme *sc, s7_pointer v) {return(make_integer(sc, vector_length(v)));}
+static s7_pointer str_length(s7_scheme *sc, s7_pointer v) {return(make_integer(sc, string_length(v)));}
+static s7_pointer iter_length(s7_scheme *sc, s7_pointer lst) {return(make_integer(sc, iterator_length(lst)));} /* in several cases, this is incorrect */
+static s7_pointer h_length(s7_scheme *sc, s7_pointer lst) {return(make_integer(sc, hash_table_mask(lst) + 1));}
+
+static s7_pointer c_obj_length(s7_scheme *sc, s7_pointer lst)
+{
+  check_method(sc, lst, sc->length_symbol, list_1(sc, lst));
+  return(c_object_length(sc, lst));
+}
+
+static s7_pointer lt_length(s7_scheme *sc, s7_pointer lst)
+{
+  check_method(sc, lst, sc->length_symbol, list_1(sc, lst));
+  return(make_integer(sc, let_length(sc, lst)));
+}
+
+static s7_pointer fnc_length(s7_scheme *sc, s7_pointer lst)
+{
+  if (has_methods(lst))
+    return(make_integer(sc, closure_length(sc, lst)));
+  return(sc->F);
+}
+
+static s7_pointer io_length(s7_scheme *sc, s7_pointer lst)
+{
+  if (is_string_port(lst))
+    return(make_integer(sc, port_data_size(lst)));
+  return(sc->F);
+}
+
+static void init_length_functions(void)
+{
+  int i;
+  for (i = 0; i < 256; i++) length_functions[i] = any_length;
+  length_functions[T_NIL]          = nil_length;
+  length_functions[T_PAIR]         = pair_length;
+  length_functions[T_VECTOR]       = v_length;
+  length_functions[T_FLOAT_VECTOR] = v_length;
+  length_functions[T_INT_VECTOR]   = v_length;
+  length_functions[T_STRING]       = str_length;
+  length_functions[T_ITERATOR]     = iter_length;
+  length_functions[T_HASH_TABLE]   = h_length;
+  length_functions[T_C_OBJECT]     = c_obj_length;
+  length_functions[T_LET]          = lt_length;
+  length_functions[T_CLOSURE]      = fnc_length;
+  length_functions[T_CLOSURE_STAR] = fnc_length;
+  length_functions[T_INPUT_PORT]   = io_length;
+}
+
 
 static s7_pointer s7_length(s7_scheme *sc, s7_pointer lst)
 {
-  switch (type(lst))
-    {
-    case T_PAIR:       return(pair_length(sc, lst));
-    case T_NIL:        return(small_int(0));
-    case T_INT_VECTOR:
-    case T_FLOAT_VECTOR:
-    case T_VECTOR:     return(make_integer(sc, vector_length(lst)));
-    case T_STRING:     return(make_integer(sc, string_length(lst)));
-    case T_ITERATOR:   return(make_integer(sc, iterator_length(lst))); /* in several cases, this is incorrect */
-    case T_HASH_TABLE: return(make_integer(sc, hash_table_mask(lst) + 1));
-
-    case T_C_OBJECT:
-      check_method(sc, lst, sc->length_symbol, list_1(sc, lst));
-      return(c_object_length(sc, lst));
-
-    case T_LET:
-      check_method(sc, lst, sc->length_symbol, list_1(sc, lst));
-      return(make_integer(sc, let_length(sc, lst)));
-
-    case T_CLOSURE:
-    case T_CLOSURE_STAR:
-      if (has_methods(lst))
-	return(make_integer(sc, closure_length(sc, lst)));
-      return(sc->F);
-
-    case T_INPUT_PORT:
-      if (is_string_port(lst))
-	return(make_integer(sc, port_data_size(lst)));
-      return(sc->F);
-
-    default:
-      return(sc->F);
-    }
-  return(sc->F);
+  return((*length_functions[unchecked_type(lst)])(sc, lst));
 }
 
 static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
@@ -39902,9 +40134,7 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 The length of a dotted list does not include the final cdr, and is returned as a negative number.  A circular \
 list has infinite length.  Length of anything else returns #f."
   #define Q_length s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_boolean_symbol), sc->T)
-  if (is_pair(car(args)))
-    return(pair_length(sc, car(args)));
-  return(s7_length(sc, car(args)));
+  return((*length_functions[unchecked_type(car(args))])(sc, car(args)));
 }
 
 /* what about (length file)?  input port, read_file gets the file length, so perhaps save it
@@ -54272,16 +54502,14 @@ static s7_pointer g_for_each_closure(s7_scheme *sc, s7_pointer args)
       sc->envir = old_e;
     }
   
-  if (is_null(cdr(body)))
+  if ((is_null(cdr(body))) &&
+      (is_pair(seq)))
     {
-      if (is_pair(seq))
-	{
-	  s7_pointer c;
-	  c = make_counter(sc, seq);
-	  counter_set_result(c, seq);
-	  push_stack(sc, OP_FOR_EACH_2, c, f);
-	  return(sc->unspecified);
-	}
+      s7_pointer c;
+      c = make_counter(sc, seq);
+      counter_set_result(c, seq);
+      push_stack(sc, OP_FOR_EACH_2, c, f);
+      return(sc->unspecified);
     }
   
   sc->z = seq;
@@ -54414,6 +54642,74 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 
 /* ---------------------------------------- map ---------------------------------------- */
 
+static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer body, expr, f, seq;
+  seq = cadr(args);
+  if (is_null(seq)) return(sc->nil);
+  f = car(args);
+  body = closure_body(f);
+  expr = car(body);
+  if ((is_pair(cadr(args))) &&
+      (!pair_no_opt(body)) &&
+      (is_optimized(expr)))
+    {
+      s7_function func;
+      s7_pointer slot, old_e;
+      
+      old_e = sc->envir;
+      sc->envir = new_frame_in_env(sc, sc->envir);
+      slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
+      
+      if (is_null(cdr(body)))
+	func = s7_optimize(sc, body);
+      else func = s7_cell_optimize(sc, cons(sc, cons(sc, sc->begin_symbol, body), sc->nil), false);
+      
+      if (func)
+	{
+	  s7_pointer fast, slow, val;
+	  
+	  val = list_2(sc, sc->nil, f);
+	  push_stack(sc, OP_GC_PROTECT, sc->args, val);
+	  for (fast = cadr(args), slow = cadr(args); is_pair(fast); fast = cdr(fast), slow = cdr(slow))
+	    {
+	      s7_pointer z;
+	      slot_set_value(slot, car(fast));
+	      z = func(sc, expr);
+	      if (z != sc->no_value)
+		set_car(val, cons(sc, z, car(val)));
+	      if (is_pair(cdr(fast)))
+		{
+		  fast = cdr(fast);
+		  if (fast == slow)
+		    break;
+		  slot_set_value(slot, car(fast));
+		  z = func(sc, expr);
+		  if (z != sc->no_value)
+		    set_car(val, cons(sc, z, car(val)));
+		}
+	    }
+	  sc->stack_end -= 4;
+	  return(safe_reverse_in_place(sc, car(val))); 
+	}
+      set_pair_no_opt(body);
+      sc->envir = old_e;
+    }
+
+  if ((is_null(cdr(body))) &&
+      (is_pair(seq)))
+    {
+      push_stack(sc, OP_MAP_2, make_counter(sc, seq), cons(sc, f, seq));
+      return(sc->unspecified);
+    }
+  
+  sc->z = (!is_iterator(cadr(args))) ? s7_make_iterator(sc, cadr(args)) : cadr(args);
+  push_stack(sc, OP_MAP_1, make_counter(sc, sc->z), f);
+  sc->z = sc->nil;
+  return(sc->nil);
+}
+
+
 static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 {
   #define H_map "(map proc object . objects) applies proc to a list made up of the next element of each of its arguments, returning \
@@ -54538,62 +54834,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  if ((len == 1) &&
 	      (fargs == 1) &&
 	      (!is_immutable_symbol(car(closure_args(f)))))
-	    {
-	      s7_pointer body, expr;
-	      if (got_nil) return(sc->nil);
-	      body = closure_body(f);
-	      expr = car(body);
-	      if ((is_pair(cadr(args))) &&
-		  (!pair_no_opt(body)) &&
-		  (is_optimized(expr)))
-		{
-		  s7_function func;
-		  s7_pointer slot, old_e;
-
-		  old_e = sc->envir;
-		  sc->envir = new_frame_in_env(sc, sc->envir);
-		  slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
-
-		  if (is_null(cdr(body)))
-		    func = s7_optimize(sc, body);
-		  else func = s7_cell_optimize(sc, cons(sc, cons(sc, sc->begin_symbol, body), sc->nil), false);
-
-		  if (func)
-		    {
-		      s7_pointer fast, slow, val;
-
-		      val = list_2(sc, sc->nil, f);
-		      push_stack(sc, OP_GC_PROTECT, sc->args, val);
-		      for (fast = cadr(args), slow = cadr(args); is_pair(fast); fast = cdr(fast), slow = cdr(slow))
-			{
-			  s7_pointer z;
-			  slot_set_value(slot, car(fast));
-			  z = func(sc, expr);
-			  if (z != sc->no_value)
-			    set_car(val, cons(sc, z, car(val)));
-			  if (is_pair(cdr(fast)))
-			    {
-			      fast = cdr(fast);
-			      if (fast == slow)
-				break;
-			      slot_set_value(slot, car(fast));
-			      z = func(sc, expr);
-			      if (z != sc->no_value)
-				set_car(val, cons(sc, z, car(val)));
-			    }
-			}
-		      sc->stack_end -= 4;
-		      return(safe_reverse_in_place(sc, car(val))); 
-		    }
-		  set_pair_no_opt(body);
-		  sc->envir = old_e;
-		}
-	      
-	      sc->z = (!is_iterator(cadr(args))) ? s7_make_iterator(sc, cadr(args)) : cadr(args);
-	      push_stack(sc, OP_MAP_1, make_counter(sc, sc->z), f);
-	      sc->z = sc->nil;
-	      return(sc->nil);
-	    }
+	    return(g_map_closure(sc, args));
 	  if ((fargs > len) ||
 	      ((fargs < len) &&
 	       ((fargs >= 0) ||
@@ -58873,13 +59114,13 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	      check_lambda(sc);
 	      sc->code = code;
 	      choose_c_function(sc, expr, func, 2);
-	      if ((c_call(expr) == g_for_each) &&
+	      if (((c_call(expr) == g_for_each) || (c_call(expr) == g_map)) &&
 		  (is_pair(cadr(arg1))) &&
 		  (is_null(cdadr(arg1))) &&
 		  (is_pair(cddr(arg1))) &&
 		  (is_null(cdddr(arg1))) &&
 		  (!is_immutable_symbol(caadr(arg1))))
-		set_c_call(expr, g_for_each_closure);
+		set_c_call(expr, (c_call(expr) == g_for_each) ? g_for_each_closure : g_map_closure);
 	      return(OPT_F);
 	    }
 	  
@@ -67958,6 +68199,59 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto APPLY;
 	  }
 	  
+	case OP_MAP_GATHER_2:
+	case OP_MAP_GATHER_3:
+	  if (sc->value != sc->no_value)
+	    {
+	      if (is_multiple_value(sc->value))
+		counter_set_result(sc->args, revappend(sc, multiple_value(sc->value), counter_result(sc->args)));
+	      else counter_set_result(sc->args, cons(sc, sc->value, counter_result(sc->args)));
+	    }
+	case OP_MAP_2:
+	  {
+	    s7_pointer x, c, code, p;
+	    code = car(sc->code);
+	    c = sc->args;
+	    p = counter_list(c);
+	    if (!is_pair(p))
+	      {
+		sc->value = safe_reverse_in_place(sc, counter_result(c));
+		free_cell(sc, sc->args);
+		sc->args = sc->nil; 
+		goto START;
+	      }
+	    x = car(p);
+	    counter_set_list(c, cdr(p));
+
+	    if (sc->op == OP_MAP_GATHER_3)
+	      {
+		cdr(sc->code) = cddr(sc->code);
+		if (cdr(sc->code) == counter_list(c))
+		  {
+		    sc->value = safe_reverse_in_place(sc, counter_result(c));
+		    free_cell(sc, c);
+		    sc->args = sc->nil;
+		    goto START;
+		  }
+		push_stack(sc, OP_MAP_GATHER_2, c, sc->code);
+	      }
+	    else push_stack(sc, OP_MAP_GATHER_3, c, sc->code);
+
+	    if (counter_capture(c) != sc->capture_let_counter)
+	      {
+		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), x);
+		counter_set_let(c, sc->envir);
+		counter_set_slots(c, let_slots(sc->envir));
+		counter_set_capture(c, sc->capture_let_counter);
+	      }
+	    else 
+	      {
+		let_set_slots(counter_let(c), counter_slots(c));
+		sc->envir = old_frame_with_slot(sc, counter_let(c), x);
+	      }
+	    sc->code = _TPair(closure_body(code));
+	    goto BEGIN1;
+	  }
 	  
 	  /* -------------------------------- FOR-EACH -------------------------------- */
 	case OP_FOR_EACH:
@@ -80576,6 +80870,7 @@ s7_scheme *s7_init(void)
       init_ctables();
       init_mark_functions();
       init_display_functions();
+      init_length_functions();
       init_equals();
       init_hash_maps();
       init_pows();
@@ -82636,7 +82931,9 @@ int main(int argc, char **argv)
  * all_x_if_a...?
  * opt let? opt_float_begin in s7_float_optimize for map-channel in snd?
  * g_multiply_2 (et al) -> direct cases
+ * ((object->let obj) 'field) could be recognized and greatly optimized
  * tie in p_di|id?
+ *
  * there's confusion about where .so files place their names upon load:
  *   cload uses (outlet (curlet))?? xg/xm use rootlet etc
  *   ideally all would allow (load "a.so" (define *a* (inlet 'init_func 'init_a))) and the like
@@ -82660,28 +82957,32 @@ int main(int argc, char **argv)
  *   add gtkex.scm to tarballs etc
  *
  * further for-each parallel to op_c_fa [and no re-closure here]: op_c_ap?
- *    map_closure and move arg check if possible [closure case always calls make_iterator?] op_for_each2|3 handle pair case
- * check in g_length->in place code in valcall [maybe functionalize lengths]
+ *    are non-seq's caught?
+ *
+ * check glob/libc.scm in openbsd -- some problem loading libc_s7.so (it works in snd, not in repl?)
+ * all make_c_pointers in *.scm need types as well and s7test 
+ * ideally cload would handle struct ptr* correctly
+ * does do+fvset->vct-scale et al?
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
  * tmac          |      |      |      || 9052 |  615   259   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1055
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1822
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1998
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1821
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1954
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2211
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2987
- * lg            |      |      |      || 211  | 161   149   143.9 143.1
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2971
+ * lg            |      |      |      || 211  | 161   149   143.9 142.2
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092
- * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3279
- * tmap          |      |      |  9.3 || 5279 |       3939  3387  3383
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3272
+ * tmap          |      |      |  9.3 || 5279 |       3939  3387  3382
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963
  * tsort         |      |      |      || 8584 | 4869  4080  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7550
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7546
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7
  * bench         |      |      |      || 17.3 | 15.7  15.4  14.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7

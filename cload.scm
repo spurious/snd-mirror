@@ -525,10 +525,11 @@
 			(trans (C->s7 type)))
 		   (format p "#ifdef ~A~%" c-name)
 		   (if (eq? trans 's7_make_c_pointer_with_type)
-		       (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), s7_make_c_pointer(sc, (~A)~A));~%" 
+		       (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), s7_make_c_pointer_with_type(sc, (~A)~A, s7_make_symbol(sc, \"~S\"), s7_f(sc)));~%" 
 			       scheme-name
 			       (C->s7-cast type)
-			       c-name)
+			       c-name
+			       type)
 		       (format p "  s7_define(sc, cur_env, s7_make_symbol(sc, ~S), ~A(sc, (~A)~A));~%" 
 			       scheme-name
 			       trans
