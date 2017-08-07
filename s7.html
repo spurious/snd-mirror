@@ -2806,7 +2806,7 @@ such as abs, we need to put it back to its original form:
 </blockquote>
 
 
-<p><b>openlet</b> marks its argument, either an environment, a closure, or a c-object
+<p><b>openlet</b> marks its argument, either an environment, a closure, a c-object, or a c-pointer
 as open.  I need better terminology here!  An open object is one that the
 built-in s7 functions handle specially.  If they encounter one in their
 argument list, they look in the object for their own name, and call that
@@ -5848,7 +5848,7 @@ free-heap-size                the number of currently unused cells
 gc-freed                      number of cells freed by the last GC pass
 gc-protected-objects          vector of the objects permanently protected from the GC
 gc-stats                      #f (#t turns on printout of the GC activity)
-memory-usage                  a description of current memory allocations
+memory-usage                  a description of current memory allocations (sent to current-output-port)
 </pre>
 
 <p>
@@ -5887,21 +5887,47 @@ The boolean sets whether the entire output should be displayed as a comment.
 The defaults are '(3 45 80 45 #t).
 </p>
 
+<p>This will display s7 memory usage sort of like the top program:
+</p>
+<pre class="indented">
+(format *stderr* "~C[~D;~DH" #\escape 0 0)
+(format *stderr* "~C[J" #\escape)
+(display (with-output-to-string (lambda() (*s7* 'memory-usage))))))
+</pre>
+<p>(Ideally we'd only redisplay the changed fields).
+</p>
+
 <pre class="indented">
 (<em class=def id="cobject">c-object?</em> obj)
 (<em class=def id="cpointer">c-pointer?</em> obj)
-(<em class=def id="cpoint">c-pointer</em> int)
+(<em class=def id="cpoint">c-pointer</em> int type info)
 </pre>
 
+<p>
+c-object? returns the object's type tag (otherwise #f of course).  This tag is also the position
+of the object's type in the (*s7* 'c-types) list. 
+(*s7* 'c-types) returns a list of the types created by s7_make_c_type.
+</p>
 <p>
 You can wrap up raw C pointers and
 pass them around in s7 code. The function c-pointer returns a wrapped pointer,
 and c-pointer? returns #t if passed one.  <code>(define NULL (c-pointer 0))</code>.
-c-object? returns the object's type tag if passed such an object (otherwise #f of course).  This tag is also the position
-of the object's type in the (*s7* 'c-types) list. 
-(*s7* 'c-types) returns a list of the types created by s7_make_c_type.
+If the type field is a symbol, it is used to check types in s7_c_pointer with_type.
+If the 'info field of a c-pointer is a let, that pointer can participate in 
+the generic functions mechanism, much like a c-object:
 </p>
-
+<pre class="indented">
+&gt; (let ((ptr (c-pointer 1 'abc 
+                (inlet 'object-&gt;string 
+		  (lambda (obj . args)
+		    (let ((lt (object->let obj)))
+		      (format #f "I am pointer ~A of type '~A!" 
+			      (lt 'c-pointer)
+			      (lt 'c-type))))))))
+    (openlet ptr)
+    (object->string ptr))
+<em class="gray">"I am pointer 1 of type 'abc!"</em>
+</pre>
 
 <div class="separator"></div>
 

@@ -27,6 +27,7 @@
   (make-method f (lambda (obj) (obj 'value))))
 
 
+
 ;;; --------------------------------------------------------------------------------
 
 (define *mock-vector*
@@ -186,7 +187,7 @@
 		  'copy               (lambda* (source dest . args)
 					(if (mock-hash-table? source)
 					    (if (and dest (not (let? dest)))
-						(apply copy (obj 'mock-hash-table-table) dest args)
+						(apply copy (source 'mock-hash-table-table) dest args)
 						(let ((nobj (or dest (openlet (copy (coverlet source))))))
 						  (openlet source)
 						  (set! (nobj 'mock-hash-table-table) (copy (source 'mock-hash-table-table)))

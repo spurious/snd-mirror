@@ -6315,6 +6315,10 @@ static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
 
     case T_C_OBJECT:
       return(c_object_let(obj));
+
+    case T_C_POINTER:
+      if (is_let(raw_pointer_info(obj)))
+	return(raw_pointer_info(obj));
     }
   return(sc->nil);
 }
@@ -6715,7 +6719,8 @@ static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
     
   if ((is_let(e)) ||
       (has_closure_let(e)) ||
-      ((is_c_object(e)) && (c_object_let(e) != sc->nil)))
+      ((is_c_object(e)) && (c_object_let(e) != sc->nil)) ||
+      ((is_c_pointer(e)) && (is_let(raw_pointer_info(e)))))
     {
       set_has_methods(e);
       return(e);
@@ -6743,7 +6748,8 @@ static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
 
   if ((is_let(e)) ||
       (has_closure_let(e)) ||
-      ((is_c_object(e)) && (c_object_let(e) != sc->nil)))
+      ((is_c_object(e)) && (c_object_let(e) != sc->nil)) ||
+      ((is_c_pointer(e)) && (is_let(raw_pointer_info(e)))))
     {
       clear_has_methods(e);
       return(e);
@@ -7204,6 +7210,11 @@ static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
     {
       if (is_c_object(env))
 	env = c_object_let(env);
+      else
+	{
+	  if (is_c_pointer(env))
+	    env = raw_pointer_info(env);
+	}
       if (!is_let(env))
         return(simple_wrong_type_argument_with_type(sc, sc->let_to_list_symbol, env, a_let_string));
     }
@@ -27867,7 +27878,7 @@ static s7_pointer check_ref9(s7_pointer p, const char *func, int32_t line)
 {
   uint8_t typ;
   typ = unchecked_type(p);
-  if ((typ != T_LET) && (typ != T_C_OBJECT) && (!is_any_closure(p)) && (!is_any_macro(p)))
+  if ((typ != T_LET) && (typ != T_C_OBJECT) && (!is_any_closure(p)) && (!is_any_macro(p)) && (typ != T_C_POINTER))
     {
       fprintf(stderr, "%s%s[%d]: not a possible method holder, but %s (%s)%s\n", 
 	      BOLD_TEXT, 
@@ -33706,7 +33717,7 @@ s7_int *s7_vector_offsets(s7_pointer vec)
 
 
 #if (!WITH_PURE_S7)
-static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, int32_t typ);
+static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, uint8_t typ);
 
 static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 {
@@ -35565,7 +35576,6 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		      int32_t orig_data;
 		      orig_data = optimize_op(expr);
 		      set_optimize_op(expr, optimize_op(expr) | 1);
-		      /* fprintf(stderr, "%s\n", opt_names[orig_data]); */
 		      if (((optimize_op(expr) == HOP_SAFE_C_SS) || (optimize_op(expr) == HOP_SAFE_C_LL)) &&
 			  (car(largs) == cadr(expr)) &&
 			  (cadr(largs) == caddr(expr)))
@@ -37821,7 +37831,6 @@ static s7_pointer s7_macroexpand(s7_scheme *sc, s7_pointer mac, s7_pointer args)
   sc->args = copy_list(sc, args);
   new_frame(sc, closure_let(sc->code), sc->envir);
   eval(sc, OP_APPLY_LAMBDA);
-  /* fprintf(stderr, "%s -> %s\n", DISPLAY(cons(sc, mac, args)), DISPLAY(sc->value)); */
   return(sc->value);
 }
 
@@ -41124,7 +41133,7 @@ static s7_int sequence_length(s7_scheme *sc, s7_pointer lst)
   return(-1);
 }
 
-static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args, s7_pointer caller, int32_t typ)
+static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args, s7_pointer caller, uint8_t typ)
 {
   s7_pointer p;
   int32_t i;
@@ -41155,7 +41164,7 @@ static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args, s7_pointer c
   return(len);
 }
 
-static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, int32_t typ)
+static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, uint8_t typ)
 {
   s7_pointer new_vec;
   s7_int len;
@@ -41197,6 +41206,7 @@ static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, int32_t typ)
       set_plist_2(sc, sc->nil, sc->nil);
       sc->temp9 = sc->nil;
       sc->temp10 = sc->nil;
+      free_cell(sc, sv);
       vector_length(sv) = 0;
     }
   return(new_vec);
@@ -41562,6 +41572,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 				    ((vector_has_dimensional_info(obj)) && (is_normal_vector(shared_vector(obj)))) ? shared_vector(obj) : sc->F)));
 
     case T_C_POINTER:
+      /* raw_pointer_info can be a let and might have an object->let method (see c_object below) */
       return(s7_inlet(sc, s7_list(sc, 10, sc->value_symbol, obj, 
 				  sc->type_symbol, sc->is_c_pointer_symbol,
 				  s7_make_symbol(sc, "c-pointer"), s7_make_integer(sc, (s7_int)raw_pointer(obj)),
@@ -67616,7 +67627,7 @@ static int32_t define1_ex(s7_scheme *sc)
       
       if (is_slot(global_slot(sc->code)))
 	x = global_slot(sc->code); 
-      else x = local_slot(sc->code);  /* added 18-May-17 */
+      else x = find_symbol(sc, sc->code);  /* not local_slot -- it can be free even if sc->code is immutable (local constant now defunct) */
       if ((!is_slot(x)) ||
 	  (type(sc->value) != unchecked_type(slot_value(x))) ||
 	  (!s7_is_morally_equal(sc, sc->value, slot_value(x))))      /* if value is unchanged, just ignore this (re)definition */
@@ -68259,7 +68270,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer x, y, iterators, saved_args;
 	    iterators = car(sc->args);
 	    saved_args = cdr(sc->args);
-	    /* fprintf(stderr, "op_for_each: %s %s\n", DISPLAY(iterators), DISPLAY(saved_args)); */
 	    for (x = saved_args, y = iterators; is_pair(x); x = cdr(x), y = cdr(y))
 	      {
 		set_car(x, s7_iterate(sc, car(y)));
@@ -68271,12 +68281,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto START;
 		  }
 	      }
-	    /* fprintf(stderr, "push %s %s\n", DISPLAY(sc->args), DISPLAY(sc->code)); */
 	    push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
 	    sc->args = saved_args;
 	    if (needs_copied_args(sc->code))
 	      sc->args = copy_list(sc, sc->args);
-	    /* fprintf(stderr, "goto apply: %s %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
 	    goto APPLY;
 	  }
 	  
@@ -71145,7 +71153,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 		case OP_S_A:
 		case HOP_S_A:
-		  /* fprintf(stderr, "s_a: %s\n", DISPLAY(code)); */
 		  sc->code = find_symbol_unchecked(sc, car(code));
 		  if (dont_eval_args(sc->code))
 		    sc->args = cdr(code);
@@ -71579,9 +71586,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_STAR_ALL_X:
 		  {
 		    s7_pointer p, old_args;
-
-		    /* fprintf(stderr, "safe *: %s\n", DISPLAY(code)); */
-
 		    sc->w = cdr(code);               /* args aren't evaluated yet */
 		    sc->args = make_list(sc, integer(arglist_length(code)), sc->F);
 		    for (p = sc->args, old_args = sc->w; is_pair(p); p = cdr(p), old_args = cdr(old_args))
@@ -71651,7 +71655,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      set_car(p, c_call(old_args)(sc, car(old_args)));
 		    sc->w = sc->nil;
 		    sc->code = opt_lambda(code);
-		    /* fprintf(stderr, "opt: %s %s\n", DISPLAY(sc->code), DISPLAY(closure_args(sc->code))); */
 		    new_frame_with_slot(sc, closure_let(sc->code), sc->envir, closure_args(sc->code), sc->args);
 		    sc->code = _TPair(closure_body(sc->code));
 		    goto BEGIN1;
@@ -73834,7 +73837,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto APPLY;
 	  
 	case OP_CLOSURE_P_MV:
-	  /* fprintf(stderr, "closure p mv: %s\n", DISPLAY(sc->code)); */
 	  sc->code = opt_lambda(sc->code);
 	  sc->args = copy_list(sc, sc->value);
 	  goto APPLY;
@@ -80254,17 +80256,23 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
    *   sinc_tables, c-objects, rc_data, strbuf/tmpbuf[reallocs], autoload tables, hash_entrys, symbol_table,
    *   small_ints?
    */
-  int32_t i, syms = 0, len;
+  int32_t i, syms = 0, len, n;
   s7_pointer x;
   gc_list *gp;
+  char buf[1024];
 
 #ifdef __linux__
   struct rusage info;
+  struct timeval ut;
   getrusage(RUSAGE_SELF, &info);
-  fprintf(stderr, "process size: %" PRId64 "\n", (s7_int)(info.ru_maxrss * 1024));
+  ut = info.ru_utime;
+  n = snprintf(buf, 1024, "process size: %" PRId64 ", time: %ld.%d\n", (s7_int)(info.ru_maxrss * 1024), ut.tv_sec, (int)floor(ut.tv_usec / 1000.0));
+  port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
 #endif
 
-  fprintf(stderr, "heap: %" PRId64 " (%" PRId64 " bytes)", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
+  n = snprintf(buf, 1024, "heap: %" PRId64 " (%" PRId64 " bytes)", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
+  port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
+
   {
     int64_t k;
     int32_t ts[NUM_TYPES];
@@ -80273,24 +80281,36 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
       ts[unchecked_type(sc->heap[k])]++;
     for (i = 0; i < NUM_TYPES; i++)
       {
-	if ((i % 10) == 0) fprintf(stderr, "\n ");
+	if ((i % 10) == 0) 
+	  {
+	    n = snprintf(buf, 1024, "\n ");
+	    port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
+	  }
+	
 	if (ts[i] > 100)
-	  fprintf(stderr, " (%s): %d", type_name_from_type(sc, i, NO_ARTICLE), ts[i]);
-	else fprintf(stderr, " %d", ts[i]);
+	  n = snprintf(buf, 1024, " (%s): %d", type_name_from_type(sc, i, NO_ARTICLE), ts[i]);
+	else n = snprintf(buf, 1024, " %d", ts[i]);
+	port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
       }
-    fprintf(stderr, "\n");
+    n = snprintf(buf, 1024, "\n");
+    port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
   }
-  fprintf(stderr, "permanent cells: %d (%" PRId64 " bytes)\n", permanent_cells, (s7_int)(permanent_cells * sizeof(s7_cell)));
-  fprintf(stderr, "gc protected size: %u, unused: %d\n", sc->protected_objects_size, sc->gpofl_loc);
+  n = snprintf(buf, 1024, "permanent cells: %d (%" PRId64 " bytes)\n", permanent_cells, (s7_int)(permanent_cells * sizeof(s7_cell)));
+  port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
+  n = snprintf(buf, 1024, "gc protected size: %u, unused: %d\n", sc->protected_objects_size, sc->gpofl_loc);
+  port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
       
   for (i = 0; i < SYMBOL_TABLE_SIZE; i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
       syms++;
-  fprintf(stderr, "symbol table: %d (%d symbols, %" PRId64 " bytes)\n", SYMBOL_TABLE_SIZE, syms, 
-	  (s7_int)(SYMBOL_TABLE_SIZE * sizeof(s7_pointer) + syms * 3 * sizeof(s7_cell)));
+  n = snprintf(buf, 1024, "symbol table: %d (%d symbols, %" PRId64 " bytes)\n", SYMBOL_TABLE_SIZE, syms, 
+	       (s7_int)(SYMBOL_TABLE_SIZE * sizeof(s7_pointer) + syms * 3 * sizeof(s7_cell)));
+  port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
 
-  fprintf(stderr, "stack: %u (%" PRId64 " bytes, current top: %ld)\n", sc->stack_size, (s7_int)(sc->stack_size * sizeof(s7_pointer)), (long int)s7_stack_top(sc));
-  fprintf(stderr, "c_functions: %d (%d bytes)\n", c_functions, (int)(c_functions * sizeof(c_proc_t)));
+  n = snprintf(buf, 1024, "stack: %u (%" PRId64 " bytes, current top: %ld)\n", sc->stack_size, (s7_int)(sc->stack_size * sizeof(s7_pointer)), (long int)s7_stack_top(sc));
+  port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
+  n = snprintf(buf, 1024, "c_functions: %d (%d bytes)\n", c_functions, (int)(c_functions * sizeof(c_proc_t)));
+  port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
 
   len = 0;
   gp = sc->strings;
@@ -80300,7 +80320,8 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
   gp = sc->strings1;
   for (i = 0; i < (int32_t)(gp->loc); i++)
     len += string_length(gp->list[i]);
-  fprintf(stderr, "strings: %u, %d bytes\n", syms + gp->loc, len); /* also doc strings, permanent strings, etc */
+  n = snprintf(buf, 1024, "strings: %u, %d bytes\n", syms + gp->loc, len); /* also doc strings, permanent strings, etc */
+  port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
 
   {
     int32_t hs;
@@ -80312,7 +80333,8 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
     for (i = 0; i < (int32_t)(gp->loc); i++)
       len += (hash_table_mask(gp->list[i]) + 1);
     
-    fprintf(stderr, "hash tables: %" PRId32 " (entries in use: %d, free: %d)\n", (int32_t)(gp->loc), len, hs);
+    n = snprintf(buf, 1024, "hash tables: %" PRId32 " (entries in use: %d, free: %d)\n", (int32_t)(gp->loc), len, hs);
+    port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
   }
   {
     int64_t len = 0, flen = 0, ilen = 0;
@@ -80330,7 +80352,8 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
 	    else len += vector_length(v);
 	  }
       }
-    fprintf(stderr, "vectors: %u (%" PRId64 " %" PRId64 " %" PRId64 ")\n", sc->vectors->loc, len, flen, ilen);
+    n = snprintf(buf, 1024, "vectors: %u (%" PRId64 " %" PRId64 " %" PRId64 ")\n", sc->vectors->loc, len, flen, ilen);
+    port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
   }
   {
     int64_t len = 0, flen = 0;
@@ -80346,7 +80369,8 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
 	      len += port_data_size(v);
 	  }
       }
-    fprintf(stderr, "input ports: %d (%" PRId64 " %" PRId64 ")\n", sc->input_ports->loc, len, flen);
+    n = snprintf(buf, 1024, "input ports: %d (%" PRId64 " %" PRId64 ")\n", sc->input_ports->loc, len, flen);
+    port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
   }
   {
     int32_t fs;
@@ -80358,10 +80382,11 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
       if (is_continuation(gp->list[i]))
 	cc_stacks += continuation_stack_size(gp->list[i]);
 
-    fprintf(stderr, "output ports: %u, free port: %d\ncontinuations: %u (total stack: %u), c_objects: %u, gensyms: %u, setters: %u, optlists: %u\n",
+    n = snprintf(buf, 1024, "output ports: %u, free port: %d\ncontinuations: %u (total stack: %u), c_objects: %u, gensyms: %u, setters: %u, optlists: %u\n",
 	    sc->output_ports->loc, fs, 
 	    gp->loc, cc_stacks,
 	    sc->c_objects->loc, sc->gensyms->loc, sc->setters_loc, sc->optlists->loc);
+    port_write_string(sc->output_port)(sc, buf, n, sc->output_port);
   }
   return(sc->F);
 }
@@ -82956,13 +82981,14 @@ int main(int argc, char **argv)
  *   several more special funcs
  *   add gtkex.scm to tarballs etc
  *
- * further for-each parallel to op_c_fa [and no re-closure here]: op_c_ap?
+ * further for-each parallel to op_c_fa [and no re-closure here]
  *    are non-seq's caught?
  *
  * check glob/libc.scm in openbsd -- some problem loading libc_s7.so (it works in snd, not in repl?)
  * all make_c_pointers in *.scm need types as well and s7test 
  * ideally cload would handle struct ptr* correctly
  * does do+fvset->vct-scale et al?
+ * perhaps add c-pointer-type|info?
  *
  * --------------------------------------------------------------------
  *

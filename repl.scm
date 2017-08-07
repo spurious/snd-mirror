@@ -509,7 +509,7 @@
 		      ((null? lst))
 		    (let ((str ((car lst) c)))
 		      (move-cursor i col)
-		      (format *stderr* "~C[K| ~A"  #\escape (if (> (length str) col) (substring str 0 (- col 1)) str))))
+		      (format *stderr* "~C[K| ~A" #\escape (if (> (length str) col) (substring str 0 (- col 1)) str))))
 		  
 		  (move-cursor (+ 2 (length (*repl* 'helpers))) col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
