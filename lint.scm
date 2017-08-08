@@ -21761,7 +21761,12 @@
 	;; -------- lint-walk-pair --------
 	(lambda (caller form env)
 	  (let ((head (car form)))
-	    
+#|	    
+	    (if (and (pair? form)
+		     (memq (car form) '(vector-set! float-vector-set! int-vector-set!))
+		     (tree-set-memq '(vector-ref float-vector-ref int-vector-ref) form))
+		(format *stderr* "~S~%" form))
+|#	      
 	    (set! line-number (or (pair-line-number form) line-number))
 	    
 	    (if *report-repeated-code-fragments*
@@ -21980,7 +21985,7 @@
 								       (string<? (object->string (car kv1)) 
 										 (object->string (car kv2))))))))))))))))
 		 vars) ; lint-file-1 should return the environment
-	      
+
 	      (if (pair? form)
 		  (set! line (max line (or (pair-line-number form) 0))))
 	      

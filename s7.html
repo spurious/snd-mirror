@@ -5892,7 +5892,7 @@ The defaults are '(3 45 80 45 #t).
 <pre class="indented">
 (format *stderr* "~C[~D;~DH" #\escape 0 0)
 (format *stderr* "~C[J" #\escape)
-(display (with-output-to-string (lambda() (*s7* 'memory-usage))))))
+(display (with-output-to-string (lambda() (*s7* 'memory-usage))))
 </pre>
 <p>(Ideally we'd only redisplay the changed fields).
 </p>
@@ -5920,12 +5920,12 @@ the generic functions mechanism, much like a c-object:
 &gt; (let ((ptr (c-pointer 1 'abc 
                 (inlet 'object-&gt;string 
 		  (lambda (obj . args)
-		    (let ((lt (object->let obj)))
+		    (let ((lt (object-&gt;let obj)))
 		      (format #f "I am pointer ~A of type '~A!" 
-			      (lt 'c-pointer)
+			      (lt 'c-pointer)        ; we need c-pointer-type etc
 			      (lt 'c-type))))))))
     (openlet ptr)
-    (object->string ptr))
+    (object-&gt;string ptr))
 <em class="gray">"I am pointer 1 of type 'abc!"</em>
 </pre>
 

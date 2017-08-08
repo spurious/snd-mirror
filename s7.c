@@ -8165,7 +8165,7 @@ static s7_pointer make_macro(s7_scheme *sc)
 }
 
 
-static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, uint64_t type)
+static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, uint64_t type, int32_t arity)
 {
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
   s7_pointer x;
@@ -8173,19 +8173,19 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
   closure_set_args(x, args);
   closure_set_body(x, code);
   closure_set_setter(x, sc->F);
-  closure_arity(x) = (is_null(args)) ? 0 : CLOSURE_ARITY_NOT_SET;
+  closure_arity(x) = arity;
   closure_set_let(x, sc->envir);
   sc->capture_let_counter++;
   return(x);
 }
 
-#define make_closure_with_let(Sc, X, Args, Code, Env)	\
+#define make_closure_with_let(Sc, X, Args, Code, Env, Arity)	\
   do {							\
     new_cell(Sc, X, T_CLOSURE | T_COPY_ARGS | ((is_safe_closure(Code)) ? T_SAFE_CLOSURE : 0)); \
     closure_set_args(X, Args);						\
     closure_set_body(X, Code);				                \
     closure_set_setter(X, sc->F);					\
-    closure_arity(X) = (is_null(Args)) ? 0 : CLOSURE_ARITY_NOT_SET;	\
+    closure_arity(X) = Arity;						\
     closure_set_let(X, Env);						\
     sc->capture_let_counter++;						\
   } while (0)
@@ -14664,7 +14664,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->add_symbol, cons_unchecked(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -14764,7 +14764,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->add_symbol, cons_unchecked(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -14799,7 +14799,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->add_symbol, cons_unchecked(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -14837,7 +14837,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->add_symbol, cons_unchecked(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -15262,7 +15262,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons_unchecked(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -15354,7 +15354,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons_unchecked(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -15389,7 +15389,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons_unchecked(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -15427,7 +15427,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons_unchecked(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -15834,7 +15834,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  goto MULTIPLY_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons_unchecked(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -15931,7 +15931,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons_unchecked(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -15966,7 +15966,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  goto MULTIPLY_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons_unchecked(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16019,7 +16019,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons_unchecked(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16462,7 +16462,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons_unchecked(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16569,7 +16569,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons_unchecked(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16638,7 +16638,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons_unchecked(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16702,7 +16702,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons_unchecked(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16858,7 +16858,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 	  goto MAX_INTEGERS;
 
 	default:
-	  method_or_bust(sc, y, sc->max_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->max_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -16966,7 +16966,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 	  goto MAX_RATIOS;
 
 	default:
-	  method_or_bust(sc, y, sc->max_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->max_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -17014,7 +17014,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 	  goto MAX_REALS;
 
 	default:
-	  method_or_bust(sc, y, sc->max_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->max_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
     default:
@@ -17073,7 +17073,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 	  goto MIN_INTEGERS;
 
 	default:
-	  method_or_bust(sc, y, sc->min_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->min_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -17159,7 +17159,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 	  goto MIN_RATIOS;
 
 	default:
-	  method_or_bust(sc, y, sc->min_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->min_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -17207,7 +17207,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 	  goto MIN_REALS;
 
 	default:
-	  method_or_bust(sc, y, sc->min_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->min_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
     default:
@@ -17255,7 +17255,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons_unchecked(sc, make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	    }
 	  if (is_null(p))
 	    return(sc->T);
@@ -17286,7 +17286,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons_unchecked(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	    }
 	  if (is_null(p))
 	    return(sc->T);
@@ -17320,7 +17320,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      goto NOT_EQUAL;
 
 	    default:
-	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons_unchecked(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	    }
 	  if (is_null(p))
 	    return(sc->T);
@@ -17347,7 +17347,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
+	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons_unchecked(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	    }
 	  if (is_null(p))
 	    return(sc->T);
@@ -17608,7 +17608,7 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	  goto REAL_LESS;
 
 	default:
-	  method_or_bust(sc, y, sc->lt_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->lt_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -17681,7 +17681,7 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	  goto REAL_LESS;
 
 	default:
-	  method_or_bust(sc, y, sc->lt_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->lt_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -17713,7 +17713,7 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	  goto REAL_LESS;
 
 	default:
-	  method_or_bust(sc, y, sc->lt_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->lt_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
     default:
@@ -17785,7 +17785,7 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	  goto REAL_LEQ;
 
 	default:
-	  method_or_bust(sc, y, sc->leq_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->leq_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -17857,7 +17857,7 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	  goto REAL_LEQ;
 
 	default:
-	  method_or_bust(sc, y, sc->leq_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->leq_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -17889,7 +17889,7 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	  goto REAL_LEQ;
 
 	default:
-	  method_or_bust(sc, y, sc->leq_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->leq_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
     default:
@@ -17960,7 +17960,7 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	  goto REAL_GREATER;
 
 	default:
-	  method_or_bust(sc, y, sc->gt_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->gt_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -18032,7 +18032,7 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	  goto REAL_GREATER;
 
 	default:
-	  method_or_bust(sc, y, sc->gt_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->gt_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -18064,7 +18064,7 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	  goto REAL_GREATER;
 
 	default:
-	  method_or_bust(sc, y, sc->gt_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->gt_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
     default:
@@ -18136,7 +18136,7 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	  goto REAL_GEQ;
 
 	default:
-	  method_or_bust(sc, y, sc->geq_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->geq_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -18208,7 +18208,7 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	  goto REAL_GEQ;
 
 	default:
-	  method_or_bust(sc, y, sc->geq_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->geq_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
 
@@ -18240,7 +18240,7 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	  goto REAL_GEQ;
 
 	default:
-	  method_or_bust(sc, y, sc->geq_symbol, cons(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
+	  method_or_bust(sc, y, sc->geq_symbol, cons_unchecked(sc, x, cons(sc, y, p)), T_REAL, position_of(p, args) - 1);
 	}
 
     default:
@@ -42872,12 +42872,12 @@ static s7_pointer active_exits(s7_scheme *sc)
 	jump = stack_args(sc->stack, i);  /* call this to jump */
 
 	if (is_any_closure(func))
-	  lst = cons(sc, cons(sc, car(closure_args(func)), jump), lst);
+	  lst = cons_unchecked(sc, cons(sc, car(closure_args(func)), jump), lst);
 	else
 	  {
 	    if ((is_pair(func)) && (car(func) == sc->call_with_exit_symbol))
-	      lst = cons(sc, cons(sc, car(cadadr(func)), jump), lst); /* (call-with-exit (lambda (three) ...)) */
-	    else lst = cons(sc, cons(sc, sc->unspecified, jump), lst);
+	      lst = cons_unchecked(sc, cons(sc, car(cadadr(func)), jump), lst); /* (call-with-exit (lambda (three) ...)) */
+	    else lst = cons_unchecked(sc, cons(sc, sc->unspecified, jump), lst);
 	  }
 	sc->w = lst;
       }
@@ -50481,12 +50481,14 @@ static s7_pointer opt_p_cf_ff(void *p)
 {
   opt_info *o = (opt_info *)p;
   opt_info *o1;
-  s7_pointer po1, po2;
+  int32_t tx;
+  s7_pointer po2;
   o1 = cur_sc->opts[++cur_sc->pc];
-  po1 = o1->v7.fp(o1);
+  tx = next_tx(cur_sc);
+  cur_sc->t_temps[tx] = o1->v7.fp(o1);
   o1 = cur_sc->opts[++cur_sc->pc];
   po2 = o1->v7.fp(o1);
-  return(o->v3.cf(cur_sc, set_plist_2(cur_sc, po1, po2)));
+  return(o->v3.cf(cur_sc, set_plist_2(cur_sc, cur_sc->t_temps[tx], po2)));
 }
 
 static s7_pointer opt_p_cf_fs(void *p)
@@ -51053,14 +51055,16 @@ static s7_pointer opt_p_cf_ppp(void *p)
 {
   opt_info *o = (opt_info *)p;
   opt_info *o1;
-  s7_pointer po1, po2, po3;
+  int32_t tx;
+  s7_pointer po2, po3;
   o1 = cur_sc->opts[++cur_sc->pc];
-  po1 = o1->v7.fp(o1);
+  tx = next_tx(cur_sc);
+  cur_sc->t_temps[tx] = o1->v7.fp(o1);
   o1 = cur_sc->opts[++cur_sc->pc];
   po2 = o1->v7.fp(o1);
   o1 = cur_sc->opts[++cur_sc->pc];
   po3 = o1->v7.fp(o1);
-  return(o->v2.cf(cur_sc, set_plist_3(cur_sc, po1, po2, po3)));
+  return(o->v2.cf(cur_sc, set_plist_3(cur_sc, cur_sc->t_temps[tx], po2, po3)));
 }
 
 static bool p_cf_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer car_x)
@@ -54385,32 +54389,39 @@ static bool tree_has_setters(s7_scheme *sc, s7_pointer tree)
 
 static s7_pointer g_for_each_closure(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer body, expr, f, seq;
+  s7_pointer body, f, seq;
 
   seq = cadr(args);
   if (is_null(seq)) return(sc->unspecified);
   f = car(args);
   body = closure_body(f);
-  expr = car(body);
   
   if (!pair_no_opt(body))
     {
       s7_function func;
-      s7_pointer slot, old_e;
+      s7_pointer slot, old_e, expr, pars;
       
       old_e = sc->envir;
+      pars = closure_args(f);
       sc->envir = new_frame_in_env(sc, sc->envir);
       if (is_pair(seq))
-	slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
+	slot = make_slot_1(sc, sc->envir, car(pars), sc->F);
       else
 	{
 	  if (is_float_vector(seq))
-	    slot = make_slot_1(sc, sc->envir, car(closure_args(f)), real_zero);
-	  else slot = make_slot_1(sc, sc->envir, car(closure_args(f)), (is_int_vector(seq)) ? small_int(0) : sc->F);
+	    slot = make_slot_1(sc, sc->envir, car(pars), real_zero);
+	  else slot = make_slot_1(sc, sc->envir, car(pars), (is_int_vector(seq)) ? small_int(0) : sc->F);
 	}
       if (is_null(cdr(body)))
-	func = s7_optimize_nr(sc, body);
-      else func = s7_cell_optimize(sc, cons(sc, cons(sc, sc->begin_symbol, body), sc->nil), true);
+	{
+	  expr = car(body);
+	  func = s7_optimize_nr(sc, body);
+	}
+      else 
+	{
+	  expr = cons(sc, sc->begin_symbol, body);
+	  func = s7_cell_optimize(sc, cons(sc, expr, sc->nil), true);
+	}
       
       if (func)
 	{
@@ -54653,42 +54664,57 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 
 /* ---------------------------------------- map ---------------------------------------- */
 
+static s7_pointer slookup(s7_scheme *sc, s7_pointer s) {return(slot_value(s));}
+
 static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer body, expr, f, seq;
+  s7_pointer body, f, seq;
+
   seq = cadr(args);
   if (is_null(seq)) return(sc->nil);
   f = car(args);
   body = closure_body(f);
-  expr = car(body);
-  if ((is_pair(cadr(args))) &&
+
+  if ((is_pair(seq)) &&
       (!pair_no_opt(body)) &&
-      (is_optimized(expr)))
+      (is_optimized(car(body)))) /* for index.scm? */
     {
       s7_function func;
-      s7_pointer slot, old_e;
+      s7_pointer slot, old_e, expr;
       
       old_e = sc->envir;
       sc->envir = new_frame_in_env(sc, sc->envir);
       slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
       
       if (is_null(cdr(body)))
-	func = s7_optimize(sc, body);
-      else func = s7_cell_optimize(sc, cons(sc, cons(sc, sc->begin_symbol, body), sc->nil), false);
+	{
+	  expr = car(body);
+	  if (is_symbol(expr))
+	    {
+	      expr = find_symbol(sc, expr);
+	      func = slookup;
+	    }
+	  else func = s7_optimize(sc, body);
+	}
+      else 
+	{
+	  expr = cons(sc, sc->begin_symbol, body);
+	  func = s7_cell_optimize(sc, cons(sc, expr, sc->nil), false);
+	}
       
       if (func)
 	{
 	  s7_pointer fast, slow, val;
 	  
-	  val = list_2(sc, sc->nil, f);
+	  val = sc->nil;
 	  push_stack(sc, OP_GC_PROTECT, sc->args, val);
-	  for (fast = cadr(args), slow = cadr(args); is_pair(fast); fast = cdr(fast), slow = cdr(slow))
+	  for (fast = seq, slow = seq; is_pair(fast); fast = cdr(fast), slow = cdr(slow))
 	    {
 	      s7_pointer z;
 	      slot_set_value(slot, car(fast));
 	      z = func(sc, expr);
 	      if (z != sc->no_value)
-		set_car(val, cons(sc, z, car(val)));
+		val = cons(sc, z, val);
 	      if (is_pair(cdr(fast)))
 		{
 		  fast = cdr(fast);
@@ -54697,11 +54723,11 @@ static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
 		  slot_set_value(slot, car(fast));
 		  z = func(sc, expr);
 		  if (z != sc->no_value)
-		    set_car(val, cons(sc, z, car(val)));
+		    val = cons(sc, z, val);
 		}
 	    }
 	  sc->stack_end -= 4;
-	  return(safe_reverse_in_place(sc, car(val))); 
+	  return(safe_reverse_in_place(sc, val)); 
 	}
       set_pair_no_opt(body);
       sc->envir = old_e;
@@ -54714,7 +54740,7 @@ static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
       return(sc->unspecified);
     }
   
-  sc->z = (!is_iterator(cadr(args))) ? s7_make_iterator(sc, cadr(args)) : cadr(args);
+  sc->z = (!is_iterator(seq)) ? s7_make_iterator(sc, seq) : seq;
   push_stack(sc, OP_MAP_1, make_counter(sc, sc->z), f);
   sc->z = sc->nil;
   return(sc->nil);
@@ -62842,14 +62868,15 @@ static int32_t define_unchecked_ex(s7_scheme *sc)
     }
   else
     {
-      s7_pointer x;
+      s7_pointer x,args;
       /* a closure.  If we called this same code earlier (a local define), the only thing
        *   that is new here is the environment -- we can't blithely save the closure object
        *   in opt2 somewhere, and pick it up the next time around (since call/cc might take
        *   us back to the previous case).  We also can't re-use opt2(sc->code) because opt2
        *   is not cleared in the gc.
        */
-      make_closure_with_let(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
+      args = cdar(sc->code);
+      make_closure_with_let(sc, x, args, cdr(sc->code), sc->envir, (is_null(args)) ? 0 : CLOSURE_ARITY_NOT_SET);
       sc->value = _NFre(x);
       sc->code = caar(sc->code);
     }
@@ -65066,7 +65093,7 @@ static int32_t dox_ex(s7_scheme *sc)
    */
   if (!pair_no_opt(sc->code))
     {
-      endf = s7_optimize(sc, cons(sc, cons(sc, sc->do_symbol, sc->code), sc->nil));
+      endf = s7_optimize(sc, cons_unchecked(sc, cons(sc, sc->do_symbol, sc->code), sc->nil));
       if (endf)
 	{
 	  sc->value = endf(sc, sc->code);
@@ -70943,7 +70970,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_C_FA:
 		  sc->code = cdr(cadr(code));
 		  /* need to check lambda if not done already */
-		  make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir);  /* sc->value=new closure cell, car=args, cdr=body */
+		  make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir, CLOSURE_ARITY_NOT_SET);
+		  /* sc->value=new closure cell, car=args, cdr=body */
 		  sc->args = list_2(sc, sc->value, c_call(cddr(code))(sc, caddr(code)));
 		  sc->value = c_call(code)(sc, sc->args);
 		  goto START;
@@ -71048,10 +71076,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		     */
 		    s7_pointer p, f, args, tag;
 		    args = cddr(code);
-		    
+
 		    /* defer making the error lambda */
-		    /* z = cdadr(args); make_closure_with_let(sc, y, car(z), cdr(z), sc->envir); */
-		    
 		    /* check catch tag */
 		    f = cadr(code);
 		    if (!is_pair(f))                     /* (catch #t ...) or (catch sym ...) */
@@ -71811,7 +71837,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer farg, larg, aarg, func, func_args;
 		    farg = cdr(cadr(code));
 		    aarg = c_call(cddr(code))(sc, caddr(code));
-		    make_closure_with_let(sc, larg, car(farg), cdr(farg), sc->envir); /* arg func */
+		    make_closure_with_let(sc, larg, car(farg), cdr(farg), sc->envir, CLOSURE_ARITY_NOT_SET);
 		    check_stack_size(sc);
 		    func = opt_lambda(sc->code);         /* outer func */
 		    func_args = closure_args(func);
@@ -73862,7 +73888,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer body;
 	    new_frame(sc, sc->envir, sc->envir);
 	    body = cddr(sc->code);
-	    sc->args = make_closure(sc, sc->nil, body, T_CLOSURE | T_COPY_ARGS | ((is_safe_closure(body)) ? T_SAFE_CLOSURE : 0));
+	    sc->args = make_closure(sc, sc->nil, body, T_CLOSURE | T_COPY_ARGS | ((is_safe_closure(body)) ? T_SAFE_CLOSURE : 0), 0);
 	    /* sc->args is a temp here */
 	    make_slot_1(sc, sc->envir, car(sc->code), sc->args);
 	    sc->code = _TPair(body);
@@ -74142,7 +74168,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer body;
 		    body = cddr(sc->code);
-		    sc->x = make_closure(sc, sc->nil, body, T_CLOSURE | T_COPY_ARGS | ((is_safe_closure(body)) ? T_SAFE_CLOSURE : 0));
+		    sc->x = make_closure(sc, sc->nil, body, T_CLOSURE | T_COPY_ARGS | ((is_safe_closure(body)) ? T_SAFE_CLOSURE : 0), 0);
 		    /* args = () in new closure, see NAMED_LET_NO_VARS above */
 		    /* if this is a safe closure, we can build its env in advance and name it (a thunk in this case) */
 		    set_funclet(closure_let(sc->x));
@@ -74210,25 +74236,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   *    can be regained directly.
 		   */
 		  s7_pointer let_name, body;
+		  int32_t n;
 		  let_name = car(sc->code);
 		  body = cddr(sc->code);
 		  sc->envir = new_frame_in_env(sc, sc->envir);
 		  
 		  sc->w = sc->nil;
-		  for (x = cadr(sc->code); is_pair(x); x = cdr(x))
+		  for (n = 0, x = cadr(sc->code); is_pair(x); n++, x = cdr(x))
 		    sc->w = cons(sc, caar(x), sc->w);
 		  
 		  if (is_safe_closure(body))
 		    {
 		      s7_pointer arg, new_env;
-		      sc->x = make_closure(sc, sc->w = safe_reverse_in_place(sc, sc->w), body, T_CLOSURE | T_SAFE_CLOSURE | T_COPY_ARGS);
+		      sc->x = make_closure(sc, sc->w = safe_reverse_in_place(sc, sc->w), body, T_CLOSURE | T_SAFE_CLOSURE | T_COPY_ARGS, n);
 		      new_env = new_frame_in_env(sc, sc->envir);
 		      closure_set_let(sc->x, new_env);
 		      for (arg = closure_args(sc->x); is_pair(arg); arg = cdr(arg))
 			make_slot_1(sc, new_env, car(arg), sc->nil);
 		      let_set_slots(new_env, reverse_slots(sc, let_slots(new_env)));
 		    }
-		  else sc->x = make_closure(sc, sc->w = safe_reverse_in_place(sc, sc->w), body, T_CLOSURE | T_COPY_ARGS);
+		  else sc->x = make_closure(sc, sc->w = safe_reverse_in_place(sc, sc->w), body, T_CLOSURE | T_COPY_ARGS, n);
 		  make_slot_1(sc, sc->envir, let_name, sc->x);
 		  /* sc->x = sc->nil; */
 		  
@@ -74348,7 +74375,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  sc->envir = new_frame_in_env(sc, sc->envir);
 		  sc->code = _TPair(cdr(sc->value));
-		  make_slot_1(sc, sc->envir, cx, make_closure(sc, sc->nil, sc->code, T_CLOSURE_STAR | ((is_safe_closure(sc->code)) ? T_SAFE_CLOSURE : 0)));
+		  make_slot_1(sc, sc->envir, cx, make_closure(sc, sc->nil, sc->code, T_CLOSURE_STAR | ((is_safe_closure(sc->code)) ? T_SAFE_CLOSURE : 0), 0));
 		  goto BEGIN1;
 		}
 	    }
@@ -74412,9 +74439,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_symbol(car(sc->code)))
 	    {
 	      /* now we need to declare the new function */
-	      s7_pointer body;
+	      s7_pointer body, args;
 	      body = cddr(sc->code);
-	      make_slot_1(sc, sc->envir, car(sc->code), make_closure(sc, cadr(sc->code), body, T_CLOSURE_STAR | ((is_safe_closure(body)) ? T_SAFE_CLOSURE : 0)));
+	      args = cadr(sc->code);
+	      make_slot_1(sc, sc->envir, car(sc->code), make_closure(sc, args, body, 
+								     T_CLOSURE_STAR | ((is_safe_closure(body)) ? T_SAFE_CLOSURE : 0),
+								     (is_null(args)) ? 0 : CLOSURE_ARITY_NOT_SET));
 	      sc->code = body;
 	    }
 	  else sc->code = _TPair(cdr(sc->code));
@@ -75086,14 +75116,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  check_lambda(sc);
 	  
 	case OP_LAMBDA_UNCHECKED:     /* pre-calculating type/arity in check_lambda was slower?? */
-	  make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir);  /* sc->value=new closure cell, car=args, cdr=body */
+	  make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir, CLOSURE_ARITY_NOT_SET);  /* sc->value=new closure cell, car=args, cdr=body */
 	  break;
 	  
 	case OP_LAMBDA_STAR:
 	  check_lambda_star(sc);
 	  
 	case OP_LAMBDA_STAR_UNCHECKED:
-	  sc->value = make_closure(sc, car(sc->code), cdr(sc->code), T_CLOSURE_STAR | ((is_safe_closure(cdr(sc->code))) ? T_SAFE_CLOSURE : 0));
+	  sc->value = make_closure(sc, car(sc->code), cdr(sc->code), T_CLOSURE_STAR | ((is_safe_closure(cdr(sc->code))) ? T_SAFE_CLOSURE : 0), CLOSURE_ARITY_NOT_SET);
 	  break;
 	  
 	  
@@ -82985,9 +83015,7 @@ int main(int argc, char **argv)
  *    are non-seq's caught?
  *
  * check glob/libc.scm in openbsd -- some problem loading libc_s7.so (it works in snd, not in repl?)
- * all make_c_pointers in *.scm need types as well and s7test 
  * ideally cload would handle struct ptr* correctly
- * does do+fvset->vct-scale et al?
  * perhaps add c-pointer-type|info?
  *
  * --------------------------------------------------------------------
@@ -82996,13 +83024,13 @@ int main(int argc, char **argv)
  * tmac          |      |      |      || 9052 |  615   259   261
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1055
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1821
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1820
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1954
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2211
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2971
- * lg            |      |      |      || 211  | 161   149   143.9 142.2
- * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2969
+ * lg            |      |      |      || 211  | 161   149   143.9 142.1
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3091
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3272
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3382
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963
