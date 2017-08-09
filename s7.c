@@ -691,6 +691,10 @@ typedef struct s7_cell {
     struct {                       /* c-pointers */
       void *c_pointer; 
       s7_pointer c_type, info;
+      /* if a gc_free function were included, the pointer could be freed (etc) via the GC-cache (sweep function), but then
+       *   every possible explicit free function would need to warn the GC not to try to free the pointer.
+       *   How to recognize an unfreed pointer at sweep time?
+       */
     } cptr;
 
     int32_t baffle_key;            /* baffles */
@@ -1958,6 +1962,11 @@ static s7_scheme *cur_sc = NULL;
 #define set_funclet(p)                typeflag(_TLet(p)) |= T_FUNCLET
 /* this marks a funclet */
 
+#define T_HASH_CHOSEN                 T_GENSYM
+#define hash_chosen(p)                ((typeflag(_THsh(p)) & T_HASH_CHOSEN) != 0)
+#define hash_set_chosen(p)            typeflag(_THsh(p)) |= T_HASH_CHOSEN
+#define hash_clear_chosen(p)          typeflag(_THsh(p)) &= (~T_HASH_CHOSEN)
+
 #define T_DOCUMENTED                  T_GENSYM
 #define is_documented(p)              ((typeflag(_TStr(p)) & T_DOCUMENTED) != 0)
 #define set_documented(p)             typeflag(_TStr(p)) |= T_DOCUMENTED
@@ -1977,7 +1986,7 @@ static s7_scheme *cur_sc = NULL;
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
 /* using bit 23 for this makes a big difference in the GC */
 
-static int32_t not_heap = -1;
+static int64_t not_heap = -1;
 #define heap_location(p)              (p)->hloc
 #define not_in_heap(p)                ((_NFre(p))->hloc < 0)
 #define in_heap(p)                    ((_NFre(p))->hloc >= 0)
@@ -25748,8 +25757,7 @@ static bool collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, 
 	  hash_entry_t **entries;
 	  bool keys_safe;
 	  
-	  keys_safe = ((hash_table_checker(top) != hash_equal) &&
-		       (!hash_table_checker_locked(top)));
+	  keys_safe = (!hash_chosen(top)); /* ((hash_table_checker(top) != hash_equal) && (!hash_table_checker_locked(top))) */
 	  entries = hash_table_elements(top);
 	  len = hash_table_mask(top) + 1;
 	  for (i = 0; i < len; i++)
@@ -27664,7 +27672,8 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   ((full_typ & T_GENSYM) != 0) ?         ((is_let(obj)) ? " funclet" : 
 						   ((is_symbol(obj)) ? " gensym" :
 						    ((is_string(obj)) ? " documented-symbol" :
-						     " ?21?"))) : "",
+						     ((is_hash_table(obj)) ? " hash-chosen" :
+						      " ?21?")))) : "",
 	   /* bit 22 */
 	   ((full_typ & T_HAS_METHODS) != 0) ?    " has-methods" : "",
 	   /* bit 23 */
@@ -28361,7 +28370,7 @@ static s7_pointer check_null_sym(s7_scheme *sc, s7_pointer p, s7_pointer sym, in
 /* these are bits usable on (say) let code without colliding with other pair-wise uses */
 /*    we need has_all_x = T_SETTER currently
  *    T_MUTABLE and T_SAFE_STEPPER are let_ref|set fallback bits 
- *    T_IMMUTABLE is hard to predict, T_GENSYM marks list_in_use and other pair-wise stuff
+ *    T_IMMUTABLE is hard to predict, 
  *    maybe T_SAFE_STEPPER for unsafe_locals
  */
 static void check_pair_bits(s7_scheme *sc, s7_pointer p)
@@ -36774,7 +36783,10 @@ static s7_pointer remove_from_hash_table(s7_scheme *sc, s7_pointer table, s7_poi
   hash_table_entries(table)--;
   if ((hash_table_entries(table) == 0) &&
       (!hash_table_checker_locked(table)))
-    hash_table_checker(table) = hash_empty;
+    {
+      hash_table_checker(table) = hash_empty;
+      hash_clear_chosen(table);
+    }
   x->next = hash_free_list;
   hash_free_list = x;
   return(sc->F);
@@ -36863,8 +36875,12 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 		return(wrong_type_argument_with_type(sc, sc->make_hash_table_symbol, 3, proc, an_eq_func_string));
 
 	      ht = s7_make_hash_table(sc, size);
+	      hash_set_chosen(ht);
 	      if (c_function_call(proc) == g_is_equal)
-		return(ht);
+		{
+		  hash_table_checker(ht) = hash_equal;
+		  return(ht);
+		}
 	      if (c_function_call(proc) == g_is_eq)
 		{
 		  hash_table_checker(ht) = hash_eq;
@@ -36938,6 +36954,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 		    {
 		      s7_pointer sig;
 		      ht = s7_make_hash_table(sc, size);
+		      hash_set_chosen(ht);
 		      if (is_any_c_function(checker))
 			{
 			  sig = c_function_signature(checker);
@@ -37203,14 +37220,18 @@ static s7_pointer hash_table_ref_p_pp_direct(s7_pointer p1, s7_pointer p2)
 
 /* -------------------------------- hash-table-set! -------------------------------- */
 
-static void hash_table_set_function(s7_pointer table, int32_t typ)
+static void hash_table_set_checker(s7_pointer table, uint8_t typ)
 {
-  if ((hash_table_checker(table) != hash_equal) &&
+  if (/* (hash_table_checker(table) != hash_equal) && */
       (hash_table_checker(table) != default_hash_checks[typ]))
     {
       if (hash_table_checker(table) == hash_empty)
 	hash_table_checker(table) = default_hash_checks[typ];
-      else hash_table_checker(table) = hash_equal;
+      else 
+	{
+	  hash_table_checker(table) = hash_equal;
+	  hash_set_chosen(table);
+	}
     }
 }
 
@@ -37240,8 +37261,8 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
       hash_entry_t *p;
       if (value == sc->F) return(sc->F);
       
-      if (!hash_table_checker_locked(table))
-	hash_table_set_function(table, type(key));
+      if (!hash_chosen(table))
+	hash_table_set_checker(table, type(key));
 
       hash_len = hash_table_mask(table);
       if (hash_table_entries(table) > hash_len)
@@ -37365,6 +37386,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
   if (hash_table_entries(new_hash) == 0)
     {
       hash_table_checker(new_hash) = hash_table_checker(old_hash);
+      if (hash_chosen(old_hash)) hash_set_chosen(new_hash);
       if ((start == 0) && 
 	  (end >= hash_table_entries(old_hash)))
 	{
@@ -37422,8 +37444,8 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
 		p->next = new_lists[loc];
 		new_lists[loc] = p;
 		hash_table_entries(new_hash)++;
-		if (!hash_table_checker_locked(new_hash))
-		  hash_table_set_function(new_hash, type(x->key));
+		if (!hash_chosen(new_hash))
+		  hash_table_set_checker(new_hash, type(x->key));
 	      }
 	  }
 	count++;
@@ -37484,7 +37506,10 @@ static s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
 	    }
 	  memset(entries, 0, len * sizeof(hash_entry_t *));
 	  if (!hash_table_checker_locked(table))
-	    hash_table_checker(table) = hash_empty;
+	    {
+	      hash_table_checker(table) = hash_empty;
+	      hash_clear_chosen(table);
+	    }
 	  hash_table_entries(table) = 0;
 	}
       else
@@ -40306,6 +40331,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	    new_hash = s7_make_hash_table(sc, hash_table_mask(source) + 1);
 	    gc_loc = s7_gc_protect(sc, new_hash);
 	    hash_table_checker(new_hash) = hash_table_checker(source);
+	    if (hash_chosen(source)) hash_set_chosen(new_hash);
 	    hash_table_mapper(new_hash) = hash_table_mapper(source);
 	    hash_table_set_procedures(new_hash, hash_table_procedures(source));
 	    hash_table_copy(sc, source, new_hash, 0, hash_table_entries(source));
@@ -40585,7 +40611,11 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	      {
 		if (hash_table_checker(dest) == hash_empty)
 		  hash_table_checker(dest) = hash_table_checker(source);
-		else hash_table_checker(dest) = hash_equal;
+		else 
+		  {
+		    hash_table_checker(dest) = hash_equal;
+		    hash_set_chosen(dest);
+		  }
 	      }
 	    return(p);
 	  }
@@ -59157,7 +59187,11 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 		  (is_pair(cddr(arg1))) &&
 		  (is_null(cdddr(arg1))) &&
 		  (!is_immutable_symbol(caadr(arg1))))
-		set_c_call(expr, (c_call(expr) == g_for_each) ? g_for_each_closure : g_map_closure);
+		{
+		  set_c_call(expr, (c_call(expr) == g_for_each) ? g_for_each_closure : g_map_closure);
+		  if (hop == 0)  /* not sure this matters -- c_function_is_ok checks opt1, set above, not opt2, set here (?) */
+		    set_unsafe_optimize_op(expr, HOP_C_FA);
+		}
 	      return(OPT_F);
 	    }
 	  
@@ -83011,12 +83045,10 @@ int main(int argc, char **argv)
  *   several more special funcs
  *   add gtkex.scm to tarballs etc
  *
- * further for-each parallel to op_c_fa [and no re-closure here]
- *    are non-seq's caught?
- *
  * check glob/libc.scm in openbsd -- some problem loading libc_s7.so (it works in snd, not in repl?)
  * ideally cload would handle struct ptr* correctly
  * perhaps add c-pointer-type|info?
+ * zauto for libc checks (needs many type checks)
  *
  * --------------------------------------------------------------------
  *
@@ -83028,17 +83060,17 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1954
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2211
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2969
- * lg            |      |      |      || 211  | 161   149   143.9 142.1
- * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3091
- * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3272
- * tmap          |      |      |  9.3 || 5279 |       3939  3387  3382
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2971
+ * lg            |      |      |      || 211  | 161   149   143.9 142.0
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3083
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3262
+ * tmap          |      |      |  9.3 || 5279 |       3939  3387  3381
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963
  * tsort         |      |      |      || 8584 | 4869  4080  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7546
+ * bench         |      |      |      || 7012 | 6378  6327  5934
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7537
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7
- * bench         |      |      |      || 17.3 | 15.7  15.4  14.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.6
  *                                    || 145  | 135   132   93.2

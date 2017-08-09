@@ -309,7 +309,7 @@
 ;	   (char* mktemp (char*))
 	   (int mkstemp (char*))
 	   (int system (char*))
-	   (char* realpath (char* char*))
+;	   (char* realpath (char* char*))
 	   (int abs (int))
 	   (int labs (int))
 	   
@@ -321,6 +321,14 @@
                     return(s7_make_integer(sc, llabs(s7_integer(s7_car(args)))));
                   #endif
                   }
+                 static s7_pointer g_realpath(s7_scheme *sc, s7_pointer args)
+                  {
+                    char *s7_dl_realpath_0;
+                    if (s7_is_string(s7_car(args)))
+                       s7_dl_realpath_0 = (char*)s7_string(s7_car(args));
+                    else return(s7_wrong_type_arg_error(sc, \"realpath\", 1, s7_car(args), \"string\"));
+                    return(s7_make_string(sc, (char*)realpath(s7_dl_realpath_0, NULL)));
+                 }
                  static s7_pointer g_free(s7_scheme *sc, s7_pointer args)
                  {free(s7_c_pointer(s7_car(args))); return(s7_f(sc));}
                  static s7_pointer g_strtod(s7_scheme *sc, s7_pointer args) 
@@ -334,12 +342,16 @@
                  static s7_pointer g_div(s7_scheme *sc, s7_pointer args)
                  {
                    div_t d;
+                   if (!s7_is_integer(s7_car(args))) return(s7_wrong_type_arg_error(sc, \"div\", 1, s7_car(args), \"integer\"));
+                   if (!s7_is_integer(s7_cadr(args))) return(s7_wrong_type_arg_error(sc, \"div\", 2, s7_cadr(args), \"integer\"));
                    d = div(s7_integer(s7_car(args)), s7_integer(s7_cadr(args)));
                    return(s7_list(sc, 2, s7_make_integer(sc, d.quot), s7_make_integer(sc, d.rem)));
                  }
                   static s7_pointer g_ldiv(s7_scheme *sc, s7_pointer args)
                  {
                    ldiv_t d;
+                   if (!s7_is_integer(s7_car(args))) return(s7_wrong_type_arg_error(sc, \"ldiv\", 1, s7_car(args), \"integer\"));
+                   if (!s7_is_integer(s7_cadr(args))) return(s7_wrong_type_arg_error(sc, \"ldiv\", 2, s7_cadr(args), \"integer\"));
                    d = ldiv(s7_integer(s7_car(args)), s7_integer(s7_cadr(args)));
                    return(s7_list(sc, 2, s7_make_integer(sc, d.quot), s7_make_integer(sc, d.rem)));
                  }
@@ -352,6 +364,7 @@
 	   (C-function ("strtoll" g_strtoll "" 2))
 	   (C-function ("div" g_div "" 1))
 	   (C-function ("ldiv" g_ldiv "" 1))
+	   (C-function ("realpath" g_realpath "" 2))
 	   
 	   
 	   ;; -------- errno.h --------

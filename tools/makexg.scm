@@ -1653,8 +1653,10 @@
  (cdr all-types))
 
 (define other-types 
-  (list 'idler 'GtkCellRendererPixbuf_ 'GtkScrollbar_ 'GtkSeparator_ 'GtkSeparatorMenuItem_
-	'GdkEventExpose_ 'GdkEventNoExpose_ 'GdkEventVisibility_ 'GdkEventButton_ 'GdkEventScroll_ 'GdkEventCrossing_
+  (list 'idler 'GtkCellRendererPixbuf_ ;'GtkScrollbar_ 
+	'GtkSeparator_ 'GtkSeparatorMenuItem_
+	'GdkEventExpose_ 'GdkEventNoExpose_ 'GdkEventVisibility_ 'GdkEventButton_ ;'GdkEventScroll_ 
+	'GdkEventCrossing_
 	'GdkEventFocus_ 'GdkEventConfigure_ 'GdkEventProperty_ 'GdkEventSelection_ 'GdkEventProximity_ 'GdkEventSetting_
 	'GdkEventWindowState_ 'GdkEventDND_ 'GtkFileChooserDialog_ 'GtkFileChooserWidget_ 'GtkColorButton_ 'GtkAccelMap
 	'GtkCellRendererCombo_ 'GtkCellRendererProgress_ 'GtkCellRendererAccel_ 'GtkCellRendererSpin_ 'GtkRecentChooserDialog_

@@ -220,3 +220,51 @@
 	    two-zero? wave-train? file->frample? frample->file?
 
 	    mark? mix? mix-sampler? region?))
+
+#|
+;;; a more complicated search:
+
+(let ((old-do-walker (hash-table-ref (*lint* 'walker-functions) 'do)))
+  ;; look for forms like (do ((i 0 (+ i 1))) ((= i 123)) (float-vector-set! v i (* .2 (float-vector-ref v i))))
+
+  (hash-table-set! (*lint* 'walker-functions) 'do
+		   (lambda (caller form env)
+		     (when (and (pair? (cdr form))
+				(pair? (cddr form)))
+		       (let ((vars (cadr form))
+			     (end+res (caddr form))
+			     (body (cdddr form)))
+			 (when (and (pair? vars)
+				    (null? (cdr vars))
+				    (pair? body)
+				    (null? (cdr body))
+				    (pair? (car body))
+				    (eq? (caar body) 'float-vector-set!)
+					;(eqv? 0 (cadar vars)) -- we'll use shared-vector if not 0
+				    (pair? (cddar vars))
+				    (eqv? (length (caddar vars)) 3))
+			   (let ((stepper (caddar vars))
+				 (expr (cdar body))
+				 (end (car end+res)))
+			     (when (and (eq? (car stepper) '+)
+					(memq (caar vars) stepper)
+					(memv 1 stepper)
+					(eqv? (length end) 3)
+					(memq (caar vars) end)
+					(memq (car end) '(= >=))
+					(symbol? (car expr))
+					(eq? (cadr expr) (caar vars))
+					(pair? (caddr expr)))
+			       (let ((ref (caddr expr)))
+				 (when (and (eq? (car ref) '*)
+					    (or (and (pair? (cadr ref))
+						     (eq? (caadr ref) 'float-vector-ref)
+						     (eq? (cadadr ref) (car expr))
+						     (eq? (caddr (cadr ref)) (caar vars)))
+						(and (pair? (caddr ref))
+						     (eq? (caaddr ref) 'float-vector-ref)
+						     (eq? (cadr (caddr ref)) (car expr))
+						     (eq? (caddr (caddr ref)) (caar vars)))))
+				   (format *stderr* "possible float-vector-scale: ~A~%" form))))))))
+		       (old-do-walker caller form env))))
+|#

@@ -2093,10 +2093,10 @@
 (CINT "GTK_WRAP_WORD" "GtkWrapMode")
 (CINT "GTK_SORT_ASCENDING" "GtkSortType")
 (CINT "GTK_SORT_DESCENDING" "GtkSortType")
-(CCAST "GTK_EVENT_BOX(obj)" "GtkEventBox*")
-(CCHK "GTK_IS_EVENT_BOX(obj)" "GtkEventBox*")
+;;; 3.91.2 (CCAST "GTK_EVENT_BOX(obj)" "GtkEventBox*")
+;;; 3.91.2 (CCHK "GTK_IS_EVENT_BOX(obj)" "GtkEventBox*")
 ;;;;(CFNC "GType gtk_event_box_get_type void")
-(CFNC "GtkWidget* gtk_event_box_new void")
+;;; 3.91.2 (CFNC "GtkWidget* gtk_event_box_new void")
 
 ;;; entire thing deprecated 2.11.0
 ;;; (CCAST "GTK_FILE_SELECTION(obj)" "GtkFileSelection*")
@@ -3786,7 +3786,7 @@
 (CFNC "void gtk_widget_queue_draw_area GtkWidget* widget gint x gint y gint width gint height")
 (CFNC "void gtk_widget_queue_resize GtkWidget* widget")
 ;;; (CFNC-gtk2 "void gtk_widget_size_request GtkWidget* widget GtkRequisition* requisition")
-(CFNC "void gtk_widget_size_allocate GtkWidget* widget GtkAllocation* allocation")
+;;; 3.91.2 (CFNC "void gtk_widget_size_allocate GtkWidget* widget GtkAllocation* allocation")
 ;;; (CFNC-gtk2 "void gtk_widget_get_child_requisition GtkWidget* widget GtkRequisition* requisition")
 (CFNC "void gtk_widget_add_accelerator GtkWidget* widget gchar* accel_signal GtkAccelGroup* accel_group guint accel_key GdkModifierType accel_mods GtkAccelFlags accel_flags")
 (CFNC "gboolean gtk_widget_remove_accelerator GtkWidget* widget GtkAccelGroup* accel_group guint accel_key GdkModifierType accel_mods")
@@ -4619,10 +4619,10 @@
 (CFNC "gboolean gtk_check_menu_item_get_draw_as_radio GtkCheckMenuItem* check_menu_item")
 (CFNC "void gtk_entry_set_completion GtkEntry* entry GtkEntryCompletion* completion")
 (CFNC "GtkEntryCompletion* gtk_entry_get_completion GtkEntry* entry")
-(CFNC "gboolean gtk_event_box_get_visible_window GtkEventBox* event_box")
-(CFNC "void gtk_event_box_set_visible_window GtkEventBox* event_box gboolean visible_window")
-(CFNC "gboolean gtk_event_box_get_above_child GtkEventBox* event_box")
-(CFNC "void gtk_event_box_set_above_child GtkEventBox* event_box gboolean above_child")
+;;; 3.91.2 (CFNC "gboolean gtk_event_box_get_visible_window GtkEventBox* event_box")
+;;; 3.91.2 (CFNC "void gtk_event_box_set_visible_window GtkEventBox* event_box gboolean visible_window")
+;;; 3.91.2 (CFNC "gboolean gtk_event_box_get_above_child GtkEventBox* event_box")
+;;; 3.91.2 (CFNC "void gtk_event_box_set_above_child GtkEventBox* event_box gboolean above_child")
 ;;; (CFNC "void gtk_icon_source_set_icon_name GtkIconSource* source gchar* icon_name")
 ;;; (CFNC "gchar* gtk_icon_source_get_icon_name GtkIconSource* source") ;const return
 (CFNC "void gtk_menu_attach GtkMenu* menu GtkWidget* child guint left_attach guint right_attach guint top_attach guint bottom_attach")
@@ -6826,7 +6826,7 @@
 (CFNC "gboolean gtk_tree_view_is_rubber_banding_active GtkTreeView* tree_view")
 
 ;;; for 2.11.6
-(CFNC "void gtk_icon_view_convert_widget_to_bin_window_coords GtkIconView* icon_view gint wx gint wy gint* [bx] gint* [by]")
+;;; 3.91.2 (CFNC "void gtk_icon_view_convert_widget_to_bin_window_coords GtkIconView* icon_view gint wx gint wy gint* [bx] gint* [by]")
 (CFNC "void gtk_icon_view_set_tooltip_item GtkIconView* icon_view GtkTooltip* tooltip GtkTreePath* path")
 (CFNC "void gtk_icon_view_set_tooltip_cell GtkIconView* icon_view GtkTooltip* tooltip GtkTreePath* path GtkCellRenderer* cell")
 (CFNC "gboolean gtk_icon_view_get_tooltip_context GtkIconView* icon_view gint* [x] gint* [y] gboolean keyboard_tip GtkTreeModel** [model] GtkTreePath** [path] GtkTreeIter* @iter")
@@ -6931,7 +6931,7 @@
 ;;; 3.1.12 (CFNC-2.14 "GtkWidget* gtk_font_selection_dialog_get_cancel_button GtkFontSelectionDialog* fsd")
 
 ;;; 3.3.2 (CFNC-2.14 "gboolean gtk_handle_box_get_child_detached GtkHandleBox* handle_box")
-(CFNC-2.14 "GdkWindow* gtk_layout_get_bin_window GtkLayout* layout")
+;;; 3.91.2 (CFNC-2.14 "GdkWindow* gtk_layout_get_bin_window GtkLayout* layout")
 (CFNC-2.14 "gchar* gtk_menu_get_accel_path GtkMenu* menu" 'const)
 (CFNC-2.14 "gint gtk_menu_get_monitor GtkMenu* menu")
 (CFNC-2.14 "gchar* gtk_menu_item_get_accel_path GtkMenuItem* menu_item" 'const)
@@ -7199,7 +7199,7 @@
 ;;; (CINT-2.18 "GTK_FILE_CHOOSER_PROP_CREATE_FOLDERS" "GtkFileChooserProp")
 
 ;;; 2.17.8
-;(CFNC-2.18 "void gtk_widget_set_allocation GtkWidget* widget GtkAllocation* allocation")
+;;; 3.91.2 ;(CFNC-2.18 "void gtk_widget_set_allocation GtkWidget* widget GtkAllocation* allocation")
 
 
 ;;; 2.17.10
@@ -7312,7 +7312,7 @@
 ;;; 2.91.6 (CFNC-2.20 "gboolean gtk_widget_has_rc_style GtkWidget* widget")
 
 ;;; 2.19.5
-(CFNC-2.20 "GdkWindow* gtk_paned_get_handle_window GtkPaned* paned")
+;;; 3.91.2 (CFNC-2.20 "GdkWindow* gtk_paned_get_handle_window GtkPaned* paned")
 ;;; 2.99.1 (CFNC-2.20 "void gtk_widget_style_attach GtkWidget* style")
 (CFNC-2.20 "void gtk_widget_set_realized GtkWidget* widget gboolean realized")
 (CFNC-2.20 "gboolean gtk_widget_get_realized GtkWidget* widget")
@@ -8535,7 +8535,7 @@
 (CFNC-3.10 "GtkBaselinePosition gtk_grid_get_row_baseline_position GtkGrid* grid gint row")
 (CFNC-3.10 "void gtk_grid_set_baseline_row GtkGrid* grid gint row")
 (CFNC-3.10 "gint gtk_grid_get_baseline_row GtkGrid* grid")
-(CFNC-3.10 "void gtk_widget_size_allocate_with_baseline GtkWidget* widget GtkAllocation* allocation gint baseline")
+;;; 3.91.2 (CFNC-3.10 "void gtk_widget_size_allocate_with_baseline GtkWidget* widget GtkAllocation* allocation gint baseline")
 ;;; 3.89.2 (CFNC-3.10 "void gtk_widget_get_preferred_height_and_baseline_for_width GtkWidget* widget gint width gint* [minimum_height] gint* [natural_height] gint* [minimum_baseline] gint* [natural_baseline]")
 ;;; (CFNC-3.10 "void gtk_widget_get_preferred_size_and_baseline GtkWidget* widget GtkRequisition* minimum_size GtkRequisition* natural_size gint* [minimum_baseline] gint* [natural_baseline]")
 (CFNC-3.10 "int gtk_widget_get_allocated_baseline GtkWidget* widget")
@@ -8897,7 +8897,7 @@
 ;;; 3.13.2:
 
 (CFNC-3.14 "gboolean gdk_window_show_window_menu GdkWindow* window GdkEvent* event")
-(CFNC-3.14 "void gtk_widget_set_clip GtkWidget* widget GtkAllocation* clip" 'const)
+;;; 3.91.2 (CFNC-3.14 "void gtk_widget_set_clip GtkWidget* widget GtkAllocation* clip" 'const)
 (CFNC-3.14 "void gtk_widget_get_clip GtkWidget* widget GtkAllocation* clip")
 
 (CCAST-3.14 "GTK_GESTURE" "GtkGesture*")
@@ -9618,3 +9618,23 @@
 (CFNC-3.99 "gboolean gdk_rectangle_contains_point GdkRectangle* rect int x int y")
 (CFNC-3.99 "GtkWidget* gtk_get_event_target GdkEvent* event")
 ;;; GtkWidget* gtk_get_event_target_with_type GdkEvent* event GType type
+
+
+;;; 3.91.2
+
+(CFNC-3.99 "void gtk_accel_label_set_label GtkAccelLabel* accel_label char* text" 'const)
+(CFNC-3.99 "char* gtk_accel_label_get_label GtkAccelLabel* accel_label" 'const-return)
+(CFNC-3.99 "void gtk_accel_label_set_use_underline GtkAccelLabel* accel_label gboolean setting")
+(CFNC-3.99 "gboolean gtk_accel_label_get_use_underline GtkAccelLabel* accel_label")
+(CFNC-3.99 "void gtk_scrollbar_set_adjustment GtkScrollbar* self GtkAdjustment* adjustment")
+(CFNC-3.99 "GtkAdjustment* gtk_scrollbar_get_adjustment GtkScrollbar* self")
+(CFNC-3.99 "double gtk_scrollbar_get_wheel_delta GtkScrollbar* self GdkEventScroll* event" 'const)
+(CFNC-3.99 "char* gtk_spin_button_get_text GtkSpinButton* spin_button" 'const-return)
+(CFNC-3.99 "void gtk_spin_button_set_text GtkSpinButton* spin_button char* text" 'const)
+(CFNC-3.99 "int gtk_spin_button_get_max_width_chars GtkSpinButton* spin_button")
+(CFNC-3.99 "void gtk_spin_button_set_max_width_chars GtkSpinButton* spin_button int max_width_chars")
+(CFNC-3.99 "int gtk_spin_button_get_width_chars GtkSpinButton* spin_button")
+(CFNC-3.99 "void gtk_spin_button_set_width_chars GtkSpinButton* spin_button int width_chars;")
+(CFNC-3.99 "void gtk_widget_size_allocate GtkWidget* widget GtkAllocation* allocation int baseline GtkAllocation* out_clip")
+ 
+ 
