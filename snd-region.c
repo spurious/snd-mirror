@@ -1563,6 +1563,7 @@ static Xen g_restore_region(Xen args)
   int i, regn;
   Xen arg, pos, chans, len, srate, maxamp, name, start, end, filename, date;
   
+  Xen_check_type(Xen_list_length(args) == 10, args, 0, S_restore_region, "10 items");
   arg = args;
   pos = Xen_car(arg);
   Xen_check_type(Xen_is_integer(pos), pos, 1, S_restore_region, "a region id");

@@ -9288,6 +9288,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   Xen snd = Xen_undefined, chn_n = Xen_undefined, force_display = Xen_undefined, show_axes = Xen_undefined;
 
   /* ldata can be a vct or a list of numbers or vcts */
+  Xen_check_type(Xen_is_pair(args), args, 1, S_graph, "a " S_vct " or a list");
   arg = args;
   ldata = Xen_car(arg);
   Xen_check_type(((mus_is_vct(ldata)) || 

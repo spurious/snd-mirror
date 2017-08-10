@@ -9718,7 +9718,8 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 		  {
 		    s7_pointer arg;
 		    arg = s7_car(s7_closure_args(s7, obj));
-		    if ((arg == s7_caddr(res)) &&
+		    if ((s7_is_pair(s7_cddr(res))) &&
+			(arg == s7_caddr(res)) &&
 			(s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
 		      {
 			gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_closure_let(s7, obj)));
@@ -11061,6 +11062,7 @@ it in conjunction with matrix to scale/envelope all the various ins and outs. \
   const char *outfile = NULL, *infile = NULL;
 
   /* -------- setup output gen -------- */
+  Xen_check_type(Xen_is_pair(args), args, 0, S_mus_file_mix, "a filename or a " S_frample_to_file " generator");
   arg = args; 
   out = Xen_car(arg);
   Xen_check_type(Xen_is_string(out) || ((mus_is_xen(out)) && (mus_is_output(Xen_to_mus_any(out)))), 
