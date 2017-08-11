@@ -752,6 +752,11 @@ typedef struct s7_cell {
       s7_pointer car, cdr, opt1, opt2, opt3;
     } cons;
 
+    struct {                         /* pairs */
+      s7_pointer car, cdr, opt1, opt2;
+      uint8_t opt_type;
+    } cons_ext;
+
     struct {                         /* special purpose pairs (symbol-table etc) */
       s7_pointer unused_car, unused_cdr;
       uint64_t hash;
@@ -772,23 +777,25 @@ typedef struct s7_cell {
     struct {                        /* strings */
       uint32_t length;
       union {
-	bool needs_free;
-	uint32_t accessor;
-	int32_t temp_len;
+	bool needs_free;            /* string GC */
+	uint32_t accessor;          /* symbol-access */
+	int32_t temp_len;           /* temp string length (sc->tmp_strs) */
       } str_ext;
       char *svalue;
       uint64_t hash;                /* string hash-index */
-      s7_pointer initial_slot;
+      s7_pointer initial_slot;      /* for built-in symbols (unlet) */
       union {
-	char *documentation;
-	s7_pointer ksym;
+	char *documentation;        /* symbol help */
+	s7_pointer ksym;            /* keyword->symbol */
       } doc;
     } string;
 
     struct {                       /* symbols */
       s7_pointer name, global_slot, local_slot;
       int64_t id;
-      uint32_t ctr, tag;
+      uint32_t ctr;                /* closure_is_ok (check func only defined once) */
+      uint16_t tag;                /* symbol lists (quick memq) */
+      uint8_t type;
     } sym;
 
     struct {                       /* syntax */
@@ -1045,7 +1052,7 @@ struct s7_scheme {
   int32_t c_object_types_size;
   int32_t num_c_object_types;
 
-  uint32_t syms_tag;
+  uint16_t syms_tag;
   int32_t ht_iter_tag, baffle_ctr, bignum_precision;
   s7_pointer default_rng;
 
@@ -1160,8 +1167,8 @@ struct s7_scheme {
              if_csc_p_p_symbol, if_csc_p_symbol, if_csc_r_symbol, if_csc_n_n_symbol, if_csc_n_symbol,
              if_csq_p_p_symbol, if_csq_p_symbol, if_csq_r_symbol, if_csq_n_n_symbol, if_csq_n_symbol,
              if_css_p_p_symbol, if_css_p_symbol, if_css_r_symbol, if_css_n_n_symbol, if_css_n_symbol,
-             if_is_pair_p_p_symbol, if_is_pair_p_symbol, if_is_pair_r_symbol, if_is_pair_n_n_symbol, if_is_pair_n_symbol,
-             if_is_symbol_p_p_symbol, if_is_symbol_p_symbol, if_is_symbol_r_symbol, if_is_symbol_n_n_symbol, if_is_symbol_n_symbol,
+             if_is_type_s_p_p_symbol, if_is_type_s_p_symbol, if_is_type_s_r_symbol, if_is_type_s_n_n_symbol, if_is_type_s_n_symbol,
+             if_is_type_opsq_p_p_symbol, if_is_type_opsq_p_symbol, if_is_type_opsq_r_symbol, if_is_type_opsq_n_n_symbol, if_is_type_opsq_n_symbol,
              if_opsq_p_p_symbol, if_opsq_p_symbol, if_opsq_r_symbol, if_opsq_n_n_symbol, if_opsq_n_symbol,
              if_and2_p_p_symbol, if_and2_p_symbol, if_and2_r_symbol, if_and2_n_n_symbol, if_and2_n_symbol,
              if_andp_p_p_symbol, if_andp_p_symbol, if_andp_r_symbol, if_andp_n_n_symbol, if_andp_n_symbol,
@@ -1171,7 +1178,6 @@ struct s7_scheme {
              if_s_opcq_p_p_symbol, if_s_opcq_p_symbol, if_s_opcq_r_symbol, if_s_opcq_n_n_symbol, if_s_opcq_n_symbol,
              if_s_p_p_symbol, if_s_p_symbol, if_s_r_symbol, if_s_n_n_symbol, if_s_n_symbol,
              if_z_p_p_symbol, if_z_p_symbol, if_z_r_symbol, if_z_n_n_symbol, if_z_n_symbol,
-             if_is_null_p_symbol, if_is_null_p_p_symbol, if_is_null_r_symbol, if_is_null_n_symbol, if_is_null_n_n_symbol,
 
              increment_1_symbol, increment_sa_symbol, increment_saa_symbol, increment_ss_symbol,
              increment_sss_symbol, increment_sz_symbol, lambda_star_unchecked_symbol, lambda_unchecked_symbol, let_all_c_symbol,
@@ -1459,7 +1465,11 @@ static s7_scheme *cur_sc = NULL;
   static void set_s_syn_op_1(s7_scheme *sc, s7_pointer p, uint32_t x, const char *func, int32_t line);
 
   #define unchecked_type(p)           ((p)->tf.type_field)
+#if WITH_GCC
   #define type(p) ({uint8_t _t_; _t_ = (p)->tf.type_field; if (((_t_ == T_FREE)) || (_t_ >= NUM_TYPES)) print_gc_info(p, __LINE__); _t_;})
+#else
+  #define type(p) (p)->tf.type_field
+#endif
 
   #define set_type(p, f)						\
     do {								\
@@ -2168,6 +2178,9 @@ static int64_t not_heap = -1;
 #define opt_direct_x(P)               opt3(P,                    G_DIRECT)
 #define set_opt_direct_x(P, X)        set_opt3(P, (s7_pointer)(X), G_DIRECT)
 
+#define opt_con3(P)                   P->object.cons_ext.opt_type
+#define set_opt_con3(P, X)            P->object.cons_ext.opt_type = X
+
 #define c_callee(f)                   ((s7_function)opt2(f,      F_CALL))
 #define c_call(f)                     ((s7_function)opt2(f,      F_CALL))
 #if DEBUGGING
@@ -2285,6 +2298,7 @@ static int64_t not_heap = -1;
  *    callgrind says this is faster than an uint32_t!
  */
 #define symbol_syntax_op(p)           syntax_opcode(slot_value(global_slot(p)))
+#define symbol_type(p)                (_TSym(p))->object.sym.type
 
 #define global_slot(p)                (_TSym(p))->object.sym.global_slot
 #define set_global_slot(p, Val)       (_TSym(p))->object.sym.global_slot = _TSld(Val)
@@ -3045,11 +3059,10 @@ enum {OP_NO_OP, OP_GC_PROTECT,
       OP_IF_CSQ_P, OP_IF_CSQ_P_P, OP_IF_CSQ_R, OP_IF_CSQ_N, OP_IF_CSQ_N_N,
       OP_IF_CSS_P, OP_IF_CSS_P_P, OP_IF_CSS_R, OP_IF_CSS_N, OP_IF_CSS_N_N,
       OP_IF_CSC_P, OP_IF_CSC_P_P, OP_IF_CSC_R, OP_IF_CSC_N, OP_IF_CSC_N_N,
-      OP_IF_IS_PAIR_P, OP_IF_IS_PAIR_P_P, OP_IF_IS_PAIR_R, OP_IF_IS_PAIR_N, OP_IF_IS_PAIR_N_N,
-      OP_IF_IS_NULL_P, OP_IF_IS_NULL_P_P, OP_IF_IS_NULL_R, OP_IF_IS_NULL_N, OP_IF_IS_NULL_N_N,
       OP_IF_opSq_P, OP_IF_opSq_P_P, OP_IF_opSq_R, OP_IF_opSq_N, OP_IF_opSq_N_N, 
       OP_IF_S_opCq_P, OP_IF_S_opCq_P_P, OP_IF_S_opCq_R, OP_IF_S_opCq_N, OP_IF_S_opCq_N_N, 
-      OP_IF_IS_SYMBOL_P, OP_IF_IS_SYMBOL_P_P, OP_IF_IS_SYMBOL_R, OP_IF_IS_SYMBOL_N, OP_IF_IS_SYMBOL_N_N,
+      OP_IF_IS_TYPE_S_P, OP_IF_IS_TYPE_S_P_P, OP_IF_IS_TYPE_S_R, OP_IF_IS_TYPE_S_N, OP_IF_IS_TYPE_S_N_N,
+      OP_IF_IS_TYPE_opSq_P, OP_IF_IS_TYPE_opSq_P_P, OP_IF_IS_TYPE_opSq_R, OP_IF_IS_TYPE_opSq_N, OP_IF_IS_TYPE_opSq_N_N,
       OP_IF_A_P, OP_IF_A_P_P, OP_IF_A_R, OP_IF_A_N, OP_IF_A_N_N,
       OP_IF_AND2_P, OP_IF_AND2_P_P, OP_IF_AND2_R, OP_IF_AND2_N, OP_IF_AND2_N_N,
       OP_IF_Z_P, OP_IF_Z_P_P, OP_IF_Z_R, OP_IF_Z_N, OP_IF_Z_N_N,
@@ -3275,11 +3288,10 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "if_csq_p", "if_csq_p_p", "if_csq_r", "if_csq_n", "if_csq_n_n",
       "if_css_p", "if_css_p_p", "if_css_r","if_css_n", "if_css_n_n",
       "if_csc_p", "if_csc_p_p", "if_csc_r", "if_csc_n", "if_csc_n_n",
-      "if_is_pair_p", "if_is_pair_p_p", "if_is_pair_r", "if_is_pair_n", "if_is_pair_n_n",
-      "if_is_null_p", "if_is_null_p_p", "if_is_null_r", "if_is_null_n", "if_is_null_n_n",
       "if_opsq_p", "if_opsq_p_p", "if_opsq_r", "if_opsq_n", "if_opsq_n_n",
       "if_s_opcq_p", "if_s_opcq_p_p", "if_s_opcq_r","if_s_opcq_n", "if_s_opcq_n_n",
-      "if_is_symbol_p", "if_is_symbol_p_p", "if_is_symbol_r", "if_is_symbol_n", "if_is_symbol_n_n",
+      "if_is_type_s_p", "if_is_type_s_p_p", "if_is_type_s_r", "if_is_type_s_n", "if_is_type_s_n_n",
+      "if_is_type_opsq_p", "if_is_type_opsq_p_p", "if_is_type_opsq_r", "if_is_type_opsq_n", "if_is_type_opsq_n_n",
       "if_a_p", "if_a_p_p", "if_a_r", "if_a_n", "if_a_n_n",
       "if_and2_p", "if_and2_p_p", "if_and2_r","if_and2_n", "if_and2_n_n",
       "if_z_p", "if_z_p_p", "if_z_r", "if_z_n", "if_z_n_n",
@@ -5596,7 +5608,7 @@ static inline uint64_t raw_string_hash(const unsigned char *key, uint32_t len)
 }
 
 
-static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, uint32_t len);
+static inline s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, uint32_t len);
 
 static s7_pointer new_symbol(s7_scheme *sc, const char *name, uint32_t len, uint64_t hash, uint32_t location)
 {
@@ -5631,6 +5643,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, uint32_t len, uint
   symbol_set_local(x, 0LL, sc->nil);
   symbol_set_tag(x, 0);
   symbol_set_ctr(x, 0);
+  symbol_type(x) = 0;
 
   if (symbol_name_length(x) > 1)                           /* not 0, otherwise : is a keyword */
     {
@@ -5674,7 +5687,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, uint32_t len, uint
   return(x);
 }
 
-static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, uint32_t len)
+static inline s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, uint32_t len)
 {
   s7_pointer x;
   uint64_t hash;
@@ -7308,16 +7321,10 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer lint_let_ref_1(s7_scheme *sc, s7_pointer lt, s7_pointer sym)
 {
   s7_pointer x, y;
-
-  lt = (is_pair(lt)) ? cdr(lt) : g_cdr(sc, set_plist_1(sc, lt));
-  
   for (x = lt; is_let(x); x = outlet(x))
     for (y = let_slots(x); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == sym)
 	return(slot_value(y));
-
-  if (!is_let(lt))
-    return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, lt, a_let_string));
 
   if (has_ref_fallback(lt))
     check_method(sc, lt, sc->let_ref_fallback_symbol, set_plist_2(sc, lt, sym));
@@ -7337,13 +7344,43 @@ static s7_pointer let_ref_p_pp(s7_pointer p1, s7_pointer p2) {return(g_let_ref(c
 static s7_pointer lint_let_ref;
 static s7_pointer g_lint_let_ref(s7_scheme *sc, s7_pointer args)
 {
-  return(lint_let_ref_1(sc, find_symbol_unchecked(sc, cadar(args)), cadadr(args)));
+  s7_pointer y, lt, sym;
+  sym = cadadr(args);
+  lt = find_symbol_unchecked(sc, cadar(args));
+  if (is_pair(lt))
+    {
+      lt = cdr(lt);
+      if (is_let(lt))
+	{
+	  for (y = let_slots(lt); is_slot(y); y = next_slot(y))
+	    if (slot_symbol(y) == sym)
+	      return(slot_value(y));
+	  return(lint_let_ref_1(sc, outlet(lt), sym));
+	}
+      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, lt, a_let_string));
+    }
+  return(simple_wrong_type_argument(sc, sc->cdr_symbol, lt, T_PAIR));
 }
 
 static s7_pointer local_lint_let_ref;
 static s7_pointer g_local_lint_let_ref(s7_scheme *sc, s7_pointer args)
 {
-  return(lint_let_ref_1(sc, local_symbol_value(cadar(args)), cadadr(args)));
+  s7_pointer y, lt, sym;
+  sym = cadadr(args);
+  lt = local_symbol_value(cadar(args));
+  if (is_pair(lt))
+    {
+      lt = cdr(lt);
+      if (is_let(lt))
+	{
+	  for (y = let_slots(lt); is_slot(y); y = next_slot(y))
+	    if (slot_symbol(y) == sym)
+	      return(slot_value(y));
+	  return(lint_let_ref_1(sc, outlet(lt), sym));
+	}
+      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, lt, a_let_string));
+    }
+  return(simple_wrong_type_argument(sc, sc->cdr_symbol, lt, T_PAIR));
 }
 
 
@@ -51004,6 +51041,7 @@ static bool p_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
   func = s7_p_ppp_function(s_func);
   if (func)
     {
+      s7_pointer arg1, arg2, arg3;
       int32_t start;
       s7_pointer sig, checker = NULL;
 	  sig = s7_procedure_signature(sc, s_func);
@@ -51014,10 +51052,13 @@ static bool p_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 	  start = sc->pc;
 
       opc->v3.p_ppp_f = func;
-      if (is_symbol(cadr(car_x))) /* dealt with at the top -> p1 */
+      arg1 = cadr(car_x);
+      arg2 = caddr(car_x);
+      arg3 = cadddr(car_x);
+      if (is_symbol(arg1)) /* dealt with at the top -> p1 */
 	{
 	  s7_pointer slot;
-	  slot = find_symbol(sc, cadr(car_x));
+	  slot = find_symbol(sc, arg1);
 	  if ((!is_slot(slot)) || 
 	      (has_methods(slot_value(slot))))
 	    return(return_false(sc, car_x, __func__, __LINE__));
@@ -51033,16 +51074,16 @@ static bool p_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 	      if (s7_apply_function(sc, checker, set_plist_1(sc, slot_value(opc->v1.p))) == sc->T)
 		opc->v3.p_ppp_f = s7_p_ppp_direct_function(s_func);
 	    }
-	  if (is_symbol(caddr(car_x)))
+	  if (is_symbol(arg2))
 	    {
-	      slot = find_symbol(sc, caddr(car_x));
+	      slot = find_symbol(sc, arg2);
 	      if ((is_slot(slot)) &&
 		  (!has_methods(slot_value(slot))))
 		{
 		  opc->v2.p = slot;
-		  if (is_symbol(cadddr(car_x)))
+		  if (is_symbol(arg3))
 		    {
-		      slot = find_symbol(sc, cadddr(car_x));
+		      slot = find_symbol(sc, arg3);
 		      if ((is_slot(slot)) &&
 			  (!has_methods(slot_value(slot))))
 			{
@@ -51054,13 +51095,13 @@ static bool p_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 		    }
 		  else
 		    {
-		      if ((!is_pair(cadddr(car_x))) ||
-			  ((car(cadddr(car_x)) == sc->quote_symbol) &&
-			   (is_pair(cdr(cadddr(car_x)))))) /* (quote) as cadddr */
+		      if ((!is_pair(arg3)) ||
+			  ((car(arg3) == sc->quote_symbol) &&
+			   (is_pair(cdr(arg3))))) /* (quote) as arg3 */
 			{
-			  if (!is_pair(cadddr(car_x)))
-			    opc->v4.p = cadddr(car_x);
-			  else opc->v4.p = cadr(cadddr(car_x));
+			  if (!is_pair(arg3))
+			    opc->v4.p = arg3;
+			  else opc->v4.p = cadr(arg3);
 			  opc->v7.fp = opt_p_ppp_ssc;
 			  return(true);
 			}
@@ -51073,15 +51114,15 @@ static bool p_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 		  pc_fallback(sc, start);
 		}
 	    }
-	  if ((is_proper_quote(sc, caddr(car_x))) &&
-	      (is_symbol(cadddr(car_x))))
+	  if ((is_proper_quote(sc, arg2)) &&
+	      (is_symbol(arg3)))
 	    {
 	      s7_pointer val_slot;
-	      val_slot = find_symbol(sc, cadddr(car_x));
+	      val_slot = find_symbol(sc, arg3);
 	      if ((is_slot(val_slot)) &&
 		  (!has_methods(val_slot)))
 		{
-		  opc->v4.p = cadr(caddr(car_x));
+		  opc->v4.p = cadr(arg2);
 		  opc->v2.p = val_slot;
 		  opc->v7.fp = opt_p_ppp_scs;
 		  return(true);
@@ -51089,10 +51130,10 @@ static bool p_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 	    }
 	  if (cell_optimize(sc, cddr(car_x)))
 	    {
-	      if (is_symbol(cadddr(car_x)))
+	      if (is_symbol(arg3))
 		{
 		  s7_pointer val_slot;
-		  val_slot = find_symbol(sc, cadddr(car_x));
+		  val_slot = find_symbol(sc, arg3);
 		  if ((is_slot(val_slot)) &&
 		      (!has_methods(val_slot)))
 		    {
@@ -60336,15 +60377,6 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 				sym = cadar(p);
 			      else sym = sc->unspecified;
 			    }
-#if 0
-			  if (c_s_is_ok)
-			    {
-			      if ((!is_h_safe_c_s(car(p))) ||
-				  ((sym) && ((!is_pair(cdar(p))) || (sym != cadar(p)))))
-				c_s_is_ok = false;
-			      else sym = cadar(p);
-			    }
-#endif
 			}
 		    }
 		}
@@ -62645,20 +62677,14 @@ static void set_if_opts(s7_scheme *sc, bool one_branch, bool reversed)
 
 	  if (is_h_safe_c_s(test))
 	    {
-	      /* these miss methods? */
-	      if (car(test) == sc->is_pair_symbol)
-		pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_pair, one_branch, reversed, not_case));
-	      else
+	      uint8_t typ;
+	      typ = symbol_type(car(test));
+	      if (typ > 0)
 		{
-		  if (car(test) == sc->is_null_symbol)
-		    pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_null, one_branch, reversed, not_case));
-		  else
-		    {
-		      if (car(test) == sc->is_symbol_symbol)
-			pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_symbol, one_branch, reversed, not_case));
-		      else pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_cs, one_branch, reversed, not_case));
-		    }
+		  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_type_s, one_branch, reversed, not_case));
+		  set_opt_con3(sc->code, typ);
 		}
+	      else pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_cs, one_branch, reversed, not_case));
 	      set_opt_sym2(sc->code, cadr(test));
 	      return;
 	    }
@@ -62694,9 +62720,20 @@ static void set_if_opts(s7_scheme *sc, bool one_branch, bool reversed)
 	    }
 	  if (optimize_op(test) == HOP_SAFE_C_opSq)
 	    {
-	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_opsq, one_branch, reversed, not_case));
-	      set_opt_pair2(sc->code, cadr(test));
-	      set_opt_sym3(sc->code, cadadr(test));
+	      uint8_t typ;
+	      typ = symbol_type(car(test));
+	      if (typ > 0)
+		{
+		  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_type_opsq, one_branch, reversed, not_case));
+		  set_opt_sym2(sc->code, cadadr(test));
+		  set_opt_con3(sc->code, typ);
+		}
+	      else
+		{
+		  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_opsq, one_branch, reversed, not_case));
+		  set_opt_pair2(sc->code, cadr(test));
+		  set_opt_sym3(sc->code, cadadr(test));
+		}
 	      return;
 	    }
 	  if (is_all_x_safe(sc, test))
@@ -65179,30 +65216,7 @@ static bool has_safe_steppers(s7_scheme *sc, s7_pointer frame)
       s7_pointer step_expr, val;
       val = slot_value(slot);
       step_expr = slot_expression(slot);
-#if 0
-      if ((!is_pair(step_expr)) ||
-	  (is_safe_stepper(step_expr)))
-	{
-	  if (is_t_integer(val)) /* a temporary kludge */
-	    {
-	      sc->pc = 0;
-	      if (int_optimize(sc, step_expr))
-		set_safe_stepper(slot);
-	      else clear_safe_stepper(slot);
-	    }
-	  else 
-	    {
-	      if (is_real(val)) /* a temporary kludge */
-		{
-		  sc->pc = 0;
-		  if (float_optimize(sc, step_expr))
-		    set_safe_stepper(slot);
-		  else clear_safe_stepper(slot);
-                }
-              else set_safe_stepper(slot);
-	    }
-	}
-#endif
+
       if (!is_pair(step_expr))
 	{
 	  if ((is_null(step_expr)) ||
@@ -73712,18 +73726,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  IF_CASE(OP_IF_C, 
 		  if (is_true(sc, c_call(car(sc->code))(sc, opt_pair2(sc->code)))),
 		  if (is_false(sc, c_call(cadar(sc->code))(sc, opt_pair2(sc->code)))))
-	    
-	  IF_CASE(OP_IF_IS_PAIR, 
-		  if (is_pair(find_symbol_unchecked(sc, opt_sym2(sc->code)))),
-		  if (!is_pair(find_symbol_unchecked(sc, opt_sym2(sc->code)))))
 
-	  IF_CASE(OP_IF_IS_NULL, 
-		  if (is_null(find_symbol_unchecked(sc, opt_sym2(sc->code)))),
-		  if (!is_null(find_symbol_unchecked(sc, opt_sym2(sc->code)))))
+	  IF_CASE(OP_IF_IS_TYPE_S,
+		  if (type(find_symbol_unchecked(sc, opt_sym2(sc->code))) == opt_con3(sc->code)),
+		  if (type(find_symbol_unchecked(sc, opt_sym2(sc->code))) != opt_con3(sc->code)))
 	    
-	  IF_CASE(OP_IF_IS_SYMBOL, 
-		  if (is_symbol(find_symbol_unchecked(sc, opt_sym2(sc->code)))),
-		  if (!is_symbol(find_symbol_unchecked(sc, opt_sym2(sc->code)))))
+	  IF_CASE(OP_IF_IS_TYPE_opSq, 
+		  set_car(sc->t1_1, find_symbol_unchecked(sc, opt_sym2(sc->code))); \
+		  if (type(c_call(cadar(sc->code))(sc, sc->t1_1)) == opt_con3(sc->code)),
+		  set_car(sc->t1_1, find_symbol_unchecked(sc, opt_sym2(sc->code))); \
+		  if (type(c_call(cadr(cadar(sc->code)))(sc, sc->t1_1)) != opt_con3(sc->code)))
 	    
 	  IF_CASE(OP_IF_CS, 
 		  set_car(sc->t1_1, find_symbol_unchecked(sc, opt_sym2(sc->code))); if (is_true(sc, c_call(car(sc->code))(sc, sc->t1_1))),
@@ -81714,9 +81726,8 @@ s7_scheme *s7_init(void)
   assign_if(csc, CSC)
   assign_if(s_opcq, S_opCq)
   assign_if(opsq, opSq)
-  assign_if(is_pair, IS_PAIR)
-  assign_if(is_null, IS_NULL)
-  assign_if(is_symbol, IS_SYMBOL)
+  assign_if(is_type_s, IS_TYPE_S)
+  assign_if(is_type_opsq, IS_TYPE_opSq)
     /* CLL and CLC happen a few times, but make no difference */
 
   #define assign_case(Sym, Op) \
@@ -81822,43 +81833,43 @@ s7_scheme *s7_init(void)
   sc->is_boolean_symbol = make_symbol(sc, "boolean?");
   pl_bt = s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->T);
 
-  sc->is_symbol_symbol =             defun("symbol?",		is_symbol,		1, 0, false);
-  sc->is_syntax_symbol =             defun("syntax?",		is_syntax,		1, 0, false);
+  sc->is_symbol_symbol =             defun("symbol?",		is_symbol,		1, 0, false); symbol_type(sc->is_symbol_symbol) = T_SYMBOL;
+  sc->is_syntax_symbol =             defun("syntax?",		is_syntax,		1, 0, false); symbol_type(sc->is_syntax_symbol) = T_SYNTAX;
   sc->is_gensym_symbol =             defun("gensym?",		is_gensym,		1, 0, false); 
   sc->is_keyword_symbol =            defun("keyword?",		is_keyword,		1, 0, false);
-  sc->is_let_symbol =                defun("let?",		is_let,			1, 0, false);
-  sc->is_openlet_symbol =            defun("openlet?",		is_openlet,		1, 0, false);
-  sc->is_iterator_symbol =           defun("iterator?",	        is_iterator,		1, 0, false);
+  sc->is_let_symbol =                defun("let?",		is_let,			1, 0, false); symbol_type(sc->is_let_symbol) = T_LET;
+  sc->is_openlet_symbol =            defun("openlet?",		is_openlet,		1, 0, false); 
+  sc->is_iterator_symbol =           defun("iterator?",	        is_iterator,		1, 0, false); symbol_type(sc->is_iterator_symbol) = T_ITERATOR;
   sc->is_constant_symbol =           defun("constant?",	        is_constant,		1, 0, false);
   sc->is_macro_symbol =              defun("macro?",		is_macro,		1, 0, false);
-  sc->is_c_pointer_symbol =          defun("c-pointer?",	is_c_pointer,		1, 1, false);
-  sc->is_c_object_symbol =           defun("c-object?",	        is_c_object,		1, 0, false);
-  sc->is_input_port_symbol =         defun("input-port?",	is_input_port,		1, 0, false);
-  sc->is_output_port_symbol =        defun("output-port?",	is_output_port,		1, 0, false);
-  sc->is_eof_object_symbol =         defun("eof-object?",	is_eof_object,		1, 0, false);
-  sc->is_integer_symbol =            defun("integer?",		is_integer,		1, 0, false);
+  sc->is_c_pointer_symbol =          defun("c-pointer?",	is_c_pointer,		1, 1, false); symbol_type(sc->is_c_pointer_symbol) = T_C_POINTER;
+  sc->is_c_object_symbol =           defun("c-object?",	        is_c_object,		1, 0, false); symbol_type(sc->is_c_object_symbol) = T_C_OBJECT;
+  sc->is_input_port_symbol =         defun("input-port?",	is_input_port,		1, 0, false); symbol_type(sc->is_input_port_symbol) = T_INPUT_PORT;
+  sc->is_output_port_symbol =        defun("output-port?",	is_output_port,		1, 0, false); symbol_type(sc->is_output_port_symbol) = T_OUTPUT_PORT;
+  sc->is_eof_object_symbol =         defun("eof-object?",	is_eof_object,		1, 0, false); symbol_type(sc->is_eof_object_symbol) = T_EOF_OBJECT;
+  sc->is_integer_symbol =            defun("integer?",		is_integer,		1, 0, false); 
   sc->is_number_symbol =             defun("number?",		is_number,		1, 0, false);
   sc->is_real_symbol =               defun("real?",		is_real,		1, 0, false);
   sc->is_complex_symbol =            defun("complex?",		is_complex,		1, 0, false);
   sc->is_rational_symbol =           defun("rational?",	        is_rational,		1, 0, false);
-  sc->is_random_state_symbol =       defun("random-state?",	is_random_state,	1, 0, false);
-  sc->is_char_symbol =               defun("char?",		is_char,		1, 0, false);
-  sc->is_string_symbol =             defun("string?",		is_string,		1, 0, false);
+  sc->is_random_state_symbol =       defun("random-state?",	is_random_state,	1, 0, false); symbol_type(sc->is_random_state_symbol) = T_RANDOM_STATE;
+  sc->is_char_symbol =               defun("char?",		is_char,		1, 0, false); symbol_type(sc->is_char_symbol) = T_CHARACTER;
+  sc->is_string_symbol =             defun("string?",		is_string,		1, 0, false); symbol_type(sc->is_string_symbol) = T_STRING;
   sc->is_list_symbol =               defun("list?",		is_list,		1, 0, false);
-  sc->is_pair_symbol =               defun("pair?",		is_pair,		1, 0, false);
-  sc->is_vector_symbol =             defun("vector?",		is_vector,		1, 0, false);
-  sc->is_float_vector_symbol =       defun("float-vector?",	is_float_vector,	1, 0, false);
-  sc->is_int_vector_symbol =         defun("int-vector?",	is_int_vector,		1, 0, false);
+  sc->is_pair_symbol =               defun("pair?",		is_pair,		1, 0, false); symbol_type(sc->is_pair_symbol) = T_PAIR;
+  sc->is_vector_symbol =             defun("vector?",		is_vector,		1, 0, false); 
+  sc->is_float_vector_symbol =       defun("float-vector?",	is_float_vector,	1, 0, false); symbol_type(sc->is_float_vector_symbol) = T_FLOAT_VECTOR;
+  sc->is_int_vector_symbol =         defun("int-vector?",	is_int_vector,		1, 0, false); symbol_type(sc->is_int_vector_symbol) = T_INT_VECTOR;
   sc->is_byte_vector_symbol =        defun("byte-vector?",	is_byte_vector,		1, 0, false);
-  sc->is_hash_table_symbol =         defun("hash-table?",	is_hash_table,		1, 0, false);
-  sc->is_continuation_symbol =       defun("continuation?",	is_continuation,	1, 0, false);
+  sc->is_hash_table_symbol =         defun("hash-table?",	is_hash_table,		1, 0, false); symbol_type(sc->is_hash_table_symbol) = T_HASH_TABLE;
+  sc->is_continuation_symbol =       defun("continuation?",	is_continuation,	1, 0, false); symbol_type(sc->is_continuation_symbol) = T_CONTINUATION;
   sc->is_procedure_symbol =          defun("procedure?",	is_procedure,		1, 0, false);
   sc->is_dilambda_symbol =           defun("dilambda?",	        is_dilambda,		1, 0, false);
-  /* set above */                    defun("boolean?",		is_boolean,		1, 0, false);
+  /* set above */                    defun("boolean?",		is_boolean,		1, 0, false); symbol_type(sc->is_boolean_symbol) = T_BOOLEAN;
   sc->is_float_symbol =              defun("float?",            is_float,               1, 0, false);
   sc->is_proper_list_symbol =        defun("proper-list?",      is_proper_list,         1, 0, false);
   sc->is_sequence_symbol =           defun("sequence?",	        is_sequence,		1, 0, false);
-  sc->is_null_symbol =               defun("null?",		is_null,		1, 0, false);
+  sc->is_null_symbol =               defun("null?",		is_null,		1, 0, false); symbol_type(sc->is_null_symbol) = T_NIL;
 
   /* these are for signatures */
   sc->is_unspecified_symbol = s7_make_symbol(sc, "unspecified?");
@@ -83079,7 +83090,7 @@ s7_scheme *s7_init(void)
 #endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
-  /* 64 bit machine: size: 48 or 56(heap-size) [size 72 if gmp, 120 if debugging], op: 426, opt: 442 */
+  /* 64 bit machine: size: 56 [size 80 if gmp, 136 if debugging], op: 425, opt: 442 */
 
   if (sizeof(void *) > sizeof(s7_int))
     fprintf(stderr, "s7_int is too small: it has %d bytes, but void* has %d\n", (int)sizeof(s7_int), (int)sizeof(void *));
@@ -83214,29 +83225,34 @@ int main(int argc, char **argv)
  * ideally cload would handle struct ptr* correctly
  * perhaps add c-pointer-type|info?
  * libc needs many type checks
- * lint: memv+memq for (or(and..)(and...))
- * revise 60388 and 65181
+ * is_type replacing is_symbol etc [all_x_is_*_s if_is_* safe_is_*]
+ *   is_type_car|cdr|a in all 3 cases
+ *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
+ *   there are 8 bits free
+ *   is_pair_cdr|car|cadr are caught by if_is_c -- perhaps put opsq first?
+ * symbol-access for *s7* or any let
+ * collect_shared direct (not recursive)
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
  * tmac          |      |      |      || 9052 |  615   259   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1055
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1058
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1824
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1822
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1956
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2211
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2969
- * lg            |      |      |      || 211  | 161   149   143.9 142.0
- * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3083
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2971
+ * lg            |      |      |      || 211  | 161   149   143.9 141.7
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3069
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3251
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3381
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3966
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4012
- * titer         |      |      |      || 5971 | 5224  4768  4707  4640
+ * titer         |      |      |      || 5971 | 5224  4768  4707  4555
  * bench         |      |      |      || 7012 | 6378  6327  5934  5934
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7538
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7531
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.6
