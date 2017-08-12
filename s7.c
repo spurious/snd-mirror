@@ -723,7 +723,7 @@ typedef struct s7_cell {
       hash_entry_t **elements;
       hash_check_t hash_func;
       hash_map_t *loc;
-      s7_pointer dproc;
+      s7_pointer dproc;             /* user-supplied list of hashing functions */
     } hasher;
 
     struct {                        /* iterators */
@@ -25760,6 +25760,24 @@ static bool collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top, 
   return(cyclic);
 }
 
+static bool check_collected(s7_pointer top, shared_info *ci)
+{
+  s7_pointer *p, *objs_end;
+  int32_t i;
+  objs_end = (s7_pointer *)(ci->objs + ci->top);
+  for (p = ci->objs; p < objs_end; p++)
+    if ((*p) == top)
+      {
+	i = (int32_t)(p - ci->objs);
+	if (ci->refs[i] == 0)
+	  {
+	    ci->has_hits = true;
+	    ci->refs[i] = ++ci->ref;  /* if found, set the ref number */
+	  }
+	break;
+      }
+  return(true);
+}
 
 static bool collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length)
 {
@@ -25769,27 +25787,12 @@ static bool collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, 
    *   encounter an object with that bit on, we've seen it before so we have a possible cycle.
    *   Once the collection pass is done, we run through our list, and clear all these bits.
    */
-  bool top_cyclic = false;
+  bool top_cyclic;
   if (is_collected_or_shared(top))
     {
-      s7_pointer *p, *objs_end;
-      int32_t i;
       if (is_shared(top))
 	return(false);
-
-      objs_end = (s7_pointer *)(ci->objs + ci->top);
-      for (p = ci->objs; p < objs_end; p++)
-	if ((*p) == top)
-	  {
-	    i = (int32_t)(p - ci->objs);
-	    if (ci->refs[i] == 0)
-	      {
-		ci->has_hits = true;
-		ci->refs[i] = ++ci->ref;  /* if found, set the ref number */
-	      }
-	    break;
-	  }
-      return(true);
+      return(check_collected(top, ci));
     }
 
   /* top not seen before -- add it to the list */
@@ -25799,16 +25802,53 @@ static bool collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, 
     enlarge_shared_info(ci);
   ci->objs[ci->top++] = top;
   
+  top_cyclic = false;
   /* now search the rest of this structure */
   switch (type(top))
     {
     case T_PAIR:
+#if 0
+      /* old form: simple understandable slow */
       if ((has_structure(car(top))) &&
 	  (collect_shared_info(sc, ci, car(top), stop_at_print_length)))
 	top_cyclic = true;
       if ((has_structure(cdr(top))) &&
 	  (collect_shared_info(sc, ci, cdr(top), stop_at_print_length)))
 	top_cyclic = true;
+#endif
+      {
+	s7_pointer p, cp;
+	if ((has_structure(car(top))) &&
+	    (collect_shared_info(sc, ci, car(top), stop_at_print_length)))
+	  top_cyclic = true;
+	for (p = cdr(top); is_pair(p); p = cdr(p))
+	  {
+	    if (is_collected_or_shared(p))
+	      {
+		if (is_shared(p))
+		  {
+		    if (!top_cyclic)
+		      for (cp = top; cp != p; cp = cdr(cp)) set_shared(cp);
+		    return(top_cyclic);
+		  }
+		return(check_collected(p, ci));
+	      }
+	    set_collected(p);
+	    if (ci->top == ci->size)
+	      enlarge_shared_info(ci);
+	    ci->objs[ci->top++] = p;
+	    if ((has_structure(car(p))) &&
+		(collect_shared_info(sc, ci, car(p), stop_at_print_length)))
+	      top_cyclic = true;
+	  }
+	if ((has_structure(p)) &&
+	    (collect_shared_info(sc, ci, p, stop_at_print_length)))
+	  return(true);
+
+	if (!top_cyclic)
+	  for (cp = top; is_pair(cp); cp = cdr(cp)) set_shared(cp);
+	return(top_cyclic);
+      }
       break;
       
     case T_VECTOR:
@@ -25875,26 +25915,24 @@ static bool collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, 
   return(top_cyclic);
 }
 
+static shared_info *init_circle_info(void)
+{
+  shared_info *ci;
+  ci = (shared_info *)calloc(1, sizeof(shared_info));
+  ci->size = INITIAL_SHARED_INFO_SIZE;
+  ci->objs = (s7_pointer *)malloc(ci->size * sizeof(s7_pointer));
+  ci->refs = (int32_t *)calloc(ci->size, sizeof(int32_t));   /* finder expects 0 = unseen previously */
+  return(ci);
+}
 
 static shared_info *new_shared_info(s7_scheme *sc)
 {
   shared_info *ci;
-  if (!sc->circle_info)
-    {
-      ci = (shared_info *)calloc(1, sizeof(shared_info));
-      ci->size = INITIAL_SHARED_INFO_SIZE;
-      ci->objs = (s7_pointer *)malloc(ci->size * sizeof(s7_pointer));
-      ci->refs = (int32_t *)calloc(ci->size, sizeof(int32_t));   /* finder expects 0 = unseen previously */
-      sc->circle_info = ci;
-    }
-  else
-    {
-      int32_t i;
-      ci = sc->circle_info;
-      memclr((void *)(ci->refs), ci->top * sizeof(int32_t));
-      for (i = 0; i < ci->top; i++)
-	clear_collected_and_shared(ci->objs[i]);
-    }
+  int32_t i;
+  ci = sc->circle_info;
+  memclr((void *)(ci->refs), ci->top * sizeof(int32_t));
+  for (i = 0; i < ci->top; i++)
+    clear_collected_and_shared(ci->objs[i]);
   ci->top = 0;
   ci->ref = 0;
   ci->has_hits = false;
@@ -32548,7 +32586,17 @@ static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 /* if memq's list is a quoted list, it won't be changing, so we can tell ahead of time that it is
  *   a proper list, and what its length is.
  */
-static s7_pointer memq_3, memq_4, memq_any;
+static s7_pointer memq_2, memq_3, memq_4, memq_any;
+
+static s7_pointer g_memq_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, obj;
+  x = cadr(args);
+  obj = car(args);
+  if (obj == car(x)) return(x);
+  if (obj == cadr(x)) return(cdr(x));
+  return(sc->F);
+}
 
 static s7_pointer g_memq_3(s7_scheme *sc, s7_pointer args)
 {
@@ -32616,22 +32664,15 @@ static s7_pointer g_memq_any(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer memq_car;
+static s7_pointer memq_car, memq_car_2;
 static s7_pointer g_memq_car(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, obj;
 
   obj = find_symbol_unchecked(sc, cadar(args));
-  if (!is_pair(obj))
-    {
-      s7_pointer func;
-      if ((has_methods(obj)) &&
-	  ((func = find_method(sc, find_let(sc, obj), sc->car_symbol)) != sc->undefined))
-	obj = s7_apply_function(sc, func, list_1(sc, obj));
-      if (!is_pair(obj))
-	return(simple_wrong_type_argument(sc, sc->car_symbol, obj, T_PAIR));
-    }
-  obj = car(obj);
+  if (is_pair(obj))
+    obj = car(obj);
+  else obj = g_car(sc, set_plist_1(sc, obj));
   x = cadadr(args);
 
   while (true)
@@ -32647,23 +32688,41 @@ static s7_pointer g_memq_car(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
+static s7_pointer g_memq_car_2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, obj;
+
+  obj = find_symbol_unchecked(sc, cadar(args));
+  if (is_pair(obj))
+    obj = car(obj);
+  else obj = g_car(sc, set_plist_1(sc, obj));
+  x = cadadr(args);
+  if (obj == car(x)) return(x);
+  if (obj == cadr(x)) return(cdr(x));
+  return(sc->F);
+}
+
 static s7_pointer memq_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_pointer expr, bool ops)
 {
   if ((is_proper_quote(sc, caddr(expr))) &&
       (is_pair(cadr(caddr(expr)))))
     {
       int32_t len;
+      len = s7_list_length(sc, cadr(caddr(expr)));
 
       if ((ops) && (is_h_safe_c_s(cadr(expr))) &&
 	  (c_callee(cadr(expr)) == g_car))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
+	  if (len == 2)
+	    return(memq_car_2);
 	  return(memq_car);
 	}
 
-      len = s7_list_length(sc, cadr(caddr(expr)));
       if (len > 0)
 	{
+	  if (len == 2)
+	    return(memq_2);
 	  if ((len % 4) == 0)
 	    return(memq_4);
 	  if ((len % 3) == 0)
@@ -33132,12 +33191,21 @@ static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
   return(sc->error_symbol);
 }
 
-
 static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_list "(list ...) returns its arguments in a list"
   #define Q_list s7_make_circular_signature(sc, 1, 2, sc->is_proper_list_symbol, sc->T)
-  return(copy_list(sc, args));
+  
+  if (is_pair(args))
+    {
+      if (is_null(cdr(args)))
+	return(cons(sc, car(args), sc->nil));
+      if (is_null(cddr(args)))
+	return(list_2(sc, car(args), cadr(args)));
+
+      return(copy_list(sc, args));
+    }
+  return(sc->nil);
 }
 
 static void check_list_validity(s7_scheme *sc, const char *caller, s7_pointer lst)
@@ -37174,8 +37242,7 @@ void init_hash_maps(void)
 static uint32_t resize_hash_table(s7_scheme *sc, s7_pointer table)
 {
   /* resize the table */
-  uint32_t hash_len, loc;
-  int32_t i, old_size, new_size;
+  uint32_t hash_len, loc, i, old_size, new_size;
   hash_entry_t **new_els, **old_els;
   
   old_size = hash_table_mask(table) + 1;
@@ -38074,7 +38141,7 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 
   check_method(sc, p, sc->procedure_documentation_symbol, list_1(sc, p));
   if ((!is_procedure(p)) &&
-      (!s7_is_macro(sc, p)))
+      (!is_any_macro(p)))
     return(simple_wrong_type_argument_with_type(sc, sc->procedure_documentation_symbol, p, a_procedure_string));
 
   return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
@@ -38142,14 +38209,18 @@ static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
   if (is_symbol(p)) 
     {
       p = s7_symbol_value(sc, p);
+      if (is_procedure(p))
+	return(s7_procedure_signature(sc, p));
       if (p == sc->undefined)
 	return(sc->F);
     }
+  else
+    {
+      if (is_procedure(p))
+	return(s7_procedure_signature(sc, p));
+    }
   check_method(sc, p, sc->procedure_signature_symbol, list_1(sc, p));
-  
-  if (!is_procedure(p))
-    return(sc->F);
-  return(s7_procedure_signature(sc, p));
+  return(sc->F);
 }
 
 /* -------------------------------- new types (c_objects) -------------------------------- */
@@ -57901,10 +57972,12 @@ static void init_choosers(s7_scheme *sc)
   /* memq */
   f = set_function_chooser(sc, sc->memq_symbol, memq_chooser);
   /* is pure-s7, use member here */
+  memq_2 = make_function_with_class(sc, f, "memq", g_memq_2, 2, 0, false, "memq opt");
   memq_3 = make_function_with_class(sc, f, "memq", g_memq_3, 2, 0, false, "memq opt");
   memq_4 = make_function_with_class(sc, f, "memq", g_memq_4, 2, 0, false, "memq opt");
   memq_any = make_function_with_class(sc, f, "memq", g_memq_any, 2, 0, false, "memq opt");
   memq_car = make_function_with_class(sc, f, "memq", g_memq_car, 2, 0, false, "memq opt");
+  memq_car_2 = make_function_with_class(sc, f, "memq", g_memq_car_2, 2, 0, false, "memq opt");
 
   /* read-line */
   read_line_uncopied = s7_make_function(sc, "read-line", g_read_line_uncopied, 1, 1, false, "read-line opt");
@@ -81130,7 +81203,7 @@ s7_scheme *s7_init(void)
 #if (!MS_WINDOWS)
   setlocale(LC_NUMERIC, "C"); /* use decimal point in floats */
 #endif
-
+  
   if (!already_inited)
     {
       init_types();
@@ -81415,7 +81488,7 @@ s7_scheme *s7_init(void)
   sc->baffle_ctr = 0;
   sc->syms_tag = 0;
   sc->class_name_symbol = make_symbol(sc, "class-name");
-  sc->circle_info = NULL;
+  sc->circle_info = init_circle_info();
   sc->fdats = (format_data **)calloc(8, sizeof(format_data *));
   sc->num_fdats = 8;
   sc->plist_1 = permanent_list(sc, 1);
@@ -83231,7 +83304,11 @@ int main(int argc, char **argv)
  *   there are 8 bits free
  *   is_pair_cdr|car|cadr are caught by if_is_c -- perhaps put opsq first?
  * symbol-access for *s7* or any let
- * collect_shared direct (not recursive)
+ *
+ * currently: (define h (make-hash-table 31 string=?)) (hash-table-set! h 'a 21)  (hash-table-ref 'a): #f
+ *   this should probably be an error?? (srfi sez yes)
+ *   string/char/number(=) are the only cases? is NaN an error if = or eqv?
+ *   see old/hash-error-s7.c -- works but is too slow
  *
  * --------------------------------------------------------------------
  *
@@ -83240,11 +83317,11 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1058
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1822
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1956
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2211
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2971
- * lg            |      |      |      || 211  | 161   149   143.9 141.7
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2944
+ * lg            |      |      |      || 211  | 161   149   143.9 141.1
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3069
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3251
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3381

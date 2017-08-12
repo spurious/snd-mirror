@@ -6084,6 +6084,12 @@ Better ideas are always welcome!
 </ul>
 
 <p>__func__ is the name (or name and location) of the function currently being called, as in C.
+<code>(symbol_value __func__)</code> is the current function, so this innocuous looking code:
+</p>
+<pre>
+(define (func p) (call-with-output-string (symbol->value __func__)))
+</pre>
+<p>can produce an infinite recursion!
 </p>
 
 <p>Currently WITH_PURE_S7:
