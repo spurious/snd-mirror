@@ -475,21 +475,19 @@
 		      (let-set! (cdr v) 'signature x))))) ; perhaps fallback on varlet here and in var-ftype above?
     
     (denote (make-lint-var name initial-value definer)
-      (let* ((old (hash-table-ref other-identifiers name))
-	     (history (if old 
-			  (begin
-			    (hash-table-set! other-identifiers name #f)
-			    (if initial-value (cons initial-value old) old))
-			  (if initial-value (list initial-value) ()))))
+      (let ((old (or (hash-table-ref other-identifiers name) ())))
+	(if (pair? old) (hash-table-set! other-identifiers name #f))
 	(cons name (inlet 'scope ()
 			  'env ()
 			  'refenv ()
 			  'setters ()
 			  'initial-value initial-value 
 			  'definer definer 
-			  'history history
+			  'history (if initial-value 
+				       (cons initial-value old)
+				       old)
 			  'set 0 
-			  'ref (if old (length old) 0)))))
+			  'ref (length old)))))
     
     
     ;; -------- the usual list functions --------

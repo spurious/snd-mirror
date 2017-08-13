@@ -4856,8 +4856,8 @@ static int32_t gc(s7_scheme *sc)
       if (sc->fdats[i])
 	S7_MARK(sc->fdats[i]->curly_arg);
   }
-  S7_MARK(sc->protected_objects);
-  S7_MARK(sc->protected_accessors);
+  mark_vector(sc->protected_objects);
+  mark_vector(sc->protected_accessors);
 
   /* now protect recent allocations using the free_heap cells above the current free_heap_top (if any).
    *
@@ -25723,7 +25723,6 @@ static void enlarge_shared_info(shared_info *ci)
     }
 }
 
-
 static void add_shared_ref(shared_info *ci, s7_pointer x, int32_t ref_x)
 {
   /* called only in equality check, not printer */
@@ -25939,7 +25938,6 @@ static shared_info *new_shared_info(s7_scheme *sc)
   return(ci);
 }
 
-
 static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at_print_length)
 {
   /* for the printer */
@@ -26074,6 +26072,7 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
   ci->top = refs;
   return(ci);
 }
+
 
 /* -------------------------------- cyclic-sequences -------------------------------- */
 
@@ -30859,15 +30858,16 @@ static bool symbol_is_in_arg_list(s7_pointer sym, s7_pointer lst)
   return(sym == x);
 }
 
-
 static s7_int tree_len_1(s7_scheme *sc, s7_pointer p)
 {
   s7_int sum;
-  if ((!is_pair(p)) ||
-      (car(p) == sc->quote_symbol))
-    return(1);
   for (sum = 0; is_pair(p); p = cdr(p))
-    sum += tree_len_1(sc, car(p));
+    {
+      if ((!is_pair(car(p))) ||
+	  (caar(p) == sc->quote_symbol))
+	sum++;
+      else sum += tree_len_1(sc, car(p));
+    }
   if (!is_null(p)) sum++;
   return(sum);
 }
@@ -30876,6 +30876,9 @@ static s7_int tree_len(s7_scheme *sc, s7_pointer p)
 {
   if (is_null(p))
     return(0);
+  if ((!is_pair(p)) ||
+      (car(p) == sc->quote_symbol))
+    return(1);
   return(tree_len_1(sc, p));
 }
 
@@ -31225,7 +31228,6 @@ static int32_t safe_list_length(s7_scheme *sc, s7_pointer a)
   for (b = a; is_pair(b); i++, b = cdr(b)) {};
   return(i);
 }
-
 
 int s7_list_length(s7_scheme *sc, s7_pointer a)
 {
@@ -40241,14 +40243,17 @@ static s7_pointer pair_length(s7_scheme *sc, s7_pointer a)
 {
   int32_t i;
   s7_pointer slow, fast;
-
-  slow = fast = a;
-  for (i = 0; ; i += 2)
+  slow = a;
+  fast = cdr(a); /* we know a is a pair */
+  i = 1;
+  while (true)
     {
       if (!is_pair(fast)) return(make_integer(sc, (is_null(fast)) ? i : -i));
       fast = cdr(fast);
-      if (!is_pair(fast)) return(make_integer(sc, (is_null(fast)) ? (i + 1) : (-i - 1)));
+      i++;
+      if (!is_pair(fast)) return(make_integer(sc, (is_null(fast)) ? i : -i));
       fast = cdr(fast);
+      i++;
       slow = cdr(slow);
       if (fast == slow)	return(real_infinity);
     }
@@ -44352,10 +44357,7 @@ static s7_pointer set_c_function_star_args(s7_scheme *sc)
   return(call_args);
 }
 
-static void apply_c_function_star(s7_scheme *sc)
-{
-  sc->value = c_function_call(sc->code)(sc, set_c_function_star_args(sc));
-}
+#define apply_c_function_star(Sc) Sc->value = c_function_call(Sc->code)(Sc, set_c_function_star_args(Sc))
 
 s7_pointer s7_apply_function_star(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 {
@@ -54863,6 +54865,8 @@ static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
   f = car(args);
   body = closure_body(f);
 
+  /* fprintf(stderr, "args: %s, body: %s %s\n", DISPLAY(args), DISPLAY(body), DISPLAY(closure_let(f))); */
+
   if ((is_pair(seq)) &&
       (!pair_no_opt(body)) &&
       (is_optimized(car(body)))) /* for index.scm? */
@@ -54871,7 +54875,7 @@ static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
       s7_pointer slot, old_e, expr;
       
       old_e = sc->envir;
-      sc->envir = new_frame_in_env(sc, sc->envir);
+      sc->envir = new_frame_in_env(sc, closure_let(f)); 
       slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
       
       if (is_null(cdr(body)))
@@ -83302,8 +83306,6 @@ int main(int argc, char **argv)
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  *   there are 8 bits free
- *   is_pair_cdr|car|cadr are caught by if_is_c -- perhaps put opsq first?
- * symbol-access for *s7* or any let
  *
  * currently: (define h (make-hash-table 31 string=?)) (hash-table-set! h 'a 21)  (hash-table-ref 'a): #f
  *   this should probably be an error?? (srfi sez yes)
@@ -83318,22 +83320,22 @@ int main(int argc, char **argv)
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1822
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2211
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2206
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2944
- * lg            |      |      |      || 211  | 161   149   143.9 141.1
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2938
+ * lg            |      |      |      || 211  | 161   149   143.9 140.7
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3069
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3251
- * tmap          |      |      |  9.3 || 5279 |       3939  3387  3381
+ * tmap          |      |      |  9.3 || 5279 |       3939  3387  3380
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3966
- * tsort         |      |      |      || 8584 | 4869  4080  4010  4012
+ * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707  4555
- * bench         |      |      |      || 7012 | 6378  6327  5934  5934
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7531
+ * bench         |      |      |      || 7012 | 6378  6327  5934  5825
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7525
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.6
- *                                    || 145  | 135   132   93.2  93.2
+ *                                    || 145  | 135   132   93.2  93.0
  * 
  * --------------------------------------------------------------------
  */
