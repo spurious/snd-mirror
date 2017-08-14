@@ -315,7 +315,7 @@
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a) xen_rb_gv_get(a)
 #define XEN_EVAL_C_STRING(Arg)          xen_rb_eval_string_with_error(Arg)
 #define XEN_TO_STRING(Obj)              xen_rb_obj_as_string(Obj)
-#define XEN_LOAD_FILE(a)                xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
+#define XEN_LOAD_FILE(a)                rb_load(C_TO_XEN_STRING(a), 0)
 #define XEN_LOAD_PATH                   XEN_NAME_AS_C_STRING_TO_VALUE("$LOAD_PATH")
 #define XEN_ADD_TO_LOAD_PATH(Path)      xen_rb_add_to_load_path(Path)
 
@@ -452,7 +452,7 @@
 /* ---- keywords, etc ---- */
 #define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
 #define XEN_MAKE_KEYWORD(Arg)           xen_rb_make_keyword(Arg)
-#define XEN_PROVIDE(a)                  rb_provide(a)
+#define XEN_PROVIDE(a)                  rb_provide(xen_strdup(a))
 #define XEN_PROTECT_FROM_GC(Var)        rb_gc_register_address(&(Var))
 #define XEN_UNPROTECT_FROM_GC(Var)      rb_gc_unregister_address(&(Var))
 

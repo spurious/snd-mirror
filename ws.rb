@@ -1,6 +1,6 @@
 # ws.rb -- with_sound and friends for Snd/Ruby
 
-# Copyright (c) 2003-2015 Michael Scholz <mi-scholz@users.sourceforge.net>
+# Copyright (c) 2003-2017 Michael Scholz <mi-scholz@users.sourceforge.net>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 #
 # Created: 03/04/08 17:05:03
-# Changed: 15/03/04 16:38:12
+# Changed: 17/08/14 02:58:44
 
 # module WS
 #   ws_getlogin
@@ -440,7 +440,7 @@ end
 
 with_silence do
   # warning: undefined variable
-  $clm_version            = "ruby 2015/03/04"
+  $clm_version            = "ruby 2017/08/14"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -1658,7 +1658,7 @@ Example: clm_mix(\"tmp\")")
   def clm_mix(infile, *args)
     output, output_frame, frames, input_frame, scaler = nil
     optkey(args, binding,
-           [:output, false],
+           [:output, false],            # dummy arg
            [:output_frame, 0],
            [:frames, framples(infile)],
            [:input_frame, 0],
@@ -1668,14 +1668,16 @@ Example: clm_mix(\"tmp\")")
         Snd.raise(:no_such_file, infile, "file name required")
       end
     end
-    # to silence "warning: assigned but unused variable - output"
-    output = "not_used"
+    # INFO: output
+    # silence "warning: assigned but unused variable - output"
+    # It's a dummy used below as mix_vct's last arg.
+    output = false
     [channels(snd), @channels].min.times do |chn|
       if scaler and scaler.nonzero?
         scale_channel(scaler, input_frame, frames, snd, chn)
       end
       mix_vct(channel2vct(input_frame, frames, snd, chn),
-              output_frame, snd, chn, false)
+              output_frame, snd, chn, output)
     end
     snd.revert
     close_sound_extend(snd)

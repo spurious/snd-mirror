@@ -767,11 +767,10 @@ Xen eval_str_wrapper(void *data)
 
 static Xen eval_file_wrapper(void *data)
 {
-  Xen error;
   last_file_loaded = (char *)data;
-  error = Xen_load((char *)data); /* error only meaningful in Ruby */
+  Xen_load((char *)data);
   last_file_loaded = NULL;
-  return(error);
+  return(Xen_true);
 }
 
 

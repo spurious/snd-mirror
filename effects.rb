@@ -2,11 +2,11 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 03/02/07 23:56:21
-# Changed: 14/11/13 04:43:14
+# Changed: 17/08/14 03:06:26
 
 # Requires --with-motif|gtk
 #
-# Tested with Snd 15.x
+# Tested with Snd 17.x
 #             Ruby 2.x.x
 #             Motif 2.3.3 X11R6
 #
@@ -353,8 +353,6 @@ module Effects
     comb4 = make_comb(0.697, 5801)
     outdel1 = make_delay((0.013 * srate()).round)
     comb_sum = 0.0
-    comb_sum_1 = 0.0
-    comb_sum_2 = 0.0
     samp = 0
     lambda do |inval|
       allpass_sum = all_pass(allpass3,
@@ -364,8 +362,6 @@ module Effects
                                                  inval :
                                                  0.0))))
       samp += 1
-      comb_sum_2 = comb_sum_1
-      comb_sum_1 = comb_sum
       comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) + \
                   comb(comb3, allpass_sum) + comb(comb4, allpass_sum))
       inval + volume * delay(outdel1, comb_sum)
