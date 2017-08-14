@@ -38695,8 +38695,13 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     case T_CONTINUATION:
       return(sc->F);
 
+    case T_C_OBJECT: 
+      /* this can satisfy procedure? if T_SAFE_PROCEDURE bit is set -- has apply method, see s7_c_type_set_apply */
+      check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
+      return(make_boolean(sc, (c_object_set(sc, p) != fallback_set)));
+      /* unfortunately ref/set are not s7_functions (they have an extra object arg), so we can't return c_object_set */
+
     case T_LET:
-    case T_C_OBJECT:
       check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
       break;
 
@@ -43116,6 +43121,17 @@ static bool catch_all_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_poi
   sc->stack_end = (s7_pointer *)(sc->stack_start + catch_all_goto_loc(catcher));
   pop_stack(sc);
   sc->value = catch_all_result(catcher);
+  if (is_pair(sc->value))
+    {
+      if (car(sc->value) == sc->quote_symbol)
+	sc->value = cadr(sc->value);
+      else sc->value = type;
+    }
+  else
+    {
+      if (is_symbol(sc->value))
+	sc->value = type;
+    }
   return(true);
 }
 
@@ -43160,7 +43176,7 @@ static bool catch_1_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_point
     {
       uint32_t loc;
       opcode_t op;
-      s7_pointer catcher, error_func, body;
+      s7_pointer catcher, error_func, error_body, error_args;
 
       op = stack_op(sc->stack, i);
       sc->temp4 = stack_let(sc->stack, i); /* GC protect this, since we're moving the stack top below */
@@ -43182,39 +43198,53 @@ static bool catch_1_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_point
 
       /* if OP_CATCH_1, we deferred making the error handler until it is actually needed */
       if (op == OP_CATCH_1)
-	body = cdr(error_func);
+	{
+	  error_body = cdr(error_func);
+	  error_args = car(error_func);
+	}
       else
 	{
 	  if (is_closure(error_func))
-	    body = closure_body(error_func);
-	  else body = NULL;
+	    {
+	      error_body = closure_body(error_func);
+	      error_args = closure_args(error_func);
+	    }
+	  else 
+	    {
+	      error_body = NULL;
+	      error_args = NULL;
+	    }
 	}
 
-      if ((body) && (is_null(cdr(body))))
+      if ((error_body) && (is_null(cdr(error_body))))
 	{
 	  s7_pointer y = NULL;
-	  body = car(body);
-	  if (is_pair(body))
+	  error_body = car(error_body);
+	  if (is_pair(error_body))
 	    {
-	      if (car(body) == sc->quote_symbol)
-		y = cadr(body);
+	      if (car(error_body) == sc->quote_symbol)
+		y = cadr(error_body);
 	      else
 		{
-		  if ((car(body) == sc->car_symbol) &&
-		      (is_pair(error_func)) &&
-		      (cadr(body) == car(error_func)))
+		  if ((car(error_body) == sc->car_symbol) &&
+		      (cadr(error_body) == error_args))
 		    y = type;
 		}
 	    }
 	  else
 	    {
-	      if (is_symbol(body))
+	      if (is_symbol(error_body))
 		{
-		  if ((is_pair(error_func)) &&
-		      (body == car(error_func)))
+		  if (error_body == error_args)
 		    y = list_2(sc, type, info);
+		  else
+		    {
+		      if ((is_pair(error_args)) &&
+			  (error_body == car(error_args)))
+			y = type;
+		    }
 		}
-	      else y = body;
+	      else y = error_body; /* not pair or symbol */
 	    }
 	  if (y)
 	    {
@@ -43247,8 +43277,6 @@ static bool catch_1_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_point
       if (op == OP_CATCH_1)
 	{
 	  s7_pointer x;
-	  if (is_safe_closure(cdr(error_func))) fprintf(stderr, "safe %s\n", DISPLAY(error_func));
-
 	  new_cell(sc, x, T_CLOSURE | T_COPY_ARGS); /* never a safe_closure, apparently */
 	  closure_set_args(x, car(error_func));
 	  closure_set_body(x, cdr(error_func));
@@ -43272,7 +43300,7 @@ static bool catch_1_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_point
 	  s7_wrong_number_of_args_error(sc, "catch error handler should accept 2 args: ~S", sc->code);
 	  return(false);
 	}
-
+      
       sc->args = list_2(sc, type, info); /* almost never able to skip this -- costs more to check! */
       sc->op = OP_APPLY;
 
@@ -59844,8 +59872,11 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 		      (is_lambda(sc, car(error_lambda))) &&
 		      (is_null(cadr(body_lambda))) &&
 		      (is_not_null(cddr(body_lambda))) &&
-		      (is_symbol(cadr(error_lambda))) &&
-		      (!is_immutable_symbol(cadr(error_lambda))) &&
+		      (((is_symbol(cadr(error_lambda))) &&              /* (lambda args ... */
+			(!is_immutable_symbol(cadr(error_lambda)))) ||
+		       ((is_pair(cadr(error_lambda))) &&                /* (lambda (type info) ... */
+			(is_pair(cdadr(error_lambda))) && 
+			(is_null(cddadr(error_lambda))))) &&
 		      (is_not_null(cddr(error_lambda))))
 		    {
 		      s7_pointer error_result;
@@ -59853,14 +59884,17 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 		      set_unsafely_optimized(expr);
 		      if ((arg1 == sc->T) &&
 			  (is_null(cdddr(error_lambda))) &&
-			  (!is_symbol(error_result)) &&
-			  ((!is_pair(error_result)) || (car(error_result) == sc->quote_symbol)))
+			  ((!is_symbol(error_result)) ||                  /* (lambda args #f) */
+			   ((is_pair(cadr(error_lambda))) &&
+			    (error_result == caadr(error_lambda)))) &&    /* (lambda (type info) type) */
+			  ((!is_pair(error_result)) ||                    
+			   (car(error_result) == sc->quote_symbol) ||     /* (lambda args 'a) */
+			   ((car(error_result) == sc->car_symbol) &&
+			    (cadr(error_result) == cadr(error_lambda))))) /* (lambda args (car args) -> error-type */
 			{
 			  set_optimize_op(expr, hop + OP_C_CATCH_ALL);
 			  set_c_function(expr, func);
-			  if (is_pair(error_result))
-			    set_opt_con2(expr, cadr(error_result));
-			  else set_opt_con2(expr, error_result);
+			  set_opt_con2(expr, error_result);
 			  set_opt_pair1(cdr(expr), cddr(body_lambda));
 			  if ((is_null(cdddr(body_lambda))) &&
 			      (is_optimized(caddr(body_lambda))))
@@ -68050,13 +68084,24 @@ static void profile(s7_scheme *sc, s7_pointer expr)
       if (val == sc->F)
 	{
 	  bool old_short_print;
+	  s7_pointer env;
+	  int32_t tx1, tx2;
+
 	  old_short_print = sc->short_print;
 	  sc->short_print = true;
 
-	  s7_hash_table_set(sc, sc->profile_info, key, 
-			    cons(sc, 
-				 make_mutable_integer(sc, 1), 
-				 g_object_to_string(sc, set_plist_3(sc, expr, sc->T, small_int(120)))));
+	  env = find_closure_let(sc, sc->envir);
+
+	  tx1 = next_tx(sc);
+	  tx2 = next_tx(sc);
+	  sc->t_temps[tx1] = g_object_to_string(sc, set_plist_3(sc, expr, sc->T, small_int(120)));
+	  sc->t_temps[tx2] = (is_let(env)) ? g_object_to_string(sc, set_plist_1(sc, funclet_function(env))) : sc->nil;
+
+	  s7_hash_table_set(sc, sc->profile_info, key,
+			    cons(sc, make_mutable_integer(sc, 1), 
+				 cons(sc, sc->t_temps[tx1], sc->t_temps[tx2])));
+	  sc->t_temps[tx1] = sc->nil;
+	  sc->t_temps[tx2] = sc->nil;
 	  sc->short_print = old_short_print;
 	}
       /* can't save the actual expr here -- it can be stepped on */
@@ -83234,7 +83279,7 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------
  *
- * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
+ * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive, /usr/ccrma/web/html/software/snd/index.html
  *
  * s7:
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
@@ -83306,6 +83351,7 @@ int main(int argc, char **argv)
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  *   there are 8 bits free
+ * add snd lint snd-test.scm to testsnd (for snd-lint etc)
  *
  * currently: (define h (make-hash-table 31 string=?)) (hash-table-set! h 'a 21)  (hash-table-ref 'a): #f
  *   this should probably be an error?? (srfi sez yes)
@@ -83318,24 +83364,24 @@ int main(int argc, char **argv)
  * tmac          |      |      |      || 9052 |  615   259   261   261
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1058
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1822
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1830
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1924
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2206
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2938
- * lg            |      |      |      || 211  | 161   149   143.9 140.7
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2929
+ * lg            |      |      |      || 211  | 161   149   143.9 140.2
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3069
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3251
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3380
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3966
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707  4555
- * bench         |      |      |      || 7012 | 6378  6327  5934  5825
+ * bench         |      |      |      || 7012 | 6378  6327  5934  5486
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7525
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.6
- *                                    || 145  | 135   132   93.2  93.0
+ *                                    || 145  | 135   132   93.2  91.3
  * 
  * --------------------------------------------------------------------
  */

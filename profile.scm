@@ -19,14 +19,19 @@
 	      ((= i n) 
 	       (newline *stderr*))
 	    (let ((data (vect i)))
-	      (let ((expr (cddr data))
+	      (let ((expr (caddr data))
 		    (count (cadr data))
-		    (key (car data)))
+		    (key (car data))
+		    (func (cdddr data)))
 		(let ((file (profile-filename key))
 		      (line (profile-line-number key)))
 		  (if (> line 0)
-		      (format *stderr* "~A[~A]: ~A ~30T~A~%" 
-			      file line count
+		      (format *stderr* "~A:~8T~A ~24T~A[~A]: ~48T~A~%" 
+			      count 
+			      (if (string? func)
+				  (format #f " ~A" func)
+				  "")
+			      file line
 			      (if (> (length expr) 60)
 				  (string-append (substring expr 0 56) " ...")
 				  expr)))))))))))

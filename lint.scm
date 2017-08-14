@@ -2205,15 +2205,10 @@
 		(if (pair? (cdr lst)) 
 		    (proper-list (cdr lst)) 
 		    (case (cdr lst) ((())) (else => list))))))
-    
-    (define (keywords lst)
-      (let loop ((args lst) (count 0))
-	(if (null? args)
-	    count
-	    (loop (cdr args) 
-		  (if (keyword? (car args))
-		      (+ count 1)
-		      count)))))
+    (define (keywords lst count)
+      (if (pair? lst)
+	  (keywords (cdr lst) (if (keyword? (car lst)) (+ count 1) count))
+	  count))
 
     (define (eqv-selector clause)
       (if (not (pair? clause))
@@ -10673,7 +10668,7 @@
 						   caller head 
 						   req (if (> req 1) "s" "") 
 						   (truncated-list->string form))))
-				(if (> (- call-args (keywords (cdr form))) opt) ; multiple-values can make this worse, (values)=nothing doesn't apply here
+				(if (> (- call-args (keywords (cdr form) 0)) opt) ; multiple-values can make this worse, (values)=nothing doesn't apply here
 				    (lint-format "~A has too many arguments: ~A" caller head (truncated-list->string form)))))
 
 			  (unless (let-ref fdata 'allow-other-keys)
@@ -10789,7 +10784,7 @@
 					   (if (> min-arity 1) "s" "") 
 					   (truncated-list->string form))
 			      (if (and (not (procedure-setter head-value))
-				       (> (- args (keywords (cdr form))) max-arity))
+				       (> (- args (keywords (cdr form) 0)) max-arity))
 				  (lint-format "~A has too many arguments: ~A" caller head (truncated-list->string form))))
 			  
 			  (when (and (procedure? head-value)

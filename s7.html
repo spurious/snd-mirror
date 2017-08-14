@@ -6087,7 +6087,7 @@ Better ideas are always welcome!
 <code>(symbol_value __func__)</code> is the current function, so this innocuous looking code:
 </p>
 <pre>
-(define (func p) (call-with-output-string (symbol->value __func__)))
+(define (func p) (call-with-output-string (symbol-&gt;value __func__)))
 </pre>
 <p>can produce an infinite recursion!
 </p>
