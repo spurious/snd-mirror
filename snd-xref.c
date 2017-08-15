@@ -1744,7 +1744,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11596] = {
+static const char *snd_names[11598] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4103,6 +4103,7 @@ static const char *snd_names[11596] = {
     "fegetexceptflag", "libc.scm",
     "fegetround", "libc.scm",
     "feholdexcept", "libc.scm",
+    "fenv_t.make", "libc.scm",
     "feof", "libc.scm",
     "feraiseexcept", "libc.scm",
     "ferror", "libc.scm",
@@ -7547,7 +7548,7 @@ static const char *snd_names[11596] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5798);
+  s7_autoload_set_names(sc, snd_names, 5799);
 }
 #endif
 

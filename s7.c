@@ -45988,6 +45988,22 @@ static s7_pointer all_x_closure_s(s7_scheme *sc, s7_pointer code)
   return(result);
 }
 
+static s7_pointer all_x_and_2_closure_s(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer result, old_e;
+
+  old_e = sc->envir;
+  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
+
+  code = cdar(closure_body(opt_lambda(code)));
+  result = c_call(code)(sc, car(code));
+  if (result != sc->F)
+    result = c_call(cdr(code))(sc, cadr(code));
+
+  sc->envir = old_e;
+  return(result);
+}
+
 static s7_pointer all_x_closure_a(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer result, old_e;
@@ -46246,6 +46262,11 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	      if (!is_pair(caddr(arg)))
 		return(all_x_c_ac);
 	      return(NULL);
+	      
+	    case HOP_SAFE_CLOSURE_S_C:
+	      if (c_call(car(closure_body(opt_lambda(arg)))) == g_and_2)
+		return(all_x_and_2_closure_s);
+	      return(all_x_closure_s);
 
 	    default:
 	      /* if (!all_x_function[optimize_op(arg)]) fprintf(stderr, "all_x_eval %s %s\n", DISPLAY(arg), (is_optimized(arg)) ? opt_names[optimize_op(arg)] : "unopt"); */
@@ -83352,6 +83373,7 @@ int main(int argc, char **argv)
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  *   there are 8 bits free
  * add snd lint snd-test.scm to testsnd (for snd-lint etc)
+ * if_and_3|n if_or_3|pair_cdr similar for all_x_closure (and_3...)
  *
  * currently: (define h (make-hash-table 31 string=?)) (hash-table-set! h 'a 21)  (hash-table-ref 'a): #f
  *   this should probably be an error?? (srfi sez yes)
@@ -83364,14 +83386,14 @@ int main(int argc, char **argv)
  * tmac          |      |      |      || 9052 |  615   259   261   261
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1058
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1830
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1516
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1924
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2206
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2195
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2929
- * lg            |      |      |      || 211  | 161   149   143.9 140.2
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2926
+ * lg            |      |      |      || 211  | 161   149   143.9 140.1
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3069
- * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3251
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3305
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3380
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3966
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
@@ -83381,7 +83403,7 @@ int main(int argc, char **argv)
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.6
- *                                    || 145  | 135   132   93.2  91.3
+ *                                    || 145  | 135   132   93.2  89.5
  * 
  * --------------------------------------------------------------------
  */

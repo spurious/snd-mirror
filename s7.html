@@ -6606,6 +6606,17 @@ These symbols are not just an optimization of string comparison:
 <em class="gray">1</em>
 </pre>
 
+<p>Now we notice that <code>(case 0.0 ((0.0) 1) (else 0))</code> is 1, but
+how to get pi into a key list?
+</p>
+<pre class="indented">
+&gt; (apply case 'pi `(((,pi) 1) (else 0)))
+<em class="gray">1</em>
+&gt; (let ((lst '(1 2))) (apply case 'lst `(((,lst) 1) (else 0))))
+<em class="gray">1</em>         ; same trick puts a list in the keys
+&gt; (apply case 'nan.0 `(((,nan.0) 1) (else 0)))
+<em class="gray">0</em>         ; (eqv? nan.0 nan.0) is #f
+</pre>
 
 <p><code>(apply define ...)</code> is similar to CL's set.
 </p>

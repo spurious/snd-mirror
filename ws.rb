@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 #
 # Created: 03/04/08 17:05:03
-# Changed: 17/08/14 02:58:44
+# Changed: 17/08/14 05:49:00
 
 # module WS
 #   ws_getlogin
@@ -1668,19 +1668,18 @@ Example: clm_mix(\"tmp\")")
         Snd.raise(:no_such_file, infile, "file name required")
       end
     end
-    # INFO: output
-    # silence "warning: assigned but unused variable - output"
-    # It's a dummy used below as mix_vct's last arg.
-    output = false
     [channels(snd), @channels].min.times do |chn|
       if scaler and scaler.nonzero?
         scale_channel(scaler, input_frame, frames, snd, chn)
       end
       mix_vct(channel2vct(input_frame, frames, snd, chn),
-              output_frame, snd, chn, output)
+              output_frame, snd, chn, false)
     end
     snd.revert
     close_sound_extend(snd)
+    # INFO: output
+    # silence "warning: assigned but unused variable - output"
+    output
   end
 
   protected

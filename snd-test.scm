@@ -19962,16 +19962,16 @@ EDITS: 2
 		(lambda (args)
 		  (for-each
 		   (lambda (n)
-		     (let ((gen (catch #t
-				  (lambda () (apply n args))
-				  (lambda args (car args)))))
-		       (if (mus-generator? gen)
+		     (catch #t
+		       (lambda ()
+			 (let ((gen (apply n args)))
 			   (for-each
 			    (lambda (arg)
 			      (catch #t
 				(lambda () (gen arg))
 				(lambda args (car args))))
-			    random-args))))
+			    random-args)))
+		       (lambda args (car args))))
 		   gen-make-procs))))
 	    
 	    (random-gen ())

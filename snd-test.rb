@@ -2,8 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 2005/02/18 10:18:34
-# Changed: 2016/11/17 15:25:21
-# Changed: 2016/12/29 00:20:51
+# Changed: 2017/08/14 06:13:35
 
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
@@ -33884,9 +33883,8 @@ def test_23_04
   map_channel(lambda do |y| pvocoder(pv, rd) end)
   close_sound(ind)
   # 
-  make_birds
-  if $with_test_nogui
-    puts
+  with_sound(:to_snd, :snd) do
+    make_birds
   end
   Snd.sounds.apply(:close_sound)
   # 

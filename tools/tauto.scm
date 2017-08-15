@@ -83,9 +83,9 @@
 	   (lambda () 
 	     ;(format *stderr* "args: ~A~%" args)
 	     (apply func args))
-	   (lambda any
+	   (lambda (type info)
 	     (if (and (positive? args-now)
-		      (memq (car any) '(wrong-type-arg wrong-number-of-args syntax-error)))
+		      (memq type '(wrong-type-arg wrong-number-of-args out-of-range syntax-error division-by-zero format-error missing-method invalid-escape-function)))
 		 (quit)))))
      
      (let ((c-args (vector-ref auto-arglists args-now)))
@@ -118,12 +118,13 @@
 		(catch #t
 		  (lambda ()
 		    (apply func c-args))
-		  (lambda any 
-		    (if (and (memq (car any) '(wrong-type-arg wrong-number-of-args syntax-error))
-			     (pair? (cdadr any))
-			     (pair? (cddadr any))
-			     (integer? (caddr (cadr any))) ; if just 1 arg, arg num can be omitted
-			     (< (caddr (cadr any)) low))
+		  (lambda (type info)
+		    (if (or (memq type '(wrong-number-of-args out-of-range syntax-error division-by-zero format-error missing-method))
+			    (and (eq? type 'wrong-type-arg)
+				 (pair? (cdr info))
+				 (pair? (cddr info))
+				 (integer? (caddr info)) ; if just 1 arg, arg num can be omitted
+				 (< (caddr info) low)))
 			(quit))))
 		 
 		(if checker ; map-values -> function here

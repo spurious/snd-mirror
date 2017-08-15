@@ -4322,6 +4322,7 @@ static Xen g_save_sound_as(Xen arglist)
       outcom = mus_optkey_to_string(keys[7], S_save_sound_as, orig_arg[7], NULL);
     }
   pchan = keys[5];
+  filep = keys[0];
 #endif
 
   if ((!file) || 
