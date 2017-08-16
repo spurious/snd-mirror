@@ -73,7 +73,6 @@
 
 (define (test-chars)
   (let ((op (open-output-string))
-	    
 	(x #f) (y #f) (z #f))
     (do ((size 2 (+ size 1))
 	 (size1 3 (+ size1 1))

@@ -1407,7 +1407,7 @@ int main(int argc, char **argv)
     {fprintf(stderr, "%d: begin_hook is not null?\n", __LINE__);}
   tested_begin_hook = false;
   s7_set_begin_hook(sc, test_begin_hook);
-  s7_eval_c_string(sc, "(begin (+ 1 2))");
+  s7_eval_c_string(sc, "(begin #f (+ 1 2))");
   if (!tested_begin_hook)
     {fprintf(stderr, "%d: begin_hook not called?\n", __LINE__);}
   if (s7_begin_hook(sc) != test_begin_hook)

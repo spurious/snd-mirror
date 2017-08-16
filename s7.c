@@ -715,7 +715,7 @@ typedef struct s7_cell {
       s7_int length;
       s7_pointer *objects;
       vdims_t *dim_info;
-      int32_t top;
+      int64_t top;
     } stk;
 
     struct {                        /* hash-tables */
@@ -800,7 +800,7 @@ typedef struct s7_cell {
 
     struct {                       /* syntax */
       s7_pointer symbol;
-      int32_t op;
+      opcode_t op;
       int16_t min_args, max_args;
     } syn;
 
@@ -821,7 +821,7 @@ typedef struct s7_cell {
 	} dox;
 	struct {                   /* (catch #t ...) opts */
 	  s7_pointer result;
-	  uint32_t op_stack_loc, goto_loc;
+	  uint32_t op_stack_loc, goto_loc; /* TODO: these are uint64_t elsewhere */
 	} ctall;
       } edat;
     } envr;
@@ -862,12 +862,12 @@ typedef struct s7_cell {
     } cwcc;
 
     struct {                        /* call-with-exit */
-      uint32_t goto_loc, op_stack_loc;
+      uint64_t goto_loc, op_stack_loc;
       bool active;
     } rexit;
 
     struct {                        /* catch */
-      uint32_t goto_loc, op_stack_loc;
+      uint64_t goto_loc, op_stack_loc;
       s7_pointer tag;
       s7_pointer handler;
     } rcatch; /* C++ reserves "catch" I guess */
@@ -1151,7 +1151,7 @@ struct s7_scheme {
 
   /* optimizer symbols */
   s7_pointer and_ap_symbol, and_az_symbol, and_p_symbol, and_safe_aa_symbol, and_safe_p_symbol, 
-             and_unchecked_symbol, begin_unchecked_symbol, case_a_symbol, case_unchecked_symbol,
+             and_unchecked_symbol, begin1_symbol, case_a_symbol, case_unchecked_symbol,
              cond_all_x_2_symbol, cond_all_x_symbol, cond_all_x_z_symbol, cond_simple_symbol, cond_unchecked_symbol, cond_unchecked_z_symbol,
              decrement_1_symbol, define_constant_unchecked_symbol, define_funchecked_symbol, define_star_unchecked_symbol, define_unchecked_symbol,
              do_unchecked_symbol, dotimes_p_symbol, dox_symbol, cond_feed_symbol, 
@@ -2995,7 +2995,7 @@ enum {OP_NO_OP, OP_GC_PROTECT,
       OP_READ_INTERNAL, OP_EVAL,
       OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
       OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, OP_MACROEXPAND,
-      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN_UNCHECKED, OP_BEGIN1,
+      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN1,
       OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
       OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1,
@@ -3175,7 +3175,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
 
       OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, 
       OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_P, HOP_SAFE_CLOSURE_P, 
-      OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS,
+      OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SS_B, HOP_SAFE_CLOSURE_SS_B, 
+      OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS,
       OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, OP_SAFE_LCLOSURE_A, HOP_SAFE_LCLOSURE_A, OP_SAFE_LCLOSURE_A_P, HOP_SAFE_LCLOSURE_A_P, 
       OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
       OP_SAFE_CLOSURE_S_P, HOP_SAFE_CLOSURE_S_P, OP_SAFE_LCLOSURE_L_P, HOP_SAFE_LCLOSURE_L_P, 
@@ -3224,7 +3225,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "read_internal", "eval",
       "eval_args", "eval_args1", "eval_args2", "eval_args3", "eval_args4", "eval_args5",
       "apply", "eval_macro", "lambda", "quote", "macroexpand",
-      "define", "define1", "begin", "begin_unchecked", "begin1",
+      "define", "define1", "begin", "begin1",
       "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
       "let", "let1", "let*", "let*1", "let*2",
       "letrec", "letrec1", "letrec*", "letrec*1", 
@@ -3401,7 +3402,8 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_thunk_p", "h_safe_thunk_p", "safe_lthunk", "h_safe_lthunk", 
       "safe_closure_s", "h_safe_closure_s", 
       "safe_closure_c", "h_safe_closure_c", "safe_closure_p", "h_safe_closure_p", 
-      "safe_closure_ss", "h_safe_closure_ss", "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs",
+      "safe_closure_ss", "h_safe_closure_ss", "safe_closure_ss_b", "h_safe_closure_ss_b", 
+      "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs",
       "safe_closure_a", "h_safe_closure_a", "safe_lclosure_a", "h_safe_lclosure_a", "safe_lclosure_a_p", "h_safe_lclosure_a_p", 
       "safe_closure_sa", "h_safe_closure_sa", 
       "safe_closure_s_p", "h_safe_closure_s_p", "safe_lclosure_l_p", "h_safe_lclosure_l_p", 
@@ -5223,7 +5225,7 @@ static void free_vlist(s7_scheme *sc, s7_pointer lst)
     }
 }
 
-static inline s7_pointer petrify(s7_scheme *sc, s7_pointer x, int32_t loc)
+static inline s7_pointer petrify(s7_scheme *sc, s7_pointer x, int64_t loc)
 {
   s7_pointer p;
   p = alloc_pointer();
@@ -5236,7 +5238,7 @@ static inline s7_pointer petrify(s7_scheme *sc, s7_pointer x, int32_t loc)
 
 static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 {
-  int32_t loc;
+  int64_t loc;
   /* global functions are very rarely redefined, so we can remove the function body from
    *   the heap when it is defined.  If redefined, we currently lose the memory held by the
    *   old definition.  (It is not trivial to recover this memory because it is allocated
@@ -8019,8 +8021,7 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
   #define Q_symbol_to_dynamic_value s7_make_signature(sc, 2, sc->T, sc->is_symbol_symbol)
 
   s7_pointer sym, val;
-  int64_t top_id;
-  int32_t i;
+  int64_t i, top_id;
 
   sym = car(args);
   if (!is_symbol(sym))
@@ -8763,10 +8764,10 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int32_t top)
+static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int64_t top)
 {
   #define CC_INITIAL_STACK_SIZE 256 /* 128 is too small here */
-  int32_t i, len;
+  int64_t i, len;
   s7_pointer new_v;
   s7_pointer *nv, *ov;
 
@@ -8904,7 +8905,7 @@ static int32_t find_any_baffle(s7_scheme *sc)
 s7_pointer s7_make_continuation(s7_scheme *sc)
 {
   s7_pointer x, stack;
-  int32_t loc;
+  int64_t loc;
 
   loc = s7_stack_top(sc);
   stack = copy_stack(sc, sc->stack, loc);
@@ -8937,7 +8938,7 @@ static void let_temp_done(s7_scheme *sc, s7_pointer args, s7_pointer code)
 
 static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 {
-  int32_t i, s_base = 0, c_base = -1;
+  int64_t i, s_base = 0, c_base = -1;
   opcode_t op;
 
   for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
@@ -8949,7 +8950,7 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	case OP_LET_TEMP_DONE:
 	  {
 	    s7_pointer x;
-	    int32_t j;
+	    int64_t j;
 	    x = stack_code(sc->stack, i);
 	    for (j = 3; j < continuation_stack_top(c); j += 4)
 	      if (((stack_op(continuation_stack(c), j) == OP_DYNAMIC_WIND) || 
@@ -9078,7 +9079,7 @@ static bool call_with_current_continuation(s7_scheme *sc)
 
 static void call_with_exit(s7_scheme *sc)
 {
-  int32_t i, new_stack_top, quit = 0;
+  int64_t i, new_stack_top, quit = 0;
 
   if (!call_exit_active(sc->code))
     {
@@ -41673,7 +41674,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 /* -------------------------------- object->let -------------------------------- */
 
 static bool is_decodable(s7_scheme *sc, s7_pointer p);
-static s7_pointer stack_entries(s7_scheme *sc, s7_pointer stack, int32_t top);
+static s7_pointer stack_entries(s7_scheme *sc, s7_pointer stack, int64_t top);
 
 static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 {
@@ -42074,7 +42075,7 @@ static s7_pointer stacktrace_find_caller(s7_scheme *sc, s7_pointer e)
   return(sc->F);
 }
 
-static bool stacktrace_find_let(s7_scheme *sc, int32_t loc, s7_pointer e)
+static bool stacktrace_find_let(s7_scheme *sc, int64_t loc, s7_pointer e)
 {
   return((loc > 0) &&
 	 ((stack_let(sc->stack, loc) == e) ||
@@ -42083,14 +42084,14 @@ static bool stacktrace_find_let(s7_scheme *sc, int32_t loc, s7_pointer e)
 
 static int32_t stacktrace_find_error_hook_quit(s7_scheme *sc)
 {
-  int32_t i;
+  int64_t i;
   for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
     if (stack_op(sc->stack, i) == OP_ERROR_HOOK_QUIT)
       return(i);
   return(-1);
 }
 
-static bool stacktrace_in_error_handler(s7_scheme *sc, int32_t loc)
+static bool stacktrace_in_error_handler(s7_scheme *sc, int64_t loc)
 {
   return((outlet(sc->owlet) == sc->envir) ||
 	 (stacktrace_find_let(sc, loc * 4, outlet(sc->owlet))) ||
@@ -42286,7 +42287,7 @@ static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, c
 static char *stacktrace_1(s7_scheme *sc, int32_t frames_max, int32_t code_cols, int32_t total_cols, int32_t notes_start_col, bool as_comment)
 {
   char *str;
-  int32_t loc, top, frames = 0;
+  int64_t loc, top, frames = 0;
   uint32_t gc_syms;
 
   gc_syms = s7_gc_protect(sc, sc->nil);
@@ -42932,7 +42933,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
       if (is_symbol(closure_args(proc)))
 	new_frame_with_slot(sc, closure_let(proc), sc->envir, closure_args(proc), sc->nil);
       else new_frame(sc, closure_let(proc), sc->envir);
-      push_stack(sc, OP_BEGIN_UNCHECKED, sc->args, sc->code);
+      push_stack(sc, OP_BEGIN1, sc->args, sc->code);
     }
   else push_stack(sc, OP_APPLY, sc->nil, proc);
 
@@ -43028,7 +43029,7 @@ It has the additional local variables: error-type, error-data, error-code, error
 
 static s7_pointer active_catches(s7_scheme *sc)
 {
-  int32_t i;
+  int64_t i;
   s7_pointer x, lst;
   lst = sc->nil;
   for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
@@ -43051,7 +43052,7 @@ static s7_pointer active_catches(s7_scheme *sc)
 static s7_pointer active_exits(s7_scheme *sc)
 {
   /* (call-with-exit (lambda (exiter) (*s7* 'exits))) */
-  int32_t i;
+  int64_t i;
   s7_pointer lst;
   lst = sc->nil;
   for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
@@ -43074,9 +43075,9 @@ static s7_pointer active_exits(s7_scheme *sc)
   return(reverse_in_place_unchecked(sc, sc->nil, lst));
 }
 
-static s7_pointer stack_entries(s7_scheme *sc, s7_pointer stack, int32_t top)
+static s7_pointer stack_entries(s7_scheme *sc, s7_pointer stack, int64_t top)
 {
-  int32_t i;
+  int64_t i;
   s7_pointer lst;
   lst = sc->nil;
   for (i = top - 1; i >= 3; i -= 4)
@@ -43146,7 +43147,7 @@ static bool catch_2_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_point
       (catch_tag(x) == type) ||
       (type == sc->T))
     {
-      int32_t loc;
+      int64_t loc;
       loc = catch_goto_loc(x);
       sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_op_loc(x));
       sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
@@ -43174,7 +43175,7 @@ static bool catch_1_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_point
       (catch_tag(x) == type) ||
       (type == sc->T))
     {
-      uint32_t loc;
+      uint64_t loc;
       opcode_t op;
       s7_pointer catcher, error_func, error_body, error_args;
 
@@ -43415,7 +43416,7 @@ It looks for an existing catch with a matching tag, and jumps to it if found.  O
   #define Q_throw s7_make_circular_signature(sc, 2, 3, sc->values_symbol, sc->is_symbol_symbol, sc->T)
 
   bool ignored_flag = false;
-  int32_t i;
+  int64_t i;
   s7_pointer type, info;
 
   type = car(args);
@@ -43546,7 +43547,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
     }
 
   { /* look for a catcher */
-    int32_t i;
+    int64_t i;
     /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
     for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
       {
@@ -55152,7 +55153,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 {
-  int32_t top;
+  int64_t top;
   s7_pointer x;
   top = s7_stack_top(sc) - 1; /* stack_end - stack_start: if this is negative, we're in big trouble */
 
@@ -59446,7 +59447,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  if (symbols == 2)
 	    {
 	      if (is_safe_closure(func))
-		set_optimize_op(expr, hop + OP_SAFE_CLOSURE_SS);
+		set_optimize_op(expr, hop + ((is_null(cdr(closure_body(func)))) ? OP_SAFE_CLOSURE_SS : OP_SAFE_CLOSURE_SS_B));
 	      else
 		{
 		  s7_pointer body;
@@ -63279,7 +63280,7 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
 
 static int32_t expansion_ex(s7_scheme *sc)
 {
-  int32_t loc;
+  int64_t loc;
   s7_pointer caller;
   
   /* read-time macro expansion:
@@ -65124,6 +65125,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
 		  if ((is_optimized(end)) &&
 		      (car(v) == cadr(end)) &&
+		      (is_pair(cddr(end))) &&      /* end: (zero? n) */
 		      (cadr(end) != caddr(end)) &&
 #if (!WITH_GMP)
 		      ((opt_any1(end) == equal_s_ic) ||
@@ -66752,7 +66754,7 @@ static int32_t unknown_gg_ex(s7_scheme *sc, s7_pointer f)
 	  if (s1)
 	    {
 	      if (is_safe_closure(f))
-		set_optimize_op(code, hop + ((s2) ? OP_SAFE_CLOSURE_SS : OP_SAFE_CLOSURE_SC));
+		set_optimize_op(code, hop + ((s2) ? ((is_null(cdr(closure_body(f)))) ? OP_SAFE_CLOSURE_SS : OP_SAFE_CLOSURE_SS_B) : OP_SAFE_CLOSURE_SC));
 	      else 
 		{
 		  if (!s2)
@@ -68265,7 +68267,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* (eval-string "'a ; b") gets here with 'a -> a, so we need to squelch the pending eval.
 		 *   another approach would read-ahead in eval_string_1_ex, but this seems less messy.
 		 */
-		int32_t top;
+		int64_t top;
 		top = s7_stack_top(sc) - 1;
 		if (stack_op(sc->stack, top) == OP_EVAL_STRING_1)
 		  vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_STRING_2;
@@ -68636,8 +68638,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		let_set_slots(counter_let(c), counter_slots(c));
 		sc->envir = old_frame_with_slot(sc, counter_let(c), x);
 	      }
-	    sc->code = _TPair(closure_body(code));
-	    goto BEGIN1;
+	    sc->code = car(closure_body(code));
+	    goto EVAL;
 	  }
 	  
 	  /* -------------------------------- FOR-EACH -------------------------------- */
@@ -69474,6 +69476,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START;
 		}
 	      /* might be => here as in cond and case */
+	      if (is_null(cdr(sc->code)))
+		{
+		  sc->code = car(sc->code);
+		  goto EVAL;
+		}
 	      if ((car(sc->code) == sc->feed_to_symbol) &&
 		  (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
 		{
@@ -69483,7 +69490,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (res == goto_APPLY) goto APPLY;
 		  goto EVAL;
 		}
-	      goto BEGIN1;
+	      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto EVAL;
 	    }
 	  goto DO_END2;
 	  
@@ -69529,20 +69538,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_BEGIN:
 	  if (!s7_is_proper_list(sc, sc->code))    /* proper list includes () */
 	    eval_error(sc, "unexpected dot? ~A", sc->code);
-
-	  if ((!is_null(sc->code)) &&              /* so check for it here */
-	      (!is_null(cdr(sc->code))) &&
-	      (is_overlaid(sc->code)) &&
-	      (has_opt_back(sc->code)))
-	    pair_set_syntax_symbol(sc->code, sc->begin_unchecked_symbol);
-	  
-	case OP_BEGIN_UNCHECKED:
 	  if (is_null(sc->code))                   /* (begin) -> () */
 	    {
 	      sc->value = sc->nil;
 	      goto START;
 	    }
-
+	  if ((is_overlaid(sc->code)) &&
+	      (has_opt_back(sc->code)))
+	    pair_set_syntax_symbol(sc->code, sc->begin1_symbol);
+	  
 	case OP_BEGIN1:
 	  if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F);
 	BEGIN1:
@@ -71740,8 +71744,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), 
 						       find_symbol_unchecked(sc, cadr(code)), 
 						       find_symbol_unchecked(sc, opt_sym2(code)));
-		  sc->code = _TPair(closure_body(opt_lambda(code)));
-		  goto BEGIN1;
+		  sc->code = car(closure_body(opt_lambda(code)));
+		  goto EVAL;
+		  
+		case OP_SAFE_CLOSURE_SS_B:
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
+		case HOP_SAFE_CLOSURE_SS_B:
+		  sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), 
+						       find_symbol_unchecked(sc, cadr(code)), 
+						       find_symbol_unchecked(sc, opt_sym2(code)));
+		  sc->code = closure_body(opt_lambda(code));
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		  sc->code = car(sc->code);
+		  goto EVAL;
 		  
 		case OP_SAFE_CLOSURE_SC:
 		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
@@ -72206,7 +72221,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;		       
 		      break;
 		    }
-		  
 		case HOP_CLOSURE_ALL_S:
 		  {
 		    s7_pointer args, p, func, e;
@@ -73986,7 +74000,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_WHEN_PP:
 	  if (is_true(sc, sc->value))
-	    goto BEGIN1;
+	    {
+	      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto EVAL;
+	    }
 	  sc->value = sc->unspecified;
 	  break;
 	  
@@ -74028,8 +74046,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_WHEN_S:
 	  if (is_true(sc, find_symbol_unchecked(sc, car(sc->code))))
 	    {
-	      sc->code = _TPair(cdr(sc->code));
-	      goto BEGIN1;
+	      push_stack_no_args(sc, OP_BEGIN1, cddr(sc->code));
+	      sc->code = cadr(sc->code);
+	      goto EVAL;
 	    }
 	  sc->value = sc->unspecified;
 	  break;
@@ -74037,8 +74056,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_WHEN_A:
 	  if (is_true(sc, c_call(sc->code)(sc, car(sc->code))))
 	    {
-	      sc->code = _TPair(cdr(sc->code));
-	      goto BEGIN1;
+	      push_stack_no_args(sc, OP_BEGIN1, cddr(sc->code));
+	      sc->code = cadr(sc->code);
+	      goto EVAL;
 	    }
 	  sc->value = sc->unspecified;
 	  break;
@@ -74065,8 +74085,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_UNLESS_S:
 	  if (is_false(sc, find_symbol_unchecked(sc, car(sc->code))))
 	    {
-	      sc->code = _TPair(cdr(sc->code));
-	      goto BEGIN1;
+	      push_stack_no_args(sc, OP_BEGIN1, cddr(sc->code));
+	      sc->code = cadr(sc->code);
+	      goto EVAL;
 	    }
 	  sc->value = sc->unspecified;
 	  break;
@@ -74074,8 +74095,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_UNLESS_A:
 	  if (is_false(sc, c_call(sc->code)(sc, car(sc->code))))
 	    {
-	      sc->code = _TPair(cdr(sc->code));
-	      goto BEGIN1;
+	      push_stack_no_args(sc, OP_BEGIN1, cddr(sc->code));
+	      sc->code = cadr(sc->code);
+	      goto EVAL;
 	    }
 	  sc->value = sc->unspecified;
 	  break;
@@ -75034,16 +75056,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      COND1:
 	      sc->code = cdar(sc->code);
-	      if (is_null(sc->code))
-		{
-		  if (is_multiple_value(sc->value))                             /* (+ 1 (cond ((values 2 3)))) */
-		    sc->value = splice_in_values(sc, multiple_value(sc->value));
-		  /* no result clause, so return test, (cond (#t)) -> #t, (cond ((+ 1 2))) -> 3 */
-		  goto START;
-		}
-	      
 	      if (is_pair(sc->code))
 		{
+		  if (is_null(cdr(sc->code)))
+		    {
+		      sc->code = car(sc->code);
+		      goto EVAL;
+		    }
 		  if ((car(sc->code) == sc->feed_to_symbol) &&
 		      (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
 		    {
@@ -75053,7 +75072,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      if (res == goto_APPLY) goto APPLY;
 		      goto EVAL;
 		    }
-		  goto BEGIN1;
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		  sc->code = car(sc->code);
+		  goto EVAL;
+		}
+	      if (is_null(sc->code))
+		{
+		  if (is_multiple_value(sc->value))                             /* (+ 1 (cond ((values 2 3)))) */
+		    sc->value = splice_in_values(sc, multiple_value(sc->value));
+		  /* no result clause, so return test, (cond (#t)) -> #t, (cond ((+ 1 2))) -> 3 */
+		  goto START;
 		}
 	      eval_error(sc, "cond: unexpected dot? ~A", sc->code); /* (cond (#t . 1)) etc */
 	    }
@@ -75749,6 +75777,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START;
 
 	      ELSE_CASE_2:
+		if (is_null(cdr(sc->code)))
+		  {
+		    sc->code = car(sc->code);
+		    goto EVAL;
+		  }
 		/* check for => */
 		if ((car(sc->code) == sc->feed_to_symbol) &&
 		    (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
@@ -75760,7 +75793,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto EVAL;
 		    /* sc->code = list_2(sc, cadr(sc->code), list_2(sc, sc->quote_symbol, sc->value)); */
 		  }
-		goto BEGIN1;
+		push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
 	    sc->value = sc->unspecified;
 	  }
@@ -81741,7 +81776,7 @@ s7_scheme *s7_init(void)
   set_immutable(sc->with_let_symbol);
 
   sc->quote_unchecked_symbol =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED);
-  sc->begin_unchecked_symbol =       assign_internal_syntax(sc, "begin",       OP_BEGIN_UNCHECKED);
+  sc->begin1_symbol =                assign_internal_syntax(sc, "begin",       OP_BEGIN1);
   sc->with_baffle_unchecked_symbol = assign_internal_syntax(sc, "with-baffle", OP_WITH_BAFFLE_UNCHECKED);
   sc->let_unchecked_symbol =         assign_internal_syntax(sc, "let",         OP_LET_UNCHECKED);
   sc->let_star_unchecked_symbol =    assign_internal_syntax(sc, "let*",        OP_LET_STAR_UNCHECKED);
@@ -83374,31 +83409,34 @@ int main(int argc, char **argv)
  *   there are 8 bits free
  * add snd lint snd-test.scm to testsnd (for snd-lint etc)
  * if_and_3|n if_or_3|pair_cdr similar for all_x_closure (and_3...)
+ * timing test based on gsl+fm calcs and more macros in tmac -- tgsl.scm (tstall?)
  *
  * currently: (define h (make-hash-table 31 string=?)) (hash-table-set! h 'a 21)  (hash-table-ref 'a): #f
  *   this should probably be an error?? (srfi sez yes)
  *   string/char/number(=) are the only cases? is NaN an error if = or eqv?
  *   see old/hash-error-s7.c -- works but is too slow
  *
+ * splitworthy: closure_s|ss|aa|all_s|all_x, set_dilambda, let_all_x, catch_all
+ *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
  * tmac          |      |      |      || 9052 |  615   259   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1058
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1056
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1516
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1400
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1924
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2195
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2926
- * lg            |      |      |      || 211  | 161   149   143.9 140.1
- * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3069
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2920
+ * lg            |      |      |      || 211  | 161   149   143.9 139.7
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3070
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3305
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3380
- * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3966
+ * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
- * titer         |      |      |      || 5971 | 5224  4768  4707  4555
- * bench         |      |      |      || 7012 | 6378  6327  5934  5486
+ * titer         |      |      |      || 5971 | 5224  4768  4707  4562
+ * bench         |      |      |      || 7012 | 6378  6327  5934  5477
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7525
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
