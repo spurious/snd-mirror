@@ -611,19 +611,19 @@ s7_pointer s7_c_object_let(s7_pointer obj);
 s7_pointer s7_c_object_set_let(s7_pointer obj, s7_pointer e);
 
 int32_t s7_make_c_type(s7_scheme *sc, const char *name);
-void s7_c_type_set_print(         s7_scheme *sc, int32_t tag, char *(*print)(s7_scheme *sc, void *value));
+void s7_c_type_set_print         (s7_scheme *sc, int32_t tag, char *(*print)(s7_scheme *sc, void *value));
 void s7_c_type_set_print_readably(s7_scheme *sc, int32_t tag, char *(*printer)(s7_scheme *sc, void *val));
-void s7_c_type_set_free(          s7_scheme *sc, int32_t tag, void (*gc_free)(void *value));
-void s7_c_type_set_equal(         s7_scheme *sc, int32_t tag, bool (*equal)(void *val1, void *val2));
-void s7_c_type_set_mark(          s7_scheme *sc, int32_t tag, void (*gc_mark)(void *val));
-void s7_c_type_set_apply(         s7_scheme *sc, int32_t tag, s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
-void s7_c_type_set_apply_direct(  s7_scheme *sc, int32_t tag, s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index));
-void s7_c_type_set_set(           s7_scheme *sc, int32_t tag, s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
-void s7_c_type_set_set_direct(    s7_scheme *sc, int32_t tag, s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
-void s7_c_type_set_length(        s7_scheme *sc, int32_t tag, s7_pointer (*length)(s7_scheme *sc, s7_pointer obj));
-void s7_c_type_set_copy(          s7_scheme *sc, int32_t tag, s7_pointer (*copy)(s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_fill(          s7_scheme *sc, int32_t tag, s7_pointer (*fill)(s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_reverse(       s7_scheme *sc, int32_t tag, s7_pointer (*reverse)(s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_free          (s7_scheme *sc, int32_t tag, void (*gc_free)(void *value));
+void s7_c_type_set_equal         (s7_scheme *sc, int32_t tag, bool (*equal)(void *val1, void *val2));
+void s7_c_type_set_mark          (s7_scheme *sc, int32_t tag, void (*gc_mark)(void *val));
+void s7_c_type_set_apply         (s7_scheme *sc, int32_t tag, s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
+void s7_c_type_set_apply_direct  (s7_scheme *sc, int32_t tag, s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index));
+void s7_c_type_set_set           (s7_scheme *sc, int32_t tag, s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
+void s7_c_type_set_set_direct    (s7_scheme *sc, int32_t tag, s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
+void s7_c_type_set_length        (s7_scheme *sc, int32_t tag, s7_pointer (*length)(s7_scheme *sc, s7_pointer obj));
+void s7_c_type_set_copy          (s7_scheme *sc, int32_t tag, s7_pointer (*copy)(s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_fill          (s7_scheme *sc, int32_t tag, s7_pointer (*fill)(s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_reverse       (s7_scheme *sc, int32_t tag, s7_pointer (*reverse)(s7_scheme *sc, s7_pointer args));
 
 
 #if (!DISABLE_DEPRECATED) 
