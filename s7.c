@@ -149,11 +149,13 @@
 #define INITIAL_HEAP_SIZE 128000
 /* the heap grows as needed, this is its initial size.
  * If the initial heap is small, s7 can run in about 2.5 Mbytes of memory. There are (many) cases where a bigger heap is faster.
- * The heap size must be a multiple of 32.  Each object takes about 50 bytes.
+ * The heap size must be a multiple of 32.  Each object takes about 60 bytes.
  *
  * repl runs in    4Mb (18v) (64bit) if heap is 8192
  *                11Mb (25v)         if 128k heap
  *  snd (no gui)  15Mb (151v)
+ *  snd (no gui)  17Mb (33v)         (no gsl, fftw, audio)
+ *                21Mb (155v)        same but with ALSA!?
  *  snd (motif)   12Mb (285v)
  *  snd (gtk)     32Mb (515v!)
  */
@@ -450,9 +452,7 @@ typedef intptr_t opcode_t;
 
 #define NUM_TYPES        51
 
-/* T_STACK, T_SLOT, T_BAFFLE, T_DYNAMIC_WIND, T_OPTLIST, and T_COUNTER are internal
- * I tried T_CASE_SELECTOR that turned a case statement into an array, but it was slower!
- */
+/* T_STACK, T_SLOT, T_BAFFLE, T_DYNAMIC_WIND, T_OPTLIST, and T_COUNTER are internal */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE,
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST,
@@ -922,7 +922,7 @@ static s7_pointer real_zero, real_NaN, real_pi, real_one, arity_not_set, max_ari
 
 
 struct s7_scheme {
-  opcode_t op;                        /* making this global is much slower! */
+  opcode_t cur_op;                    /* making this global is much slower! */
   s7_pointer value;
   s7_pointer args;                    /* arguments of current function */
   s7_pointer code, cur_code;          /* current code */
@@ -3447,7 +3447,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
 };
 #endif
 
-#define in_reader(Sc) ((Sc->op >= OP_READ_LIST) && (Sc->op <= OP_READ_DONE) && (is_input_port(Sc->input_port)))
+#define in_reader(Sc) ((sc->cur_op >= OP_READ_LIST) && (sc->cur_op <= OP_READ_DONE) && (is_input_port(Sc->input_port)))
 
 #define is_safe_c_op(op) (op < OP_THUNK)
 #define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_PP))
@@ -5429,10 +5429,10 @@ static void pop_stack(s7_scheme *sc)
   sc->code =  _NFre(sc->stack_end[0]);
   sc->envir = _TLid(sc->stack_end[1]);
   sc->args =  _NFre(sc->stack_end[2]);
-  sc->op =    (opcode_t)(sc->stack_end[3]);
-  if (sc->op > OP_MAX_DEFINED) 
+  sc->cur_op =    (opcode_t)(sc->stack_end[3]);
+  if (sc->cur_op > OP_MAX_DEFINED) 
     {
-      fprintf(stderr, "%spop_stack[%d] invalid opcode: %" PRIdPTR " %s\n", BOLD_TEXT, __LINE__, sc->op, UNBOLD_TEXT);
+      fprintf(stderr, "%spop_stack[%d] invalid opcode: %" PRIdPTR " %s\n", BOLD_TEXT, __LINE__, sc->cur_op, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
 }
@@ -5459,7 +5459,7 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
     }
   if (op > OP_MAX_DEFINED) 
     {
-      fprintf(stderr, "%spush_stack[%d] invalid opcode: %" PRIdPTR " %s\n", BOLD_TEXT, __LINE__, sc->op, UNBOLD_TEXT);
+      fprintf(stderr, "%spush_stack[%d] invalid opcode: %" PRIdPTR " %s\n", BOLD_TEXT, __LINE__, sc->cur_op, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
   if (code) sc->stack_end[0] = _NFre(code);
@@ -5471,7 +5471,9 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 
 #define push_stack_no_code(Sc, Op, Args) push_stack(Sc, Op, Args, Sc->gc_nil)
 #define push_stack_no_args(Sc, Op, Code) push_stack(Sc, Op, Sc->gc_nil, Code)
-/* in the non-debugging case, the sc->F's here are not set, so we can (later) pop free cells */
+#define push_stack_no_let(Sc, Op, Args, Code) push_stack(Sc, Op, Args, Code)
+#define push_stack_op(Sc, Op) push_stack(Sc, Op, Sc->gc_nil, Sc->gc_nil)
+/* in the non-debugging case, the sc->gc_nil's here are not set, so we can (later) pop free cells */
 
 #else
 /* these macros are faster than the equivalent simple function calls.  If the s7_scheme struct is set up to reflect the
@@ -5486,7 +5488,7 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
       Sc->code =  Sc->stack_end[0]; \
       Sc->envir = Sc->stack_end[1]; \
       Sc->args =  Sc->stack_end[2]; \
-      Sc->op =    (opcode_t)(Sc->stack_end[3]); \
+      sc->cur_op =    (opcode_t)(Sc->stack_end[3]); \
   } while (0)
 
 #define pop_stack_no_op(Sc) \
@@ -5520,6 +5522,19 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
       Sc->stack_end[3] = (s7_pointer)Op; \
       Sc->stack_end += 4; \
   } while (0)
+#define push_stack_no_let(Sc, Op, Args, Code) \
+  do { \
+      Sc->stack_end[0] = Code; \
+      Sc->stack_end[2] = Args; \
+      Sc->stack_end[3] = (s7_pointer)Op; \
+      Sc->stack_end += 4; \
+  } while (0)
+#define push_stack_op(Sc, Op) \
+  do { \
+      Sc->stack_end[3] = (s7_pointer)Op; \
+      Sc->stack_end += 4; \
+  } while (0)
+
 #endif
 /* since we don't GC mark the stack past the stack_top, push_stack_no_args and friends can cause pop_stack to set
  *   sc->code and sc->args to currently free objects.
@@ -5540,8 +5555,8 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 static void stack_reset(s7_scheme *sc)
 {
   sc->stack_end = sc->stack_start;
-  push_stack(sc, OP_EVAL_DONE, sc->nil, sc->nil);
-  push_stack(sc, OP_BARRIER, sc->nil, sc->nil);
+  push_stack_op(sc, OP_EVAL_DONE);
+  push_stack_op(sc, OP_BARRIER);
 }
 
 
@@ -8167,23 +8182,23 @@ static s7_pointer make_macro(s7_scheme *sc)
   s7_pointer cx, mac;
   uint64_t typ;
 
-  if (sc->op == OP_DEFINE_MACRO)
+  if (sc->cur_op == OP_DEFINE_MACRO)
     typ = T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS;
   else
     {
-      if (sc->op == OP_DEFINE_MACRO_STAR)
+      if (sc->cur_op == OP_DEFINE_MACRO_STAR)
 	typ = T_MACRO_STAR | T_DONT_EVAL_ARGS | T_COPY_ARGS;
       else
 	{
-	  if (sc->op == OP_DEFINE_BACRO)
+	  if (sc->cur_op == OP_DEFINE_BACRO)
 	    typ = T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS;
 	  else
 	    {
-	      if (sc->op == OP_DEFINE_BACRO_STAR)
+	      if (sc->cur_op == OP_DEFINE_BACRO_STAR)
 		typ = T_BACRO_STAR | T_DONT_EVAL_ARGS | T_COPY_ARGS;
 	      else
 		{
-		  if ((sc->op == OP_DEFINE_EXPANSION) &&
+		  if ((sc->cur_op == OP_DEFINE_EXPANSION) &&
 		      (!is_let(sc->envir)))        /* local expansions are just normal macros */
 		    typ = T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS;
 		  else typ = T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS;
@@ -8202,7 +8217,7 @@ static s7_pointer make_macro(s7_scheme *sc)
 
   sc->capture_let_counter++;
   sc->code = caar(sc->code);
-  if ((sc->op == OP_DEFINE_EXPANSION) &&
+  if ((sc->cur_op == OP_DEFINE_EXPANSION) &&
       (!is_let(sc->envir)))
     set_type(sc->code, T_EXPANSION | T_SYMBOL); /* see comment under READ_TOK */
   /* symbol? macro name has already been checked, find name in environment, and define it */
@@ -24386,7 +24401,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
       if (jump_loc != NO_JUMP)
 	{
 	  if (jump_loc != ERROR_JUMP)
-	    eval(sc, sc->op);
+	    eval(sc, sc->cur_op);
 	}
       else 
 	{
@@ -24398,7 +24413,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 	  if (sc->tok == TOKEN_EOF)
 	    sc->value = sc->eof_object;
 
-	  if ((sc->op == OP_EVAL_DONE) &&
+	  if ((sc->cur_op == OP_EVAL_DONE) &&
 	      (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER))
 	    pop_stack(sc); 
 	}
@@ -24548,7 +24563,7 @@ s7_pointer s7_load_with_environment(s7_scheme *sc, const char *filename, s7_poin
   if (jump_loc != NO_JUMP)
     {
       if (jump_loc != ERROR_JUMP)
-	eval(sc, sc->op);
+	eval(sc, sc->cur_op);
     }
   else eval(sc, OP_READ_INTERNAL);
 
@@ -25871,7 +25886,7 @@ static bool collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, 
 	  hash_entry_t **entries;
 	  bool keys_safe;
 	  
-	  keys_safe = (!hash_chosen(top)); /* ((hash_table_checker(top) != hash_equal) && (!hash_table_checker_locked(top))) */
+	  keys_safe = ((hash_table_checker(top) != hash_equal) && (!hash_table_checker_locked(top)));
 	  entries = hash_table_elements(top);
 	  len = hash_table_mask(top) + 1;
 	  for (i = 0; i < len; i++)
@@ -29091,11 +29106,19 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
   return(object_out(sc, car(args), port, USE_WRITE));
 }
 
-static s7_pointer write_p_p(s7_pointer x) {return(object_out(cur_sc, x, cur_sc->output_port, USE_WRITE));}
+static s7_pointer write_p_p(s7_pointer x) 
+{
+  if (cur_sc->output_port == cur_sc->F) return(x);
+  return(object_out(cur_sc, x, cur_sc->output_port, USE_WRITE));
+}
 static s7_pointer write_p_pp(s7_pointer x, s7_pointer port) 
 {
   if (port == cur_sc->F)
     return(x);
+  if ((!is_output_port(port)) ||
+      (port_is_closed(port)))
+    s7_wrong_type_arg_error(cur_sc, "write", 2, port, "an open output port");
+  if (port == cur_sc->F) return(x);
   return(object_out(cur_sc, x, port, USE_WRITE));
 }
 
@@ -29130,11 +29153,19 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
   return(object_out(sc, car(args), port, USE_DISPLAY));
 }
 
-static s7_pointer display_p_p(s7_pointer x) {return(object_out(cur_sc, x, cur_sc->output_port, USE_DISPLAY));}
+static s7_pointer display_p_p(s7_pointer x) 
+{
+  if (cur_sc->output_port == cur_sc->F) return(x);
+  return(object_out(cur_sc, x, cur_sc->output_port, USE_DISPLAY));
+}
 static s7_pointer display_p_pp(s7_pointer x, s7_pointer port) 
 {
   if (port == cur_sc->F)
     return(x);
+  if ((!is_output_port(port)) ||
+      (port_is_closed(port)))
+    s7_wrong_type_arg_error(cur_sc, "display", 2, port, "an open output port");
+  if (port == cur_sc->F) return(x);
   return(object_out(cur_sc, x, port, USE_DISPLAY));
 }
 
@@ -37034,6 +37065,12 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 		  hash_table_checker(ht) = hash_equal;
 		  return(ht);
 		}
+	      if (c_function_call(proc) == g_is_morally_equal)
+		{
+		  hash_table_checker(ht) = hash_morally_equal;
+		  hash_table_mapper(ht) = morally_equal_hash_map;
+		  return(ht);
+		}
 	      if (c_function_call(proc) == g_is_eq)
 		{
 		  hash_table_checker(ht) = hash_eq;
@@ -37081,12 +37118,6 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 		{
 		  hash_table_checker(ht) = hash_eqv; 
 		  hash_table_mapper(ht) = eqv_hash_map;
-		  return(ht);
-		}
-	      if (c_function_call(proc) == g_is_morally_equal)
-		{
-		  hash_table_checker(ht) = hash_morally_equal;
-		  hash_table_mapper(ht) = morally_equal_hash_map;
 		  return(ht);
 		}
 	      return(wrong_type_argument_with_type(sc, sc->make_hash_table_symbol, 3, proc, s7_make_string_wrapper(sc, "a hash function")));
@@ -42854,7 +42885,7 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
   if (jump_loc != NO_JUMP)
     {
       if (jump_loc != ERROR_JUMP)
-	eval(sc, sc->op);
+	eval(sc, sc->cur_op);
     }
   else
     {
@@ -43164,7 +43195,7 @@ static bool catch_2_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_point
 	  set_car(sc->t2_2, info);
 	  sc->args = sc->t2_1;
 	}
-      sc->op = OP_APPLY;
+      sc->cur_op = OP_APPLY;
       return(true);
     }
   return(false);
@@ -43306,7 +43337,7 @@ static bool catch_1_function(s7_scheme *sc, int32_t i, s7_pointer type, s7_point
 	}
       
       sc->args = list_2(sc, type, info); /* almost never able to skip this -- costs more to check! */
-      sc->op = OP_APPLY;
+      sc->cur_op = OP_APPLY;
 
       /* explicit eval needed if s7_call called into scheme where a caught error occurred (ex6 in exs7.c)
        *  but putting it here (via eval(sc, OP_APPLY)) means the C stack is not cleared correctly in non-s7-call cases,
@@ -43722,7 +43753,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
        */
       sc->value = type;
       /* stack_reset(sc); */
-      sc->op = OP_ERROR_QUIT;
+      sc->cur_op = OP_ERROR_QUIT;
     }
 
   if (sc->longjmp_ok) longjmp(sc->goto_start, ERROR_JUMP);
@@ -44130,7 +44161,7 @@ static bool call_begin_hook(s7_scheme *sc)
    *   that I hope can't be optimized out of existence.
    */
   opcode_t op;
-  op = sc->op;
+  op = sc->cur_op;
 
   push_stack(sc, OP_BARRIER, sc->args, sc->code);
   sc->begin_hook(sc, &result);
@@ -44155,7 +44186,7 @@ static bool call_begin_hook(s7_scheme *sc)
       return(true);
     }
   pop_stack_no_op(sc);
-  sc->op = op;         /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error */
+  sc->cur_op = op;         /* for better error handling.  otherwise we get "barrier" as the offending function name in eval_error */
   return(false);
 }
 
@@ -44439,7 +44470,7 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
   if (jump_loc != NO_JUMP)
     {
       if (jump_loc != ERROR_JUMP)
-	eval(sc, sc->op);
+	eval(sc, sc->cur_op);
     }
   else 
     {
@@ -44495,7 +44526,7 @@ pass (rootlet):\n\
        clear_all_optimizations(sc, sc->code);
    }
   if (s7_stack_top(sc) < 12)
-    push_stack(sc, OP_BARRIER, sc->nil, sc->nil);
+    push_stack_op(sc, OP_BARRIER);
   push_stack(sc, OP_EVAL, sc->args, sc->code);
 
   return(sc->nil);
@@ -44522,7 +44553,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   if (jump_loc != NO_JUMP)
     {
       if (jump_loc != ERROR_JUMP)
-	eval(sc, sc->op);
+	eval(sc, sc->cur_op);
 
       if ((jump_loc == CATCH_JUMP) &&        /* we're returning (back to eval) from an error in catch */
 	  (sc->stack_end == sc->stack_start))
@@ -53222,7 +53253,7 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int32_t len)
   if (is_slot(let_slots(frame)))
     let_set_slots(frame, reverse_slots(sc, let_slots(frame)));
   sc->envir = frame;
-  push_stack(sc, OP_GC_PROTECT, frame, sc->nil);
+  push_stack_no_let(sc, OP_GC_PROTECT, frame, sc->nil);
   
   for (p = cadr(car_x); is_pair(p); p = cdr(p))
     {
@@ -54750,7 +54781,7 @@ static s7_pointer g_for_each_closure(s7_scheme *sc, s7_pointer args)
 	  if (!is_iterator(sc->z))
 	    sc->z = s7_make_iterator(sc, sc->z);
 	  seq = sc->z;
-	  push_stack(sc, OP_GC_PROTECT, seq, f);
+	  push_stack_no_let(sc, OP_GC_PROTECT, seq, f);
 	  sc->z = sc->nil;
 	  while (true)
 	    {
@@ -54851,7 +54882,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
       func = c_function_call(f);
       sc->z = make_iterators(sc, args);
       sc->z = cons(sc, sc->z, make_list(sc, len, sc->nil));
-      push_stack(sc, OP_GC_PROTECT, sc->args, sc->z); /* temporary GC protection */
+      push_stack_no_let(sc, OP_GC_PROTECT, sc->args, sc->z); /* temporary GC protection */
       if (len == 1)
 	{
 	  s7_pointer x, y;
@@ -54952,7 +54983,7 @@ static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
 	  s7_pointer fast, slow, val;
 	  
 	  val = sc->nil;
-	  push_stack(sc, OP_GC_PROTECT, sc->args, val);
+	  push_stack_no_let(sc, OP_GC_PROTECT, sc->args, val);
 	  for (fast = seq, slow = seq; is_pair(fast); fast = cdr(fast), slow = cdr(slow))
 	    {
 	      s7_pointer z;
@@ -55040,7 +55071,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      s7_pointer f_args, val, fast, slow;
 	      f_args = list_1(sc, sc->F);
 	      val = list_1(sc, sc->nil);
-	      push_stack(sc, OP_GC_PROTECT, f_args, val);
+	      push_stack_no_let(sc, OP_GC_PROTECT, f_args, val);
 	      for (fast = cadr(args), slow = cadr(args); is_pair(fast); fast = cdr(fast), slow = cdr(slow))
 		{
 		  s7_pointer z;
@@ -55070,7 +55101,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      iter_list = sc->z;
 	      old_args = sc->args;
 	      func = c_function_call(f);
-	      push_stack(sc, OP_GC_PROTECT, val1, val = cons(sc, sc->nil, sc->code)); /* temporary GC protection: need to protect val1, iter_list, val */
+	      push_stack_no_let(sc, OP_GC_PROTECT, val1, val = cons(sc, sc->nil, sc->code)); /* temporary GC protection: need to protect val1, iter_list, val */
 	      sc->z = sc->nil;
 	      while (true)
 		{
@@ -55286,7 +55317,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
     case OP_LETREC1:
     case OP_LETREC_STAR1:
       set_multiple_value(args);
-      eval_error_with_caller(sc, "~A: can't bind some variable to ~S", (sc->op == OP_LETREC1) ? sc->letrec_symbol : sc->letrec_star_symbol, args);
+      eval_error_with_caller(sc, "~A: can't bind some variable to ~S", (sc->cur_op == OP_LETREC1) ? sc->letrec_symbol : sc->letrec_star_symbol, args);
       
       /* handle 'and' and 'or' specially */
     case OP_AND1:
@@ -63052,15 +63083,15 @@ static s7_pointer check_define(s7_scheme *sc)
   bool starred;
   int32_t arity = CLOSURE_ARITY_NOT_SET;
 
-  starred = (sc->op == OP_DEFINE_STAR);
+  starred = (sc->cur_op == OP_DEFINE_STAR);
   if (starred)
     {
       caller = sc->define_star_symbol;
-      sc->op = OP_DEFINE_STAR_UNCHECKED;
+      sc->cur_op = OP_DEFINE_STAR_UNCHECKED;
     }
   else 
     {
-      if (sc->op == OP_DEFINE)
+      if (sc->cur_op == OP_DEFINE)
 	caller = sc->define_symbol;
       else caller = sc->define_constant_symbol;
     }
@@ -63126,7 +63157,7 @@ static s7_pointer check_define(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (has_opt_back(sc->code)))
     {
-      if (sc->op == OP_DEFINE)
+      if (sc->cur_op == OP_DEFINE)
 	{
 	  if ((is_pair(car(sc->code))) &&
 	      (!symbol_has_accessor(func)) &&
@@ -63146,7 +63177,7 @@ static s7_pointer check_define(s7_scheme *sc)
 
 static int32_t define_unchecked_ex(s7_scheme *sc)
 {
-  if (sc->op == OP_DEFINE_STAR_UNCHECKED)
+  if (sc->cur_op == OP_DEFINE_STAR_UNCHECKED)
     {
       s7_pointer x;
       uint64_t typ;
@@ -63291,11 +63322,11 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
 
   for ( ; is_pair(y); y = cdr(y))
     if ((!is_symbol(car(y))) &&
-	((sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO) || (sc->op == OP_DEFINE_EXPANSION)))
+	((sc->cur_op == OP_DEFINE_MACRO) || (sc->cur_op == OP_DEFINE_BACRO) || (sc->cur_op == OP_DEFINE_EXPANSION)))
       return(s7_error(sc, sc->syntax_error_symbol,                                    /* (define-macro (mac 1) ...) */
 		      set_elist_3(sc, s7_make_string_wrapper(sc, "define-macro ~A argument name is not a symbol: ~S"), x, y)));
 
-  if ((sc->op == OP_DEFINE_MACRO_STAR) || (sc->op == OP_DEFINE_BACRO_STAR))
+  if ((sc->cur_op == OP_DEFINE_MACRO_STAR) || (sc->cur_op == OP_DEFINE_BACRO_STAR))
     set_cdar(sc->code, check_lambda_star_args(sc, cdar(sc->code), NULL));
   else check_lambda_args(sc, cdar(sc->code), NULL);
 
@@ -65666,11 +65697,11 @@ static int32_t dox_ex(s7_scheme *sc)
 	  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
 	  
 	  if (typesflag(code) == SYNTACTIC_PAIR)
-	    sc->op = (opcode_t)pair_syntax_op(code);
+	    sc->cur_op = (opcode_t)pair_syntax_op(code);
 	  else
 	    {
-	      sc->op = (opcode_t)symbol_syntax_op(car(code));
-	      pair_set_syntax_op(code, sc->op);
+	      sc->cur_op = (opcode_t)symbol_syntax_op(car(code));
+	      pair_set_syntax_op(code, sc->cur_op);
 	      set_syntactic_pair(code);
 	    }
 	  sc->code = cdr(code);
@@ -66190,11 +66221,11 @@ static int32_t safe_dotimes_ex(s7_scheme *sc)
 		    }
 		  push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, code);
 		  if (typesflag(sc->code) == SYNTACTIC_PAIR)
-		    sc->op = (opcode_t)pair_syntax_op(sc->code);
+		    sc->cur_op = (opcode_t)pair_syntax_op(sc->code);
 		  else
 		    {
-		      sc->op = (opcode_t)symbol_syntax_op(car(sc->code));
-		      pair_set_syntax_op(sc->code, sc->op);
+		      sc->cur_op = (opcode_t)symbol_syntax_op(car(sc->code));
+		      pair_set_syntax_op(sc->code, sc->cur_op);
 		      set_syntactic_pair(sc->code);
 		    }
 		  sc->code = cdr(sc->code);
@@ -67212,7 +67243,7 @@ static int32_t read_s_ex(s7_scheme *sc)
       else
 	{
 	  push_input_port(sc, port);
-	  push_stack(sc, OP_READ_DONE, sc->nil, sc->nil); /* this stops the internal read process so we only get one form */
+	  push_stack_op(sc, OP_READ_DONE); /* this stops the internal read process so we only get one form */
 	  sc->tok = token(sc);
 	  switch (sc->tok)
 	    {
@@ -67520,7 +67551,7 @@ static void apply_syntax(s7_scheme *sc)                            /* -------- s
       (syntax_max_args(sc->code) != -1))
     s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, sc->code, sc->args));
 
-  sc->op = (opcode_t)syntax_opcode(sc->code);         /* (apply begin '((define x 3) (+ x 2))) */
+  sc->cur_op = (opcode_t)syntax_opcode(sc->code);         /* (apply begin '((define x 3) (+ x 2))) */
   /* I used to have elaborate checks here for embedded circular lists, but now i think that is the caller's problem */
   sc->code = sc->args;
 }
@@ -68231,7 +68262,7 @@ static s7_pointer check_for_cyclic_code(s7_scheme *sc, s7_pointer code)
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 {
-  sc->op = first_op;
+  sc->cur_op = first_op;
 
   /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp
    *   I don't think the recursion can hurt our continuations because s7_call is coming from hooks and
@@ -68246,14 +68277,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc);
       
     START_WITHOUT_POP_STACK:
-      /* fprintf(stderr, "%s (%d) %s\n", op_names[sc->op], (int)(sc->op), DISPLAY_80(sc->code)); */
+      /* fprintf(stderr, "%s (%d) %s\n", op_names[sc->cur_op], (int)(sc->cur_op), DISPLAY_80(sc->code)); */
 
 #if WITH_PROFILE
       profile_at_start = sc->code;
       profile(sc, sc->code);
 #endif
 
-      switch (sc->op)
+      switch (sc->cur_op)
 	{
 	case OP_NO_OP:
 	case OP_GC_PROTECT:
@@ -68629,7 +68660,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    x = car(p);
 	    counter_set_list(c, cdr(p));
 
-	    if (sc->op == OP_MAP_GATHER_3)
+	    if (sc->cur_op == OP_MAP_GATHER_3)
 	      {
 		cdr(sc->code) = cddr(sc->code);
 		if (cdr(sc->code) == counter_list(c))
@@ -68738,7 +68769,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    code = _TClo(sc->code);
 	    arg = car(lst);
 	    counter_set_list(c, cdr(lst));
-	    if (sc->op == OP_FOR_EACH_3)
+	    if (sc->cur_op == OP_FOR_EACH_3)
 	      {
 		counter_set_result(c, cdr(counter_result(c)));
 		if (counter_result(c) == counter_list(c))
@@ -68785,7 +68816,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  set_opt_fast(sc->args, cdr(opt_fast(sc->args)));     /* cdr down arg list */
 	  
-	  if (sc->op == OP_MEMBER_IF1)
+	  if (sc->cur_op == OP_MEMBER_IF1)
 	    {
 	      /* circular list check */
 	      if (opt_fast(sc->args) == opt_slow(sc->args))
@@ -68822,7 +68853,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  set_opt_fast(sc->args, cdr(opt_fast(sc->args)));  /* cdr down arg list */
 	  
-	  if (sc->op == OP_ASSOC_IF1)
+	  if (sc->cur_op == OP_ASSOC_IF1)
 	    {
 	      /* circular list check */
 	      if (opt_fast(sc->args) == opt_slow(sc->args))
@@ -69020,7 +69051,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    push_stack(sc, OP_SAFE_DOTIMES_STEP_P, sc->args, sc->code);
 	    sc->code = opt_pair2(sc->code);
-	    sc->op = (opcode_t)pair_syntax_op(sc->code);
+	    sc->cur_op = (opcode_t)pair_syntax_op(sc->code);
 	    sc->code = cdr(sc->code);
 	    goto START_WITHOUT_POP_STACK;
 	  }
@@ -69184,10 +69215,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->code = cdr(cadr(code));
 		goto DO_END_CLAUSES;
 	      }
-	    push_stack(sc, sc->op, sc->args, code);
+	    push_stack(sc, sc->cur_op, sc->args, code);
 #if DEBUGGING
-	    if (sc->op != OP_SIMPLE_DO_STEP)
-	      fprintf(stderr, "simple_do_step: %s\n", op_names[sc->op]);
+	    if (sc->cur_op != OP_SIMPLE_DO_STEP)
+	      fprintf(stderr, "simple_do_step: %s\n", op_names[sc->cur_op]);
 #endif
 	    sc->code = _TPair(opt_pair2(code));
 	    goto BEGIN1;
@@ -69257,7 +69288,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    push_stack(sc, OP_DOTIMES_STEP_P, sc->args, code);
 	    code = caddr(code);
 	    set_current_code(sc, code);
-	    sc->op = (opcode_t)pair_syntax_op(code);
+	    sc->cur_op = (opcode_t)pair_syntax_op(code);
 	    sc->code = cdr(code);
 	    goto START_WITHOUT_POP_STACK;
 	  }
@@ -69313,7 +69344,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
 	    sc->code = caddr(sc->code);
-	    sc->op = (opcode_t)pair_syntax_op(sc->code);
+	    sc->cur_op = (opcode_t)pair_syntax_op(sc->code);
 	    sc->code = cdr(sc->code);
 	    goto START_WITHOUT_POP_STACK;
 	  }
@@ -69607,7 +69638,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		profile(sc, sc->code);
 #endif
 	      set_current_code(sc, sc->code);         /* in case an error occurs, this helps tell us where we are */
-	      sc->op = (opcode_t)pair_syntax_op(sc->code);
+	      sc->cur_op = (opcode_t)pair_syntax_op(sc->code);
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;	      
 	    }
@@ -69886,21 +69917,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   */
 		case HOP_SAFE_C_Z:
 		  check_stack_size(sc);
-		  push_stack(sc, OP_SAFE_C_P_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_SAFE_C_P_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 
 		case OP_SAFE_C_P:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_P:
-		  push_stack(sc, OP_SAFE_C_P_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_SAFE_C_P_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto EVAL;
 		  
 		case OP_NOT_P:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_NOT_P:
-		  push_stack(sc, OP_NOT_P_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_NOT_P_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto EVAL;
 		  
@@ -69938,7 +69969,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ZS:
 		  check_stack_size(sc);
-		  push_stack(sc, OP_EVAL_ARGS_P_3, sc->nil, code);
+		  push_stack_no_args(sc, OP_EVAL_ARGS_P_3, code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -70054,7 +70085,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ZA:
 		  /* here we can't use ZS order because we sometimes assume left->right arg evaluation (binary-io.scm for example) */
-		  push_stack(sc, OP_SAFE_C_ZA_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_SAFE_C_ZA_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -70064,7 +70095,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* most of the component Z's here are very complex:
 		   *    264600: (+ (* even-amp (oscil (vector-ref evens k) (+ even-freq val))) (* odd-amp...
 		   */
-		  push_stack(sc, OP_SAFE_C_ZZ_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_SAFE_C_ZZ_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -70082,7 +70113,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_ZAA:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ZAA:
-		  push_stack(sc, OP_SAFE_C_ZAA_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_SAFE_C_ZAA_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -70120,7 +70151,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_ZZA:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ZZA:
-		  push_stack(sc, OP_SAFE_C_ZZA_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_SAFE_C_ZZA_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -70145,7 +70176,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_ZZZ:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ZZZ:
-		  push_stack(sc, OP_SAFE_C_ZZZ_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_SAFE_C_ZZZ_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 
@@ -70471,7 +70502,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_PS:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_PS:
-		  push_stack(sc, OP_EVAL_ARGS_P_3, sc->nil, code); /* gotta wait in this case */
+		  push_stack_no_args(sc, OP_EVAL_ARGS_P_3, code); /* gotta wait in this case */
 		  sc->code = cadr(code);
 		  goto EVAL;
 		  
@@ -71327,14 +71358,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_C_Z:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_C_Z:
-		  push_stack(sc, OP_C_P_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_C_P_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 		  
 		case OP_C_P:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_C_P:
-		  push_stack(sc, OP_C_P_1, sc->nil, code);
+		  push_stack_no_args(sc, OP_C_P_1, code);
 		  sc->code = _TPair(cadr(code));
 		  goto EVAL;
 		  
@@ -71662,7 +71693,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_LTHUNK_P:
 		  sc->envir = closure_let(opt_lambda(code));
 		  sc->code = car(closure_body(opt_lambda(code)));
-		  sc->op = (opcode_t)pair_syntax_op(sc->code);
+		  sc->cur_op = (opcode_t)pair_syntax_op(sc->code);
 		  sc->code = cdr(sc->code);
 		  goto START_WITHOUT_POP_STACK;
 		  
@@ -71691,7 +71722,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_S_P:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
 		  sc->code = car(closure_body(opt_lambda(code)));
-		  sc->op = (opcode_t)pair_syntax_op(sc->code);
+		  sc->cur_op = (opcode_t)pair_syntax_op(sc->code);
 		  sc->code = cdr(sc->code);
 		  goto START_WITHOUT_POP_STACK;
 
@@ -71700,7 +71731,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_LCLOSURE_L_P:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), local_symbol_value(opt_sym2(code)));
 		  sc->code = car(closure_body(opt_lambda(code)));
-		  sc->op = (opcode_t)pair_syntax_op(sc->code);
+		  sc->cur_op = (opcode_t)pair_syntax_op(sc->code);
 		  sc->code = cdr(sc->code);
 		  goto START_WITHOUT_POP_STACK;
 
@@ -72124,7 +72155,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  code = opt_lambda(code);
 		  new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
 		  code = car(closure_body(code));
-		  sc->op = (opcode_t)pair_syntax_op(code);
+		  sc->cur_op = (opcode_t)pair_syntax_op(code);
 		  sc->code = cdr(code);
 		  goto START_WITHOUT_POP_STACK;
 		  
@@ -72165,7 +72196,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					     car(args), find_symbol_unchecked(sc, cadr(code)),
 					     cadr(args), find_symbol_unchecked(sc, opt_sym2(code)));
 		    sc->code = car(closure_body(func));
-		    sc->op = (opcode_t)pair_syntax_op(sc->code);
+		    sc->cur_op = (opcode_t)pair_syntax_op(sc->code);
 		    sc->code = cdr(sc->code);
 		    goto START_WITHOUT_POP_STACK;	      
 		  }
@@ -72628,8 +72659,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    set_syntactic_pair(code);      /* leave other bits (T_LINE_NUMBER) intact */
 		    set_car(code, syntax_symbol(slot_value(initial_slot(carc)))); /* clear possible optimization confusion */
-		    sc->op = (opcode_t)symbol_syntax_op(carc);
-		    pair_set_syntax_op(code, sc->op);
+		    sc->cur_op = (opcode_t)symbol_syntax_op(carc);
+		    pair_set_syntax_op(code, sc->cur_op);
 		    sc->code = cdr(code);
 		    goto START_WITHOUT_POP_STACK;
 		  }
@@ -72664,7 +72695,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				((!is_pair(cdr(carc))) ||                 /* ((quote . #\h) (2 . #\i)) ! */
 				 (is_syntactic(cadr(carc)))))
 			      return(apply_error(sc, (is_pair(cdr(carc))) ? cadr(carc) : carc, cdr(code)));
-			    sc->op = (opcode_t)symbol_syntax_op(car(carc));
+			    sc->cur_op = (opcode_t)symbol_syntax_op(car(carc));
 			    sc->code = cdr(carc);
 			    goto START_WITHOUT_POP_STACK;
 			  }
@@ -72708,7 +72739,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* (define progn begin) (progn (display "hi") (+ 1 23)) */
 	      if (!is_syntax(sc->value))
 		eval_error(sc, "attempt to evaluate: ~A?", sc->code);
-	      sc->op = (opcode_t)syntax_opcode(sc->value);
+	      sc->cur_op = (opcode_t)syntax_opcode(sc->value);
 	      goto START_WITHOUT_POP_STACK;
 	    }
 	  
@@ -73251,7 +73282,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  if (is_pair(caar(sc->code)))                            /* (macroexpand ((symbol->value 'mac) (+ 1 2))) */
 	    {
-	      push_stack(sc, OP_MACROEXPAND_1, sc->nil, sc->code);
+	      push_stack_no_args(sc, OP_MACROEXPAND_1, sc->code);
 	      sc->code = caar(sc->code);
 	      goto EVAL;
 	    }
@@ -73323,7 +73354,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = find_symbol_checked(sc, car(sc->code));
 	      goto START;
 	    }
-	  push_stack(sc, OP_DEFINE_CONSTANT1, sc->nil, sc->code);
+	  push_stack_no_args(sc, OP_DEFINE_CONSTANT1, sc->code);
 	  
 	case OP_DEFINE_STAR:
 	case OP_DEFINE:
@@ -75071,12 +75102,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  check_cond(sc);
 	  
 	case OP_COND_UNCHECKED:
-	  push_stack(sc, OP_COND1, sc->nil, sc->code);
+	  push_stack_no_args(sc, OP_COND1, sc->code);
 	  sc->code = caar(sc->code);
 	  goto EVAL;
 	  
 	case OP_COND_UNCHECKED_Z:
-	  push_stack(sc, OP_COND1, sc->nil, sc->code);
+	  push_stack_no_args(sc, OP_COND1, sc->code);
 	  sc->code = caar(sc->code);
 	  goto OPT_EVAL_CHECKED;
 	  
@@ -75507,7 +75538,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_DEFINE_EXPANSION:
 	case OP_DEFINE_MACRO:
 	case OP_DEFINE_MACRO_STAR:
-	  check_define_macro(sc, sc->op);
+	  check_define_macro(sc, sc->cur_op);
 	  if (symbol_has_accessor(caar(sc->code)))
 	    {
 	      s7_pointer x;
@@ -75851,8 +75882,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   get confused.
 	   */
 	  stack_reset(sc);                                 /* is this necessary? */
-	  push_stack(sc, OP_ERROR_QUIT, sc->nil, sc->nil); /* added 3-Dec-16: try to make sure we actually exit! */
-	  sc->op = OP_ERROR_QUIT;
+	  push_stack_op(sc, OP_ERROR_QUIT);                /* added 3-Dec-16: try to make sure we actually exit! */
+	  sc->cur_op = OP_ERROR_QUIT;
 	  if (sc->longjmp_ok) longjmp(sc->goto_start, ERROR_QUIT_JUMP);
 #if DEBUGGING
 	  fprintf(stderr, "%d: op_error_hook_quit did not jump, returns %s\n", __LINE__, DISPLAY(sc->value));
@@ -75969,7 +76000,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  else
 	    {
-	      push_stack(sc, OP_WITH_LET1, sc->nil, cdr(sc->code));
+	      push_stack_no_args(sc, OP_WITH_LET1, cdr(sc->code));
 	      sc->code = sc->value;                          /* eval env arg */
 	      goto EVAL;
 	    }
@@ -76000,7 +76031,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  /* -------------------------------- the reader -------------------------------- */
 	POP_READ_LIST:
-	  /* push-stack OP_READ_LIST is always no_code and sc->op is always OP_READ_LIST (and not used), sc->envir is apparently not needed here
+	  /* push-stack OP_READ_LIST is always no_code and sc->cur_op is always OP_READ_LIST (and not used), sc->envir is apparently not needed here
 	   */
 	  sc->stack_end -= 4;
 	  sc->args = sc->stack_end[2];
@@ -76172,7 +76203,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if ((is_expansion(car(sc->value))) &&
 		      (expansion_ex(sc) == goto_APPLY))
 		    {
-		      push_stack(sc, OP_EXPANSION, sc->nil, sc->nil);
+		      push_stack(sc, OP_EXPANSION, sc->nil, sc->gc_nil);
 		      new_frame(sc, closure_let(sc->code), sc->envir);
 		      goto APPLY_LAMBDA;
 		    }
@@ -76338,7 +76369,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	default:
-	  fprintf(stderr, "unknown operator: %" PRIdPTR " in %s\n", sc->op, DISPLAY(current_code(sc)));
+	  fprintf(stderr, "unknown operator: %" PRIdPTR " in %s\n", sc->cur_op, DISPLAY(current_code(sc)));
 #if DEBUGGING
 	  fprintf(stderr, "stack size: %u\n", sc->stack_size);
 	  if (sc->stack_end < sc->stack_start) 
@@ -83451,6 +83482,7 @@ int main(int argc, char **argv)
  *
  * splitworthy: closure_s|ss|aa|all_s|all_x, set_dilambda, let_all_x, catch_all
  * either remove lclosure* or be explicit in unknown*ex -- outer_hop is too tricky
+ *   tlet lc_a_p -> eval, titer lc_l_p
  *
  * --------------------------------------------------------------------
  *
@@ -83459,18 +83491,18 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1056
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1400
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1924
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1918
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2195
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2919
- * lg            |      |      |      || 211  | 161   149   143.9 139.7
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2918
+ * lg            |      |      |      || 211  | 161   149   143.9 139.6
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
- * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3305
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3298
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3380
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707  4578
- * bench         |      |      |      || 7012 | 6378  6327  5934  5474
+ * bench         |      |      |      || 7012 | 6378  6327  5934  5472
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7525
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
