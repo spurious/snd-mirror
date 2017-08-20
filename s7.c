@@ -892,7 +892,7 @@ typedef struct s7_cell {
 
 typedef struct {
   s7_pointer *objs;
-  int32_t size, top, ref;
+  int32_t size, top, ref, size2;
   bool has_hits;
   int32_t *refs;
 } shared_info;
@@ -1991,7 +1991,7 @@ static s7_scheme *cur_sc = NULL;
  * don't reuse this bit if possible
  */
 
-#define T_ITER_OK                     (1LL << (TYPE_BITS + 24))
+#define T_ITER_OK                     (1LL << (TYPE_BITS + 23))
 #define iter_ok(p)                    ((typeflag(p) & T_ITER_OK) != 0)  /* not TItr(p) here because this bit is globally unique */
 #define clear_iter_ok(p)              typeflag(_TItr(p)) &= (~T_ITER_OK)
 
@@ -25740,6 +25740,7 @@ static void enlarge_shared_info(shared_info *ci)
 {
   int32_t i;
   ci->size *= 2;
+  ci->size2 = ci->size - 2;
   ci->objs = (s7_pointer *)realloc(ci->objs, ci->size * sizeof(s7_pointer));
   ci->refs = (int32_t *)realloc(ci->refs, ci->size * sizeof(int32_t));
   for (i = ci->top; i < ci->size; i++)
@@ -25945,16 +25946,27 @@ static shared_info *init_circle_info(void)
   shared_info *ci;
   ci = (shared_info *)calloc(1, sizeof(shared_info));
   ci->size = INITIAL_SHARED_INFO_SIZE;
+  ci->size2 = ci->size - 2;
   ci->objs = (s7_pointer *)malloc(ci->size * sizeof(s7_pointer));
   ci->refs = (int32_t *)calloc(ci->size, sizeof(int32_t));   /* finder expects 0 = unseen previously */
   return(ci);
 }
+
+/* static int max_ref = 0, max_top = 0; */
 
 static shared_info *new_shared_info(s7_scheme *sc)
 {
   shared_info *ci;
   int32_t i;
   ci = sc->circle_info;
+#if 0
+  if ((ci->ref > max_ref) || (ci->top > max_top))
+    {
+      if (ci->ref > max_ref) max_ref = ci->ref;
+      if (ci->top > max_top) max_top = ci->top;
+      fprintf(stderr, "top: %d, ref: %d\n", max_top, max_ref);
+    }
+#endif
   memclr((void *)(ci->refs), ci->top * sizeof(int32_t));
   for (i = 0; i < ci->top; i++)
     clear_collected_and_shared(ci->objs[i]);
@@ -27810,7 +27822,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 						      " ?21?")))) : "",
 	   /* bit 22 */
 	   ((full_typ & T_HAS_METHODS) != 0) ?    " has-methods" : "",
-	   /* bit 24 */
+	   /* bit 23 */
 	   ((full_typ & T_ITER_OK) != 0) ?        " iter-ok" : "",
 	   /* bit 55 */
 	   (((full_typ & T_GC_MARK) != 0) && (in_heap(obj))) ? " gc-marked" : "");
@@ -39421,7 +39433,7 @@ static bool port_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared
 #define equal_ref(Sc, X, Y, Ci) \
   do {   \
     /* here we know x and y are pointers to the same type of structure */ \
-    int32_t ref_y;						\
+    int32_t ref_y;							\
     ref_y = (is_collected(Y)) ? peek_shared_ref(Ci, Y) : 0;		\
     if (is_collected(X))						\
       {									\
@@ -39429,7 +39441,7 @@ static bool port_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared
 	ref_x = peek_shared_ref(Ci, X);					\
 	if (ref_y != 0) return(ref_x == ref_y);				\
 	/* try to harmonize the new guy -- there can be more than one structure equal to the current one */ \
-	if (ref_x != 0) add_shared_ref(Ci, Y, ref_x);					\
+	if (ref_x != 0) add_shared_ref(Ci, Y, ref_x);			\
       }									\
     else								\
       {									\
@@ -39440,7 +39452,7 @@ static bool port_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared
 	    /* assume neither x nor y is in the table, and that they should share a ref value, \
 	     *   called only in equality check, not printer.		\
 	     */								\
-	    if ((Ci->top + 2) >= Ci->size) enlarge_shared_info(Ci);	\
+	    if (Ci->top >= Ci->size2) enlarge_shared_info(Ci);		\
 	    set_collected(X);						\
 	    set_collected(Y);						\
 	    Ci->objs[Ci->top] = X;					\
@@ -39715,6 +39727,8 @@ static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
       if (!s7_is_equal_1(sc, car(px), car(py), nci)) return(false);
       equal_ref(sc, px, py, nci);
     }
+  if (px == py) /* normally nil? */
+    return(true);
   return(s7_is_equal_1(sc, px, py, nci));
 }
 
@@ -39750,6 +39764,8 @@ static bool pair_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared
       if (!s7_is_morally_equal_1(sc, car(px), car(py), nci)) return(false);
       equal_ref(sc, px, py, nci);
     }
+  if (px == py) /* normally nil? */
+    return(true);
   return(s7_is_morally_equal_1(sc, px, py, nci));
 }
 
@@ -83491,6 +83507,15 @@ int main(int argc, char **argv)
  * either remove lclosure* or be explicit in unknown*ex -- outer_hop is too tricky
  *   tlet lc_a_p -> eval, titer lc_l_p
  *
+ * at start clear tops, during scan for each seq, does tops[ref]==obj
+ *   if so, cycle, else set ref so tops[ref]==obj
+ *   no need to clear at end.  need enough bits for ref -- 24??
+ *   if 24, bits 32-55 in typeflag -- use top half as int -- GC mark
+ *      may be set/cleared in midst, but we won't notice?
+ *      so read as int32, write same, but max at however many free bits there are (currently 31)
+ *   circle_info = tops array+size+last top (for memclr)
+ *   but y=ref too? so ref->x|ytop[ref], so ref above needs to check both arrays
+ *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
@@ -83498,20 +83523,20 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1056
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1400
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1918
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2195
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2917
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2916
  * lg            |      |      |      || 211  | 161   149   143.9 139.5
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3298
- * tmap          |      |      |  9.3 || 5279 |       3939  3387  3380
+ * tmap          |      |      |  9.3 || 5279 |       3939  3387  3379
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707  4578
  * bench         |      |      |      || 7012 | 6378  6327  5934  5472
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7525
- * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  10.6
+ * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.6
  *                                    || 145  | 135   132   93.2  89.5
