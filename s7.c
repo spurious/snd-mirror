@@ -24659,7 +24659,7 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
       {
 	s7_pointer init;
 
-	init = g_let_ref(sc, set_plist_2(sc, sc->envir, s7_make_symbol(sc, "init_func")));
+	init = g_let_ref(sc, set_plist_2(sc, (is_null(sc->envir)) ? sc->rootlet : sc->envir, s7_make_symbol(sc, "init_func")));
 	if (is_symbol(init))
 	  {
 	    void *library;
@@ -25952,21 +25952,11 @@ static shared_info *init_circle_info(void)
   return(ci);
 }
 
-/* static int max_ref = 0, max_top = 0; */
-
 static shared_info *new_shared_info(s7_scheme *sc)
 {
   shared_info *ci;
   int32_t i;
   ci = sc->circle_info;
-#if 0
-  if ((ci->ref > max_ref) || (ci->top > max_top))
-    {
-      if (ci->ref > max_ref) max_ref = ci->ref;
-      if (ci->top > max_top) max_top = ci->top;
-      fprintf(stderr, "top: %d, ref: %d\n", max_top, max_ref);
-    }
-#endif
   memclr((void *)(ci->refs), ci->top * sizeof(int32_t));
   for (i = 0; i < ci->top; i++)
     clear_collected_and_shared(ci->objs[i]);
@@ -65194,7 +65184,9 @@ static s7_pointer check_do(s7_scheme *sc)
 
 	      if ((is_optimized(step_expr)) &&
 		  (((optimize_op(step_expr) == HOP_SAFE_C_SC) && (car(v) == cadr(step_expr))) ||
-		   ((is_h_safe_c_c(step_expr)) && (car(v) == cadr(step_expr)) &&
+		   ((is_h_safe_c_c(step_expr)) && 
+		    (is_pair(cdr(step_expr))) &&         /* ((v 0 (+))) */
+		    (car(v) == cadr(step_expr)) &&
 		    ((opt_cfunc(step_expr) == add_cs1) || (opt_cfunc(step_expr) == add_cl1) || 
 		     (opt_cfunc(step_expr) == subtract_cs1) || (opt_cfunc(step_expr) == subtract_cl1))) ||
 		   ((optimize_op(step_expr) == HOP_SAFE_C_CS) && (car(v) == caddr(step_expr)))))
@@ -66594,10 +66586,8 @@ static int32_t unknown_ex(s7_scheme *sc, s7_pointer f)
 	{
 	  if (is_safe_closure(f))
 	    {
-	      int32_t outer_hop;
 	      s7_pointer body;
 	      body = closure_body(f);
-	      outer_hop = (is_local_symbol(code)) ? 2 : 0; 
 	      set_optimize_op(code, hop + OP_SAFE_THUNK);
 	      if (is_null(cdr(body)))
 		{
@@ -66608,7 +66598,7 @@ static int32_t unknown_ex(s7_scheme *sc, s7_pointer f)
 		      if ((is_pair(car(body))) &&
 			  (is_syntactic_symbol(caar(body))))
 			{
-			  set_optimize_op(code, hop + outer_hop + OP_SAFE_THUNK_P);
+			  set_optimize_op(code, hop + ((is_local_symbol(code)) ? OP_SAFE_LTHUNK_P : OP_SAFE_THUNK_P));
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			    {
 			      pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
@@ -66682,7 +66672,6 @@ static int32_t unknown_g_ex(s7_scheme *sc, s7_pointer f)
       break;
       
     case T_CLOSURE:
-      /* fprintf(stderr, "unknown_g_ex: %s: %s %d %s\n", DISPLAY(code), DISPLAY(f), is_safe_closure(f), opt_names[optimize_op(code)]); */
       if ((!has_methods(f)) &&
 	  (closure_arity_to_int(sc, f) == 1))
 	{
@@ -66699,9 +66688,7 @@ static int32_t unknown_g_ex(s7_scheme *sc, s7_pointer f)
 		      (is_pair(car(body))) &&
 		      (is_syntactic_symbol(caar(body))))
 		    {
-		      int32_t outer_hop;
-		      outer_hop = ((is_local_symbol(code)) && (is_local_symbol(cdr(code)))) ? 2 : 0;
-		      set_optimize_op(code, hop + outer_hop + OP_SAFE_CLOSURE_S_P);
+		      set_optimize_op(code, hop + (((is_local_symbol(code)) && (is_local_symbol(cdr(code)))) ? OP_SAFE_LCLOSURE_L_P : OP_SAFE_CLOSURE_S_P));
 		      if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			{
 			  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
@@ -66989,9 +66976,8 @@ static int32_t unknown_a_ex(s7_scheme *sc, s7_pointer f)
 	  (closure_arity_to_int(sc, f) == 1))
 	{
 	  if (is_safe_closure(f))
-	    set_optimize_op(code, hop + (OP_SAFE_CLOSURE_A + 
-					 ((is_local_symbol(code)) ? 
-					  ((is_null(cdr(closure_body(f)))) ? 4 : 2) : 0)));
+	    set_optimize_op(code, hop + (((is_local_symbol(code)) ? 
+					  ((is_null(cdr(closure_body(f)))) ? OP_SAFE_LCLOSURE_A_P : OP_SAFE_LCLOSURE_A) : OP_SAFE_CLOSURE_A)));
 	  else 
 	    {
 	      set_optimize_op(code, hop + OP_CLOSURE_A);
@@ -83452,26 +83438,6 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  *
- * finish the t563.scm bugs: a couple number type problems 31905 30802 
- * weed out unused stuff -- choose.data/choose: simple_char_eq, is_eq_caar_q not_is_string|char|pair_car
- * map/for-each multi-expr bodies could be done in-place (rather than cons with begin)
- *   map/for-each/sort! in-place if c-func: p_pp 
- *   for-each+lambda also doable if lambda body is
- * test opt_sizes escape in sort et al -- perhaps save sc->envir, make sure it is ok if optimize fails
- * s7_macroexpand of multiple-value-set!? maybe disable values?
- *    s7test 29596 _sort_ 23890 use-redef-1 etc
- * all_x_if_a...?
- * opt let? opt_float_begin in s7_float_optimize for map-channel in snd?
- * g_multiply_2 (et al) -> direct cases
- * ([let-ref] (object->let obj) 'field) could be recognized and greatly optimized
- * tie in p_di|id?
- *
- * there's confusion about where .so files place their names upon load:
- *   cload uses (outlet (curlet))?? xg/xm use rootlet etc
- *   ideally all would allow (load "a.so" (define *a* (inlet 'init_func 'init_a))) and the like
- *      so all should use curlet
- *   (libm -> snd results in two versions of each??)
- *   libgtk uses curlet which seems to work as intended
  * grepl:
  *   grepl.scm for debugger.
  *      libgl_s7.c to makegl
@@ -83487,34 +83453,23 @@ int main(int argc, char **argv)
  *   callback funcs need calling check -- 5 list as fields of c-pointer?
  *   several more special funcs
  *
+ * finish the t563.scm bugs: a couple number type problems 31905 30802 
+ * weed out unused stuff -- choose.data/choose: simple_char_eq, is_eq_caar_q not_is_string|char|pair_car
+ * test opt_sizes escape in sort et al -- perhaps save sc->envir, make sure it is ok if optimize fails
+ * s7_macroexpand of multiple-value-set!? maybe disable values?  s7test 29596 _sort_ 23890 use-redef-1 etc
+ * all_x_if_a...?
+ * opt let? opt_float_begin in s7_float_optimize for map-channel in snd?
+ * g_multiply_2 (et al) -> direct cases
+ * ([let-ref] (object->let obj) 'field) could be recognized and greatly optimized
  * check glob/libc.scm in openbsd -- some problem loading libc_s7.so (it works in snd, not in repl?)
  * ideally cload would handle struct ptr* correctly
- * perhaps add c-pointer-type|info?
  * libc needs many type checks
  * is_type replacing is_symbol etc [all_x_is_*_s if_is_* safe_is_*]
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  *   there are 8 bits free
- * add snd lint snd-test.scm to testsnd (for snd-lint etc)
  * if_and_n if_or_3|pair_cdr similar for all_x_closure (and_3...)
- *
- * currently: (define h (make-hash-table 31 string=?)) (hash-table-set! h 'a 21)  (hash-table-ref 'a): #f
- *   this should probably be an error?? (srfi sez yes)
- *   string/char/number(=) are the only cases? is NaN an error if = or eqv?
- *   see old/hash-error-s7.c -- works but is too slow
- *
  * splitworthy: closure_s|ss|aa|all_s|all_x, set_dilambda, let_all_x, catch_all
- * either remove lclosure* or be explicit in unknown*ex -- outer_hop is too tricky
- *   tlet lc_a_p -> eval, titer lc_l_p
- *
- * at start clear tops, during scan for each seq, does tops[ref]==obj
- *   if so, cycle, else set ref so tops[ref]==obj
- *   no need to clear at end.  need enough bits for ref -- 24??
- *   if 24, bits 32-55 in typeflag -- use top half as int -- GC mark
- *      may be set/cleared in midst, but we won't notice?
- *      so read as int32, write same, but max at however many free bits there are (currently 31)
- *   circle_info = tops array+size+last top (for memclr)
- *   but y=ref too? so ref->x|ytop[ref], so ref above needs to check both arrays
  *
  * --------------------------------------------------------------------
  *
@@ -83530,7 +83485,7 @@ int main(int argc, char **argv)
  * lg            |      |      |      || 211  | 161   149   143.9 139.5
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3298
- * tmap          |      |      |  9.3 || 5279 |       3939  3387  3379
+ * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707  4578

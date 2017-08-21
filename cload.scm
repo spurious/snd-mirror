@@ -481,7 +481,7 @@
 	     (format p ");~%")))
 	 signatures)
 	(format p "  }~%~%")
-	(format p "  cur_env = s7_outlet(sc, s7_curlet(sc));~%") ; this must exist because we pass load the env ourselves
+	(format p "  cur_env = s7_curlet(sc);~%") ; changed from s7_outlet(s7_curlet) 20-Aug-17
 	
 	;; send out any special initialization code
 	(for-each
@@ -672,9 +672,9 @@
 	(delete-file o-file-name))
       
       ;; load the object file, clean up
-      (let ((new-env (sublet cur-env 'init_func (string->symbol init-name))))
-	(format *stderr* "loading ~A~%" so-file-name)
-	(load so-file-name new-env)))))
+      (varlet cur-env 'init_func (string->symbol init-name))
+      (format *stderr* "loading ~A~%" so-file-name)
+      (load so-file-name cur-env))))
 
 
 #|

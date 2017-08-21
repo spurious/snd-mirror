@@ -19,6 +19,7 @@ echo ' '
 
 ./snd -noinit s7test.scm
 ./snd lint.scm -e '(begin (lint "s7test.scm" #f) (exit))'
+./snd -e '(begin (load "snd-lint.scm") (lint "snd-test.scm") (exit))'
 
 valgrind ./snd -noinit -l snd-test
 echo ' '

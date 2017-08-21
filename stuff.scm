@@ -263,6 +263,15 @@
 	      (cdr places))
        (set! ,last ,tmp))))
 
+#|
+(define (rotate! lst)
+  (if (and (pair? lst)
+	   (pair? (cdr lst)))
+      (let ((lr (reverse! lst)))
+	(cons (car lr) (reverse! (cdr lr))))
+      lst))
+|#
+
 (define-macro (progv vars vals . body)
   `(apply (apply lambda ,vars ',body) ,vals))
 

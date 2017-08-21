@@ -10174,6 +10174,8 @@
 				      (var-member :catch env)   ; (round (char-position #\a "asb"))
 				      (and (pair? arg)
 					   (memq (car arg) '(int-vector-ref float-vector-ref system))))
+			    (let ((other (remove-if (lambda (o) (any-compatible? checker o)) op)))
+			      (when (pair? other)
 				(lint-format "in ~A,~%~NC~A's argument ~Ashould be ~A, but ~A might also be ~A" caller
 					     (truncated-list->string form)
 					     (+ lint-left-margin 4) #\space
@@ -10181,7 +10183,7 @@
 					     (prettify-arg-number arg-number)
 					     (prettify-checker-unq checker)
 					     (truncated-list->string arg)
-					     (car (remove-if (lambda (o) (any-compatible? checker o)) op))))
+					     (car other)))))
 			  (lint-format "in ~A,~%~NC~A's argument ~Ashould be ~A, but ~A is ~A" caller
 				       (truncated-list->string form)
 				       (+ lint-left-margin 4) #\space
