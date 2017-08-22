@@ -1987,8 +1987,8 @@ static s7_scheme *cur_sc = NULL;
 #define has_methods(p)                ((typeflag(_NFre(p)) & T_HAS_METHODS) != 0)
 #define set_has_methods(p)            typeflag(_TMet(p)) |= T_HAS_METHODS
 #define clear_has_methods(p)          typeflag(_TMet(p)) &= (~T_HAS_METHODS)
-/* this marks an environment or closure that is "opened" up to generic functions etc
- * don't reuse this bit if possible
+/* this marks an environment or closure that is "open" for generic functions etc
+ * don't reuse this bit
  */
 
 #define T_ITER_OK                     (1LL << (TYPE_BITS + 23))
@@ -2172,8 +2172,8 @@ static int64_t not_heap = -1;
 #define set_arglist_length(P, X)      set_opt3(cdr(P), _TI(X),   G_ARGLEN)
 #define opt_sym3(P)                   _TSym(opt3(P,              G_SYM))
 #define set_opt_sym3(P, X)            set_opt3(P, _TSym(X),      G_SYM)
-#define opt_and_2_test(P)             _TPair(opt3(P,             G_AND))
-#define set_opt_and_2_test(P, X)      set_opt3(P, _TPair(X),     G_AND)
+#define opt_pair3(P)             _TPair(opt3(P,             G_AND))
+#define set_opt_pair3(P, X)      set_opt3(P, _TPair(X),     G_AND)
 #define opt_else(P)                   _NFre(opt3(P,              G_AND))
 #define set_opt_else(P, X)            set_opt3(P, _NFre(X),      G_AND)
 #define opt_direct_x(P)               opt3(P,                    G_DIRECT)
@@ -7371,14 +7371,15 @@ static s7_pointer let_ref_p_pp(s7_pointer p1, s7_pointer p2) {return(g_let_ref(c
 static s7_pointer lint_let_ref;
 static s7_pointer g_lint_let_ref(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer y, lt, sym;
-  sym = cadadr(args);
-  lt = find_symbol_unchecked(sc, cadar(args));
+  s7_pointer lt;
+  lt = find_symbol_unchecked(sc, opt_sym2(args)); /* cadar */
   if (is_pair(lt))
     {
       lt = cdr(lt);
       if (is_let(lt))
 	{
+	  s7_pointer y, sym;
+	  sym = opt_sym3(args); /* cadadr */
 	  for (y = let_slots(lt); is_slot(y); y = next_slot(y))
 	    if (slot_symbol(y) == sym)
 	      return(slot_value(y));
@@ -7392,14 +7393,15 @@ static s7_pointer g_lint_let_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer local_lint_let_ref;
 static s7_pointer g_local_lint_let_ref(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer y, lt, sym;
-  sym = cadadr(args);
-  lt = local_symbol_value(cadar(args));
+  s7_pointer lt;
+  lt = local_symbol_value(opt_sym2(args));
   if (is_pair(lt))
     {
       lt = cdr(lt);
       if (is_let(lt))
 	{
+	  s7_pointer y, sym;
+	  sym = opt_sym3(args);
 	  for (y = let_slots(lt); is_slot(y); y = next_slot(y))
 	    if (slot_symbol(y) == sym)
 	      return(slot_value(y));
@@ -7429,6 +7431,8 @@ static s7_pointer let_ref_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_
 	  (!is_immutable_symbol(cadr(arg2))))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
+	  set_opt_sym2(cdr(expr), cadr(arg1));
+	  set_opt_sym3(cdr(expr), cadr(arg2));
 	  if (is_local_symbol(cdr(arg1)))
 	    return(local_lint_let_ref);
 	  return(lint_let_ref);
@@ -7608,12 +7612,12 @@ static s7_pointer g_lint_let_set_1(s7_scheme *sc, s7_pointer lt1, s7_pointer sym
 
 static s7_pointer g_lint_let_set(s7_scheme *sc, s7_pointer args)
 {
-  return(g_lint_let_set_1(sc, find_symbol_checked(sc, cadar(args)), cadadr(args), find_symbol_unchecked(sc, caddr(args))));
+  return(g_lint_let_set_1(sc, find_symbol_checked(sc, opt_sym2(args)), opt_sym3(args), find_symbol_unchecked(sc, caddr(args))));
 }
 
 static s7_pointer g_local_lint_let_set(s7_scheme *sc, s7_pointer args)
 {
-  return(g_lint_let_set_1(sc, local_symbol_value(cadar(args)), cadadr(args), local_symbol_value(caddr(args))));
+  return(g_lint_let_set_1(sc, local_symbol_value(opt_sym2(args)), opt_sym3(args), local_symbol_value(caddr(args))));
 }
 
 
@@ -7638,6 +7642,8 @@ static s7_pointer let_set_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_
 	  (!is_immutable_symbol(arg3)))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
+	  set_opt_sym2(cdr(expr), cadr(arg1));
+	  set_opt_sym3(cdr(expr), cadr(arg2));
 	  if ((is_local_symbol(cdr(arg1))) &&
 	      (is_local_symbol(cdddr(expr))))
 	    return(local_lint_let_set);
@@ -28171,7 +28177,7 @@ static const char *opt3_role_name(int32_t role)
 {
   if (role == G_ARGLEN) return("arglist_length");
   if (role == G_SYM) return("opt_sym3");
-  if (role == G_AND) return("opt_and_2_test or opt_else");
+  if (role == G_AND) return("opt_pair3 or opt_else");
   if (role == G_DIRECT) return("direct_opt3");
   if (role == S_OP) return("s_op");
   if (role == S_SYNOP) return("s_synop");
@@ -28209,7 +28215,7 @@ static char* show_debugger_bits(uint32_t bits)
 	  ((bits & G_SET) != 0) ? " g-set" : "",
 	  ((bits & G_ARGLEN) != 0) ? " arglist_length" : "",
 	  ((bits & G_SYM) != 0) ? " opt_sym3" : "",
-	  ((bits & G_AND) != 0) ? " opt_and_2_test or opt_else " : "",
+	  ((bits & G_AND) != 0) ? " opt_pair3 or opt_else " : "",
 	  ((bits & G_DIRECT) != 0) ? " opt_direct_x3" : "",
 	  ((bits & S_NAME) != 0) ? " raw-name" : "",
 	  ((bits & S_HASH) != 0) ? " raw-hash" : "",	
@@ -32713,11 +32719,11 @@ static s7_pointer g_memq_car(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, obj;
 
-  obj = find_symbol_unchecked(sc, cadar(args));
+  obj = find_symbol_unchecked(sc, opt_sym2(args));
   if (is_pair(obj))
     obj = car(obj);
   else obj = g_car(sc, set_plist_1(sc, obj));
-  x = cadadr(args);
+  x = opt_pair3(args);
 
   while (true)
     {
@@ -32736,11 +32742,11 @@ static s7_pointer g_memq_car_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, obj;
 
-  obj = find_symbol_unchecked(sc, cadar(args));
+  obj = find_symbol_unchecked(sc, opt_sym2(args));
   if (is_pair(obj))
     obj = car(obj);
   else obj = g_car(sc, set_plist_1(sc, obj));
-  x = cadadr(args);
+  x = opt_pair3(args);
   if (obj == car(x)) return(x);
   if (obj == cadr(x)) return(cdr(x));
   return(sc->F);
@@ -32758,6 +32764,8 @@ static s7_pointer memq_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_poi
 	  (c_callee(cadr(expr)) == g_car))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
+	  set_opt_sym2(cdr(expr), cadadr(expr));
+	  set_opt_pair3(cdr(expr), cadr(caddr(expr)));
 	  if (len == 2)
 	    return(memq_car_2);
 	  return(memq_car);
@@ -36773,12 +36781,12 @@ static hash_entry_t *hash_equal_any(s7_scheme *sc, s7_pointer table, s7_pointer 
   /* we can get into an infinite loop here, but it requires 2 hash tables that are members of each other
    *    and key is one of them, so I changed the equality check above to use eq? -- not sure this is right.
    */
-  /* hope for an easy case... */
-
+#if 0
+  /* hope for an easy case... (apparently this never happens) */
   for (x = hash_table_element(table, loc); x; x = x->next)
     if (x->key == key)
       return(x);
-
+#endif
   for (x = hash_table_element(table, loc); x; x = x->next)
     if (s7_is_equal(sc, x->key, key))
       return(x);
@@ -37383,7 +37391,7 @@ static s7_pointer g_hash_table_ref_car(s7_scheme *sc, s7_pointer args)
   hash_entry_t *x;
 
   table = find_symbol_unchecked(sc, car(args));
-  y = find_symbol_unchecked(sc, cadadr(args));
+  y = find_symbol_unchecked(sc, opt_sym3(args));
   if (!is_pair(y))
     return(simple_wrong_type_argument(sc, sc->car_symbol, y, T_PAIR));
 
@@ -44923,27 +44931,27 @@ static s7_pointer all_x_c_char_eq(s7_scheme *sc, s7_pointer arg)
 static s7_pointer all_x_not_is_eq_car_q(s7_scheme *sc, s7_pointer arg)  
 {
   s7_pointer lst, a;
-  a = cdadr(arg);
-  lst = find_symbol_unchecked(sc, cadar(a));
+  a = opt_pair2(cdr(arg));
+  lst = find_symbol_unchecked(sc, opt_sym2(a));
   if (!is_pair(lst))
-    return(make_boolean(sc, is_false(sc, g_is_eq(sc, set_plist_2(sc, g_car(sc, set_plist_1(sc, lst)), cadadr(a))))));
-  return(make_boolean(sc, car(lst) != cadadr(a)));
+    return(make_boolean(sc, is_false(sc, g_is_eq(sc, set_plist_2(sc, g_car(sc, set_plist_1(sc, lst)), opt_sym3(a))))));
+  return(make_boolean(sc, car(lst) != opt_sym3(a)));
 }
 
 static s7_pointer local_x_not_is_eq_car_q(s7_scheme *sc, s7_pointer arg)  
 {
   s7_pointer lst, a;
-  a = cdadr(arg);
-  lst = local_symbol_value(cadar(a));
+  a = opt_pair2(cdr(arg));
+  lst = local_symbol_value(opt_sym2(a));
   if (!is_pair(lst))
-    return(make_boolean(sc, is_false(sc, g_is_eq(sc, set_plist_2(sc, g_car(sc, set_plist_1(sc, lst)), cadadr(a))))));
-  return(make_boolean(sc, car(lst) != cadadr(a)));
+    return(make_boolean(sc, is_false(sc, g_is_eq(sc, set_plist_2(sc, g_car(sc, set_plist_1(sc, lst)), opt_sym3(a))))));
+  return(make_boolean(sc, car(lst) != opt_sym3(a)));
 }
 
 static s7_pointer all_x_is_pair_cdr(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer p;
-  p = find_symbol_unchecked(sc, cadadr(arg));
+  p = find_symbol_unchecked(sc, opt_sym2(cdr(arg)));
   if (is_pair(p))
     return(make_boolean(sc, is_pair(cdr(p))));
   return(g_is_pair(sc, set_plist_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
@@ -45083,12 +45091,12 @@ static s7_pointer all_x_not_s(s7_scheme *sc, s7_pointer arg)
 
 static s7_pointer all_x_not_is_pair(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_not_bool(sc, is_pair, sc->is_pair_symbol, find_symbol_unchecked(sc, cadadr(arg)));
+  all_x_not_bool(sc, is_pair, sc->is_pair_symbol, find_symbol_unchecked(sc, opt_sym3(arg)));
 }
 
 static s7_pointer local_x_not_is_pair(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_not_bool(sc, is_pair, sc->is_pair_symbol, local_symbol_value(cadadr(arg)));
+  all_x_not_bool(sc, is_pair, sc->is_pair_symbol, local_symbol_value(opt_sym3(arg)));
 }
 
 static s7_pointer all_x_c_sc(s7_scheme *sc, s7_pointer arg)
@@ -45152,7 +45160,7 @@ static s7_pointer all_x_c_hash_table_ref_car(s7_scheme *sc, s7_pointer arg)
   hash_entry_t *x;
 
   table = find_symbol_unchecked(sc, cadr(arg));
-  lst = find_symbol_unchecked(sc, cadr(caddr(arg)));
+  lst = find_symbol_unchecked(sc, opt_sym3(cdr(arg)));
   if (!is_pair(lst))
     return(simple_wrong_type_argument(sc, sc->car_symbol, lst, T_PAIR));
 
@@ -45181,21 +45189,21 @@ static s7_pointer all_x_c_qs(s7_scheme *sc, s7_pointer arg)
 static s7_pointer all_x_c_sq(s7_scheme *sc, s7_pointer arg)
 {
   set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(arg)));
-  set_car(sc->t2_2, cadr(caddr(arg)));
+  set_car(sc->t2_2, opt_con2(cdr(arg)));
   return(c_call(arg)(sc, sc->t2_1));
 }
 
 static s7_pointer local_x_c_sq(s7_scheme *sc, s7_pointer arg)
 {
   set_car(sc->t2_1, local_symbol_value(cadr(arg)));
-  set_car(sc->t2_2, cadr(caddr(arg)));
+  set_car(sc->t2_2, opt_con2(cdr(arg)));
   return(c_call(arg)(sc, sc->t2_1));
 }
 
 static s7_pointer all_x_c_cq(s7_scheme *sc, s7_pointer arg)
 {
   set_car(sc->t2_1, cadr(arg));
-  set_car(sc->t2_2, cadr(caddr(arg)));
+  set_car(sc->t2_2, opt_con2(cdr(arg)));
   return(c_call(arg)(sc, sc->t2_1));
 }
 
@@ -45357,7 +45365,7 @@ static s7_pointer local_x_c_opsq(s7_scheme *sc, s7_pointer arg)
 static s7_pointer all_x_c_car_s(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer val;
-  val = find_symbol_unchecked(sc, cadadr(arg));
+  val = find_symbol_unchecked(sc, opt_sym2(cdr(arg)));
   set_car(sc->t1_1, (is_pair(val)) ? car(val) : g_car(sc, set_plist_1(sc, val)));
   return(c_call(arg)(sc, sc->t1_1));
 }
@@ -45365,7 +45373,7 @@ static s7_pointer all_x_c_car_s(s7_scheme *sc, s7_pointer arg)
 static s7_pointer local_x_c_car_s(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer val;
-  val = local_symbol_value(cadadr(arg));
+  val = local_symbol_value(opt_sym2(cdr(arg)));
   set_car(sc->t1_1, (is_pair(val)) ? car(val) : g_car(sc, set_plist_1(sc, val)));
   return(c_call(arg)(sc, sc->t1_1));
 }
@@ -45373,7 +45381,7 @@ static s7_pointer local_x_c_car_s(s7_scheme *sc, s7_pointer arg)
 static s7_pointer all_x_c_cdr_s(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer val;
-  val = find_symbol_unchecked(sc, cadadr(arg));
+  val = find_symbol_unchecked(sc, opt_sym2(cdr(arg)));
   set_car(sc->t1_1, (is_pair(val)) ? cdr(val) : g_cdr(sc, set_plist_1(sc, val)));
   return(c_call(arg)(sc, sc->t1_1));
 }
@@ -45381,7 +45389,7 @@ static s7_pointer all_x_c_cdr_s(s7_scheme *sc, s7_pointer arg)
 static s7_pointer local_x_c_cdr_s(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer val;
-  val = local_symbol_value(cadadr(arg));
+  val = local_symbol_value(opt_sym2(cdr(arg)));
   set_car(sc->t1_1, (is_pair(val)) ? cdr(val) : g_cdr(sc, set_plist_1(sc, val)));
   return(c_call(arg)(sc, sc->t1_1));
 }
@@ -46165,16 +46173,15 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	  switch (optimize_op(arg))
 	    {
 	    case HOP_SAFE_C_C:
-	      if (c_call(arg) == g_not_is_pair)	
-		return((is_local_symbol(cdadr(arg))) ? local_x_not_is_pair : all_x_not_is_pair);
+	      if (c_call(arg) == g_not_is_pair)
+		{
+		  set_opt_sym3(arg, cadadr(arg));
+		  return((is_local_symbol(cdadr(arg))) ? local_x_not_is_pair : all_x_not_is_pair);
+		}
 	      if (c_call(arg) == g_is_pair_cdr)
 		{
-		  if (is_local_symbol(cdadr(arg)))
-		    {
-		      set_opt_sym2(cdr(arg), cadadr(arg));
-		      return(local_x_is_pair_cdr);
-		    }
-		  else return(all_x_is_pair_cdr);
+		  set_opt_sym2(cdr(arg), cadadr(arg));
+		  return((is_local_symbol(cdadr(arg))) ? local_x_is_pair_cdr : all_x_is_pair_cdr);
 		}
 	      if (c_call(arg) == g_add_cs1) return(all_x_c_add1);
 	      if (c_call(arg) == g_add_cl1) return(local_x_c_add1);
@@ -46192,7 +46199,10 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	      if (c_call(arg) == g_not_c_c)
 		{
 		  if (c_call(cadr(arg)) == g_is_eq_car_q)
-		    return((is_local_symbol(cdr(cadadr(arg)))) ? local_x_not_is_eq_car_q : all_x_not_is_eq_car_q);
+		    {
+		      set_opt_pair2(cdr(arg), cdadr(arg));
+		      return((is_local_symbol(cdr(cadadr(arg)))) ? local_x_not_is_eq_car_q : all_x_not_is_eq_car_q);
+		    }
 		  return(all_x_not_c_c);
 		}
 	      if (c_call(arg) == g_hash_table_ref_ss)
@@ -46232,8 +46242,16 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	      
 	    case HOP_SAFE_C_opSq:
 	      if (car(arg) == sc->not_symbol)   return((is_local_symbol(cdadr(arg))) ? local_x_c_not_opsq : all_x_c_not_opsq);
-	      if (caadr(arg) == sc->car_symbol) return((is_local_symbol(cdr(cadr(arg)))) ? local_x_c_car_s : all_x_c_car_s);
-	      if (caadr(arg) == sc->cdr_symbol) return((is_local_symbol(cdr(cadr(arg)))) ? local_x_c_cdr_s : all_x_c_cdr_s);
+	      if (caadr(arg) == sc->car_symbol) 
+		{
+		  set_opt_sym2(cdr(arg), cadadr(arg));
+		  return((is_local_symbol(cdr(cadr(arg)))) ? local_x_c_car_s : all_x_c_car_s);
+		}
+	      if (caadr(arg) == sc->cdr_symbol) 
+		{
+		  set_opt_sym2(cdr(arg), cadadr(arg));
+		  return((is_local_symbol(cdadr(arg))) ? local_x_c_cdr_s : all_x_c_cdr_s);
+		}
 	      return((is_local_symbol(cdr(cadr(arg)))) ? local_x_c_opsq : all_x_c_opsq);
 
 	    case HOP_SAFE_C_opSq_C:
@@ -46242,7 +46260,11 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	    case HOP_SAFE_C_SC:
 	      return((is_local_symbol(cdr(arg))) ? local_x_c_sc : all_x_c_sc);
 	    case HOP_SAFE_C_SQ:
+	      set_opt_con2(cdr(arg), cadr(caddr(arg)));
 	      return((is_local_symbol(cdr(arg))) ? local_x_c_sq : all_x_c_sq);
+	    case HOP_SAFE_C_CQ:
+	      set_opt_con2(cdr(arg), cadr(caddr(arg)));
+	      return(all_x_c_cq);
 	      
 	    case HOP_SAFE_C_SS:
 	      if ((is_local_symbol(cdr(arg))) &&
@@ -56771,20 +56793,20 @@ static s7_pointer g_is_eq_car(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_eq_car_q(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer lst;
-  lst = find_symbol_unchecked(sc, cadar(args));
+  lst = find_symbol_unchecked(sc, opt_sym2(args));
   if (is_pair(lst))
-    return(make_boolean(sc, car(lst) == cadadr(args)));
-  return(g_is_eq(sc, set_plist_2(sc, g_car(sc, set_plist_1(sc, lst)), cadadr(args))));
+    return(make_boolean(sc, car(lst) == opt_sym3(args)));
+  return(g_is_eq(sc, set_plist_2(sc, g_car(sc, set_plist_1(sc, lst)), opt_sym3(args))));
 }
 
 static s7_pointer g_is_eq_caar_q(s7_scheme *sc, s7_pointer args)
 {
   /* (eq? (caar x) 'y), but x is not guaranteed to be list(list) */
   s7_pointer lst;
-  lst = find_symbol_unchecked(sc, cadar(args));
+  lst = find_symbol_unchecked(sc, opt_sym2(args));
   if ((!is_pair(lst)) || (!is_pair(car(lst))))
-    return(g_is_eq(sc, set_plist_2(sc, g_caar(sc, set_plist_1(sc, lst)), cadadr(args))));
-  return(make_boolean(sc, caar(lst) == cadadr(args)));
+    return(g_is_eq(sc, set_plist_2(sc, g_caar(sc, set_plist_1(sc, lst)), opt_sym3(args))));
+  return(make_boolean(sc, caar(lst) == opt_sym3(args)));
 }
 
 static s7_pointer is_eq_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_pointer expr, bool ops)
@@ -56805,11 +56827,15 @@ static s7_pointer is_eq_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_po
 	  if (c_callee(cadr(expr)) == g_car)
 	    {
 	      set_optimize_op(expr, HOP_SAFE_C_C);
+	      set_opt_sym2(cdr(expr), cadr(cadr(expr)));
+	      set_opt_sym3(cdr(expr), cadr(caddr(expr)));
 	      return(is_eq_car_q);
 	    }
 	  if (c_callee(cadr(expr)) == g_caar)
 	    {
 	      set_optimize_op(expr, HOP_SAFE_C_C);
+	      set_opt_sym2(cdr(expr), cadr(cadr(expr)));
+	      set_opt_sym3(cdr(expr), cadr(caddr(expr)));
 	      return(is_eq_caar_q);
 	    }
 	}
@@ -57059,6 +57085,7 @@ static s7_pointer hash_table_ref_chooser(s7_scheme *sc, s7_pointer f, int32_t ar
 	      (c_callee(caddr(expr)) == g_car))
 	    {
 	      set_optimize_op(expr, HOP_SAFE_C_C);
+	      set_opt_sym3(cdr(expr), cadr(caddr(expr)));
 	      return(hash_table_ref_car);
 	    }
 	}
@@ -59223,7 +59250,10 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 		{
 		  set_optimized(expr);
 		  if (is_symbol(arg1))
-		    set_optimize_op(expr, hop + OP_SAFE_C_SQ);
+		    {
+		      set_opt_con1(cdr(expr), cadr(caddr(expr)));
+		      set_optimize_op(expr, hop + OP_SAFE_C_SQ);
+		    }
 		  else set_optimize_op(expr, hop + OP_SAFE_C_QS);
 		  choose_c_function(sc, expr, func, 2);
 		  return(OPT_T);
@@ -59392,7 +59422,11 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 		    {
 		      if (car(arg1) == sc->quote_symbol)
 			set_optimize_op(expr, hop + OP_SAFE_C_QP);
-		      else set_optimize_op(expr, hop + ((is_optimized(arg1)) ? OP_SAFE_C_ZQ : OP_SAFE_C_PQ));
+		      else 
+			{
+			  set_optimize_op(expr, hop + ((is_optimized(arg1)) ? OP_SAFE_C_ZQ : OP_SAFE_C_PQ));
+			  set_opt_con2(cdr(expr), cadr(caddr(expr)));
+			}
 		      set_unsafely_optimized(expr);
 		      choose_c_function(sc, expr, func, 2);
 		      return(OPT_F);
@@ -62844,21 +62878,21 @@ static void set_if_opts(s7_scheme *sc, bool one_branch, bool reversed)
 		{
 		  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_and2, one_branch, reversed, not_case));
 		  set_opt_pair2(sc->code, cdr(test));
-		  set_opt_and_2_test(sc->code, cddr(test));
+		  set_opt_pair3(sc->code, cddr(test));
 		  return;
 		}
 	      if (c_callee(test) == g_and_3)
 		{
 		  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_and3, one_branch, reversed, not_case));
 		  set_opt_pair2(sc->code, cdr(test));
-		  set_opt_and_2_test(sc->code, cddr(test));
+		  set_opt_pair3(sc->code, cddr(test));
 		  return;
 		}
 	      if (c_callee(test) == g_or_2)
 		{
 		  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_or2, one_branch, reversed, not_case));
 		  set_opt_pair2(sc->code, cdr(test));
-		  set_opt_and_2_test(sc->code, cddr(test));
+		  set_opt_pair3(sc->code, cddr(test));
 		  return;
 		}
 	      set_opt_pair2(sc->code, cdr(test));
@@ -69862,14 +69896,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_SQ:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_SQ:
-		  {
-		    s7_pointer args;
-		    args = cdr(code);
-		    set_car(sc->t2_1, find_symbol_unchecked(sc, car(args)));
-		    set_car(sc->t2_2, cadadr(args));
-		    sc->value = c_call(code)(sc, sc->t2_1);
-		    goto START;
-		  }
+		  set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(code)));
+		  set_car(sc->t2_2, opt_con1(cdr(code)));
+		  sc->value = c_call(code)(sc, sc->t2_1);
+		  goto START;
 		  
 		case OP_SAFE_C_QS:
 		  if (!c_function_is_ok(sc, code)) break;
@@ -70134,6 +70164,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    val = c_call(cdr(code))(sc, cadr(code));
 		    push_stack(sc, OP_SAFE_C_AZA_1, val, code);
 		    sc->code = _TPair(caddr(code));
+		    /* mostly stuff like h_safe_c_aaa */
 		    goto OPT_EVAL_CHECKED;
 		  }
 		  
@@ -70525,14 +70556,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_PQ:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_PQ:
-		  push_stack(sc, OP_EVAL_ARGS_P_4, cadr(caddr(code)), code); /* was P_5, but that's the same as P_4 */
+		  push_stack(sc, OP_EVAL_ARGS_P_4, opt_con2(cdr(code)), code); /* was P_5, but that's the same as P_4 */
 		  sc->code = cadr(code);
 		  goto EVAL;
 		  
 		case OP_SAFE_C_ZQ:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ZQ:
-		  push_stack(sc, OP_EVAL_ARGS_P_4, cadr(caddr(code)), code);
+		  push_stack(sc, OP_EVAL_ARGS_P_4, opt_con2(cdr(code)), code);
 		  sc->code = cadr(code);
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -71397,11 +71428,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto EVAL;
 		  }
 
-		case OP_C_FA:
+		case OP_C_FA: /* op_c_fs was not faster if all_x_s below */
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_C_FA:
 		  sc->code = cdadr(code);
-		  /* need to check lambda if not done already */
 		  make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir, CLOSURE_ARITY_NOT_SET);
 		  /* sc->value=new closure cell, car=args, cdr=body */
 		  sc->args = list_2(sc, sc->value, c_call(cddr(code))(sc, caddr(code)));
@@ -71420,9 +71450,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_APPLY_SS:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_APPLY_SS:
-		  sc->code = find_symbol_unchecked(sc, cadr(code)); /* global search here was slower */
+		  sc->code = find_symbol_unchecked(sc, cadr(code));      /* global search here was slower */
 		  sc->args = find_symbol_unchecked(sc, opt_sym2(code));  /* is this right if code=macro? */
-		  if (!s7_is_proper_list(sc, sc->args))             /* (apply + #f) etc */
+		  if (!s7_is_proper_list(sc, sc->args))                  /* (apply + #f) etc */
 		    return(apply_list_error(sc, sc->args));
 		  if (needs_copied_args(sc->code))
 		    sc->args = copy_list(sc, sc->args);
@@ -74001,23 +74031,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	  IF_CASE(OP_IF_AND2, 
 		  if ((is_true(sc, c_call(opt_pair2(sc->code))(sc, car(opt_pair2(sc->code))))) && \
-		      (is_true(sc, c_call(opt_and_2_test(sc->code))(sc, car(opt_and_2_test(sc->code)))))),
+		      (is_true(sc, c_call(opt_pair3(sc->code))(sc, car(opt_pair3(sc->code)))))),
 		  if ((is_false(sc, c_call(opt_pair2(sc->code))(sc, car(opt_pair2(sc->code))))) || \
-		      (is_false(sc, c_call(opt_and_2_test(sc->code))(sc, car(opt_and_2_test(sc->code)))))))
+		      (is_false(sc, c_call(opt_pair3(sc->code))(sc, car(opt_pair3(sc->code)))))))
 
 	  IF_CASE(OP_IF_AND3, 
 		  if ((is_true(sc, c_call(opt_pair2(sc->code))(sc, car(opt_pair2(sc->code))))) && \
-		      (is_true(sc, c_call(opt_and_2_test(sc->code))(sc, car(opt_and_2_test(sc->code))))) && \
-		      (is_true(sc, c_call(cdr(opt_and_2_test(sc->code)))(sc, cadr(opt_and_2_test(sc->code)))))),
+		      (is_true(sc, c_call(opt_pair3(sc->code))(sc, car(opt_pair3(sc->code))))) && \
+		      (is_true(sc, c_call(cdr(opt_pair3(sc->code)))(sc, cadr(opt_pair3(sc->code)))))),
 		  if ((is_false(sc, c_call(opt_pair2(sc->code))(sc, car(opt_pair2(sc->code))))) || \
-		      (is_false(sc, c_call(opt_and_2_test(sc->code))(sc, car(opt_and_2_test(sc->code))))) || \
-		      (is_false(sc, c_call(cdr(opt_and_2_test(sc->code)))(sc, cadr(opt_and_2_test(sc->code)))))))
+		      (is_false(sc, c_call(opt_pair3(sc->code))(sc, car(opt_pair3(sc->code))))) || \
+		      (is_false(sc, c_call(cdr(opt_pair3(sc->code)))(sc, cadr(opt_pair3(sc->code)))))))
 
 	  IF_CASE(OP_IF_OR2, 
 		  if ((is_true(sc, c_call(opt_pair2(sc->code))(sc, car(opt_pair2(sc->code))))) || \
-		      (is_true(sc, c_call(opt_and_2_test(sc->code))(sc, car(opt_and_2_test(sc->code)))))),
+		      (is_true(sc, c_call(opt_pair3(sc->code))(sc, car(opt_pair3(sc->code)))))),
 		  if ((is_false(sc, c_call(opt_pair2(sc->code))(sc, car(opt_pair2(sc->code))))) && \
-		      (is_false(sc, c_call(opt_and_2_test(sc->code))(sc, car(opt_and_2_test(sc->code)))))))
+		      (is_false(sc, c_call(opt_pair3(sc->code))(sc, car(opt_pair3(sc->code)))))))
 
 	case OP_IF_P_P: push_stack_no_args(sc, OP_IF_PP, cadr(sc->code)); sc->code = car(sc->code); goto EVAL;
 	case OP_IF_P_N: push_stack_no_args(sc, OP_IF_PR, cadr(sc->code)); sc->code = cadar(sc->code); goto EVAL;
@@ -83470,6 +83500,9 @@ int main(int argc, char **argv)
  *   there are 8 bits free
  * if_and_n if_or_3|pair_cdr similar for all_x_closure (and_3...)
  * splitworthy: closure_s|ss|aa|all_s|all_x, set_dilambda, let_all_x, catch_all
+ * op_c_fa cons unnecessary for map/for-each (or at least free it) (are there 2 lets?)
+ * pair_equal just loop cdr s7_is_equal of car and if slow==fast back up (no seq but pair and no cycle there it's safe)
+ * scaler->scale throughout
  *
  * --------------------------------------------------------------------
  *
@@ -83481,15 +83514,15 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2195
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2916
- * lg            |      |      |      || 211  | 161   149   143.9 139.5
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2907
+ * lg            |      |      |      || 211  | 161   149   143.9 138.9
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3298
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707  4578
- * bench         |      |      |      || 7012 | 6378  6327  5934  5472
+ * bench         |      |      |      || 7012 | 6378  6327  5934  5467
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7525
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
