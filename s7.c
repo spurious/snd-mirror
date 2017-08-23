@@ -3197,7 +3197,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_C_S_opSq, HOP_C_S_opSq, OP_C_S_opCq, HOP_C_S_opCq, OP_C_SS, HOP_C_SS,
       OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, OP_C_Z, HOP_C_Z, OP_C_AP, HOP_C_AP, OP_NOT_P, HOP_NOT_P,
       OP_C_A, HOP_C_A, OP_C_SCS, HOP_C_SCS,
-      OP_C_FA, HOP_C_FA, OP_C_AA, HOP_C_AA,
+      OP_C_FA, HOP_C_FA, OP_C_AA, HOP_C_AA, OP_C_FA_1, HOP_C_FA_1, 
 
       OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, OP_GOTO_A, HOP_GOTO_A,
       OP_ITERATE, HOP_ITERATE, 
@@ -3424,7 +3424,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "c_s_opsq", "h_c_s_opsq", "c_s_opcq", "h_c_s_opcq", "c_ss", "h_c_ss",
       "c_s", "h_c_s", "read_s", "h_read_s", "c_p", "h_c_p", "c_z", "h_c_z", "c_ap", "h_c_ap", "c_not", "h_c_not",
       "c_a", "h_c_a", "c_scs", "h_c_scs",
-      "c_fa", "h_c_fa", "c_aa", "h_c_aa",
+      "c_fa", "h_c_fa", "c_aa", "h_c_aa", "c_fa_1", "h_c_fa_1",
 
       "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", "goto_a", "h_goto_a",
       "iterate", "h_iterate",
@@ -28061,7 +28061,7 @@ static s7_pointer check_ref11(s7_pointer p, const char *func, int32_t line)
 {
   uint8_t typ;
   typ = unchecked_type(p);
-  if ((typ < T_CLOSURE) && (typ != T_BOOLEAN)) /* actually #t is an error here */
+  if ((typ < T_CLOSURE) && (typ != T_BOOLEAN) && (typ != T_PAIR)) /* actually #t is an error here */
     {
       fprintf(stderr, "%s%s[%d]: setter is %s (%s)%s?\n", 
 	      BOLD_TEXT, 
@@ -51358,16 +51358,17 @@ static s7_pointer opt_p_cf_ppp(void *p)
 {
   opt_info *o = (opt_info *)p;
   opt_info *o1;
-  int32_t tx;
-  s7_pointer po2, po3;
+  int32_t tx1, tx2;
+  s7_pointer po3;
   o1 = cur_sc->opts[++cur_sc->pc];
-  tx = next_tx(cur_sc);
-  cur_sc->t_temps[tx] = o1->v7.fp(o1);
+  tx1 = next_tx(cur_sc);
+  cur_sc->t_temps[tx1] = o1->v7.fp(o1);
   o1 = cur_sc->opts[++cur_sc->pc];
-  po2 = o1->v7.fp(o1);
+  tx2 = next_tx(cur_sc);
+  cur_sc->t_temps[tx2] = o1->v7.fp(o1);
   o1 = cur_sc->opts[++cur_sc->pc];
   po3 = o1->v7.fp(o1);
-  return(o->v2.cf(cur_sc, set_plist_3(cur_sc, cur_sc->t_temps[tx], po2, po3)));
+  return(o->v2.cf(cur_sc, set_plist_3(cur_sc, cur_sc->t_temps[tx1], cur_sc->t_temps[tx2], po3)));
 }
 
 static bool p_cf_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer car_x)
@@ -54981,7 +54982,7 @@ static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
   f = car(args);
   body = closure_body(f);
 
-  /* fprintf(stderr, "args: %s, body: %s %s\n", DISPLAY(args), DISPLAY(body), DISPLAY(closure_let(f))); */
+  /* fprintf(stderr, "f: %p, args: %s, body: %s %s\n", f, DISPLAY(args), DISPLAY(body), DISPLAY(closure_let(f))); */
 
   if ((is_pair(seq)) &&
       (!pair_no_opt(body)) &&
@@ -55015,7 +55016,7 @@ static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
 	  s7_pointer fast, slow, val;
 	  
 	  val = sc->nil;
-	  push_stack_no_let(sc, OP_GC_PROTECT, sc->args, val);
+	  push_stack_no_let(sc, OP_GC_PROTECT, args, val); /* was sc->args? */
 	  for (fast = seq, slow = seq; is_pair(fast); fast = cdr(fast), slow = cdr(slow))
 	    {
 	      s7_pointer z;
@@ -55044,7 +55045,8 @@ static s7_pointer g_map_closure(s7_scheme *sc, s7_pointer args)
   if ((is_null(cdr(body))) &&
       (is_pair(seq)))
     {
-      push_stack(sc, OP_MAP_2, make_counter(sc, seq), cons(sc, f, seq));
+      closure_set_setter(f, seq);
+      push_stack(sc, OP_MAP_2, make_counter(sc, seq), f);
       return(sc->unspecified);
     }
   
@@ -55179,7 +55181,15 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  if ((len == 1) &&
 	      (fargs == 1) &&
 	      (!is_immutable_symbol(car(closure_args(f)))))
-	    return(g_map_closure(sc, args));
+	    {
+	      /* g_map_closure here if not s7_tree_memq 'map takes more time than it saves */
+	      if (got_nil) return(sc->nil);
+	      /* don't go to OP_MAP_2 here! It assumes no recursion */
+	      sc->z = (!is_iterator(cadr(args))) ? s7_make_iterator(sc, cadr(args)) : cadr(args);
+	      push_stack(sc, OP_MAP_1, make_counter(sc, sc->z), f);
+	      sc->z = sc->nil;
+	      return(sc->nil);
+	    }
 	  if ((fargs > len) ||
 	      ((fargs < len) &&
 	       ((fargs >= 0) ||
@@ -59486,8 +59496,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 		  (!is_immutable_symbol(caadr(arg1))))
 		{
 		  set_c_call(expr, (c_call(expr) == g_for_each) ? g_for_each_closure : g_map_closure);
-		  if (hop == 0)  /* not sure this matters -- c_function_is_ok checks opt1, set above, not opt2, set here (?) */
-		    set_unsafe_optimize_op(expr, HOP_C_FA);
+		  set_unsafe_optimize_op(expr, HOP_C_FA_1);
 		}
 	      return(OPT_F);
 	    }
@@ -68689,8 +68698,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	case OP_MAP_2:
 	  {
-	    s7_pointer x, c, code, p;
-	    code = car(sc->code);
+	    s7_pointer x, c, p, code;
+	    code = sc->code;
 	    c = sc->args;
 	    p = counter_list(c);
 	    if (!is_pair(p))
@@ -68705,17 +68714,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    if (sc->cur_op == OP_MAP_GATHER_3)
 	      {
-		cdr(sc->code) = cddr(sc->code);
-		if (cdr(sc->code) == counter_list(c))
+		closure_set_setter(code, cdr(closure_setter(code)));
+		/* this depends on code (the function) being non-recursive, else closure_setter gets stepped on */
+		if (closure_setter(code) == counter_list(c))
 		  {
 		    sc->value = safe_reverse_in_place(sc, counter_result(c));
 		    free_cell(sc, c);
 		    sc->args = sc->nil;
 		    goto START;
 		  }
-		push_stack(sc, OP_MAP_GATHER_2, c, sc->code);
+		push_stack(sc, OP_MAP_GATHER_2, c, code);
 	      }
-	    else push_stack(sc, OP_MAP_GATHER_3, c, sc->code);
+	    else push_stack(sc, OP_MAP_GATHER_3, c, code);
 
 	    if (counter_capture(c) != sc->capture_let_counter)
 	      {
@@ -71436,6 +71446,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* sc->value=new closure cell, car=args, cdr=body */
 		  sc->args = list_2(sc, sc->value, c_call(cddr(code))(sc, caddr(code)));
 		  sc->value = c_call(code)(sc, sc->args);
+		  goto START;
+
+		case OP_C_FA_1: 
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_C_FA_1:
+		  sc->code = cdadr(code);
+		  make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir, CLOSURE_ARITY_NOT_SET);
+		  sc->value = c_call(code)(sc, set_plist_2(sc, sc->value, c_call(cddr(code))(sc, caddr(code))));
+		  set_plist_2(sc, sc->nil, sc->nil); /* hooboy -- GC protects plists */
 		  goto START;
 
 		case OP_C_AA:
@@ -83461,6 +83480,8 @@ int main(int argc, char **argv)
  *   If start/end selection changed while playing, are these loop points updated?
  *
  * lint: as in random-gen (snd-test), move internally created but unchanged sequences (lists) out of the body
+ *       (if old (cons form old) (list form)) -> (cons form (or old ()))?
+ *       also (if (not x) (list y) (cons y x))
  *
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
@@ -83500,29 +83521,26 @@ int main(int argc, char **argv)
  *   there are 8 bits free
  * if_and_n if_or_3|pair_cdr similar for all_x_closure (and_3...)
  * splitworthy: closure_s|ss|aa|all_s|all_x, set_dilambda, let_all_x, catch_all
- * op_c_fa cons unnecessary for map/for-each (or at least free it) (are there 2 lets?)
- * pair_equal just loop cdr s7_is_equal of car and if slow==fast back up (no seq but pair and no cycle there it's safe)
- * scaler->scale throughout
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
  * tmac          |      |      |      || 9052 |  615   259   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1056
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1055
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1400
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1399
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2195
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2191
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2907
- * lg            |      |      |      || 211  | 161   149   143.9 138.9
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2888
+ * lg            |      |      |      || 211  | 161   149   143.9 138.4
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3298
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707  4578
- * bench         |      |      |      || 7012 | 6378  6327  5934  5467
+ * bench         |      |      |      || 7012 | 6378  6327  5934  5464
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7525
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7

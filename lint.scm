@@ -684,10 +684,9 @@
 					  (set! syms (cons a syms)))
 				      (if (pair? a) (walk a))))
 				(cdr p)))
-		  (if (pair? (car p))
-		      (begin
-			(walk (car p))
-			(walk (cdr p)))))
+		  (when (pair? (car p))
+		    (walk (car p))
+		    (walk (cdr p))))
 	      (if (and (symbol? tree)
 		       (not (memq tree syms)))
 		  (set! syms (cons tree syms)))))
@@ -1314,11 +1313,10 @@
 		    (let ((iter (car args))
 			  (res (cadr args)))
 		      
-		      (if (and (len>1? iter)
-			       (any-null? (cadr iter)))
-			  (begin
-			    (set! iter (cadr args))
-			    (set! res (car args))))
+		      (when (and (len>1? iter)
+				 (any-null? (cadr iter)))
+			(set! iter (cadr args))
+			(set! res (car args)))
 		      
 		      (when (and (len=2? res)
 				 (any-null? (cadr res))
@@ -2171,10 +2169,9 @@
 	      (begin
 		(set! (var-ref data) (+ (var-ref data) 1))
 		(update-scope data caller env)
-		(if (and form (not (memq form (var-history data))))
-		    (begin
-		      (set! (var-history data) (cons form (var-history data)))
-		      (set! (var-refenv data) env))))
+		(when (and form (not (memq form (var-history data))))
+		  (set! (var-history data) (cons form (var-history data)))
+		  (set! (var-refenv data) env)))
 	      (if (not (defined? name (rootlet)))
 		  (let ((old (hash-table-ref other-identifiers name)))
 		    (check-for-bad-variable-name caller name)
@@ -2189,10 +2186,9 @@
 	  (update-scope data caller env)
 	  (if (not (memq caller (var-setters data)))
 	      (set! (var-setters data) (cons caller (var-setters data))))
-	  (if (not (memq form (var-history data)))
-	      (begin
-		(set! (var-history data) (cons form (var-history data)))
-		(set! (var-refenv data) env)))
+	  (unless (memq form (var-history data))
+	    (set! (var-history data) (cons form (var-history data)))
+	    (set! (var-refenv data) env))
 	  (set! (var-signature data) #f)
 	  (set! (var-ftype data) #f))))
     
@@ -3119,10 +3115,9 @@
 					  (if (null? start)
 					      (set! start p))
 					  (begin
-					    (if (pair? start)
-						(begin
-						  (set! new-form (cons (list 'not (cons new-head (collect-nots start p))) new-form))
-						  (set! start ())))
+					    (when (pair? start)
+					      (set! new-form (cons (list 'not (cons new-head (collect-nots start p))) new-form))
+					      (set! start ()))
 					    (set! new-form (cons c new-form)))))))
 			    () () env))))))
 	
@@ -4926,10 +4921,9 @@
 						     (cons y (collect-if-not-number val))))))))
 			   (let ((first-arg (car args))
 				 (nargs val))
-			     (if (member first-arg nargs)
-				 (begin
-				   (set! nargs (remove first-arg nargs)) ; remove once
-				   (set! first-arg 0)))
+			     (when (member first-arg nargs)
+			       (set! nargs (remove first-arg nargs)) ; remove once
+			       (set! first-arg 0))
 			     (cond ((null? nargs) first-arg)         ; (- x 0 0 0)?
 				   
 				   ((eqv? first-arg 0)
