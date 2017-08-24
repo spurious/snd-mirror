@@ -4123,7 +4123,7 @@ in its closure:
 <pre class="indented">
 &gt; (define f1 (let ((procedure-documentation (lambda (f) "helpful info"))
                     (procedure-signature (lambda (f) '(boolean? real?))))
-                (<em class=red>openlet</em>
+                (<em class=red>openlet</em>  ; openlet alerts s7 that f1 has methods
                   (lambda (x) 
                     (positive? x)))))
 &gt; (procedure-documentation f1)
@@ -4146,10 +4146,36 @@ in its closure:
 <p>but the optimizer currently doesn't know how to take advantage of this pattern.
 </p>
 
-<p>openlet alerts s7 that f1 has methods.
+<p>You can obviously add your own methods:
 </p>
+
+<pre class="indented">
+(define my-add
+  (let ((<em class="red">tester</em> (lambda ()
+		  (if (not (= (my-add 2 3) 5))
+		      (format #t "oops: (myadd 2 3) -&gt; ~A~%" 
+			      (my-add 2 3))))))
+    (lambda (x y)
+      (- x y))))
+
+(define (auto-test) ; scan the symbol table for procedures with testers
+  (let ((st (symbol-table)))
+    (for-each (lambda (f)
+		(let* ((fv (and (defined? f)
+			       (symbol-&gt;value f)))
+		       (testf (and (procedure? fv)
+				   ((funclet fv) '<em class="red">tester</em>))))
+		  (when (procedure? testf)  ; found one!
+		    (testf)))) 
+	      st)))
+
+&gt; (auto-test)
+<em class="gray">oops: (myadd 2 3) -&gt; -1</em>
+</pre>
+
 <blockquote>
 <br>
+
 
 <details>
 <summary class="indented">examples</summary>

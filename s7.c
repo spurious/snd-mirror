@@ -2153,8 +2153,8 @@ static int64_t not_heap = -1;
 #define opt_slot1(P)                  _TSlt(opt1(P,              E_SLOT))
 #define set_opt_slot1(P, X)           set_opt1(P, _TSlt(X),      E_SLOT)
 
-#define opt_key(P)                    _NFre(opt2(P,              F_KEY))
-#define set_opt_key(P, X)             set_opt2(P, _NFre(X),      F_KEY)
+#define opt_any2(P)                    _NFre(opt2(P,             F_KEY))
+#define set_opt_any2(P, X)             set_opt2(P, _NFre(X),     F_KEY)
 #define opt_slow(P)                   _TLst(opt2(P,              F_SLOW))
 #define set_opt_slow(P, X)            set_opt2(P, _TPair(X),     F_SLOW)
 #define opt_sym2(P)                   _TSym(opt2(P,              F_SYM))
@@ -2172,10 +2172,10 @@ static int64_t not_heap = -1;
 #define set_arglist_length(P, X)      set_opt3(cdr(P), _TI(X),   G_ARGLEN)
 #define opt_sym3(P)                   _TSym(opt3(P,              G_SYM))
 #define set_opt_sym3(P, X)            set_opt3(P, _TSym(X),      G_SYM)
-#define opt_pair3(P)             _TPair(opt3(P,             G_AND))
-#define set_opt_pair3(P, X)      set_opt3(P, _TPair(X),     G_AND)
-#define opt_else(P)                   _NFre(opt3(P,              G_AND))
-#define set_opt_else(P, X)            set_opt3(P, _NFre(X),      G_AND)
+#define opt_pair3(P)                  _TPair(opt3(P,             G_AND))
+#define set_opt_pair3(P, X)           set_opt3(P, _TPair(X),     G_AND)
+#define opt_any3(P)                   _NFre(opt3(P,              G_AND))
+#define set_opt_any3(P, X)            set_opt3(P, _NFre(X),      G_AND)
 #define opt_direct_x(P)               opt3(P,                    G_DIRECT)
 #define set_opt_direct_x(P, X)        set_opt3(P, (s7_pointer)(X), G_DIRECT)
 
@@ -28164,7 +28164,7 @@ static const char *opt1_role_name(int32_t role)
 static const char *opt2_role_name(int32_t role)
 {
   if (role == F_CALL) return("c_call(ee)");
-  if (role == F_KEY) return("opt_key");
+  if (role == F_KEY) return("opt_any2");
   if (role == F_SLOW) return("opt_slow");
   if (role == F_SYM) return("opt_sym2");
   if (role == F_PAIR) return("opt_pair2");
@@ -28177,7 +28177,7 @@ static const char *opt3_role_name(int32_t role)
 {
   if (role == G_ARGLEN) return("arglist_length");
   if (role == G_SYM) return("opt_sym3");
-  if (role == G_AND) return("opt_pair3 or opt_else");
+  if (role == G_AND) return("opt_pair3 or opt_any3");
   if (role == G_DIRECT) return("direct_opt3");
   if (role == S_OP) return("s_op");
   if (role == S_SYNOP) return("s_synop");
@@ -28205,7 +28205,7 @@ static char* show_debugger_bits(uint32_t bits)
 	  ((bits & E_ANY) != 0) ? " opt_any1" : "",
 	  ((bits & E_SLOT) != 0) ? " opt_slot1" : "",
 	  ((bits & F_SET) != 0) ? " f-set" : "",
-	  ((bits & F_KEY) != 0) ? " opt_key" : "",
+	  ((bits & F_KEY) != 0) ? " opt_any2" : "",
 	  ((bits & F_SLOW) != 0) ? " opt_slow" : "",
 	  ((bits & F_SYM) != 0) ? " opt_sym2" : "",
 	  ((bits & F_PAIR) != 0) ? " opt_pair2" : "",
@@ -28215,7 +28215,7 @@ static char* show_debugger_bits(uint32_t bits)
 	  ((bits & G_SET) != 0) ? " g-set" : "",
 	  ((bits & G_ARGLEN) != 0) ? " arglist_length" : "",
 	  ((bits & G_SYM) != 0) ? " opt_sym3" : "",
-	  ((bits & G_AND) != 0) ? " opt_pair3 or opt_else " : "",
+	  ((bits & G_AND) != 0) ? " opt_pair3 or opt_any3 " : "",
 	  ((bits & G_DIRECT) != 0) ? " opt_direct_x3" : "",
 	  ((bits & S_NAME) != 0) ? " raw-name" : "",
 	  ((bits & S_HASH) != 0) ? " raw-hash" : "",	
@@ -62034,7 +62034,7 @@ static s7_pointer check_case(s7_scheme *sc)
     eval_error(sc, "case has no clauses?:  ~A", sc->code);
   if (!is_pair(cadr(sc->code)))                                      /* (case 1 1) */
     eval_error(sc, "case clause is not a list? ~A", sc->code);
-  set_opt_else(sc->code, sc->unspecified);
+  set_opt_any3(sc->code, sc->unspecified);
 
   for (x = cdr(sc->code); is_pair(x); x = cdr(x))
     {
@@ -62062,13 +62062,13 @@ static s7_pointer check_case(s7_scheme *sc)
 	    eval_error(sc, "case 'else' clause, ~A, is not the last clause", x);
 	  if (is_null(cdr(car_x)))                                  /* (else) so return selector */
 	    {
-	      /* opt_else?? */
+	      /* opt_any3?? */
 	    }
 	  else
 	    {
 	      if (is_pair(cddr(car_x)))
 		{
-		  set_opt_else(sc->code, cdr(car_x));
+		  set_opt_any3(sc->code, cdr(car_x));
 		  /* fprintf(stderr, "else not simple\n"); */
 		  bodies_simple = false;
 		}
@@ -62076,8 +62076,8 @@ static s7_pointer check_case(s7_scheme *sc)
 		{
 		  if ((bodies_simple) && 
 		      (keys_single))
-		    set_opt_else(sc->code, cadr(car_x));
-		  else set_opt_else(sc->code, cdr(car_x));
+		    set_opt_any3(sc->code, cadr(car_x));
+		  else set_opt_any3(sc->code, cdr(car_x));
 		  set_opt_clause(x, cadr(car_x));
 		}
 	    }
@@ -62131,10 +62131,10 @@ static s7_pointer check_case(s7_scheme *sc)
 	{
 	  for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
 	    {
-	      set_opt_key(x, caar(x));
-	      if (is_pair(opt_key(x)))
+	      set_opt_any2(x, caar(x));
+	      if (is_pair(opt_any2(x)))
 		{
-		  set_opt_key(x, car(opt_key(x)));
+		  set_opt_any2(x, car(opt_any2(x)));
 		  if (is_pair(cdar(x)))
 		    set_opt_clause(x, cadar(x));
 		}
@@ -62144,8 +62144,8 @@ static s7_pointer check_case(s7_scheme *sc)
 	{
 	  for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
 	    {
-	      set_opt_key(x, caar(x));
-	      if ((is_pair(opt_key(x))) &&
+	      set_opt_any2(x, caar(x));
+	      if ((is_pair(opt_any2(x))) &&
 		  (is_pair(cdar(x))))
 		set_opt_clause(x, cadar(x));
 	    }
@@ -75778,13 +75778,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_simple(selector))
 	      {
 	        for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-		  if (opt_key(x) == selector)
+		  if (opt_any2(x) == selector)
 		    {
  	              sc->code = opt_clause(x);
 		      goto EVAL;
 		    }
 	      }
-	    sc->code = opt_else(sc->code);
+	    sc->code = opt_any3(sc->code);
 	    goto EVAL;
 	  }
 	  break;
@@ -75798,7 +75798,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer x, selector, else_clause;
 	    selector = sc->value;
-	    else_clause = opt_else(sc->code);
+	    else_clause = opt_any3(sc->code);
 	    if (else_clause != sc->unspecified)
 	      {
 		if (is_integer(selector))
@@ -75807,9 +75807,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    val = integer(selector);
 		    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 		      {
-			if (is_integer(opt_key(x)))
+			if (is_integer(opt_any2(x)))
 			  {
-			    if (integer(opt_key(x)) == val)
+			    if (integer(opt_any2(x)) == val)
 			      {
 				sc->code = opt_clause(x);
 				goto EVAL;
@@ -75829,7 +75829,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    val = integer(selector);
 		    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 		      {
-			if (integer(opt_key(x)) == val)
+			if (integer(opt_any2(x)) == val)
 			  {
 			    sc->code = opt_clause(x);
 			    goto EVAL;
@@ -75851,12 +75851,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer x, selector;
 	    selector = sc->value;
 	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      if (s7_is_eqv(opt_key(x), selector))
+	      if (s7_is_eqv(opt_any2(x), selector))
 		{
 		  sc->code = opt_clause(x);
 		  goto EVAL;
 		}
-	    sc->code = opt_else(sc->code);
+	    sc->code = opt_any3(sc->code);
 	    goto EVAL;
 	  }
 	  break;
@@ -75874,7 +75874,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 		  {
-		    y = opt_key(x);
+		    y = opt_any2(x);
 		    if (!is_pair(y))
 		      goto ELSE_CASE_1;
 		    do {
@@ -75886,7 +75886,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else 
 	      {
-		sc->code = opt_else(sc->code);
+		sc->code = opt_any3(sc->code);
 		if (is_pair(sc->code))
 		  goto ELSE_CASE_2;
 		goto START;
@@ -83480,8 +83480,6 @@ int main(int argc, char **argv)
  *   If start/end selection changed while playing, are these loop points updated?
  *
  * lint: as in random-gen (snd-test), move internally created but unchanged sequences (lists) out of the body
- *       (if old (cons form old) (list form)) -> (cons form (or old ()))?
- *       also (if (not x) (list y) (cons y x))
  *
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
@@ -83511,7 +83509,6 @@ int main(int argc, char **argv)
  * all_x_if_a...?
  * opt let? opt_float_begin in s7_float_optimize for map-channel in snd?
  * g_multiply_2 (et al) -> direct cases
- * ([let-ref] (object->let obj) 'field) could be recognized and greatly optimized
  * check glob/libc.scm in openbsd -- some problem loading libc_s7.so (it works in snd, not in repl?)
  * ideally cload would handle struct ptr* correctly
  * libc needs many type checks
@@ -83520,7 +83517,6 @@ int main(int argc, char **argv)
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  *   there are 8 bits free
  * if_and_n if_or_3|pair_cdr similar for all_x_closure (and_3...)
- * splitworthy: closure_s|ss|aa|all_s|all_x, set_dilambda, let_all_x, catch_all
  *
  * --------------------------------------------------------------------
  *
@@ -83532,8 +83528,8 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2191
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2888
- * lg            |      |      |      || 211  | 161   149   143.9 138.4
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2825
+ * lg            |      |      |      || 211  | 161   149   143.9 136.9
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3298
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386
