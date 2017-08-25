@@ -1966,8 +1966,6 @@ static s7_scheme *cur_sc = NULL;
 #define is_gensym(p)                  ((typeflag(_TSym(p)) & T_GENSYM) != 0)
 /* symbol is from gensym (GC-able etc) */
 
- /* gensym bit is ok for a pair */
-
 #define T_FUNCLET                     T_GENSYM
 #define is_funclet(p)                 ((typeflag(_TLet(p)) & T_FUNCLET) != 0)
 #define set_funclet(p)                typeflag(_TLet(p)) |= T_FUNCLET
@@ -1983,6 +1981,11 @@ static s7_scheme *cur_sc = NULL;
 #define set_documented(p)             typeflag(_TStr(p)) |= T_DOCUMENTED
 /* this marks a symbol that has documentation (bit is set on name cell) */
 
+#define T_DOTTED_PAIR                 T_GENSYM
+#define is_dotted_pair(p)             ((typeflag(_TLst(p)) & T_DOTTED_PAIR) != 0)
+#define pair_set_dotted(p)            typeflag(_TPair(p)) |= T_DOTTED_PAIR
+
+
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
 #define has_methods(p)                ((typeflag(_NFre(p)) & T_HAS_METHODS) != 0)
 #define set_has_methods(p)            typeflag(_TMet(p)) |= T_HAS_METHODS
@@ -1992,8 +1995,9 @@ static s7_scheme *cur_sc = NULL;
  */
 
 #define T_ITER_OK                     (1LL << (TYPE_BITS + 23))
-#define iter_ok(p)                    ((typeflag(p) & T_ITER_OK) != 0)  /* not TItr(p) here because this bit is globally unique */
+#define iter_ok(p)                    ((typeflag(_NFre(p)) & T_ITER_OK) != 0)  /* not TItr(p) here because this bit is globally unique */
 #define clear_iter_ok(p)              typeflag(_TItr(p)) &= (~T_ITER_OK)
+
 
 #define T_GC_MARK                     0x8000000000000000
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
@@ -22156,7 +22160,7 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
   if (is_null(car(args)))
     return(s7_make_string_with_length(sc, "", 0));
 
-  if (!s7_is_proper_list(sc, car(args)))
+  if (!s7_is_proper_list(sc, car(args))) 
     method_or_bust_with_type_one_arg(sc, car(args), sc->list_to_string_symbol, args, s7_make_string_wrapper(sc, "a (proper, non-circular) list of characters"));
   return(g_string_1(sc, car(args), sc->list_to_string_symbol));
 }
@@ -27815,7 +27819,8 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 						   ((is_symbol(obj)) ? " gensym" :
 						    ((is_string(obj)) ? " documented-symbol" :
 						     ((is_hash_table(obj)) ? " hash-chosen" :
-						      " ?21?")))) : "",
+						      ((is_pair(obj)) ? " dotted" :
+						       " ?21?"))))) : "",
 	   /* bit 22 */
 	   ((full_typ & T_HAS_METHODS) != 0) ?    " has-methods" : "",
 	   /* bit 23 */
@@ -58534,11 +58539,11 @@ static bool is_lambda(s7_scheme *sc, s7_pointer sym)
 static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer func, int32_t hop, int32_t pairs, int32_t symbols, int32_t quotes, int32_t bad_pairs, s7_pointer e)
 {
   s7_pointer arg1;
-  /* very often, expr is already optimized */
-  /* fprintf(stderr, "opt 1: %s\n", DISPLAY_80(expr)); */
+  /* very often, expr is already optimized, quoted stuff is counted under "bad_pairs"! as well as quotes */
+  /* fprintf(stderr, "opt 1: %s, hop: %d, pairs: %d, symbols: %d, quotes: %d, bad: %d\n", DISPLAY_80(expr), hop, pairs, symbols, quotes, bad_pairs); */
 
   arg1 = cadr(expr);
-  if ((bad_pairs == 0) &&
+  if ((bad_pairs == quotes) &&
       (is_immutable_symbol(car(expr))))
     hop = 1;
 
@@ -58797,7 +58802,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	}
       else /* pairs == 1 */
 	{
-	  if (bad_pairs == 0)
+	  if (bad_pairs == quotes)
 	    {
 	      if ((is_optimized(arg1)) &&
 		  (is_all_x_op(optimize_op(arg1))))
@@ -58837,7 +58842,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 
       if (all_x_count(sc, expr) == 1)
 	{
-	  /* fprintf(stderr, "%d: %s %d %d\n", __LINE__, DISPLAY(car(expr)), is_local_symbol(expr), safe_case); */
+	  set_unsafely_optimized(expr);
 	  if ((safe_case) &&
 	      (is_pair(car(body))) &&
 	      (is_h_safe_c_c(car(body))))
@@ -59008,7 +59013,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 
   arg1 = cadr(expr);
   arg2 = caddr(expr);
-  if ((bad_pairs == 0) &&
+  if ((bad_pairs == quotes) &&
       (is_immutable_symbol(car(expr))))
     hop = 1;
 
@@ -59720,7 +59725,7 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
     }
   /* end of bad symbol wrappers */
 
-  if ((bad_pairs == 0) &&
+  if ((bad_pairs == quotes) &&
       (is_immutable_symbol(car(expr))))
     hop = 1;
 
@@ -60121,7 +60126,7 @@ static opt_t optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
   bool func_is_closure;
 
   if (bad_pairs > quotes) return(OPT_F);
-  if ((bad_pairs == 0) &&
+  if ((bad_pairs == quotes) &&
       (is_immutable_symbol(car(expr))))
     hop = 1;
 
@@ -60206,6 +60211,7 @@ static opt_t optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 	  (args < GC_TRIGGER_SIZE))
 	{
 	  bool safe_case;
+	  set_unsafely_optimized(expr);
 	  safe_case = is_safe_closure(func);
 	  set_unsafe_optimize_op(expr, hop + ((safe_case) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_X));
 	  annotate_args(sc, cdr(expr), e);
@@ -60715,7 +60721,7 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int32_t hop, s7
 {
   s7_pointer car_expr;
 
-  /* fprintf(stderr, "opt-expr %d %s %s\n", hop, DISPLAY(expr), DISPLAY(e)); */
+  /* fprintf(stderr, "opt-expr %d %s %s\n", hop, DISPLAY_80(expr), DISPLAY(e)); */
   /* if (is_checked(expr)) return(OPT_T); */
 
   set_checked(expr);
@@ -72693,7 +72699,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *  trail: unknown_all_s function (letstar outer-vars inner-vars inner1-vars)
 	       *  trail: unknown_all_s function (letstar outer-vars inner-vars inner1-vars inner2-vars)
 	       *  trail: safe_closure_all_x function (f args form env)
-	       * letstar is (f . x) -- need support for dotted arg
 	       */
 	      clear_all_optimizations(sc, code);
 	      /* and fall into the normal evaluator */
@@ -72708,7 +72713,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (sc->code != profile_at_start)
 		  profile(sc, code);
 #endif
-		/* fprintf(stderr, "trail: %s\n", DISPLAY(sc->code)); */
+		/* fprintf(stderr, "trail: %s\n", DISPLAY_80(sc->code)); */
 
 		set_current_code(sc, code);
 		carc = car(code);
@@ -76341,6 +76346,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *      something is fishy
 	   */
 	  sc->value = reverse_in_place(sc, sc->value, sc->args);
+	  pair_set_dotted(sc->value);
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 	  
@@ -76367,7 +76373,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	case OP_READ_VECTOR:
-	  if (!s7_is_proper_list(sc, sc->value))    /* #(1 . 2) */
+	  if (is_dotted_pair(sc->value))            /* #(1 . 2) */
 	    return(read_error(sc, "vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
@@ -76380,7 +76386,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case OP_READ_INT_VECTOR:
-	  if (!s7_is_proper_list(sc, sc->value))
+	  if (is_dotted_pair(sc->value))
 	    return(read_error(sc, "vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
@@ -76392,7 +76398,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case OP_READ_FLOAT_VECTOR:
-	  if (!s7_is_proper_list(sc, sc->value))
+	  if (is_dotted_pair(sc->value))
 	    return(read_error(sc, "vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
@@ -76404,7 +76410,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;	  
 
 	case OP_READ_BYTE_VECTOR:
-	  if (!s7_is_proper_list(sc, sc->value))
+	  if (is_dotted_pair(sc->value))
 	    return(read_error(sc, "byte-vector constant data is not a proper list"));
 	  sc->v = sc->value;
 	  sc->value = g_byte_vector(sc, sc->value);
@@ -83517,19 +83523,21 @@ int main(int argc, char **argv)
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  *   there are 8 bits free
  * if_and_n if_or_3|pair_cdr similar for all_x_closure (and_3...)
+ * -0.0 prints as -0.0 but does the sign bit ever leak out?  should the printer output be 0.0?
+ * check unopt bits and more trailers via never_opt debugging?
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
  * tmac          |      |      |      || 9052 |  615   259   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1055
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1054
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1399
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2191
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2177
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2825
- * lg            |      |      |      || 211  | 161   149   143.9 136.9
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2720
+ * lg            |      |      |      || 211  | 161   149   143.9 134.7
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3298
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386
@@ -83540,7 +83548,7 @@ int main(int argc, char **argv)
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7525
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
- * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.6
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.5
  *                                    || 145  | 135   132   93.2  89.5
  * 
  * --------------------------------------------------------------------
