@@ -2195,6 +2195,7 @@
 		(if (pair? (cdr lst)) 
 		    (proper-list (cdr lst)) 
 		    (case (cdr lst) ((())) (else => list))))))
+
     (define (keywords lst count)
       (if (pair? lst)
 	  (keywords (cdr lst) (if (keyword? (car lst)) (+ count 1) count))
@@ -7453,6 +7454,9 @@
 		(cond ((all-caps-warning arg)
 		       (lint-format  "There's no need to shout: ~A" caller (truncated-list->string form)))
 		      
+		      ((not port)
+		       (lint-format "~A could be ~A" caller form (cadr form)))
+
 		      ((not (len>1? arg)))
 		      
 		      ((and (eq? (car arg) 'format)    ; (display (format #f str x)) -> (format () str x)
@@ -7468,16 +7472,18 @@
 		      ((and (pair? port)
 			    (eq? (car port) 'current-output-port))
 		       (lint-format "(current-output-port) is the default port for display: ~A" caller form))))))
-	  
+		      
 	  (hash-special 'display sp-display))
 	
 	;; ---------------- flush-output-port, newline, close-output-port ----------------
 	(let ()
 	  (define (sp-flush-output-port caller head form env)
-	    (if (and (pair? (cdr form))
-		     (pair? (cadr form))
-		     (eq? (caadr form) 'current-output-port))
-		(lint-format "(current-output-port) is the default port for ~A: ~A" caller head form)))
+	    (when (pair? (cdr form))
+	      (if (and (pair? (cadr form))
+		       (eq? (caadr form) 'current-output-port))
+		  (lint-format "(current-output-port) is the default port for ~A: ~A" caller head form)
+		  (unless (cadr form)
+		    (lint-format "~A is a no-op, returning ~A" caller form (if (eq? head 'flush-output-port) #f #<unspecified>))))))
 	  (hash-special 'flush-output-port sp-flush-output-port)
 	  (hash-special 'close-output-port sp-flush-output-port)
 	  (hash-special 'newline sp-flush-output-port))
@@ -7486,10 +7492,12 @@
 	(let ()
 	  (define (sp-write-char caller head form env)
 	    (when (pair? (cdr form))
-	      (if (and (pair? (cddr form))
-		       (pair? (caddr form))
-		       (eq? (caaddr form) 'current-output-port))
-		  (lint-format "(current-output-port) is the default port for ~A: ~A" caller head form))
+	      (when (pair? (cddr form))
+		(if (and (pair? (caddr form))
+			 (eq? (caaddr form) 'current-output-port))
+		    (lint-format "(current-output-port) is the default port for ~A: ~A" caller head form)
+		    (if (not (caddr form))
+			(lint-format "~A could be ~A" caller form (cadr form)))))
 	      (case head
 		((write-byte)
 		 (if (and (integer? (cadr form))
@@ -22538,7 +22546,7 @@
     #f))
 |#
 
-;;; 64 911195
+;;; 63 911195
 ;;;
 ;;; combine do|case|cond: currently combine-successive-ifs for if|when|unless 12874 (see t605 for examples)
 
