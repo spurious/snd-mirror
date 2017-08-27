@@ -167,7 +167,7 @@ define s7cell
   end
 
   if (($type == T_CHARACTER) || ($is_bad_type))	 
-      printf "chr:            c: %c, up_c: %c, alpha_c: %d, digit_c: %d, space_c: %d, upper_c: %d, lower_c: %d", \
+      printf "chr:            c: %c, up_c: %c, alpha_c: %d, digit_c: %d, space_c: %d, upper_c: %d, lower_c: %d\n", \
          $cell.object.chr.c, $cell.object.chr.up_c, \
          $cell.object.chr.alpha_c, $cell.object.chr.digit_c, $cell.object.chr.space_c, $cell.object.chr.upper_c, $cell.object.chr.lower_c
       if ($type == T_CHARACTER) 
@@ -225,7 +225,7 @@ define s7cell
   end
 
   if (($type == T_CONTINUATION) || ($is_bad_type))
-      printf "continuation:   continuation: %p, stack: %p, start_start: %p, stack_end: %p, op_stack: %p, key: %d\n", \
+      printf "continuation:   continuation: %p, stack: %p,\n                    start_start: %p, stack_end: %p, op_stack: %p, key: %d\n", \
          $cell.object.cwcc.continuation, $cell.object.cwcc.stack, $cell.object.cwcc.stack_start, $cell.object.cwcc.stack_end, $cell.object.cwcc.op_stack, \
          $cell.object.cwcc.continuation->local_key
   end
@@ -261,9 +261,9 @@ define s7cell
   end
 
   if (($type == T_OPTLIST) || ($is_bad_type))
-      printf("optlist:        opts: %p, num_exprs: %d, num_args: %d, len: %d, addr: %d, pc: %d, tag: %d\n", \
+      printf "optlist:        opts: %p, num_exprs: %d, num_args: %d, len: %d, addr: %d, pc: %d\n", \
          $cell.object.opt.opts, $cell.object.opt.num_exprs, $cell.object.opt.num_args, \
-         $cell.object.opt.len, $cell.object.opt.addr, $cell.object.opt.pc, $cell.object.opt.tag
+         $cell.object.opt.len, $cell.object.opt.addr, $cell.object.opt.pc
   end
 
   if (($type == T_CLOSURE) || ($type == T_CLOSURE_STAR) || ($type == T_MACRO) || ($type == T_BACRO) || ($is_bad_type))

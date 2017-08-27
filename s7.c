@@ -2763,18 +2763,6 @@ static inline int32_t safe_strlen(const char *str)
 }
 
 
-static int32_t safe_strlen5(const char *str)
-{
-  /* safe_strlen but we quit counting if len>5 */
-  char *tmp = (char *)str;
-  char *end;
-  if ((!tmp) || (!(*tmp))) return(0);
-  end = (char *)(tmp + 6);
-  while ((*tmp++) && (tmp < end)) {};
-  return(tmp - str - 1);
-}
-
-
 static char *copy_string_with_length(const char *str, int32_t len)
 {
   char *newstr;
@@ -11005,7 +10993,6 @@ static s7_pointer unknown_sharp_constant(s7_scheme *sc, char *name)
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, int32_t radix, bool with_error)
 {
   /* name is the stuff after the '#', return sc->nil if not a recognized #... entity */
-  int32_t len;
   s7_pointer x;
 
   if ((name[0] == 't') &&
@@ -11023,8 +11010,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, int32_t radix, 
 	return(x);
     }
 
-  len = safe_strlen5(name); /* just count up to 5 */
-  if (len < 2)
+  if ((name[0] == '\0') || name[1] == '\0')
     return(unknown_sharp_constant(sc, name));
 
   switch (name[0])
@@ -30912,7 +30898,7 @@ static s7_int tree_len_1(s7_scheme *sc, s7_pointer p)
 	sum++;
       else sum += tree_len_1(sc, car(p));
     }
-  if (!is_null(p)) sum++;
+  if (!is_null(p)) return(sum + 1);
   return(sum);
 }
 
@@ -30926,10 +30912,7 @@ static s7_int tree_len(s7_scheme *sc, s7_pointer p)
   return(tree_len_1(sc, p));
 }
 
-static s7_int tree_leaves_i(s7_pointer p) 
-{
-  return(tree_len(cur_sc, p));
-}
+static s7_int tree_leaves_i(s7_pointer p) {return(tree_len(cur_sc, p));}
 
 static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
 {
@@ -30950,13 +30933,12 @@ bool s7_tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
       return(sym == cadr(tree));
     }
   do {
-    if ((sym == cdr(tree)) || 
+    if ((sym == cdr(tree)) ||    /* "sym" need not be a symbol */
 	(s7_tree_memq(sc, sym, car(tree))))
       return(true);
     tree = cdr(tree);
   } while (is_pair(tree));
-  return((!is_null(tree)) &&
-	 (sym == tree));
+  return(false);
 }
 
 static s7_pointer g_tree_memq(s7_scheme *sc, s7_pointer args)
@@ -30977,14 +30959,11 @@ static bool tree_set_memq(s7_scheme *sc, s7_pointer tree)
       (car(tree) == sc->quote_symbol))
     return(false);
   do {
-    if (is_symbol(cdr(tree)))
-      return(symbol_is_in_list(sc, cdr(tree)));
     if (tree_set_memq(sc, car(tree)))
       return(true);
     tree = cdr(tree);
   } while (is_pair(tree));
-  return((is_symbol(tree)) &&
-	 (symbol_is_in_list(sc, tree)));
+  return((is_symbol(tree)) && (symbol_is_in_list(sc, tree)));
 }
 
 static s7_pointer g_tree_set_memq(s7_scheme *sc, s7_pointer args)
@@ -31193,9 +31172,6 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe
   return(result);
 }
 
-
-/* is this correct? (let ((x (list 1 2))) (eq? x (append () x))) -> #t
- */
 
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
@@ -36540,7 +36516,7 @@ static uint32_t hash_map_let(s7_scheme *sc, s7_pointer table, s7_pointer key)
 static uint32_t hash_map_pair(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   /* len+loc(car) is not horrible, but it means (for example) every list '(set! ...) is hashed to the same location,
-   *   so at least we need to take cadr into account if possible.  Better would combine the list_length(max 5 == safe_strlen5?) call
+   *   so at least we need to take cadr into account if possible.  Better would combine the list_length
    *   with stats like symbols/pairs/constants at top level, then use those to spread it out over all the locs.
    */
   s7_pointer p1;
@@ -41721,7 +41697,6 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 
 /* -------------------------------- object->let -------------------------------- */
 
-static bool is_decodable(s7_scheme *sc, s7_pointer p);
 static s7_pointer stack_entries(s7_scheme *sc, s7_pointer stack, int64_t top);
 
 static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
@@ -43507,7 +43482,6 @@ static void s7_warn(s7_scheme *sc, int32_t len, const char *ctrl, ...)
 
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 {
-  static int32_t last_line = -1;
   bool reset_error_hook = false;
   s7_pointer cur_code;
 
@@ -43532,10 +43506,6 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
 
-#if DEBUGGING
-  if (!is_let(sc->owlet)) 
-    fprintf(stderr, "owlet clobbered!\n");
-#endif
   if ((unchecked_type(sc->envir) != T_LET) &&
       (sc->envir != sc->nil))
     sc->envir = sc->nil;          /* in reader, the envir frame is mostly ignored so it can be (and usually is) garbage */
@@ -43555,6 +43525,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   if ((is_pair(cur_code)) &&     /* can be () if unexpected close paren read error */
       (has_line_number(cur_code)))
     {
+      static int32_t last_line = -1;
       int32_t line;
       line = (int32_t)pair_line(cur_code); /* cast to int32_t (from uint32_t) for last_line */
       if (line != last_line)
@@ -61274,10 +61245,7 @@ static void cancel_sym(s7_scheme *sc, s7_pointer symbol, slist *top)
     {
       for (p = top; p; p = p->next)
 	if (p->sym == symbol)
-	  {
-	    /* fprintf(stderr, "%d: cancel %s in %s\n", line, DISPLAY(symbol), DISPLAY(x)); */
-	    p->sym = sc->gc_nil;
-	  }
+	  p->sym = sc->gc_nil;
     }
 }
 
@@ -62395,9 +62363,7 @@ static s7_pointer check_let(s7_scheme *sc)
       set_local(y);
     }
 
-  /* we accept (let ((:hi 1)) :hi)
-   *           (let ('1) quote) [guile accepts this]
-   */
+  /* (let ('1) quote) -> 1 */
 
   if (is_not_null(x))                  /* (let* ((a 1) . b) a) */
     eval_error(sc, "let var list improper?: ~A", sc->code);
@@ -67117,19 +67083,6 @@ static int32_t unknown_all_x_ex(s7_scheme *sc, s7_pointer f)
   hop = (is_immutable_symbol(car(code))) ? 1 : 0;
   num_args = integer(arglist_length(code));
 
-#if DEBUGGING && 0
-  {
-    s7_pointer p;
-    int32_t i;
-    for (i = 1, p = cdr(code); is_pair(p); i++, p = cdr(p))
-      if (!has_all_x(p))
-	{
-	  fprintf(stderr, "oops_all_x%d: %s %s\n", i, DISPLAY_80(code), opt_names[optimize_op(code)]);
-	  /* abort(); */
-	}
-  }
-#endif
-
   switch (type(f))
     {
     case T_C_FUNCTION:
@@ -70236,6 +70189,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer arg, val1, val2;
 		    arg = cdr(code);
 		    val1 = c_call(arg)(sc, car(arg));
+		    sc->temp4 = val1;
 		    arg = cdr(arg);
 		    val2 = c_call(arg)(sc, car(arg));
 		    arg = cdr(arg);
@@ -81432,7 +81386,7 @@ s7_scheme *s7_init(void)
     }
 
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
-  cur_sc = sc;                                    /* for gdb/debugging */
+  cur_sc = sc;                                    /* for gdb/debugging and clm optimizer */
   sc->gc_off = true;                              /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->gc_stats = 0;
   init_gc_caches(sc);
@@ -83481,7 +83435,6 @@ int main(int argc, char **argv)
  *   callback funcs need calling check -- 5 list as fields of c-pointer?
  *   several more special funcs
  *
- * finish the t563.scm bugs: a couple number type problems 31905 30802 
  * weed out unused stuff -- choose.data/choose: simple_char_eq, is_eq_caar_q not_is_pair_car, geq_s_fc
  * test opt_sizes escape in sort et al -- perhaps save sc->envir, make sure it is ok if optimize fails
  * s7_macroexpand of multiple-value-set!? maybe disable values?  s7test 29596 _sort_ 23890 use-redef-1 etc
