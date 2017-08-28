@@ -337,7 +337,7 @@
     (set! *e* (curlet))
     (set! *lint* (curlet))                ; external access to (for example) the built-in-functions hash-table via (*lint* 'built-in-functions)
 
-    (define denote define-constant)
+    (define denote define)
 
     (define definers-table 
       (let ((h (make-hash-table)))
@@ -11684,7 +11684,6 @@
 						       (if (> (length unused) 1) "are" "is")))))))))
 			  pars)))))
 
-	
 	;; -------- report-usage --------
 	(lambda (caller head vars env)
 
@@ -13120,8 +13119,8 @@
 			(equal? (cdr a) (cdadr b)))))))
 
 	
-    (define lint-function-body #f) ; a momentary kludge??
-    (define lint-function-name #f) ; and another!
+    (define lint-function-body ()) ; a momentary kludge??
+    (define lint-function-name ()) ; and another!
 
     (define (evert-function-locals form vars env)
       ;; look for outer let with var value constant, not set in func body --
@@ -13131,28 +13130,33 @@
       ;;   and not named-let (can this happen?) and only this expr in body)
       ;; currently called only in let-walker, but might make sense in let*-walker and letrec-walker.
       ;;   in letrec-walker it got only 1 hit.
-
+      
       (when (and (pair? lint-function-body)  ; (let ((v 3)) v)?
 		 (eq? form (car lint-function-body))
 		 (symbol? lint-function-name)
-		 (pair? form) ; this is (car lint-function-body)
+		 (pair? form)                ; this is (car lint-function-body)
 		 (null? (cdr lint-function-body))
-		 (not (tree-set-memq definers (cdr form))))
+		 ;(not (tree-set-memq definers (cdr form)))
+		 )
 	(for-each 
 	 (lambda (local-var)
 	   (let ((vname (var-name local-var))
 		 (vvalue (var-initial-value local-var)))
 	     (when (and (zero? (var-set local-var))
 			(not (eq? (var-definer local-var) 'parameter))
-			(constant-expression? vvalue env)
-			(lint-every? (lambda (p)
-				       (not (and (pair? p)
-						 (or (memq (car p) '(vector-set! float-vector-set! int-vector-set! 
-										 string-set! list-set! hash-table-set! let-set!
-										 set-car! set-cdr!))
-						     (set!? p env))
-						 (eq? vname (cadr p)))))
-				     (var-history local-var)))
+			(or (constant-expression? vvalue env)
+			    (and (pair? vvalue)
+				 (memq (car vvalue) '(list vector float-vector int-vector byte-vector))
+				 (not (lint-any? (lambda (x) (and (pair? x) (not (eq? (car x) 'quote)))) (cdr vvalue)))))
+			(not (lint-any? (lambda (p)
+					  (and (pair? p)
+					       (or (memq (car p) '(vector-set! float-vector-set! int-vector-set! 
+								   string-set! list-set! hash-table-set! let-set!
+								   set-car! set-cdr!))
+						   ;; maybe check for anything ending in ! here
+						   (set!? p env))
+					       (eq? vname (cadr p))))
+					(var-history local-var))))
 	       (lint-format "~A can ~Abe moved to ~A's closure" lint-function-name
 			    vname 
 			    (if (lint-any? (lambda (p)
@@ -13165,8 +13169,7 @@
 					 (memq lint-function-name '(let let* letrec))))
 				lint-function-name
 				"the enclosing function")))))
-	 vars)
-	(set! lint-function-name #f)))
+	 vars)))
 
     (define (report-doc-string definer function-name args body)
       (lint-format "old-style doc string: ~S, in s7 use 'documentation:~%~NC~A" function-name
@@ -13213,10 +13216,9 @@
 		       (symbol? (var-ftype v)))
 		  (set! (var-retcons v) #t)))))
       
-      (set! lint-function-body (and (not (eq? definer 'definstrument)) body))
-      (set! lint-function-name (and (null? (cdr body)) function-name))
-
-      (lint-walk-body function-name definer body env))
+      (let-temporarily ((lint-function-body (and (not (eq? definer 'definstrument)) body))
+			(lint-function-name (and (null? (cdr body)) function-name)))
+	(lint-walk-body function-name definer body env)))
 
     (define (lint-walk-function definer function-name args body form env)
       ;; check out function arguments (adding them to the current env), then walk its body

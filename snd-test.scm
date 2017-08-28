@@ -38303,7 +38303,7 @@ EDITS: 1
       (define (Q) (mus-copy G))
       
       (define (try1 form gen)
-	(let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
+	(let ((make-gen (symbol "make-" (symbol->string gen))))
 	  (let ((body
 		 `(let ()
 		    (define (tester-1)
@@ -38367,7 +38367,7 @@ EDITS: 1
 	    (the-body))))
       
       (define (try2 form gen)
-	(let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
+	(let ((make-gen (symbol "make-" (symbol->string gen))))
 	  (let ((body
 		 `(let ()
 		    (define (tester-1)
@@ -38459,7 +38459,7 @@ EDITS: 1
 	    (the-body))))
       
       (define (try34 form gen)
-	(let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
+	(let ((make-gen (symbol "make-" (symbol->string gen))))
 	  (let ((body
 		 `(let ()
 		    (define (tester-1)

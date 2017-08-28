@@ -3070,20 +3070,18 @@ enum {OP_NO_OP, OP_GC_PROTECT,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O,
       OP_SAFE_DO, OP_SAFE_DO_STEP, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, 
       OP_DOTIMES_P, OP_DOTIMES_STEP_P,
-
       OP_DO_NO_VARS, OP_DO_NO_VARS_NO_OPT, OP_DO_NO_VARS_NO_OPT_1,
       OP_DOTIMES_ONE_STEP,
 
-      OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6,
-      OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV,
+      OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_3, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6,
+      OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV,
       OP_EVAL_ARGS_AAP_1, OP_EVAL_ARGS_AAP_MV, OP_EVAL_MACRO_MV, OP_MACROEXPAND_1, OP_APPLY_LAMBDA,
       OP_SAFE_CLOSURE_P_1, OP_CLOSURE_P_1, OP_SAFE_CLOSURE_AP_1, OP_SAFE_CLOSURE_PA_1, 
-
-      OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_ZC_1, OP_SAFE_C_SZ_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1, OP_SAFE_C_SZ_SZ,
+      OP_SAFE_C_ZZ_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1, OP_SAFE_C_SZ_SZ,
       OP_SAFE_C_ZAA_1, OP_SAFE_C_AZA_1, OP_SAFE_C_AAZ_1, 
-      OP_SAFE_C_ZZA_1, OP_SAFE_C_ZZA_2, OP_SAFE_C_ZAZ_1, OP_SAFE_C_ZAZ_2, OP_SAFE_C_AZZ_1, OP_SAFE_C_AZZ_2,
-      OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3,
-      OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2, OP_C_AP_1, OP_C_AP_2, OP_NOT_P_1,
+      OP_SAFE_C_ZZA_1, OP_SAFE_C_ZZA_2, OP_SAFE_C_ZAZ_1, OP_SAFE_C_AZZ_1, OP_SAFE_C_AZZ_2,
+      OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2,
+      OP_C_P_1, OP_C_P_2, OP_C_AP_1, OP_NOT_P_1,
       OP_CLOSURE_AP_1, OP_CLOSURE_PA_1, 
       OP_CLOSURE_P_MV, OP_CLOSURE_AP_MV, OP_CLOSURE_PA_MV, 
 
@@ -3301,21 +3299,18 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "safe_dotimes_step_p", "safe_dotimes_step_o", 
       "safe_do", "safe_do_step", "dox", "dox_step", "dox_step_p", 
       "dotimes_p", "dotimes_step_p",
-
       "do_no_vars", "do_no_vars_no_opt", "do_no_vars_no_opt_1",
       "dotimes_one_step",
 
-      "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "safe_c_pp_3", "safe_c_pp_4", "safe_c_pp_5", "safe_c_pp_6",
-      "eval_args_p_2", "eval_args_p_2_mv", "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv",
+      "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_3", "safe_c_pp_5", "safe_c_pp_6",
+      "eval_args_p_2", "eval_args_p_2_mv", "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv",
       "eval_args_aap_1", "eval_args_aap_mv", "eval_macro_mv", "macroexpand_1", "apply_lambda",
       "safe_closure_p_1", "closure_p_1", "safe_closure_ap_1", "safe_closure_pa_1", 
-
-      "safe_c_zz_1", "safe_c_zz_2", "safe_c_zc_1", "safe_c_sz_1", "safe_c_za_1", "increment_sz_1", "safe_c_sz_sz",
+      "safe_c_zz_1", "safe_c_za_1", "increment_sz_1", "safe_c_sz_sz",
       "safe_c_zaa_1", "safe_c_aza_1", "safe_c_aaz_1", 
-      "safe_c_zza_1", "safe_c_zza_2", "safe_c_zaz_1", "safe_c_zaz_2", "safe_c_azz_1", "safe_c_azz_2",
-      "safe_c_zzz_1", "safe_c_zzz_2", "safe_c_zzz_3",
-
-      "safe_c_opsq_p_1", "safe_c_opsq_p_mv", "c_p_1", "c_p_2", "c_ap_1", "c_ap_2", "not_1",
+      "safe_c_zza_1", "safe_c_zza_2", "safe_c_zaz_1", "safe_c_azz_1", "safe_c_azz_2",
+      "safe_c_zzz_1", "safe_c_zzz_2",
+      "c_p_1", "c_p_2", "c_ap_1", "not_1",
       "closure_ap_1", "closure_pa_1", 
       "closure_p_mv", "closure_ap_mv", "closure_pa_mv",
 
@@ -55221,26 +55216,18 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
       /* in the next set, the main evaluator branches blithely assume no multiple-values,
        *   and if it happens anyway, we vector to a different branch here
        */
-    case OP_SAFE_C_opSq_P_1:
-      vector_element(sc->stack, top) = (s7_pointer)OP_SAFE_C_opSq_P_MV;
-      return(args);
-      
     case OP_EVAL_ARGS_AAP_1:
       vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_ARGS_AAP_MV;
       return(args);
       
-    case OP_SAFE_C_SZ_1:
+    case OP_C_AP_1:
     case OP_EVAL_ARGS_P_2:
+    case OP_EVAL_ARGS_P_4:
       vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_ARGS_P_2_MV;
       return(args);
       
     case OP_EVAL_ARGS_P_3:
       vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_ARGS_P_3_MV;
-      return(args);
-      
-    case OP_SAFE_C_ZC_1:
-    case OP_EVAL_ARGS_P_4:
-      vector_element(sc->stack, top) = (s7_pointer)OP_EVAL_ARGS_P_4_MV;
       return(args);
       
     case OP_C_P_1:
@@ -55263,17 +55250,9 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
     case OP_CLOSURE_PA_1:
       vector_element(sc->stack, top) = (s7_pointer)OP_CLOSURE_PA_MV;
       return(args);
-
-    case OP_C_AP_1:
-      vector_element(sc->stack, top) = (s7_pointer)OP_C_AP_2;
-      return(args);
       
     case OP_SAFE_C_PP_1:
       vector_element(sc->stack, top) = (s7_pointer)OP_SAFE_C_PP_3;
-      return(args);
-      
-    case OP_SAFE_C_PP_2:
-      vector_element(sc->stack, top) = (s7_pointer)OP_SAFE_C_PP_4;
       return(args);
       
     case OP_SAFE_C_PP_5:
@@ -69917,7 +69896,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   *   the reader protects us, but a call/cc can replace the original stack with a much smaller one.
 		   * How to minimize the cost of this check?
 		   */
-		  push_stack(sc, OP_SAFE_C_SZ_1, cadr(code), code);
+		  push_stack(sc, OP_EVAL_ARGS_P_2, cadr(code), code);
 		  sc->code = _TPair(caddr(code));
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -69925,7 +69904,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ZC:
 		  check_stack_size(sc);
-		  push_stack(sc, OP_SAFE_C_ZC_1, caddr(code), code); /* need ZC_1 here in case multiple values encountered */
+		  push_stack(sc, OP_EVAL_ARGS_P_4, caddr(code), code);
 		  sc->code = _TPair(cadr(code));
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -69933,7 +69912,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_SZ:
 		  check_stack_size(sc);
-		  push_stack(sc, OP_SAFE_C_SZ_1, find_symbol_unchecked(sc, cadr(code)), code);
+		  push_stack(sc, OP_EVAL_ARGS_P_2, find_symbol_unchecked(sc, cadr(code)), code);
 		  sc->code = _TPair(caddr(code));	            /* splitting out the all_x cases here and elsewhere saves nothing */
 		  goto OPT_EVAL_CHECKED;
 		  
@@ -70048,7 +70027,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer val;
 		    val = c_call(cdr(code))(sc, cadr(code));
-		    push_stack(sc, OP_SAFE_C_SZ_1, val, code);
+		    push_stack(sc, OP_EVAL_ARGS_P_2, val, code);
 		    sc->code = _TPair(caddr(code));
 		    goto OPT_EVAL_CHECKED;
 		  }
@@ -70077,7 +70056,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer val;
 		    val = c_call(cadr(code))(sc, cdadr(code));
-		    push_stack(sc, OP_SAFE_C_ZZ_2, val, code);
+		    push_stack(sc, OP_EVAL_ARGS_P_2, val, code);
 		    sc->code = _TPair(caddr(code));
 		    goto OPT_EVAL_CHECKED;
 		  }
@@ -71033,7 +71012,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    check_stack_size(sc);
 		    set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(args)));
 		    val = c_call(args)(sc, sc->t1_1);
-		    push_stack(sc, OP_SAFE_C_opSq_P_1, val, sc->code);
+		    push_stack(sc, OP_EVAL_ARGS_P_2, val, sc->code);
 		    sc->code = caddr(code);
 		    goto EVAL;
 		  }
@@ -72759,8 +72738,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto APPLY;
 	  }
 	  
-	case OP_EVAL_ARGS2:
-	  /* sc->value is the last arg, [so if is_null(cdr(sc->code) and current is pair, push args2] */
+	case OP_EVAL_ARGS2:          /* sc->value is the last arg, [so if is_null(cdr(sc->code) and current is pair, push args2] */
 	  {
 	    s7_pointer x;
 	    sc->code = pop_op_stack(sc);
@@ -72775,9 +72753,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  /* tricky cases here all involve values (i.e. multiple-values) */
 	case OP_EVAL_ARGS_P_2:
-	  /* from HOP_SAFE_C_SP||CP|QP, handled like P_1 case above
-	   *   primarily involves generators: (outa i (nrcos gen)) etc
-	   */
 	  set_car(sc->t2_1, sc->args);
 	  set_car(sc->t2_2, sc->value);
 	  sc->value = c_call(sc->code)(sc, sc->t2_1);
@@ -72788,7 +72763,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = c_function_base(opt_cfunc(sc->code));
 	  goto APPLY;
 	  
-	case OP_EVAL_ARGS_AAP_1:	  /* from HOP_SAFE_C_AAP */
+	case OP_EVAL_ARGS_P_3:
+	  set_car(sc->t2_2, find_symbol_unchecked(sc, caddr(sc->code)));
+	  /* we have to wait because we say the evaluation order is left to right (in lambda*)
+	   *   and the first arg's evaluation might change the value of the second arg.
+	   */
+	  set_car(sc->t2_1, sc->value);
+	  sc->value = c_call(sc->code)(sc, sc->t2_1);
+	  break;
+	  
+	case OP_EVAL_ARGS_P_3_MV:      /* (define (hi a) (+ (values 1 2) a)) */
+	  sc->w = sc->value;
+	  sc->args = cons(sc, find_symbol_unchecked(sc, caddr(sc->code)), sc->w);
+	  sc->code = c_function_base(opt_cfunc(sc->code));
+	  goto APPLY;
+	  
+	case OP_EVAL_ARGS_P_4:
+	  set_car(sc->t2_1, sc->value);
+	  set_car(sc->t2_2, sc->args);
+	  sc->value = c_call(sc->code)(sc, sc->t2_1);
+	  break;
+	  
+	case OP_EVAL_ARGS_AAP_1:	  /* from OP_SAFE_C_AAP */
 	  {
 	    s7_pointer val1, val3;
 	    val1 = sc->args;
@@ -72811,47 +72807,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto APPLY;
 	  }
 
-	case OP_EVAL_ARGS_P_3:
-	  set_car(sc->t2_2, find_symbol_unchecked(sc, caddr(sc->code)));
-	  /* we have to wait because we say the evaluation order is always left to right
-	   *   and the first arg's evaluation might change the value of the second arg.
-	   */
-	  set_car(sc->t2_1, sc->value);
-	  sc->value = c_call(sc->code)(sc, sc->t2_1);
-	  break;
-	  
-	case OP_EVAL_ARGS_P_3_MV:
-	  /* (define (hi a) (+ (values 1 2) a))
-	   * (define (hi a) (log (values 1 2) a))
-	   */
-	  sc->w = sc->value;
-	  sc->args = cons(sc, find_symbol_unchecked(sc, caddr(sc->code)), sc->w);
-	  sc->code = c_function_base(opt_cfunc(sc->code));
-	  goto APPLY;
-	  
-	case OP_EVAL_ARGS_P_4:
-	  set_car(sc->t2_1, sc->value);
-	  set_car(sc->t2_2, sc->args);
-	  sc->value = c_call(sc->code)(sc, sc->t2_1);
-	  break;
-	  
-	case OP_EVAL_ARGS_P_4_MV: /* same as P_2_MV) */
-	  sc->args = cons(sc, sc->args, sc->value);
-	  sc->code = c_function_base(opt_cfunc(sc->code));
-	  goto APPLY; /* (define (hi) (log (values 1 2) 3)) ? */
-	  
-	case OP_SAFE_C_ZC_1:
-	  set_car(sc->t2_1, sc->value);
-	  set_car(sc->t2_2, sc->args);
-	  sc->value = c_call(sc->code)(sc, sc->t2_1);
-	  break;
-	  
-	case OP_SAFE_C_SZ_1:
-	  set_car(sc->t2_1, sc->args);
-	  set_car(sc->t2_2, sc->value);
-	  sc->value = c_call(sc->code)(sc, sc->t2_1);
-	  break;
-	  
 	case OP_SAFE_C_SZ_SZ:
 	  /* S_opSZq actually, in (nominal second, only actual) SZ, S=args, Z=value,
 	   *   SZ from the SP combiner for SZ
@@ -72870,15 +72825,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	case OP_SAFE_C_ZZ_1:
-	  push_stack(sc, OP_SAFE_C_ZZ_2, sc->value, sc->code);
+	  push_stack(sc, OP_EVAL_ARGS_P_2, sc->value, sc->code);
 	  sc->code = _TPair(caddr(sc->code));
 	  goto OPT_EVAL;
-	  
-	case OP_SAFE_C_ZZ_2:
-	  set_car(sc->t2_1, sc->args);
-	  set_car(sc->t2_2, sc->value);
-	  sc->value = c_call(sc->code)(sc, sc->t2_1);
-	  break;
 	  
 	case OP_SAFE_C_ZAA_1:
 	  {
@@ -72924,18 +72873,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer val;
 	    push_op_stack(sc, sc->value);
 	    val = c_call(cddr(sc->code))(sc, caddr(sc->code));
-	    push_stack(sc, OP_SAFE_C_ZAZ_2, val,  sc->code);
+	    push_stack(sc, OP_SAFE_C_AAZ_1, val,  sc->code);
 	    sc->code = _TPair(cadddr(sc->code));
 	    goto OPT_EVAL_CHECKED;
 	  }
-	  
-	case OP_SAFE_C_ZAZ_2:
-	  set_car(sc->t3_1, pop_op_stack(sc));
-	  set_car(sc->t3_2, sc->args);
-	  set_car(sc->t3_3, sc->value);
-	  sc->value = c_call(sc->code)(sc, sc->t3_1);
-	  break;
-	  
+
 	case OP_SAFE_C_AZZ_1:
 	  push_op_stack(sc, sc->value);
 	  push_stack(sc, OP_SAFE_C_AZZ_2, sc->args, sc->code);
@@ -72956,49 +72898,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_SAFE_C_ZZZ_2:
 	  push_op_stack(sc, sc->value);
-	  push_stack(sc, OP_SAFE_C_ZZZ_3, sc->args, sc->code);
+	  push_stack(sc, OP_SAFE_C_AZZ_2, sc->args, sc->code);
 	  sc->code = _TPair(cadddr(sc->code));
 	  goto OPT_EVAL_CHECKED;
 	  
-	case OP_SAFE_C_ZZZ_3:
-	  set_car(sc->t3_1, sc->args);
-	  set_car(sc->t3_2, pop_op_stack(sc));
-	  set_car(sc->t3_3, sc->value);
-	  sc->value = c_call(sc->code)(sc, sc->t3_1);
-	  break;
-
-	case OP_SAFE_C_opSq_P_1:
-	  /* this is the no-multiple-values case */
-	  set_car(sc->t2_1, sc->args);
-	  set_car(sc->t2_2, sc->value);
-	  sc->value = c_call(sc->code)(sc, sc->t2_1);
-	  break;
-	  
-	case OP_SAFE_C_opSq_P_MV:
-	  /* here we need an argnum check since values could have appended any number of args
-	   */
-	  sc->args = cons(sc, sc->args, sc->value);
-	  
-	  /* can values return an improper or circular list?  I don't think so:
-	   *   (values 1 . 2) -> improper arg list error (same with apply values)
-	   *
-	   * currently (values) does not simply erase itself:
-	   *   :(let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
-	   *   ;expt power, argument 2, #<unspecified>, is an untyped but should be a number
-	   *   :(s7-version (values))
-	   *   ;s7-version: too many arguments: (#<unspecified>)
-	   *   :(exp (values) 0.0)
-	   *   ;exp: too many arguments: (#<unspecified> 0.0)
-	   *
-	   * map is explicitly a special case, and surely it is more confusing to have (values) scattered at random.
-	   * also this is consistent with the unoptimized version
-	   */
-	  sc->code = c_function_base(opt_cfunc(sc->code));
-	  goto APPLY; /* (define (hi a) (+ (abs a) (values 1 2 3))) */
-	  
-	case OP_EVAL_ARGS3:
-	  /* sc->value is the next-to-last arg, and we know the last arg is not a list (so values can't mess us up!)
-	   */
+	case OP_EVAL_ARGS3:  /* sc->value is the next-to-last arg, and we know the last arg is not a list (so values can't mess us up!) */
 	  {
 	    s7_pointer x, y, val;
 	    
@@ -74199,19 +74103,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *
 	   * I think safe_c_ppp would require 18 branches (or maybe just collect the args and concatenate at the end?)
 	   */
-	  push_stack(sc, OP_SAFE_C_PP_2, sc->value, sc->code); /* mv -> 3 */
+	  push_stack(sc, OP_EVAL_ARGS_P_2, sc->value, sc->code); /* mv -> 3 */
 	  sc->code = caddr(sc->code);
 	  if (is_optimized(sc->code))
 	    goto OPT_EVAL;
 	  goto EVAL;
-	  
-	case OP_SAFE_C_PP_2:
-	  /* we get here only if neither arg returned multiple values, so sc->args is the first value, and sc->value the second */
-	  set_car(sc->t2_1, sc->args);
-	  set_car(sc->t2_2, sc->value);
-	  sc->value = c_call(sc->code)(sc, sc->t2_1);
-	  break;
-	  
+
 	case OP_SAFE_C_PP_3:
 	  /* we get here if the first arg returned multiple values */
 	  push_stack(sc, OP_SAFE_C_PP_5, sc->value, sc->code);
@@ -74219,12 +74116,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_optimized(sc->code))
 	    goto OPT_EVAL;
 	  goto EVAL;
-	  
-	case OP_SAFE_C_PP_4:
-	  /* we get here if the first arg result was normal, but the second had multiple values */
-	  sc->args = cons(sc, sc->args, sc->value);
-	  sc->code = c_function_base(opt_cfunc(sc->code));
-	  goto APPLY;
 	  
 	case OP_SAFE_C_PP_5:
 	  /* 1 mv, 2, normal */
@@ -74257,7 +74148,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto APPLY;
 	  
 	case OP_CLOSURE_AP_1:
-	  /* sc->value is presumably the "P" argument value, "S" is sc->args */
+	  /* sc->value is presumably the "P" argument value, "A" is sc->args */
 	  check_stack_size(sc);
 	  sc->code = opt_lambda(sc->code);
 	  new_frame_with_two_slots(sc, closure_let(sc->code), sc->envir, 
@@ -74293,13 +74184,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_C_AP_1:
 	  sc->value = c_call(sc->code)(sc, list_2(sc, sc->args, sc->value));
 	  break;
-	  
-	case OP_C_AP_2:
-	  /* op_c_ap_1 -> mv case: (map + (values '(1 2 3) #(1 2 3))) */
-	  sc->code = c_function_base(opt_cfunc(sc->code));
-	  sc->args = cons(sc, sc->args, copy_list(sc, sc->value));
-	  goto APPLY;
-	  
+
 	  /* -------------------------------- LET -------------------------------- */
 	case OP_LET_NO_VARS:
 	  new_frame(sc, sc->envir, sc->envir);
@@ -83412,8 +83297,6 @@ int main(int argc, char **argv)
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
  *
- * lint: as in random-gen (snd-test), move internally created but unchanged sequences (lists) out of the body
- *
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
@@ -83435,7 +83318,7 @@ int main(int argc, char **argv)
  *   callback funcs need calling check -- 5 list as fields of c-pointer?
  *   several more special funcs
  *
- * weed out unused stuff -- choose.data/choose: simple_char_eq, is_eq_caar_q not_is_pair_car, geq_s_fc
+ * weed out unused stuff -- choose.data/choose: simple_char_eq, is_eq_caar_q not_is_pair_car
  * test opt_sizes escape in sort et al -- perhaps save sc->envir, make sure it is ok if optimize fails
  * s7_macroexpand of multiple-value-set!? maybe disable values?  s7test 29596 _sort_ 23890 use-redef-1 etc
  * all_x_if_a...?
@@ -83445,7 +83328,6 @@ int main(int argc, char **argv)
  * is_type replacing is_symbol etc [all_x_is_*_s if_is_* safe_is_*]
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
- *   there are 8 bits free
  * if_and_n if_or_3|pair_cdr similar for all_x_closure (and_3...)
  * -0.0 prints as -0.0 but does the sign bit ever leak out?  should the printer output be 0.0?
  *

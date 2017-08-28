@@ -4890,7 +4890,7 @@
 ;;;  9-Nov-16:  22
 ;;; 20-Jul-17:   6 (370)
 
-<1> (load "test-phases.scm")
+<1> (load "test-phases.scm") ; same 27-Aug-17
 <1> (test-all-phases #f)
 ;all peaks... Thu 20-Jul-2017 14:49
 (0.00149573739942177 101)
