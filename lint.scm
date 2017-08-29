@@ -309,7 +309,7 @@
 	(*e* #f)
 	(other-identifiers (make-hash-table))
 	(quote-warnings 0)
-	;; these line numbers are trying to reduce redundant output
+	;; these line numbers are trying to reduce redundant output, but they sometimes squelch useful feedback
 	(last-simplify-boolean-line-number -1)
 	(last-simplify-numeric-line-number -1)
 	(last-simplify-cxr-line-number -1)
@@ -337,7 +337,7 @@
     (set! *e* (curlet))
     (set! *lint* (curlet))                ; external access to (for example) the built-in-functions hash-table via (*lint* 'built-in-functions)
 
-    (define denote define)
+    (define denote define-constant)
 
     (define definers-table 
       (let ((h (make-hash-table)))
@@ -13119,8 +13119,8 @@
 			(equal? (cdr a) (cdadr b)))))))
 
 	
-    (define lint-function-body ()) ; a momentary kludge??
-    (define lint-function-name ()) ; and another!
+    (define lint-function-body #f) ; a momentary kludge??
+    (define lint-function-name #f) ; and another!
 
     (define (evert-function-locals form vars env)
       ;; look for outer let with var value constant, not set in func body --
@@ -18957,7 +18957,7 @@
 	      (when (and (< (length varlist) 8)
 			 (not (or (memq (caar body) '(lambda lambda* define define* define-macro))
 				  (and (eq? (caar body) 'set!)
-				       (lint-any? (lambda (v) (and (eq? (car v) (cadar body)))) varlist))
+				       (lint-any? (lambda (v) (eq? (car v) (cadar body))) varlist))
 				  (any-macro? (caar body) env)
 				  (lint-any? (lambda (p)
 					       (and (unquoted-pair? p)

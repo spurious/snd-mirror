@@ -241,19 +241,19 @@
 			 (let ((documentation "this is the repl's load replacement; its default is to use the repl's top-level-let.")
 			       (signature '(values string? let?)))
 			   (lambda* (file (e (*repl* 'top-level-let)))
-			     (dynamic-wind original-hooks (lambda () (load file e)) repl-hooks))))
+			     (dynamic-wind repl-hooks (lambda () (load file e)) original-hooks))))
 			
 			(new-eval 
 			 (let ((documentation "this is the repl's eval replacement; its default is to use the repl's top-level-let.")
 			       (signature '(values list? let?)))
 			   (lambda* (form (e (*repl* 'top-level-let)))
-			     (dynamic-wind original-hooks (lambda () (eval form e)) repl-hooks))))
+			     (dynamic-wind repl-hooks (lambda () (eval form e)) original-hooks))))
 			
 			(new-eval-string 
 			 (let ((documentation "this is the repl's eval-string replacement; its default is to use the repl's top-level-let.")
 			       (signature '(values string? let?)))
 			   (lambda* (str (e (*repl* 'top-level-let)))
-			     (dynamic-wind original-hooks (lambda () (eval-string str e)) repl-hooks)))))
+			     (dynamic-wind repl-hooks (lambda () (eval-string str e)) original-hooks)))))
 		    
 		    (dynamic-wind
 			(lambda ()
@@ -1039,14 +1039,45 @@
 	      (set! (meta-keymap-functions (char->integer #\u)) upper-case)
 	      (set! (meta-keymap-functions (char->integer #\l)) lower-case))
 	    
-	    ;; -------- terminal setup --------
-	    (define* (run file)
-	      (let ((saved #f)
-		    (tty #t))
+	    (define (run-emacs-shell)
+	      ;; TODO: use the emacs language server protocol? (not our own rpc stuff or epc)
+	      ;;   probably will need an argument for repl to open the channel or whatever
+	      (let ((buf (c-pointer->string (calloc 512 1) 512)))
+		(format *stderr* "> ")
+		(do ((b (fgets buf 512 stdin) (fgets buf 512 stdin)))
+		    ((zero? (length b))
+		     (#_exit))
+		  (let ((len (strlen buf)))
+		    (when (positive? len)
+		      (do ((i 0 (+ i 1)))
+			  ((or (not (char-whitespace? (buf i)))
+			       (= i len))
+			   (when (< i len)
+			     (let ((str (substring buf 0 (- (strlen buf) 1))))
+			       (catch #t
+				 (lambda ()
+				   (do ()
+				       ((= (string-length str) 0))
+				     (catch 'string-read-error
+				       (lambda ()
+					 (with-repl-let
+					  (lambda ()
+					    (format *stderr* "~S~%> " (eval-string str (*repl* 'top-level-let)))
+					    (set! str ""))))
+				       (lambda (type info)
+					 (fgets buf 512 stdin)
+					 (set! str (string-append str " " (substring buf 0 (- (strlen buf) 1))))))))
+				 (lambda (type info)
+				   (set! str "")
+				   (apply format *stderr* info)
+				   (format *stderr* "~%> "))))))))))))
+	    
+	    (define (run-normal-shell file)		
+	      (let ((saved #f))
 		
 		;; we're in libc here, so exit is libc's exit!
 		(define (tty-reset)
-		  (if tty (tcsetattr terminal-fd TCSAFLUSH saved))
+		  (tcsetattr terminal-fd TCSAFLUSH saved)
 		  (if (not (equal? input-fd terminal-fd)) (close input-fd))
 		  (#_exit))
 		
@@ -1056,33 +1087,7 @@
 			    (newline *stderr*)
 			    (tty-reset))))
 		
-		;; check for dumb terminal
-		(if (or (zero? (isatty terminal-fd))        ; not a terminal -- input from pipe probably
-			(string=? (getenv "TERM") "dumb"))  ; no vt100 codes -- emacs shell for example
-		    (let ((buf (c-pointer->string (calloc 512 1) 512)))
-		      (set! tty #f)
-		      (format *stderr* "> ")
-		      (do ((b (fgets buf 512 stdin) (fgets buf 512 stdin)))
-			  ((zero? (length b))
-			   (#_exit))
-			(let ((len (strlen buf)))
-			  (when (positive? len)
-			    (do ((i 0 (+ i 1)))
-				((or (not (char-whitespace? (buf i)))
-				     (= i len))
-				 (when (< i len)
-				   (with-repl-let
-				    (lambda ()
-				      (catch #t
-					(lambda ()
-					  (format *stderr* "~S~%" (eval-string (substring buf 0 (- (strlen buf) 1)) (*repl* 'top-level-let))))
-					(lambda (type info)
-					  (format *stderr* "error: ")
-					  (apply format *stderr* info)
-					  (newline *stderr*)))))
-				   (format *stderr* "> ")))))))))
-		
-		;; not a pipe or a dumb terminal -- hopefully all others accept vt100 codes
+		;; a "normal" terminal -- hopefully it accepts vt100 codes
 		(let ((buf (termios.make)))
 		  (let ((read-size 128))
 		    (set! next-char                                     ; this indirection is needed if user pastes the selection into the repl
@@ -1100,10 +1105,10 @@
 				   (set! chars (read input-fd cc read-size))
 				   (if (= chars 0)
 				       (tty-reset))
-
+				   
 				   (when (> chars (- last-col prompt-length 12))
 				     (let ((str (substring c 0 chars)))
-
+				       
 				       (when (= chars read-size)
 					 ;; concatenate buffers until we get the entire selection
 					 (let reading ((num (read input-fd cc read-size)))
@@ -1159,17 +1164,17 @@
 						(display-lines)
 						(return #\newline)))))
 				       ;; now the pasted-in line has inserted newlines, we hope
-
+				       
 				       (set! c str)
 				       (set! cc (string->c-pointer c))
-
+				       
 				       ;; avoid time-consuming redisplays.  We need to use a recursive call on next-char here
 				       ;;   since we might have multi-char commands (embedded #\escape -> meta, etc)
 				       ;; actually, the time is not the repl's fault -- xterm seems to be waiting
 				       ;;   for the window manager or someone to poke it -- if I move the mouse,
 				       ;;   I get immediate output.  I also get immediate output in any case in OSX.
 				       ;;   valgrind and ps say we're not computing, we're just sitting there.
-
+				       
 				       (catch #t
 					 (lambda ()
 					   (do ((ch (next-char) (next-char)))
@@ -1209,8 +1214,6 @@
 		  (when (negative? (tcsetattr terminal-fd TCSAFLUSH buf))
 		    (tty-reset))
 		  
-		  
-		  ;; -------- the repl --------
 		  (display-prompt)
 		  (cursor-bounds)
 		  ;; (debug-help)
@@ -1239,6 +1242,13 @@
 			(set! chars 0)
 			(new-prompt)))))))
 	    
+	    (define* (run file)
+	      ;; check for dumb terminal
+	      (if (or (zero? (isatty terminal-fd))        ; not a terminal -- input from pipe probably
+		      (string=? (getenv "TERM") "dumb"))  ; no vt100 codes -- emacs shell for example
+		  (run-emacs-shell)
+		  (run-normal-shell file)))
+
 	    (curlet))))))
       
       (define (save-repl) 
@@ -1259,7 +1269,6 @@
       (define (restore-repl) 
 	(set! (*repl* 'top-level-let) (load "save.repl")))  
       ;; I think this could be a merge rather than a reset by using (with-let top-level-let (load ...))
-      
       
       (set! keymap (repl-let 'keymap))
       (set! history (repl-let 'history))
