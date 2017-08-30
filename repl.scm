@@ -1039,9 +1039,14 @@
 	      (set! (meta-keymap-functions (char->integer #\u)) upper-case)
 	      (set! (meta-keymap-functions (char->integer #\l)) lower-case))
 	    
-	    (define (run-emacs-shell)
-	      ;; TODO: use the emacs language server protocol? (not our own rpc stuff or epc)
-	      ;;   probably will need an argument for repl to open the channel or whatever
+	    ;; -------- emacs --------
+	    (define (emacs-repl)
+	      ;; TODO: use the emacs language server protocol? (not our own rpc stuff or epc), for json, see json.scm 
+	      ;;   probably will need an argument/function? for repl to open the channel or whatever
+	      ;; also this does not resend the entire expression after editing
+	      ;;   and does not notice in-place edits
+	      ;;   m-p does not resend the entire expr
+	      ;;   can <cr> get entire expr? -- inf-snd.el send-last-sexp?
 	      (let ((buf (c-pointer->string (calloc 512 1) 512)))
 		(format *stderr* "> ")
 		(do ((b (fgets buf 512 stdin) (fgets buf 512 stdin)))
@@ -1054,6 +1059,7 @@
 			       (= i len))
 			   (when (< i len)
 			     (let ((str (substring buf 0 (- (strlen buf) 1))))
+			       ;(format *stderr* "str: ~S~%" str)
 			       (catch #t
 				 (lambda ()
 				   (do ()
@@ -1066,13 +1072,15 @@
 					    (set! str ""))))
 				       (lambda (type info)
 					 (fgets buf 512 stdin)
+					 ;(format *stderr* "add str: ~S~%" (substring buf 0 (- (strlen buf) 1)))
 					 (set! str (string-append str " " (substring buf 0 (- (strlen buf) 1))))))))
 				 (lambda (type info)
 				   (set! str "")
 				   (apply format *stderr* info)
 				   (format *stderr* "~%> "))))))))))))
-	    
-	    (define (run-normal-shell file)		
+
+	    ;; -------- rxvt et al --------
+	    (define (terminal-repl file)		
 	      (let ((saved #f))
 		
 		;; we're in libc here, so exit is libc's exit!
@@ -1245,9 +1253,9 @@
 	    (define* (run file)
 	      ;; check for dumb terminal
 	      (if (or (zero? (isatty terminal-fd))        ; not a terminal -- input from pipe probably
-		      (string=? (getenv "TERM") "dumb"))  ; no vt100 codes -- emacs shell for example
-		  (run-emacs-shell)
-		  (run-normal-shell file)))
+		      (string=? (getenv "TERM") "dumb"))  ; no vt100 codes -- emacs subjob for example
+		  (emacs-repl)                            ; TODO: restore support for the pipe case
+		  (terminal-repl file)))
 
 	    (curlet))))))
       

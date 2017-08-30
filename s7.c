@@ -34564,37 +34564,6 @@ static s7_pointer g_vector_ref_ic_2(s7_scheme *sc, s7_pointer args) {return(g_ve
 static s7_pointer vector_ref_ic_3;
 static s7_pointer g_vector_ref_ic_3(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, 3));}
 
-static s7_pointer vector_ref_add1;
-static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
-{
-  /* (vector-ref v (+ s 1)) I think */
-  s7_pointer vec, x;
-  s7_int index;
-
-  vec = find_symbol_unchecked(sc, car(args));
-  x = find_symbol_unchecked(sc, cadadr(args));
-
-  if (!s7_is_integer(x))
-    method_or_bust(sc, x, sc->vector_ref_symbol, list_2(sc, vec, x), T_INTEGER, 2);
-  index = s7_integer(x) + 1;
-
-  if (!s7_is_vector(vec))
-    method_or_bust(sc, vec, sc->vector_ref_symbol, list_2(sc, vec, s7_make_integer(sc, index)), T_VECTOR, 1);
-
-  if ((index < 0) ||
-      (index >= vector_length(vec)))
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), (index < 0) ? its_negative_string : its_too_large_string));
-
-  if (vector_rank(vec) > 1)
-    {
-      if (index >= vector_dimension(vec, 0))
-	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), its_too_large_string));
-      return(make_shared_vector(sc, vec, 1, index * vector_offset(vec, 0)));
-    }
-  return(vector_getter(vec)(sc, vec, index));
-}
-
-
 static s7_pointer vector_ref_2;
 static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
 {
@@ -56934,15 +56903,6 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int32_t args, 
 		    default: return(vector_ref_ic);
 		    }
 		}
-	      
-	      if ((is_pair(arg2)) &&
-		  (is_safely_optimized(arg2)) &&
-		  ((c_callee(arg2) == g_add_cs1) || (c_callee(arg2) == g_add_cl1)))
-		{
-		  set_optimize_op(expr, HOP_SAFE_C_C);
-		  return(vector_ref_add1);
-		}
-	      
 	      if ((is_immutable_symbol(arg1)) &&
 		  (is_slot(local_slot(arg1))))
 		{
@@ -57980,7 +57940,6 @@ static void init_choosers(s7_scheme *sc)
   vector_ref_ic_1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_1, 1, 0, false, "vector-ref opt");
   vector_ref_ic_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_2, 1, 0, false, "vector-ref opt");
   vector_ref_ic_3 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_3, 1, 0, false, "vector-ref opt");
-  vector_ref_add1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_add1, 2, 0, false, "vector-ref opt");
   vector_ref_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref opt");
   vector_ref_2_direct = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2_direct, 2, 0, false, "vector-ref opt");
 
@@ -58215,15 +58174,13 @@ static int32_t combine_ops(s7_scheme *sc, s7_pointer func, s7_pointer expr, comb
 	  set_opt_con2(cdr(expr), caddr(arg));
 	  return(OP_SAFE_C_S_opSCq);
 
-	case OP_SAFE_C_CS:
-	  /* expr is (* a (- 1 b)), e2 is (- 1 b) */
+	case OP_SAFE_C_CS:	  /* expr is (* a (- 1 b)), e2 is (- 1 b) */
 	  set_opt_con1(cdr(expr), cadr(arg));
 	  set_opt_sym2(cdr(expr), caddr(arg));
 	  return(OP_SAFE_C_S_opCSq);
 
 	case OP_SAFE_C_LL:
-	case OP_SAFE_C_SS:
-	  /* (* a (- b c)) */
+	case OP_SAFE_C_SS:	  /* (* a (- b c)) */
 	  set_opt_sym1(cdr(expr), cadr(arg));
 	  set_opt_sym2(cdr(expr), caddr(arg));
 	  return(OP_SAFE_C_S_opSSq);
@@ -58275,7 +58232,6 @@ static int32_t combine_ops(s7_scheme *sc, s7_pointer func, s7_pointer expr, comb
 	case OP_SAFE_C_SC:    return(OP_SAFE_C_opSCq_C);
 	case OP_SAFE_C_opSq:  return(OP_SAFE_C_op_opSq_q_C);
 	case OP_SAFE_C_opSSq: return(OP_SAFE_C_op_opSSq_q_C);
-
 	case OP_SAFE_C_LL:   
 	case OP_SAFE_C_SS:    return(OP_SAFE_C_opSSq_C);
 	}
@@ -58335,7 +58291,6 @@ static int32_t combine_ops(s7_scheme *sc, s7_pointer func, s7_pointer expr, comb
       arg_op = op_no_hop(arg);
       switch (arg_op)
 	{
-
 	case OP_SAFE_C_S: case OP_SAFE_C_L: case OP_SAFE_CAR_S: case OP_SAFE_CDR_S: case OP_SAFE_CADR_S:
 	case OP_SAFE_IS_PAIR_S: case OP_SAFE_IS_NULL_S: case OP_SAFE_IS_SYMBOL_S:
 	  if (is_safe_c_s(e1))
@@ -58353,7 +58308,6 @@ static int32_t combine_ops(s7_scheme *sc, s7_pointer func, s7_pointer expr, comb
 		      set_direct_x_opt(expr);
 		    }
 		}
-	      /* else fprintf(stderr, "opt: %s\n", DISPLAY_80(expr)); */
 	      return(OP_SAFE_C_opSq_opSq);
 	    }
 	  if ((optimize_op_match(e1, OP_SAFE_C_SS)) || (optimize_op_match(e1, OP_SAFE_C_LL)))
@@ -59392,7 +59346,6 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  (symbols == 1) &&
 	  (quotes == 0) &&
 	  (!func_is_safe) &&
-	  /* (is_symbol(arg1)) */
 	  ((!is_pair(arg1)) ||
 	   ((is_optimized(arg1)) &&
 	    (is_all_x_op(optimize_op(arg1))))))
@@ -69561,25 +69514,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	EVAL:
 	case OP_EVAL:
-
-	  /*          pairs     p-pairs  e-pairs   trail-pairs symbols constants
-	   * lt:     13490829  9228673   4181239   80917      319033    94090
-	   * index:  3901552   3058753   813513    29286      95751     897
-	   * let:    20001055  10001004  10000007  44         0         0 
-	   * s7test: 9324376   4901196   3436539   986641     157227    50930 
-	   * tcopy:  1281511   79073     1201151   1287       1110      0 
-	   * tauto:  9552991   3101760   6300328   150903     45175     33534 
-	   * tform:  3841898   1540676   2177987   123235     8         12350 
-	   * tmap:   658841    386907    271735    199        0         0 
-	   * tfft:   134060    133979    16        65         0         1000 
-	   * titer:  23334023  23333689  227       107        1         49 
-	   * tsort:  4600110   4599928   79        103        0         0
-	   * gen:    11271508  5658421   1742505   3870582    38984     14
-	   * all:    7862193   5903945   1680578   277670     119542    321 
-	   * sntest: 44301378  23021391  18195957  3084030    772340    41220 
-	   * lg:     760518634 511139346 243146042 6233246    18805115  6449374
-	   * bench:  23309472  12712606  8859018   1737848    491015    1084819
-	   */
 
 	  /* main part of evaluation
 	   *   at this point, it's sc->code we care about; sc->args is not set yet.
@@ -83318,9 +83252,7 @@ int main(int argc, char **argv)
  *   callback funcs need calling check -- 5 list as fields of c-pointer?
  *   several more special funcs
  *
- * weed out unused stuff -- choose.data/choose: simple_char_eq, is_eq_caar_q not_is_pair_car
  * test opt_sizes escape in sort et al -- perhaps save sc->envir, make sure it is ok if optimize fails
- * s7_macroexpand of multiple-value-set!? maybe disable values?  s7test 29596 _sort_ 23890 use-redef-1 etc
  * all_x_if_a...?
  * opt let? opt_float_begin in s7_float_optimize for map-channel in snd?
  * check glob/libc.scm in openbsd -- some problem loading libc_s7.so (it works in snd, not in repl?)
@@ -83328,8 +83260,6 @@ int main(int argc, char **argv)
  * is_type replacing is_symbol etc [all_x_is_*_s if_is_* safe_is_*]
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
- * if_and_n if_or_3|pair_cdr similar for all_x_closure (and_3...)
- * -0.0 prints as -0.0 but does the sign bit ever leak out?  should the printer output be 0.0?
  *
  * --------------------------------------------------------------------
  *
@@ -83349,7 +83279,7 @@ int main(int argc, char **argv)
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
  * titer         |      |      |      || 5971 | 5224  4768  4707  4578
- * bench         |      |      |      || 7012 | 6378  6327  5934  5232
+ * bench         |      |      |      || 7012 | 6378  6327  5934  5106
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7533
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
