@@ -11109,18 +11109,10 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, int32_t radix, 
 	  break;
 
 	case 'x':
-	  /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e -- Guile doesn't have this
-	   *
-	   * r7rs has 2/3/4-byte "characters" of the form #\xcebb but this is not compatible with
-	   *   make-string, string-length, and so on.  We'd either have to have 2-byte chars
-	   *   so (string-length (make-string 3 #\xcebb)) = 3, or accept 6 here for number of chars.
-	   *   Then substring and string-set! and so on have to use utf8 encoding throughout or
-	   *   risk changing the string length unexpectedly.
-	   */
+	  /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e, and #\xcebb is lambda? */
 	  {
 	    /* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
-	     *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
-	     *   an even lower level.
+	     *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at an even lower level.
 	     * another problem: #\xbdca2cbec overflows so lval is -593310740 -> segfault unless caught
 	     */
 	    bool happy = true;
@@ -26215,6 +26207,7 @@ static char *slashify_string(s7_scheme *sc, const char *p, int32_t len, bool quo
 		  s[j++] = '0';
 		else s[j++] = dignum[(n / 16) % 16];
 		s[j++] = dignum[n % 16];
+		s[j++] = ';';
 	      }
 	      break;
 	    }
@@ -41083,6 +41076,34 @@ also accepts a string or vector argument."
 	return((*(c_object_reverse(sc, p)))(sc, args));
       eval_error(sc, "attempt to reverse ~S?", p);
 
+    case T_LET:
+      {
+	s7_pointer new_e, x;
+	s7_int id;
+	check_method(sc, p, sc->reverse_symbol, args);
+	if ((p == sc->rootlet) ||
+	    (!is_slot(let_slots(p))) ||
+	    (!is_slot(next_slot(let_slots(p)))))
+	  return(p);
+	new_e = new_frame_in_env(sc, outlet(p));
+	set_all_methods(new_e, p);
+	sc->temp3 = new_e;
+	id = let_id(new_e);
+	for (x = let_slots(p); is_slot(x); x = next_slot(x))
+	  {
+	    s7_pointer z;
+	    new_cell(sc, z, T_SLOT);
+	    slot_set_symbol(z, slot_symbol(x));
+	    slot_set_value(z, slot_value(x));
+	    if (symbol_id(slot_symbol(z)) != id) /* keep shadowing intact */
+	      symbol_set_local(slot_symbol(x), id, z);
+	    next_slot(z) = let_slots(new_e);
+	    let_slots(new_e) = z;
+	  }
+	sc->temp3 = sc->nil;
+	return(new_e);
+      }
+
     default:
       method_or_bust_with_type_one_arg(sc, p, sc->reverse_symbol, args, a_sequence_string);
     }
@@ -55897,37 +55918,48 @@ static token_t token(s7_scheme *sc)
     }
 }
 
-
-#define NOT_AN_X_CHAR -1
-
-static int32_t read_x_char(s7_pointer pt)
+static int32_t read_x_char(s7_scheme *sc, int32_t i, s7_pointer pt)
 {
-  /* possible "\xnn" char (write creates these things, so we have to read them)
+  /* possible "\xn...;" char (write creates these things, so we have to read them)
    *   but we could have crazy input like "\x -- with no trailing double quote
    */
-  int32_t d1, c;
-
-  c = inchar(pt);
-  if (c == EOF)
-    return(NOT_AN_X_CHAR);
-
-  d1 = digits[c];
-  if (d1 < 16)
+  while (true)
     {
-      int32_t d2;
+      int32_t d1, d2, c;
+      c = inchar(pt);
+      if (c == ';') return(i);
+      if (c == EOF) 
+	{
+	  read_error(sc, "#<eof> in midst of hex-char");
+	  return(i);
+	}
+      d1 = digits[c];
+      if (d1 >= 16)
+	{
+	  read_error(sc, "non-hex digit in hex-char");
+	  return(i);
+	}
       c = inchar(pt);
       if (c == EOF)
-	return(NOT_AN_X_CHAR);
+	{
+	  read_error(sc, "#<eof> in midst of hex-char");
+	  return(i);
+	}
+      if (c == ';')
+	{
+	  sc->strbuf[i++] = d1;
+	  return(i);
+	}
       d2 = digits[c];
-      if (d2 < 16)
-	return(16 * d1 + d2);           /* following char can be anything, including a number -- we ignore it */
-      /* apparently one digit is also ok */
-      backchar(c, pt);
-      return(d1);
+      if (d2 >= 16)
+	{
+	  read_error(sc, "non-hex digit in hex-char");
+	  return(i);
+	}
+      sc->strbuf[i++] = 16 * d1 + d2;
     }
-  return(NOT_AN_X_CHAR);
+  return(i);
 }
-
 
 static s7_pointer unknown_string_constant(s7_scheme *sc, int32_t c)
 {
@@ -56037,58 +56069,43 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	case '\\':
 	  c = inchar(pt);
 
-	  if (c == EOF)
+	  switch (c)
 	    {
+	    case EOF:
 	      sc->strbuf[(i > 8) ? 8 : i] = '\0';
 	      return(sc->F);
-	    }
-
-	  if ((c == '\\') || (c == '"') || (c == '|'))
-	    sc->strbuf[i++] = c;
-	  else
-	    {
-	      if (c == 'n')
-		sc->strbuf[i++] = '\n';
-	      else
+	      
+	    case '\\': case '"': case '|':
+	      sc->strbuf[i++] = c;
+              break;
+	      
+	    case 'n': sc->strbuf[i++] = '\n'; break;
+	    case 't': sc->strbuf[i++] = '\t'; break;
+	    case 'r': sc->strbuf[i++] = '\r'; break;
+	    case '/': sc->strbuf[i++] = '/';  break;
+	    case 'b': sc->strbuf[i++] = 8;    break;
+	    case 'f': sc->strbuf[i++] = 12;   break;
+	      
+	    case 'x':
+	      i = read_x_char(sc, i, pt);
+              break;
+	      
+            default:	      /* if (!is_white_space(c)) */ /* changed 8-Apr-12 */
+	      if ((c != '\n') && (c != '\r'))
 		{
-		  if (c == 't')                         /* this is for compatibility with other Schemes */
-		    sc->strbuf[i++] = '\t';
-		  else
-		    {
-		      if (c == 'x')
-			{
-			  c = read_x_char(pt);
-			  if (c == NOT_AN_X_CHAR)
-			    {
-			      s7_pointer result;
-			      result = unknown_string_constant(sc, c);
-			      if (s7_is_character(result))
-				sc->strbuf[i++] = character(result);
-			      else return(result);
-			    }
-			  sc->strbuf[i++] = (unsigned char)c;
-			}
-		      else
-			{
-			  /* if (!is_white_space(c)) */ /* changed 8-Apr-12 */
-			  if ((c != '\n') && (c != '\r'))
-			    {
-			      s7_pointer result;
-			      result = unknown_string_constant(sc, c);
-			      if (s7_is_character(result))
-				sc->strbuf[i++] = character(result);
-			      else return(result);
-			    }
-			  /* #f here would give confusing error message "end of input", so return #t=bad backslash.
-			   *     this is not optimal. It's easy to forget that backslash needs to be backslashed.
-			   *
-			   * the white_space business half-implements Scheme's \<newline>...<eol>... or \<space>...<eol>...
-			   *   feature -- the characters after \ are flushed if they're all white space and include a newline.
-			   *   (string->number "1\   2") is 12??  Too bizarre.
-			   */
-			}
-		    }
+		  s7_pointer result;
+		  result = unknown_string_constant(sc, c);
+		  if (s7_is_character(result))
+		    sc->strbuf[i++] = character(result);
+		  else return(result);
 		}
+	      /* #f here would give confusing error message "end of input", so return #t=bad backslash.
+	       *     this is not optimal. It's easy to forget that backslash needs to be backslashed.
+	       *
+	       * the white_space business half-implements Scheme's \<newline>...<eol>... or \<space>...<eol>...
+	       *   feature -- the characters after \ are flushed if they're all white space and include a newline.
+	       *   (string->number "1\   2") is 12??  Too bizarre.
+	       */
 	    }
 	  break;
 

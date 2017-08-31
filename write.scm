@@ -11,8 +11,8 @@
 	(any? (lambda (f sequence) ; this and every? ought to be built-in!
 		(call-with-exit
 		 (lambda (return) 
-		   (for-each (lambda (arg) (if (not (f arg)) (return #f))) sequence)
-		   #t)))))
+		   (for-each (lambda (arg) (if (f arg) (return #t))) sequence)
+		   #f)))))
 
     (define pretty-print-1
       (letrec ((messy-number (lambda (z)
@@ -428,8 +428,8 @@
 		   h)))
 	    
 	    ;; pretty-print-1
-	    (lambda (obj port column) 
-	      
+	    (lambda (obj port column)
+
 	      (cond ((number? obj)
 		     (if (rational? obj)
 			 (write obj port)
@@ -694,4 +694,26 @@
 	     (apply string-append (append (reverse! strs) (list "...")))
 	     (apply string-append (reverse! strs))))
       (set! strs (cons (format #f "~S " entry) strs)))))
+
+
+;;; pretty-print method:
+(let ((v (openlet (inlet 'value #(0 1 2 3) 
+			 'pretty-print (lambda (obj port column)
+					 (display "#(... 2 ...)" port))))))
+  (pretty-print (list 1 v 3)))
+
+;;; local pretty-print settings:
+(let ((v (openlet (inlet 'value (* pi 1000)
+			 'pretty-print (lambda (obj port column)
+					 (let-temporarily ((((funclet pretty-print) '*pretty-print-float-format*) "~E"))
+					   (pretty-print (obj 'value) port column)))))))
+  (pretty-print (list (* pi 1000) v)))
+
+;;; or simpler:
+(let ((v (* 1000 pi)))
+  (let-temporarily ((((funclet pretty-print) '*pretty-print-float-format*) "~E"))
+    (pretty-print v))
+  (newline)
+  (pretty-print v))
+
 |#

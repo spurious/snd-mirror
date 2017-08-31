@@ -1045,8 +1045,7 @@
 	      ;;   probably will need an argument/function? for repl to open the channel or whatever
 	      ;; also this does not resend the entire expression after editing
 	      ;;   and does not notice in-place edits
-	      ;;   m-p does not resend the entire expr
-	      ;;   can <cr> get entire expr? -- inf-snd.el send-last-sexp?
+	      ;;   can <cr> get entire expr?
 	      (let ((buf (c-pointer->string (calloc 512 1) 512)))
 		(format *stderr* "> ")
 		(do ((b (fgets buf 512 stdin) (fgets buf 512 stdin)))

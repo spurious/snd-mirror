@@ -65,13 +65,73 @@
 	    (else 
 	     (write-char (str i) p))))))))
 
-;;; TODO: in the strings we need to support all the extra chars and 4-digit stuff (\uxxxx I think)
-;;;    test \" \\ \/ \b \n \t \r \f -- s7 already supports all except \f \t? \b, maybe \/ needs help too
-;;; TODO: s7->json, use ~E for floats
+;;; TODO: in the strings we need to support the 4-digit stuff (\uxxxx I think)
+;;;    test \":  char-pos above should check for preceding \'s 
+;;;      (json->s7 "{\"test\" : \"a\"b\"}") -> char-pos error
+;;;      (json->s7 "{\"test\" : \"a\x1234b\"}") -> (inlet 'test "a\x1234;b") ; not working yet
+;;; PERHAPS: could ~E=@E and ~e=@e?
+
+
+(define* (s7->json obj (port (current-output-port)))
+  (case (type-of obj)
+    ((integer? float?) 
+     (display obj port))
+
+    ((string? obj)
+     (write obj port))
+
+    ((vector? float-vector? int-vector? byte-vector?)
+     (let ((len (length obj)))
+       (if (zero? len)
+	   (display "[]" port)
+	   (begin
+	     (write-char #\[ port)
+	     (do ((i 0 (+ i 1)))
+		 ((= i (- len 1))
+		  (s7->json (obj i) port)
+		  (write-char #\] port))
+	       (s7->json (obj i) port)
+	       (display ", " port))))))
+
+    ((let?)
+     (let ((len (length obj)))
+       (if (zero? len)
+	   (display "{}" port)
+	   (let ((slot-ctr 1))
+	     (write-char #\{ port)
+	     (for-each (lambda (slot)
+			 (write (symbol->string (car slot)) port)
+			 (display " : " port)
+			 (s7->json (cdr slot) port)
+			 (if (< slot-ctr len)
+			     (display ", " port)
+			     (write-char #\} port))
+			 (set! slot-ctr (+ slot-ctr 1)))
+		       (reverse obj))))))
+    (else
+     (format *stderr* "bad entry: ~S~%" obj))))
 
 
 #|
 ;;; -------------------------------- tests --------------------------------
+
+(display (with-output-to-string (lambda () (s7->json (vector 1 2))))) (newline) ; "[1, 2]"
+(display (with-output-to-string (lambda () (s7->json (vector "asdf" #i(1 2)))))) (newline) ; "[\"asdf\", [1, 2]]"
+(display (with-output-to-string (lambda () (s7->json (inlet 'a 2))))) (newline) ; "{\"a\" : 2}
+
+(display 
+ (with-output-to-string
+   (lambda ()
+     (s7->json (json->s7 "{\"title\": \"Person\", \"type\": \"object\"}")))))
+(newline)
+
+
+(write (json->s7 "{\"test\":\"a\\\\b\"}")) (newline) ; (inlet 'test "a\\b") = (#\a #\\ #\b)
+(write (json->s7 "{\"test\" : \"a\tb\"}")) (newline) ; (string->list ((inlet 'test "a\x09b") 'test)) = (#\a #\tab #\b)
+(write (json->s7 "{\"test\":\"a\fb\"}")) (newline)   ; (inlet 'test "a\x0cb")
+(write (json->s7 "{\"test\":\"a\rb\"}")) (newline)   ; (inlet 'test "a\x0db")
+(write (json->s7 "{\"test\":\"a\bb\"}")) (newline)   ; (inlet 'test "a\x08b")
+(write (json->s7 "{\"test\":\"a\/b\"}")) (newline)   ; (inlet 'test "a/b")
 
 (write (json->s7 "[123 321]")) (newline)
 (write (json->s7 "{\"asdf\" : 123}")) (newline)
