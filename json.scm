@@ -35,6 +35,8 @@
 	     (let ((qpos (char-position #\" str (+ i 1))))
 	       (if (not qpos)
 		   (format *stderr* "no close quote: ~S ~S~%" (substring str 0 i) (substring str i)))
+	       (if (char=? (str (- qpos 1)) #\\)                    ; stopgap...
+		   (set! qpos (char-position #\" str (+ qpos 1))))
 	       (display (substring str i (+ qpos 1)) p)
 	       (set! i qpos)))
 	    
@@ -66,10 +68,7 @@
 	     (write-char (str i) p))))))))
 
 ;;; TODO: in the strings we need to support the 4-digit stuff (\uxxxx I think)
-;;;    test \":  char-pos above should check for preceding \'s 
-;;;      (json->s7 "{\"test\" : \"a\"b\"}") -> char-pos error
-;;;      (json->s7 "{\"test\" : \"a\x1234b\"}") -> (inlet 'test "a\x1234;b") ; not working yet
-;;; PERHAPS: could ~E=@E and ~e=@e?
+;;;   (json->s7 "{\"test\" : \"a\u1234b\"}") -> (inlet 'test "a\x1234;b") ; not working yet
 
 
 (define* (s7->json obj (port (current-output-port)))
@@ -77,7 +76,7 @@
     ((integer? float?) 
      (display obj port))
 
-    ((string? obj)
+    ((string?)
      (write obj port))
 
     ((vector? float-vector? int-vector? byte-vector?)

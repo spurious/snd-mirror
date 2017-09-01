@@ -6781,7 +6781,7 @@ static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
   e = car(args);
   sc->temp3 = e;
   check_method(sc, e, sc->coverlet_symbol, list_1(sc, e));
-
+  sc->temp3 = sc->nil;
   if (e == sc->rootlet)
     s7_error(sc, sc->error_symbol, set_elist_1(sc, s7_make_string(sc, "can't coverlet rootlet")));
 
@@ -21065,10 +21065,12 @@ static s7_pointer g_string_downcase(s7_scheme *sc, s7_pointer args)
   unsigned char *nstr, *ostr;
 
   p = car(args);
-  sc->temp3 = p;
   if (!is_string(p))
-    method_or_bust_one_arg(sc, p, sc->string_downcase_symbol, list_1(sc, p), T_STRING);
-
+    {
+      sc->temp3 = p;
+      method_or_bust_one_arg(sc, p, sc->string_downcase_symbol, list_1(sc, p), T_STRING);
+      sc->temp3 = sc->nil;
+    }
   len = string_length(p);
   newstr = make_empty_string(sc, len, 0);
 
@@ -21090,10 +21092,12 @@ static s7_pointer g_string_upcase(s7_scheme *sc, s7_pointer args)
   unsigned char *nstr, *ostr;
 
   p = car(args);
-  sc->temp3 = p;
   if (!is_string(p))
-    method_or_bust_one_arg(sc, p, sc->string_upcase_symbol, list_1(sc, p), T_STRING);
-
+    {
+      sc->temp3 = p;
+      method_or_bust_one_arg(sc, p, sc->string_upcase_symbol, list_1(sc, p), T_STRING);
+      sc->temp3 = sc->nil;
+    }
   len = string_length(p);
   newstr = make_empty_string(sc, len, 0);
 
@@ -24954,7 +24958,7 @@ The symbols refer to the argument to \"provide\"."
   #define Q_require s7_make_circular_signature(sc, 1, 2, sc->T, sc->is_symbol_symbol)
 
   s7_pointer p;
-  sc->temp5 = cons(sc, args, sc->temp5);
+  push_stack_no_let_no_code(sc, OP_GC_PROTECT, args);
   for (p = args; is_pair(p); p = cdr(p))
     {
       s7_pointer sym;
@@ -24982,7 +24986,7 @@ The symbols refer to the argument to \"provide\"."
 	    }
 	}
     }
-  sc->temp5 = cdr(sc->temp5); /* in-coming value */
+  sc->stack_end -= 4;  
   return(sc->T);
 }
 
@@ -26153,7 +26157,7 @@ static char *slashify_string(s7_scheme *sc, const char *p, int32_t len, bool quo
   unsigned char *pcur, *pend;
 
   pend = (unsigned char *)(p + len);
-  size = len + 256;
+  size = len * 4 + 256;
   if (size > sc->slash_str_size)
     {
       if (sc->slash_str) free(sc->slash_str);
@@ -26189,14 +26193,15 @@ static char *slashify_string(s7_scheme *sc, const char *p, int32_t len, bool quo
 	  s[j++] = '\\';
 	  switch (*pcur)
 	    {
-	    case '"':
-	      s[j++] = '"';
-	      break;
-
-	    case '\\':
-	      s[j++] = '\\';
-	      break;
-
+	    case '"':   s[j++] = '"';  break;
+	    case '\\':  s[j++] = '\\'; break;
+	    case '\'':  s[j++] = '\'';  break;
+	    case '\t':  s[j++] = 't';  break;
+	    case '\r':  s[j++] = 'r';  break;
+	    case '\b':  s[j++] = 'b';  break;
+	    /* case '\v':  s[j++] = 'v';  break; */
+	    case '\f':  s[j++] = 'f';  break;
+	    case '\?':  s[j++] = '?';  break;
 	    default:               /* this is the "\x01" stuff */
 	      {
 		uint32_t n;
@@ -26213,15 +26218,13 @@ static char *slashify_string(s7_scheme *sc, const char *p, int32_t len, bool quo
 	    }
 	}
       else s[j++] = *pcur;
-      if (j >= cur_size) /* even with 256 extra, we can overflow (for example, inordinately many tabs in ALSA output) */
+      if (j >= cur_size)
 	{
-	  /* int32_t k; */
 	  size *= 2;
 	  sc->slash_str = (char *)realloc(sc->slash_str, size * sizeof(char));    
 	  sc->slash_str_size = size;
-	  cur_size = size - 2;
+	  cur_size = size - 4;
 	  s = sc->slash_str;
-	  /* for (k = j; k < size; k++) s[k] = 0; */
 	}
     }
   if (quoted) s[j++] = '"';
@@ -27546,8 +27549,7 @@ static void write_closure_name(s7_scheme *sc, s7_pointer closure, s7_pointer por
 
 static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 {
-  /* this is used by the error handlers to get the current function name
-   */
+  /* this is used by the error handlers to get the current function name */
   s7_pointer x;
 
   x = find_closure(sc, closure, sc->envir);
@@ -35306,21 +35308,23 @@ static s7_pointer univect_set(s7_scheme *sc, s7_pointer args, bool flt)
     }
   else
     {
-      if (!s7_is_integer(cadr(args)))
+      s7_pointer p;
+      p = cdr(args);
+      if (!s7_is_integer(car(p)))
 	{
-	  s7_pointer p;
-	  if (!s7_is_integer(p = check_values(sc, cadr(args), cdr(args))))
-	    method_or_bust(sc, cadr(args), caller, args, T_INTEGER, 2);
-	  index = s7_integer(p);
+	  s7_pointer z;
+	  if (!s7_is_integer(z = check_values(sc, car(p), p)))
+	    method_or_bust(sc, car(p), caller, args, T_INTEGER, 2);
+	  index = s7_integer(z);
 	}
-      else index = s7_integer(cadr(args));
+      else index = s7_integer(car(p));
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
-	return(out_of_range(sc, caller, small_int(2), cadr(args), (index < 0) ? its_negative_string : its_too_large_string));
+	return(out_of_range(sc, caller, small_int(2), car(p), (index < 0) ? its_negative_string : its_too_large_string));
 
-      if (is_not_null(cdddr(args)))
+      if (is_not_null(cddr(p)))
 	return(s7_wrong_number_of_args_error(sc, "too many args: ~S", args));
-      val = caddr(args);
+      val = cadr(p);
     }
 
   if (flt)
@@ -35708,7 +35712,8 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		       *   but that is irrelevant at this point -- if c_function_is_ok, we're good to go.
 		       */
 		      (((optimize_op(expr) & 1) != 0) ||
-		       (c_function_is_ok(sc, expr))))
+		       ((is_global(car(expr))) &&            /* (sort! x (lambda (car y) (car x)...))! */
+			(c_function_is_ok(sc, expr)))))
 		    {
 		      int32_t orig_data;
 		      orig_data = optimize_op(expr);
@@ -43003,6 +43008,7 @@ static s7_pointer init_owlet(s7_scheme *sc)
 #if WITH_HISTORY
   sc->error_history = make_slot_1(sc, e, make_symbol(sc, "error-history"), sc->F); /* buffer of previous evaluations */
 #endif
+  sc->temp3 = sc->nil;
   return(e);
 }
 
@@ -59823,7 +59829,12 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 			      set_optimize_op(expr, hop + OP_SAFE_C_ZZA);
 			      annotate_arg(sc, cdddr(expr), e);
 			    }
-			  else set_optimize_op(expr, hop + OP_SAFE_C_ZZZ);
+			  else 
+			    {
+			      set_opt_pair2(cdr(expr), arg2);
+			      set_opt_pair1(cdr(expr), arg3);
+			      set_optimize_op(expr, hop + OP_SAFE_C_ZZZ);
+			    }
 			}
 		    }
 		}
@@ -60475,7 +60486,7 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	  for (p = cdr(expr); (happy) && (is_pair(p)); p = cdr(p))
 	    happy = is_all_x_safe(sc, car(p));
 
-	  if ((happy) &&
+	  if ((happy) &&       /* all_x* will work */
 	      (is_null(p)))    /* catch the syntax error later: (or #f . 2) etc */
 	    {
 	      int32_t args, symbols = 0, pairs = 0, rest = 0;
@@ -70106,9 +70117,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer val;
 		    val = c_call(cdr(code))(sc, cadr(code));
+		    sc->temp4 = val;
 		    set_car(sc->a2_2, c_call(cddr(code))(sc, caddr(code)));
 		    set_car(sc->a2_1, val);
 		    sc->value = c_call(code)(sc, sc->a2_1);
+		    sc->temp4 = sc->nil;
 		    goto START;
 		  }
 		  
@@ -70122,11 +70135,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->temp4 = val1;
 		    arg = cdr(arg);
 		    val2 = c_call(arg)(sc, car(arg));
+		    sc->temp11 = val2;
 		    arg = cdr(arg);
 		    set_car(sc->t3_3, c_call(arg)(sc, car(arg)));
 		    set_car(sc->t3_1, val1);
 		    set_car(sc->t3_2, val2);
 		    sc->value = c_call(code)(sc, sc->t3_1);
+		    sc->temp4 = sc->nil;
+		    sc->temp11 = sc->nil;
 		    goto START;
 		  }
 		  
@@ -70199,16 +70215,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer arg, val1, val2, val3;
 		    arg = cdr(code);
 		    val1 = c_call(arg)(sc, car(arg));
+		    sc->temp4 = val1;
 		    arg = cdr(arg);
 		    val2 = c_call(arg)(sc, car(arg));
+		    sc->temp11 = val2;
 		    arg = cdr(arg);
 		    val3 = c_call(arg)(sc, car(arg));
+		    sc->temp5 = val3;
 		    arg = cdr(arg);
 		    set_car(sc->a4_4, c_call(arg)(sc, car(arg)));
 		    set_car(sc->a4_1, val1);
 		    set_car(sc->a4_2, val2);
 		    set_car(sc->a4_3, val3);
 		    sc->value = c_call(code)(sc, sc->a4_1);
+		    sc->temp4 = sc->nil;
+		    sc->temp5 = sc->nil;
+		    sc->temp11 = sc->nil;
 		    goto START;
 		  }
 		  
@@ -72844,13 +72866,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_SAFE_C_ZZZ_1:
 	  push_stack(sc, OP_SAFE_C_ZZZ_2, sc->value, sc->code);
-	  sc->code = _TPair(caddr(sc->code));
+	  sc->code = opt_pair2(cdr(sc->code));
 	  goto OPT_EVAL_CHECKED;
 	  
 	case OP_SAFE_C_ZZZ_2:
 	  push_op_stack(sc, sc->value);
 	  push_stack(sc, OP_SAFE_C_AZZ_2, sc->args, sc->code);
-	  sc->code = _TPair(cadddr(sc->code));
+	  sc->code = opt_pair1(cdr(sc->code));
 	  goto OPT_EVAL_CHECKED;
 	  
 	case OP_EVAL_ARGS3:  /* sc->value is the next-to-last arg, and we know the last arg is not a list (so values can't mess us up!) */
@@ -83270,7 +83292,6 @@ int main(int argc, char **argv)
  *   several more special funcs
  *
  * test opt_sizes escape in sort et al -- perhaps save sc->envir, make sure it is ok if optimize fails
- * all_x_if_a...?
  * opt let? opt_float_begin in s7_float_optimize for map-channel in snd?
  * check glob/libc.scm in openbsd -- some problem loading libc_s7.so (it works in snd, not in repl?)
  * libc needs many type checks
@@ -83285,8 +83306,8 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1053
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1399
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1920
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2177
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1917
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
  * lint          |      |      |      || 4041 | 3376  3114  3003  2721
  * lg            |      |      |      || 211  | 161   149   144   134.5
@@ -83295,7 +83316,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
- * titer         |      |      |      || 5971 | 5224  4768  4707  4578
+ * titer         |      |      |      || 5971 | 5224  4768  4707  4562
  * bench         |      |      |      || 7012 | 6378  6327  5934  5106
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7533
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
