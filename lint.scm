@@ -8909,6 +8909,12 @@
 				(pair? arg1)
 				(eq? (return-type (car arg1) env) 'boolean?))
 			   (set! expr arg1)))
+
+		    (let ((t1 (->lint-type arg1))          ; (eq? (floor pi) 'a) -> #f
+			  (t2 (->lint-type arg2)))
+		      ;; ->lint-type -> #t if unknown
+		      (when (not (compatible? t1 t2))
+			(set! expr #f)))
 		    
 		    (if (not (eq? expr 'unset))            ; (eq? x '()) -> (null? x)
 			(lint-format "perhaps ~A" caller (lists->string form expr)))))))
@@ -8996,7 +9002,14 @@
 			(else                                   ; (eqv? x 'a)
 			 (lint-format "~A could be eq?~A in ~S" caller head 
 				      (if specific-op (format #f " or ~A" specific-op) "") 
-				      form))))))
+				      form)))
+
+		    (let ((t1 (->lint-type arg1))               ; (eqv? (floor pi) 'a) -> #f
+			  (t2 (->lint-type arg2)))
+		      ;(format *stderr* "rtn: ~A ~A~%" t1 t2)
+		      (when (not (compatible? t1 t2))
+			(lint-format "perhaps ~A -> #f" caller form)))
+		    )))
 		  ;; very few hits:
 		  ;; (equal? (reverse em) '((0 -2 0) (0 -1 0) (1 -2 0) (1 -1 0)))
 		  ;; (equal? post-date (cons 0 0))
@@ -9007,12 +9020,21 @@
 
 	(let ()
 	  (define (sp-morally-equal caller head form env)
-	    (if (and (= (length form) 3)
-		     (code-constant? (cadr form))
-		     (code-constant? (caddr form)))
-		(lint-format "perhaps ~A" caller
-			     (lists->string form
-					    (apply morally-equal? (cdr form))))))
+	    (if (< (length form) 3)
+		(lint-format "~A needs 2 arguments: ~A" caller head (truncated-list->string form))
+		(if (= (length form) 3)
+		    (let ((arg1 (cadr form))
+			  (arg2 (caddr form)))
+		      (if (and (code-constant? arg1)
+			       (code-constant? arg2))     ; (morally-equal? 1 1) -> #t
+			  (lint-format "perhaps ~A" caller
+				       (lists->string form
+						      (apply morally-equal? (cdr form)))))
+		      (let ((t1 (->lint-type arg1))       ; (morallly-equal? (floor pi) 'a) -> #f
+			    (t2 (->lint-type arg2)))
+			(when (not (compatible? t1 t2))
+			  (lint-format "perhaps ~A -> #f" caller form)))))))
+
 	  (hash-special 'morally-equal? sp-morally-equal))
 
 	
@@ -17177,7 +17199,6 @@
 		  (exprs-repeated #f)
 		  (else-foldable #f)
 		  (has-else #f))
-
 	      (let ((all-exprs ())
 		    (ctr 0)
 		    (len (length (cddr form))))
@@ -17247,7 +17268,8 @@
 				    (set! all-keys (cons key all-keys)))
 				;; unintentional quote here, as in (case x ('a b)...) never happens and
 				;;   is hard to distinguish from (case x ((quote a) b)...) which happens a lot
-				(if (not (compatible? sel-type (->lint-type key)))
+
+				(if (not (compatible? sel-type (if (symbol? key) 'symbol? (->lint-type key))))
 				    ;; (case (string->symbol x) ((a) 1) ((2 3) 3))
 				    (lint-format "case key ~S in ~S is pointless" caller key clause)))
 			      keys))
@@ -22548,7 +22570,6 @@
     #f))
 |#
 
-;;; 63 911195
-;;;
-;;; combine do|case|cond: currently combine-successive-ifs for if|when|unless 12874 (see t605 for examples)
+;;; 63 911262
+
 

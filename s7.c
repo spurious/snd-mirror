@@ -1944,8 +1944,8 @@ static s7_scheme *cur_sc = NULL;
 
 #define T_HAS_SET_FALLBACK            T_SAFE_STEPPER
 #define T_HAS_REF_FALLBACK            T_MUTABLE
-#define has_ref_fallback(p)           ((typeflag(_TLid(p)) & T_HAS_REF_FALLBACK) != 0)
-#define has_set_fallback(p)           ((typeflag(_TLid(p)) & T_HAS_SET_FALLBACK) != 0)
+#define has_ref_fallback(p)           ((typeflag(_TLid(p)) & (T_HAS_REF_FALLBACK | T_HAS_METHODS)) == (T_HAS_REF_FALLBACK | T_HAS_METHODS))
+#define has_set_fallback(p)           ((typeflag(_TLid(p)) & (T_HAS_SET_FALLBACK | T_HAS_METHODS)) == (T_HAS_SET_FALLBACK | T_HAS_METHODS))
 #define set_has_ref_fallback(p)       typeflag(_TLet(p)) |= T_HAS_REF_FALLBACK
 #define set_has_set_fallback(p)       typeflag(_TLet(p)) |= T_HAS_SET_FALLBACK
 #define set_all_methods(p, e)         typeflag(_TLet(p)) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
@@ -3473,6 +3473,8 @@ s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method)
     if ((has_methods(Obj)) && ((func = find_method(Sc, find_let(Sc, Obj), Method)) != Sc->undefined)) \
       return(s7_apply_function(Sc, func, Args)); \
   }
+
+#define apply_known_method(Sc, Let, Method, Args) return(s7_apply_function(Sc, find_method(Sc, Let, Method), Args))
 
 #define check_two_methods(Sc, Obj, Method1, Method2, Args)	                            \
   if (has_methods(Obj))                                                                     \
@@ -7311,15 +7313,19 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
    *   versus keys), and we can't just try again here because that makes it too easy to
    *   get into infinite recursion.  So, 'let-ref-fallback...
    */
-  if (has_ref_fallback(env))
-    check_method(sc, env, sc->let_ref_fallback_symbol, args);
 
-  /* why did this ignore a global value? Changed 24-May-16 to check rootlet if no methods --
-   *   apparently I was using #<undefined> here (pre-rootlet-check) to indicate that an
-   *   open let did not have a particular method (locally).  This seems inconsistent now,
-   *   but it was far worse before.  At least (let () ((curlet) 'pi)) is pi!
-   */
-  if (!has_methods(env))
+  if (has_methods(env))
+    {
+      if (has_ref_fallback(env))
+	apply_known_method(sc, env, sc->let_ref_fallback_symbol, args);
+
+      /* why did this ignore a global value? Changed 24-May-16 to check rootlet if no methods --
+       *   apparently I was using #<undefined> here (pre-rootlet-check) to indicate that an
+       *   open let did not have a particular method (locally).  This seems inconsistent now,
+       *   but it was far worse before.  At least (let () ((curlet) 'pi)) is pi!
+       */
+    }
+  else
     {
       y = global_slot(symbol);
       if (is_slot(y))
@@ -7338,10 +7344,12 @@ static s7_pointer lint_let_ref_1(s7_scheme *sc, s7_pointer lt, s7_pointer sym)
       if (slot_symbol(y) == sym)
 	return(slot_value(y));
 
-  if (has_ref_fallback(lt))
-    check_method(sc, lt, sc->let_ref_fallback_symbol, set_plist_2(sc, lt, sym));
-
-  if (!has_methods(lt))
+  if (has_methods(lt))
+    {
+      if (has_ref_fallback(lt))
+	apply_known_method(sc, lt, sc->let_ref_fallback_symbol, set_plist_2(sc, lt, sym));
+    }
+  else
     {
       y = global_slot(sym);
       if (is_slot(y))
@@ -7495,10 +7503,12 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 	  return(slot_value(y));
 	}
 
-  if (has_set_fallback(env))
-    check_method(sc, env, sc->let_set_fallback_symbol, sc->w = list_3(sc, env, symbol, value));
-
-  if (!has_methods(env))
+  if (has_methods(env))
+    {
+      if (has_set_fallback(env))
+	apply_known_method(sc, env, sc->let_set_fallback_symbol, sc->w = list_3(sc, env, symbol, value));
+    }
+  else
     {
       y = global_slot(symbol);
       if (is_slot(y))
@@ -7525,7 +7535,7 @@ s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_point
     {
       check_method(sc, env, sc->let_set_symbol, sc->w = list_3(sc, env, symbol, value));
       if (has_set_fallback(env))
-	check_method(sc, env, sc->let_set_fallback_symbol, sc->w = list_3(sc, env, symbol, value));
+	apply_known_method(sc, env, sc->let_set_fallback_symbol, sc->w = list_3(sc, env, symbol, value));
       return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 2, symbol, a_symbol_string));
     }
 
@@ -7577,10 +7587,12 @@ static s7_pointer g_lint_let_set_1(s7_scheme *sc, s7_pointer lt1, s7_pointer sym
 	  return(slot_value(y));
 	}
 
-  if (has_set_fallback(lt))
-    check_method(sc, lt, sc->let_set_fallback_symbol, sc->w = list_3(sc, lt, sym, val));
-
-  if (!has_methods(lt))
+  if (has_methods(lt))
+    {
+      if (has_set_fallback(lt))
+	apply_known_method(sc, lt, sc->let_set_fallback_symbol, sc->w = list_3(sc, lt, sym, val));
+    }
+  else
     {
       y = global_slot(sym);
       if (is_slot(y))
@@ -26202,7 +26214,8 @@ static char *slashify_string(s7_scheme *sc, const char *p, int32_t len, bool quo
 	    /* case '\v':  s[j++] = 'v';  break; */
 	    case '\f':  s[j++] = 'f';  break;
 	    case '\?':  s[j++] = '?';  break;
-	    default:               /* this is the "\x01" stuff */
+	    case 'x':   s[j++] = 'x'; break;
+	    default:
 	      {
 		uint32_t n;
 		static char dignum[] = "0123456789abcdef";
@@ -55933,6 +55946,11 @@ static int32_t read_x_char(s7_scheme *sc, int32_t i, s7_pointer pt)
     {
       int32_t d1, d2, c;
       c = inchar(pt);
+      if (c == '"')
+	{
+	  backchar(c, pt);
+	  return(i);
+	}
       if (c == ';') return(i);
       if (c == EOF) 
 	{
@@ -55942,10 +55960,16 @@ static int32_t read_x_char(s7_scheme *sc, int32_t i, s7_pointer pt)
       d1 = digits[c];
       if (d1 >= 16)
 	{
-	  read_error(sc, "non-hex digit in hex-char");
+	  sc->strbuf[i++] = c; /* just go on -- maybe a special char is not intended */
 	  return(i);
 	}
       c = inchar(pt);
+      if (c == '"')
+	{
+	  sc->strbuf[i++] = d1;
+	  backchar(c, pt);
+	  return(i);
+	}
       if (c == EOF)
 	{
 	  read_error(sc, "#<eof> in midst of hex-char");
@@ -55959,7 +55983,7 @@ static int32_t read_x_char(s7_scheme *sc, int32_t i, s7_pointer pt)
       d2 = digits[c];
       if (d2 >= 16)
 	{
-	  read_error(sc, "non-hex digit in hex-char");
+	  sc->strbuf[i++] = c; /* just go on -- maybe a special char is not intended */
 	  return(i);
 	}
       sc->strbuf[i++] = 16 * d1 + d2;
@@ -56292,7 +56316,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
    */
   if (has_ref_fallback(sc->envir)) /* an experiment -- see s7test (with-let *db* (+ int32_t (length str))) */
-    check_method(sc, sc->envir, sc->let_ref_fallback_symbol, sc->w = list_2(sc, sc->envir, sym));
+    apply_known_method(sc, sc->envir, sc->let_ref_fallback_symbol, sc->w = list_2(sc, sc->envir, sym));
   /* but if the thing we want to hit this fallback happens to exist at a higher level, oops... */
 
   if (sym == sc->unquote_symbol)
@@ -83255,6 +83279,9 @@ int main(int argc, char **argv)
  * s7:
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
+ * lint:
+ *   combine do|case|cond: currently combine-successive-ifs for if|when|unless (see t605 for examples)
+ *   that is, successive conds with the same tests -- does this happen?
  *
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func
@@ -83276,17 +83303,6 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  *
- * grepl:
- *   grepl.scm for debugger.
- *      libgl_s7.c to makegl
- *   in gdb -- window showing text (via emacs?) and auto decode gdb output
- *   in repl auto s7let? or begin-hook for that? or begin_hook for trace? symbol-access for set!
- *   also on-going profile? room/gc stats? stacktrace?
- *   added glistener commands: M-. 
- *   repl as break etc
- *   in glistener, hover/select op, give doc string, var, highlight def? and box->inspect
- *   as typed, run lint? or display op args, check types etc
- *   if undef name, search libs and give correct/closest?
  * libgtk:
  *   callback funcs need calling check -- 5 list as fields of c-pointer?
  *   several more special funcs
@@ -83309,8 +83325,8 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1917
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2721
- * lg            |      |      |      || 211  | 161   149   144   134.5
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2726
+ * lg            |      |      |      || 211  | 161   149   144   135.0
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3287
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386

@@ -63,13 +63,14 @@
 		   (display "#f" p)
 		   (set! i (+ i 4)))
 		 (format *stderr* "bad entry: ~S~%" (substring str i))))
-	    
+
 	    (else 
 	     (write-char (str i) p))))))))
 
 ;;; TODO: in the strings we need to support the 4-digit stuff (\uxxxx I think)
-;;;   (json->s7 "{\"test\" : \"a\u1234b\"}") -> (inlet 'test "a\x1234;b") ; not working yet
-
+;;;   (json->s7 "{\"test\" : \"a\\u1234b\"}") -> (inlet 'test "a\x1234;b")
+;;;   but the real problem is that \u in a string is an error in scheme, so we need use read-error-hook
+;;;   to catch the \unnnn stuff before we call json->s7. See lint.scm.
 
 (define* (s7->json obj (port (current-output-port)))
   (case (type-of obj)
