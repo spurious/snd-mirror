@@ -12915,8 +12915,9 @@
 		     (ctr 0 (+ ctr 1)))
 		    ((not (pair? fs)))
 		  (let ((f (car fs)))
-
 		    (when (len>1? f)
+		      
+		      ;; successive combinable conds/cases/dos are tricky and rare
 		      (when (and *report-shadowed-variables*
 				 (eq? (car f) 'define))
 			(check-shadows caller head f env))
@@ -13720,12 +13721,12 @@
       (and *report-any-!-as-setter* ; (inc! x) when inc! is unknown, assume it sets x
 	   (symbol? (car form))
 	   (pair? (cdr form))
-	   (not (hash-table-ref built-in-functions (car form)))
-	   (let ((str (symbol->string (car form))))
-	     (char=? (string-ref str (- (length str) 1)) #\!))
 	   (or (symbol? (cadr form))
 	       (and (pair? (cddr form))
 		    (symbol? (caddr form))))
+	   (not (hash-table-ref built-in-functions (car form)))
+	   (let ((str (symbol->string (car form))))
+	     (char=? (string-ref str (- (length str) 1)) #\!))
 	   (not (var-member (car form) env))))
 
     (define (set-target name form env)

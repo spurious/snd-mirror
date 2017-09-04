@@ -111,8 +111,26 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
       if (kdur > size) kdur = size;
       if (sf->runf == next_sample_value_unscaled)
 	{
+#if (!WITH_VECTORIZE)
 	  for (j = 0; j < kdur; j++)
 	    chandata[j] += (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++];
+#else
+	  for (j = 0; j < kdur; )
+	    {
+	      mus_long_t ksize;
+	      ksize = sf->last - sf->loc + 1;
+	      if (ksize == 1)
+		chandata[j++] = next_sound(sf);
+	      else 
+		{
+		  if (j + ksize > kdur) ksize = kdur - j;
+		  mus_copy_floats((mus_float_t *)(chandata + j), (mus_float_t *)(sf->data + sf->loc), ksize);
+		  j += ksize;
+		  if (j < kdur)
+		    chandata[j++] = next_sound(sf);
+		}
+	    }
+#endif
 	}
       else
 	{

@@ -134,6 +134,7 @@
  * -ffast-math makes a mess of NaNs, and does not appear to be faster
  * for timing tests, I use: -O2 -march=native -fomit-frame-pointer -funroll-loops
  * according to callgrind, clang is normally about 10% slower than gcc, and vectorization either doesn't work or is much worse than gcc's
+ *   also g++ appears to be slightly slower than gcc (though it takes forever to compile s7.c).
  */
 
 #if (defined(__GNUC__) || defined(__clang__))
@@ -83279,9 +83280,6 @@ int main(int argc, char **argv)
  * s7:
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
- * lint:
- *   combine do|case|cond: currently combine-successive-ifs for if|when|unless (see t605 for examples)
- *   that is, successive conds with the same tests -- does this happen?
  *
  * gtk_box_pack* has changed -- many uses!
  * gtk4: no draw signal -- need to set the draw func
@@ -83314,31 +83312,50 @@ int main(int argc, char **argv)
  * is_type replacing is_symbol etc [all_x_is_*_s if_is_* safe_is_*]
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
+ * maybe pass \u... through in read_constant_string unchanged, or read in s7??  no worse than \x..;
+ *
+ * immutable sequence as bit 25? == elements can't be set, immutable let=no slot added/deleted, so values changed
+ *   then immutable-let access->offsets (type?), auto-copy-on-write? or (constant-copied ...)?
+ *   currently the define-constant cases are inconsistent
+ *   slot-setter, symbol-setter, let-setter?
+ *   (define fnc (let ((setter...)) (lambda ...))) (define lt (let ((setter (lambda..))) (inlet...)))? -- and all the others like documentation/tester
+ *     but where is this outlet saved esp. if vector? for let, a new union.
+ *     vect get/set should be s7_function (multi-dim indices for example)
+ *     string a new union as long as not associated with symbol, hash-table has extensible dproc
+ *     pair can use opt fields, c_pointer has room already, immutable slot can use expr/pending_value
+ *     so no problem at the s7_cell level, how to handle (eg) (let ((lt (let ((setter (lambda...))) (proc-creates-let...))))...)
+ *     and how to recognize immutable values/symbols/bindings etc?
+ *   (define x (let ((documentation "help for x")) (* pi 3))) -- there is room for this but it's currently the number print name
+ *   add constant = set completely-immutable-value bit
+ *   literator for lambda?
+ *
+ * symbol 8-bits->cycling number, let tracks range? inserts ordered? [see above]
+ *   could opt recognize large heavily-used lets and use this?
  *
  * --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
  * tmac          |      |      |      || 9052 |  615   259   261   261
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1053
- * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1125
+ * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1109
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1399
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1917
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436
  * lint          |      |      |      || 4041 | 3376  3114  3003  2726
- * lg            |      |      |      || 211  | 161   149   144   135.0
+ * lg            |      |      |      || 211  | 161   149   144   134.9
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3068
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  3287
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964
- * tsort         |      |      |      || 8584 | 4869  4080  4010  4010
+ * tsort         |      |      |      || 8584 | 4869  4080  4010  4012
  * titer         |      |      |      || 5971 | 5224  4768  4707  4562
  * bench         |      |      |      || 7012 | 6378  6327  5934  5106
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7533
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.7
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.7
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.4
- *                                    || 145  | 135   132   93.2  89.5
+ *                                    || 145  | 135   132   93.2  89.4
  * 
  * --------------------------------------------------------------------
  */

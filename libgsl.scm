@@ -30,7 +30,7 @@
     (define gsl-version 0.0)		; define at top-level no matter where we are now
     (when (and (provided? 'linux)
 	       (defined? 'system))
-      (let* ((version (system "pkg-config gsl --modversion" #t))
+      (let* ((version (#_system "pkg-config gsl --modversion" #t))
 	     (len (length version)))
 	(when (positive? len)
 	  (set! gsl-version (string->number (if (char=? (version (- len 1)) #\newline)
