@@ -9735,7 +9735,7 @@
 	      (let ((body (cddadr form)))
 		(when (and (pair? body)
 			   (len=2? (car body))
-			   (memq (caar body) '(write display)))
+			   (memq (caar body) '(write display))) ; write-char write-string never happen
 		  (if (null? (cdr body))
 		      (lint-format "perhaps ~A" caller
 				   (lists->string form (cons 'object->string 
@@ -13756,7 +13756,10 @@
 	     (lint-format "~A is one of its many names, but pi is a predefined constant in s7" caller (caddr form)))
 	    
 	    ((constant? sym)              ; (define most-positive-fixnum 432)
-	     (lint-format "~A is a constant in s7: ~A" caller sym form))
+	     (if (memq sym '(pi most-positive-fixnum most-negative-fixnum nan.0 -nan.0 inf.0 -inf.0
+			     *unbound-variable-hook* *missing-close-paren-hook* *read-error-hook*
+			     *load-hook* *error-hook* *rootlet-redefinition-hook*))
+		 (lint-format "~A is a constant in s7: ~A" caller sym form)))
 	    
 	    ((eq? sym 'quote)
 	     (lint-format "either a stray quote, or a really bad idea: ~A" caller (truncated-list->string form)))

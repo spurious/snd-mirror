@@ -23,7 +23,7 @@
 ;;(openlet (inlet 'i 0 'list-set! (lambda (l . args) (apply #_list-set! l ((car args) 'i) (cdr args))))))
 
 (define-constant constants (vector #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i 
-			  "hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) (list (list 1 2)) (list (list 1)) (list ()) #() 
+			  "hi455" "\n  \t\x65;" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) (list (list 1 2)) (list (list 1)) (list ()) #() 
 			  1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 			  1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
 			  most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
@@ -31,7 +31,7 @@
 			  '((1 2) (3 4)) '((1 (2)) (((3) 4))) "" (list #(1) "1") '(1 2 . 3) (list (cons 'a 2) (cons 'b 3))
 			  #(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs 'a 'b one apply 
 			  (lambda args args) (lambda* ((a 3) (b 2)) (+ a b)) (lambda () 3)
-			  (sublet () (cons 'a 1)) (rootlet)
+			  (sublet () (cons 'a 1)) ;(rootlet)
 			  *load-hook*  *error-hook* (random-state 123)
 			  quasiquote macroexpand cond-expand begin let letrec* if case cond (call-with-exit (lambda (goto) goto))
 			  (with-baffle (call/cc (lambda (cc) cc)))
