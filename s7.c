@@ -674,7 +674,7 @@ typedef struct s7_cell {
     struct {                       /* ports */
       port_t *port;
       unsigned char *data;
-      uint32_t size, point;    /* these limit the in-core portion of a string-port to 2^31 bytes */
+      uint32_t size, point;        /* these limit the in-core portion of a string-port to 2^32-1 bytes */
       uint32_t line_number, file_number;
       bool is_closed;
       port_type_t ptype;
@@ -17601,7 +17601,6 @@ static s7_pointer equal_p_pi(s7_pointer p1, s7_int p2)
     return(cur_sc->F);
   return(wrong_type_argument_with_type(cur_sc, cur_sc->eq_symbol, 1, p1, a_number_string));  
 }
-/* TODO: all the rest of the 2-arg cases */
 
 static s7_pointer equal_p_dd(s7_double x1, s7_double x2) {return(make_boolean(cur_sc, x1 == x2));}
 static s7_pointer gt_p_dd(s7_double x1, s7_double x2) {return(make_boolean(cur_sc, x1 > x2));}
@@ -24962,7 +24961,7 @@ static s7_pointer g_autoloader(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_require(s7_scheme *sc, s7_pointer args)
 {
   #define H_require "(require . symbols) loads each file associated with each symbol if it has not been loaded already.\
-The symbols refer to the argument to \"provide\"."
+The symbols refer to the argument to \"provide\".  (require lint.scm)"
   #define Q_require s7_make_circular_signature(sc, 1, 2, sc->T, sc->is_symbol_symbol)
 
   s7_pointer p;
@@ -24979,6 +24978,7 @@ The symbols refer to the argument to \"provide\"."
 	    sym = cadar(p);
 	  else return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "require: ~S is not a symbol"), car(p))));
 	}
+
       if ((!is_slot(find_symbol(sc, sym))) &&
 	  (sc->is_autoloading))
 	{
@@ -60197,10 +60197,7 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
   opcode_t op;
   s7_pointer p, body;
   /* TODO: those not allowed need to be passed back and treated as unsafe symbols (find_uncomplicated_symbol etc) */
-#if 0
-  if (!is_pair(cdr(expr))) /* cddr(expr) might be null if, for example, (begin (let ...)) */
-    return(OPT_F);
-#endif
+
   op = (opcode_t)syntax_opcode(func);
   sc->w = e;
   body = cdr(expr);
@@ -64970,6 +64967,8 @@ static bool tree_has_definers(s7_scheme *sc, s7_pointer tree)
   add_symbol_to_list(sc, sc->define_bacro_star_symbol);
   add_symbol_to_list(sc, sc->define_expansion_symbol);
   add_symbol_to_list(sc, sc->define_constant_symbol);
+  add_symbol_to_list(sc, sc->varlet_symbol);
+  add_symbol_to_list(sc, sc->provide_symbol);             /* local *features*! */
   return(tree_set_memq(sc, tree));
 }
 
@@ -65007,13 +65006,16 @@ static s7_pointer check_do(s7_scheme *sc)
 
 	  if (is_pair(cdr(y)))
 	    {
-	      if ((!is_pair(cddr(y))) &&
-		  (is_not_null(cddr(y))))               /* (do ((i 0 . 1)) ...) */
-		eval_error(sc, "do: step variable info is an improper list?: ~A", x);
-
-	      if ((is_pair(cddr(y))) &&
-		  (is_not_null(cdddr(y))))              /* (do ((i 0 1 (+ i 1))) ...) */
-		eval_error(sc, "do: step variable info has extra stuff after the increment: ~A", x);
+	      if (!is_pair(cddr(y)))
+		{
+		  if (is_not_null(cddr(y)))             /* (do ((i 0 . 1)) ...) */
+		    eval_error(sc, "do: step variable info is an improper list?: ~A", x);
+		}
+	      else
+		{
+		  if (is_not_null(cdddr(y)))            /* (do ((i 0 1 (+ i 1))) ...) */
+		    eval_error(sc, "do: step variable info has extra stuff after the increment: ~A", x);
+		}
 	    }
 	  else eval_error(sc, "do: step variable has no initial value: ~A", x);
 	  set_local(car(y));
@@ -68034,10 +68036,16 @@ static int32_t define1_ex(s7_scheme *sc)
       
       if (is_slot(global_slot(sc->code)))
 	x = global_slot(sc->code); 
-      else x = find_symbol(sc, sc->code);  /* not local_slot -- it can be free even if sc->code is immutable (local constant now defunct) */
-      if ((!is_slot(x)) ||
-	  (type(sc->value) != unchecked_type(slot_value(x))) ||
-	  (!s7_is_morally_equal(sc, sc->value, slot_value(x))))      /* if value is unchanged, just ignore this (re)definition */
+      else x = find_symbol(sc, sc->code);  /* local_slot can be free even if sc->code is immutable (local constant now defunct) */
+      if (!is_slot(x))
+	{
+	  if ((is_slot(local_slot(sc->code))) &&
+	      (type(sc->value) == unchecked_type(slot_value(local_slot(sc->code)))))
+	    x = local_slot(sc->code);
+	}
+      if (!((is_slot(x)) &&
+	    (type(sc->value) == unchecked_type(slot_value(x))) &&
+	    (s7_is_morally_equal(sc, sc->value, slot_value(x)))))    /* if value is unchanged, just ignore this (re)definition */
 	eval_error_no_return(sc, sc->syntax_error_symbol, "define: ~S is immutable", sc->code);   /*   can't use s7_is_equal because value might be NaN, etc */
     }
   if (symbol_has_accessor(sc->code))
@@ -80130,7 +80138,9 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
   bool rats = false;
   s7_pointer x, lst;
 
-  for (x = args; is_not_null(x); x = cdr(x))
+  if (is_null(args)) return(small_int(0));
+
+  for (x = args; is_pair(x); x = cdr(x))
     {
       if (!is_rational_via_method(sc, car(x)))
 	return(wrong_type_argument_with_type(sc, sc->gcd_symbol, position_of(x, args), car(x), a_rational_string));
@@ -80222,7 +80232,9 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
   s7_pointer x, lst;
   bool rats = false;
 
-  for (x = args; is_not_null(x); x = cdr(x))
+  if (is_null(args)) return(small_int(1));
+
+  for (x = args; is_pair(x); x = cdr(x))
     {
       if (!is_rational_via_method(sc, car(x)))
 	return(wrong_type_argument_with_type(sc, sc->lcm_symbol, position_of(x, args), car(x), a_rational_string));
@@ -83336,9 +83348,9 @@ int main(int argc, char **argv)
  *   does this give who-calls?
  *   or change to new call, reporting changes etc
  *
- * --------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7
+ *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7  17.8
  * tmac          |      |      |      || 9052 |  615   259   261   261
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1053
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1109
@@ -83361,5 +83373,5 @@ int main(int argc, char **argv)
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.4
  *                                    || 145  | 135   132   93.2  89.4
  * 
- * --------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
  */

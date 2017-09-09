@@ -1624,72 +1624,84 @@
 							      (list 'lambda* new-arglist
 								    new-body)))))))))))))))))
     
-    (define (form->arity form)
-      ;; this ignores non-s7 keywords and the like (#!optional :: etc), treating them as parameter names
-      (and (pair? form)
-	   (case (car form)
-	     ((lambda)
-	      (if (symbol? (cadr form))
-		  (cons 0 536870912)
-		  (let ((len (length (cadr form))))
-		    (if (negative? len)
-			(cons (abs len) 536870912)
-			(cons len len)))))
-
-	     ((define define-constant define-macro define-bacro)
-	      (if (symbol? (cdadr form))
-		  (cons 0 536870912)
-		  (let ((len (length (cdadr form))))
-		    (if (negative? len)
-			(cons (abs len) 536870912)
-			(cons len len)))))
-
-	     ((let)                              ; let = named let
-	      (let ((len (length (caddr form))))
-		(cons len len)))
-
-	     ((let*) 
-	      (cons 0 (length (caddr form))))
-
-	     ((lambda*)
-	      (let ((args (cadr form)))
-		(if (symbol? args)
-		    (cons 0 536870912)
-		    (let ((len (length args))
-			  (rest (or (memq :rest args) 
-				    (memq :allow-other-keys args))))
-		      (cons 0 (if (or rest (negative? len))
-				  536870912
-				  len))))))
-
-	     ((define* define-macro* define-bacro*)
-	      (let ((args (cdadr form)))
-		(if (symbol? args)
-		    (cons 0 536870912)
-		    (let ((len (length args))
-			  (rest (or (memq :rest args) 
-				    (memq :allow-other-keys args))))
-		      (cons 0 (if (or rest (negative? len))
-				  536870912
-				  len))))))
-	     
-	     ((defmacro)
-	      (if (symbol? (caddr form))
-		  (cons 0 536870912)
+    (define form->arity
+      (let ((max-arity 536870912))
+	(lambda (form)
+	  ;; this ignores non-s7 keywords and the like (#!optional :: etc), treating them as parameter names
+	  (and (pair? form)
+	       (case (car form)
+		 ((lambda)
+		  (cond ((list? (cadr form))
+			 (let ((len (length (cadr form))))
+			   (if (negative? len)
+			       (cons (abs len) max-arity)
+			       (cons len len))))
+			((symbol? (cadr form))
+			 (cons 0 max-arity))
+			(else #f)))
+		 
+		 ((define define-constant define-macro define-bacro)
+		  (cond ((list? (cdadr form))
+			 (let ((len (length (cdadr form))))
+			   (if (negative? len)
+			       (cons (abs len) 536870912)
+			       (cons len len))))
+			((symbol? (cdadr form))
+			 (cons 0 max-arity))
+			(else #f)))
+		 
+		 ((let)                              ; let = named let
 		  (let ((len (length (caddr form))))
-		    (if (negative? len)
-			(cons (abs len) 536870912)
-			(cons len len)))))
-
-	     (else #f))))
-	      
+		    (cons len len)))
+		 
+		 ((let*) 
+		  (cons 0 (length (caddr form))))
+		 
+		 ((lambda*)
+		  (let ((args (cadr form)))
+		    (cond ((list? args)
+			   (let ((len (length args))
+				 (rest (or (memq :rest args) 
+					   (memq :allow-other-keys args))))
+			     (cons 0 (if (or rest (negative? len))
+					 max-arity
+					 len))))
+			  ((symbol? args)
+			   (cons 0 max-arity))
+			  (else #f))))
+		 
+		 ((define* define-macro* define-bacro*)
+		  (let ((args (cdadr form)))
+		    (cond ((list? args)
+			   (let ((len (length args))
+				 (rest (or (memq :rest args) 
+					   (memq :allow-other-keys args))))
+			     (cons 0 (if (or rest (negative? len))
+					 max-arity
+					 len))))
+			  ((symbol? args)
+			   (cons 0 max-arity))
+			  (else #f))))
+		 
+		 ((defmacro)
+		  (cond ((list? (caddr form))
+			 (let ((len (length (caddr form))))
+			   (if (negative? len)
+			       (cons (abs len) max-arity)
+			       (cons len len))))
+			((symbol? (caddr form))
+			 (cons 0 max-arity))
+			(else #f)))
+		 
+		 (else #f))))))
+    
     (define (report-shadower caller head vtype v expr env)
       (when (symbol? v)
 	(if (var-member v env)
 	    (lint-format "~A ~A ~A in ~S shadows an earlier declaration" caller head vtype v expr)
 	    (if (defined? v (rootlet))
 		(lint-format "~A ~A ~A shadows built-in ~A" caller head vtype v v)))))
-
+    
     (define (make-fvar name ftype arglist initial-value env)
       (unless (keyword? name)
 	(recursion->iteration name ftype arglist initial-value env))
@@ -2166,7 +2178,8 @@
 	      (when (and form (not (memq form (var-history data))))
 		(set! (var-history data) (cons form (var-history data)))
 		(set! (var-refenv data) env)))
-	    (if (not (defined? name (rootlet)))
+	    (if (and (symbol? name)
+		     (not (defined? name (rootlet))))
 		(let ((old (hash-table-ref other-identifiers name)))
 		  (check-for-bad-variable-name caller name)
 		  (hash-table-set! other-identifiers name (cons form (or old ())))))))

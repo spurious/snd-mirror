@@ -323,11 +323,13 @@
                   }
                  static s7_pointer g_realpath(s7_scheme *sc, s7_pointer args)
                   {
-                    char *s7_dl_realpath_0;
+                    char *s7_dl_realpath_0, *res;
                     if (s7_is_string(s7_car(args)))
                        s7_dl_realpath_0 = (char*)s7_string(s7_car(args));
                     else return(s7_wrong_type_arg_error(sc, \"realpath\", 1, s7_car(args), \"string\"));
-                    return(s7_make_string(sc, (char*)realpath(s7_dl_realpath_0, NULL)));
+                    res = realpath(s7_dl_realpath_0, NULL);
+                    if (res) {s7_pointer str; str = s7_make_string(sc, res); free(res); return(str);}
+                    return(s7_f(sc));
                  }
                  static s7_pointer g_free(s7_scheme *sc, s7_pointer args)
                  {free(s7_c_pointer(s7_car(args))); return(s7_f(sc));}
