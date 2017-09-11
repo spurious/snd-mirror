@@ -2308,35 +2308,37 @@
 		      (string-append (substring str 0 (min 60 (- len 1) (+ focus-len pos 20))) " ...")
 		      (string-append "... " (substring str (- pos 20) (min (- len 1) (+ focus-len pos 20))) " ...")))))))
     
-    (define (check-star-parameters f args env)
-      (if (lint-any? (lambda (k) (memq k '(:key :optional))) args)
-	  (let ((kw (if (memq :key args) :key :optional)))
-	    (format outport "~NC~A: ~A is no longer accepted: ~A~%" lint-left-margin #\space f kw 
-		    (focus-str (object->string args) (symbol->string kw)))))
-      
-      (if (member 'pi args (lambda (a b) (or (eq? b 'pi) (and (pair? b) (eq? (car b) 'pi)))))
-	  (format outport "~NC~A: parameter can't be a constant: ~A~%" lint-left-margin #\space f 
-		  (focus-str (object->string args) "pi")))
-      
-      (let ((r (memq :rest args)))
-	(when (pair? r)
-	  (if (not (pair? (cdr r)))
-	      (format outport "~NC~A: :rest parameter needs a name: ~A~%" lint-left-margin #\space f args)
-	      (if (pair? (cadr r))
-		  (format outport "~NC~A: :rest parameter can't specify a default value: ~A~%" lint-left-margin #\space f args)))))
-      
-      (let ((a (memq :allow-other-keys args)))
-	(when (pair? a)
-	  (if (pair? (cdr a))
-	      (format outport "~NC~A: :allow-other-keys should be at the end of the parameter list: ~A~%" lint-left-margin #\space f 
-		      (focus-str (object->string args) ":allow-other-keys")))
-	  (if (len=1? args)
-	      (format outport "~NC~A: :allow-other-keys can't be the only parameter: ~A~%" lint-left-margin #\space f args))))
-
-      (for-each (lambda (p)
-		  (if (len>1? p)
-		      (lint-walk f (cadr p) env)))
-		args))
+    (define check-star-parameters
+      (let ((pi-arg (lambda (a b) (or (eq? b 'pi) (and (pair? b) (eq? (car b) 'pi))))))
+	(lambda (f args env)
+	  (if (lint-any? (lambda (k) (memq k '(:key :optional))) args)
+	      (let ((kw (if (memq :key args) :key :optional)))
+		(format outport "~NC~A: ~A is no longer accepted: ~A~%" lint-left-margin #\space f kw 
+			(focus-str (object->string args) (symbol->string kw)))))
+	  
+	  (if (member 'pi args pi-arg)
+	      (format outport "~NC~A: parameter can't be a constant: ~A~%" lint-left-margin #\space f 
+		      (focus-str (object->string args) "pi")))
+	  
+	  (let ((r (memq :rest args)))
+	    (when (pair? r)
+	      (if (not (pair? (cdr r)))
+		  (format outport "~NC~A: :rest parameter needs a name: ~A~%" lint-left-margin #\space f args)
+		  (if (pair? (cadr r))
+		      (format outport "~NC~A: :rest parameter can't specify a default value: ~A~%" lint-left-margin #\space f args)))))
+	  
+	  (let ((a (memq :allow-other-keys args)))
+	    (when (pair? a)
+	      (if (pair? (cdr a))
+		  (format outport "~NC~A: :allow-other-keys should be at the end of the parameter list: ~A~%" lint-left-margin #\space f 
+			  (focus-str (object->string args) ":allow-other-keys")))
+	      (if (len=1? args)
+		  (format outport "~NC~A: :allow-other-keys can't be the only parameter: ~A~%" lint-left-margin #\space f args))))
+	  
+	  (for-each (lambda (p)
+		      (if (len>1? p)
+			  (lint-walk f (cadr p) env)))
+		    args))))
     
     (define (checked-eval form)
       (and (proper-list? form) ;(not (infinite? (length form))) but when would a dotted list work?
