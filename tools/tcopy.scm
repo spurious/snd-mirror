@@ -1,4 +1,5 @@
 (let ((new-env (sublet (curlet) (cons 'init_func 'block_init)))) ; load calls init_func if possible
+  ;; depends on running s7test first normally
   (load "s7test-block.so" new-env))
 
 (define (test-copy size)
@@ -11,16 +12,13 @@
 	(old-fvect (make-float-vector size 1.0))
 	(old-ivect (make-int-vector size 1))
 	(old-hash (make-hash-table size))
-	(old-let #f)
+	(old-let (inlet))
 	(old-block (make-block size)))
-    (set! old-let (inlet))
 
     (do ((i 0 (+ i 1)))
 	((= i size))
-      (hash-table-set! old-hash i #\a))
-    (do ((i 0 (+ i 1)))
-	((= i size))
-      (varlet old-let (string->symbol (number->string i)) #\a))
+      (hash-table-set! old-hash (string->symbol (number->string i)) #\a))
+    (copy old-hash old-let)
 
     (let ((new-string (make-string size #\space))
 	  (new-bvect (make-byte-vector size 0))
