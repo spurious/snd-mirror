@@ -39753,7 +39753,7 @@ EDITS: 1
   (zip-sound 2 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
   
   (if all-args
-      (let ((ind (open-sound "oboe.snd"))
+      (let ((ind (open-sound "1a.snd"))
 	    (pv (make-pvocoder 256 4 64))
 	    (rd (make-sampler 0)))
 	(map-channel (lambda (y) (pvocoder pv rd)))

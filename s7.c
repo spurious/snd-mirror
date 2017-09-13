@@ -520,7 +520,6 @@ typedef struct vdims_t {
 typedef struct {
   int32_t type;
   uint32_t outer_type;
-  const char *name;
   s7_pointer scheme_name;
   char *(*print)(s7_scheme *sc, void *value);
   void (*free)(void *value);
@@ -544,7 +543,7 @@ typedef struct hash_entry_t {
   uint32_t raw_hash;
 } hash_entry_t;
 
-typedef uint32_t (*hash_map_t)(s7_scheme *sc, s7_pointer table, s7_pointer key);    /* hash-table object->location mapper */
+typedef uint32_t (*hash_map_t)(s7_scheme *sc, s7_pointer table, s7_pointer key);        /* hash-table object->location mapper */
 typedef hash_entry_t *(*hash_check_t)(s7_scheme *sc, s7_pointer table, s7_pointer key); /* hash-table object equality function */
 static hash_map_t *default_hash_map;
 
@@ -629,11 +628,11 @@ typedef struct {
 /* cell structure */
 typedef struct s7_cell {
   union {
-    uint64_t flag;
+    uint64_t flag;                /* type info */
     uint8_t type_field;
     uint16_t sflag;
   } tf;
-  int64_t hloc;
+  int64_t hloc;                   /* heap location */
   union {
 
     union {                       /* integers, floats */
@@ -32474,17 +32473,8 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 			      if (o->v7.fb(o))
 				return(car(x));
 			    }
+			  return(sc->F);
 			}
-		      else
-			{
-			  for (; is_pair(x); x = cdr(x))
-			    {
-			      slot_set_value(b, caar(x));
-			      if (is_true(sc, func(sc, car(body))))
-				return(car(x));
-			    }
-			}
-		      return(sc->F);
 		    }
 		}
 	    }
@@ -32982,23 +32972,8 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 			  sc->pc = 0;
 			  if (o->v7.fb(o)) return(x);
 			}
+		      return(sc->F);
 		    }
-		  else
-		    {
-		      for (slow = x; is_pair(x); x = cdr(x), slow = cdr(slow))
-			{
-			  slot_set_value(b, car(x));
-			  if (is_true(sc, func(sc, car(body)))) return(x);
-			  
-			  if (!is_pair(cdr(x))) return(sc->F);
-			  x = cdr(x);
-			  if (x == slow) return(sc->F);
-			  
-			  slot_set_value(b, car(x));
-			  if (is_true(sc, func(sc, sc->t2_1))) return(x);
-			}
-		    }
-		  return(sc->F);
 		}
 	    }
 	}
@@ -38300,7 +38275,6 @@ int32_t s7_make_c_type(s7_scheme *sc, const char *name)
     }
   sc->c_object_types[tag] = (c_object_t *)calloc(1, sizeof(c_object_t));
   sc->c_object_types[tag]->type = tag;
-  sc->c_object_types[tag]->name = copy_string(name);
   sc->c_object_types[tag]->scheme_name = s7_make_permanent_string(name);
 
   sc->c_object_types[tag]->free = fallback_free;
@@ -38533,7 +38507,7 @@ static s7_int c_object_length_to_int(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer object_copy(s7_scheme *sc, s7_pointer args)
+static s7_pointer copy_c_object(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer obj;
   obj = car(args);
@@ -38541,6 +38515,13 @@ static s7_pointer object_copy(s7_scheme *sc, s7_pointer args)
   if (c_object_copy(sc, obj))
     return((*(c_object_copy(sc, obj)))(sc, args));
   eval_error(sc, "attempt to copy ~S?", obj);
+}
+
+
+static s7_pointer c_object_type_to_let(s7_scheme *sc, s7_pointer cobj)
+{
+  /* should we make new wrappers every time this is called? or save the let somewhere and reuse it? */
+  return(sc->F);
 }
 
 
@@ -40478,7 +40459,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  }
 	  
 	case T_C_OBJECT:
-	  return(object_copy(sc, args));
+	  return(copy_c_object(sc, args));
 
 	case T_RANDOM_STATE:
 	  return(rng_copy(sc, args));
@@ -40596,10 +40577,10 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       check_method(sc, source, sc->copy_symbol, args);
       {
 	s7_pointer x;
-	x = object_copy(sc, args);
+	x = copy_c_object(sc, args);
 	if (x == dest)
 	  return(dest);
-	/* if object_copy can't handle args for some reason, it should return #f (not dest), and we'll soldier on... */
+	/* if copy_c_object can't handle args for some reason, it should return #f (not dest), and we'll soldier on... */
       }
       get = c_object_direct_ref(sc, source);
       if (!get) get = c_object_getter;
@@ -41946,15 +41927,13 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
       {
 	s7_pointer let, clet;
 	clet = c_object_let(obj);
-	let = s7_inlet(sc, s7_list(sc, 10,
+	let = s7_inlet(sc, s7_list(sc, 12,
 				   sc->value_symbol, obj,
 				   sc->type_symbol, sc->is_c_object_symbol,
 				   s7_make_symbol(sc, "c-object-type"), s7_make_integer(sc, c_object_type(obj)),
 				   s7_make_symbol(sc, "c-object-let"), clet,
-				   s7_make_symbol(sc, "class"), c_object_scheme_name(sc, obj)));
-	/* TODO: local 'let entry causes trouble -- it's an error now in s7_varlet 
-	 *       also how to examine the c_object_type table?
-	 */
+				   s7_make_symbol(sc, "class"), c_object_scheme_name(sc, obj),
+				   s7_make_symbol(sc, string_value(c_object_scheme_name(sc, obj))), c_object_type_to_let(sc, obj)));
 	if ((is_let(clet)) &&
 	    ((has_methods(clet)) || (has_methods(obj))))
 	  {
@@ -42638,7 +42617,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int32_t article)
   switch (unchecked_type(arg))
     {
     case T_C_OBJECT:
-      return(make_type_name(sc, sc->c_object_types[c_object_type(arg)]->name, article));
+      return(make_type_name(sc, string_value(c_object_scheme_name(sc, arg)), article));
 
     case T_INPUT_PORT:
       return(make_type_name(sc, (is_file_port(arg)) ? "input file port" : ((is_string_port(arg)) ? "input string port" : "input port"), article));
@@ -83405,7 +83384,7 @@ int main(int argc, char **argv)
  *   add constant = set completely-immutable-value bit, but since callable anytime, every seq-set always has to check it
  *   literator for lambda?
  *   c_object type table entries should also be s7_function, reported by object->let perhaps
- *     wrappers in the meantime?
+ *     wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
  *
  * symbol 8-bits->cycling number, let tracks range? inserts ordered? [see above]
  *   could opt recognize large heavily-used lets and use this?
@@ -83425,7 +83404,7 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921  1923
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2182
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2726
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2733
  * lg            |      |      |      || 211  | 161   149   144   134.9 135.0
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  2746  2742
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3071  2909
@@ -83438,7 +83417,7 @@ int main(int argc, char **argv)
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.9  11.8
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.8  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.4  39.3
- *                                    || 145  | 135   132   93.2  89.4  89.2
+ *                                    || 139  | 129   126   87.2  83.4  82.7
  * 
  * ----------------------------------------------------------------------------
  */

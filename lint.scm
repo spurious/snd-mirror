@@ -6169,265 +6169,272 @@
 						caadr)))
 				      (else #f))))))
 	      (lambda (caller head form env)
-		(when (= (length form) 4)
-		  (let ((func (list-ref form 3)))
-		    (if (symbol? func)
-			(if (memq func '(eq? eqv? equal?))   ; (member x y eq?) -> (memq x y)
-			    (let ((op (if (eq? head 'member) ; (member (car x) entries equal?) -> (member (car x) entries)
-					  (case func ((eq?) 'memq) ((eqv?) 'memv) (else 'member))
-					  (case func ((eq?) 'assq) ((eqv?) 'assv) (else 'assoc)))))
-			      (lint-format "perhaps ~A" caller (lists->string form (list op (cadr form) (caddr form)))))
-			    (let ((sig (procedure-signature (symbol->value func)))) ; arg-signature here is too cranky
-			      (if (and (pair? sig)
-				       (not (eq? 'boolean? (car sig)))
-				       (not (and (pair? (car sig))
-						 (memq 'boolean? (car sig)))))
-				  (lint-format "~A is a questionable ~A function" caller func head)))) ; (member 1 x abs)
-			;; func not a symbol
-			(when (and (len>2? func)
-				   (eq? (car func) 'lambda)
-				   (pair? (cadr func)))
-			  (if (not (memv (length (cadr func)) '(2 -1)))
-			      (lint-format "~A equality function (optional third arg) should take two arguments" caller head)
-			      (when (and (= (length func) 3)       ; (member 'a x (lambda (a b c) (eq? a b)))
-					 (pair? (caddr func))
-					 (eq? head 'member))
-				(let ((eq (caddr func))
-				      (args (cadr func)))
-				  (if (and (memq (car eq) '(eq? eqv? equal?))
-					   (eq? (car args) (cadr eq))
-					   (len>1? (caddr eq))
-					   (eq? (caaddr eq) 'car)
-					   (pair? (cdr args))
-					   (eq? (cadr args) (cadr (caddr eq))))
-				      (lint-format "member might perhaps be ~A" ; (member 'a x (lambda (a b) (eq? a (car b))))
-						   caller
-						   (if (or (eq? func 'eq?)
-							   (eq? (caaddr func) 'eq?))
-						       'assq
-						       (if (eq? (caaddr func) 'eqv?) 
-							   'assv 
-							   'assoc)))))))))))
-		
-		(when (= (length form) 3)
-		  (let ((selector (cadr form))
-			(items (caddr form)))
+		(case (length form)
+		  ((3)
+		   (let ((selector (cadr form))
+			 (items (caddr form)))
+		     
+		     (let ((current-eqf (case head ((memq assq) 'eq?) ((memv assv) 'eqv?) (else 'equal?)))
+			   (selector-eqf (car (eqf selector env)))
+			   (one-item (and (memq head '(memq memv member)) (list-one? items))))
+		       ;; one-item assoc doesn't simplify cleanly
+		       
+		       (if one-item
+			   (let* ((target (one-item items))
+				  (iter-eqf (eqf target env)))
+			     (if (or (symbol? target)
+				     (unquoted-pair? target))
+				 (set! target (list 'quote target))) ; ; (member x (list "asdf")) -> (string=? x "asdf") -- maybe equal? here?
+			     (lint-format "perhaps ~A" caller (lists->string form (list (cadr iter-eqf) selector target))))
+			   
+			   ;; not one-item
+			   (letrec ((duplicates? (lambda (lst fnc)
+						   (and (pair? lst)
+							(or (fnc (car lst) (cdr lst))
+							    (duplicates? (cdr lst) fnc)))))
+				    (duplicate-constants? (lambda (lst fnc)
+							    (and (pair? lst)
+								 (or (and (constant? (car lst))
+									  (fnc (car lst) (cdr lst)))
+								     (duplicate-constants? (cdr lst) fnc))))))
+			     (if (and (symbol? selector-eqf)   ; (memq 1.0 x): perhaps memq -> memv
+				      (not (eq? selector-eqf current-eqf)))
+				 (lint-format "~A: perhaps ~A -> ~A" caller (truncated-list->string form) head 
+					      (if (memq head '(memq memv member))
+						  (case selector-eqf ((eq?) 'memq) ((eqv?) 'memv) ((equal?) 'member))
+						  (case selector-eqf ((eq?) 'assq) ((eqv?) 'assv) ((equal?) 'assoc)))))
+			     
+			     ;; --------------------------------
+			     ;; check for head mismatch with items
+			     (when (pair? items)
+			       (when (or (eq? (car items) 'list)
+					 (quoted-pair? items))
+				 (let ((elements ((if (eq? (car items) 'quote) cadr cdr) items)))
+				   (let ((baddy #f))
+				     (catch #t 
+				       (lambda () 
+					 (set! baddy ((if (eq? (car items) 'list) duplicate-constants? duplicates?)
+						      elements (symbol->value head))))
+				       (lambda args #f))
+				     (if (pair? baddy) ; (member x (list "asd" "abc" "asd"))
+					 (lint-format "duplicated entry ~S in ~A" caller (car baddy) items)))
+				   
+				   (when (proper-list? elements)
+				     (let ((maxf #f)
+					   (keys (if (eq? (car items) 'quote)
+						     (if (memq head '(memq memv member))
+							 elements 
+							 (and (lint-every? pair? elements)
+							      (map car elements)))
+						     (if (memq head '(memq memv member))
+							 (and (lint-every? code-constant? elements)
+							      elements)
+							 (and (lint-every? (lambda (e)
+									     (and (len=2? e)
+										  (eq? (car e) 'quote)
+										  (pair? (cadr e))))
+									   elements)
+							      (map caadr elements)))))) 
+				       (when (proper-list? keys)
+					 (if (eq? (car items) 'quote)
+					     (do ((p keys (cdr p)))
+						 ((or (null? p)
+						      (memq maxf '(equal? #t))))
+					       (let ((element (car p)))
+						 (if (symbol? element)
+						     (if (not maxf)
+							 (set! maxf 'eq?))
+						     (if (pair? element)
+							 (begin
+							   (if (and (eq? (car element) 'quote)
+								    (pair? (cdr element)))
+							       (lint-format "stray quote? ~A" caller form)) ; (memq x '(a 'b c))
+							   (set! maxf #t))
+							 (let ((type (if (symbol? element)
+									 'eq?
+									 (car (->eqf (->simple-type element))))))
+							   (if (or (memq maxf '(#f eq?))
+								   (memq type '(#t equal?)))
+							       (set! maxf type)))))))
+					     ;; else (list ...)
+					     (do ((p keys (cdr p)))
+						 ((or (null? p)
+						      (memq maxf '(equal? #t))))
+					       (let ((element (car p)))
+						 (if (symbol? element)
+						     (set! maxf #t)
+						     (let ((type (car (eqf element env))))
+						       (if (or (memq maxf '(#f eq?))
+							       (memq type '(#t equal?)))
+							   (set! maxf type)))))))
+					 (case maxf
+					   ((eq?)
+					    (if (not (memq head '(memq assq))) ; (member (car op) '(x y z))
+						(lint-format "~A could be ~A in ~A" caller 
+							     head 
+							     (if (memq head '(memv member)) 'memq 'assq)
+							     form)))
+					   ((eqv?)
+					    (if (not (memq head '(memv assv))) ; (memq (strname 0) '(#\{ #\[ #\()))
+						(lint-format "~A ~Aould be ~A in ~A" caller 
+							     head 
+							     (if (memq head '(memq assq)) "sh" "c")
+							     (if (memq head '(memq member)) 'memv 'assv)
+							     form)))
+					   ((equal? #t)                        ; (memq (car op) '("a" #()))
+					    (if (not (memq head '(member assoc)))
+						(lint-format "~A should be ~A in ~A" caller 
+							     head 
+							     (if (memq head '(memq memv)) 'member 'assoc)
+							     form))))))
+				     
+				     (if (and (= (length elements) 2)  ; (memq expr '(#t #f))
+					      (memq #t elements)
+					      (memq #f elements))
+					 (lint-format "perhaps ~A" caller (lists->string form (list 'boolean? selector)))))))
+			       ;; not (memv x '(0 0.0)) -> (zero? x) because x might not be a number
+			       
+			       (case (car items)
+				 ((map)
+				  (let ((memx (memq head '(memq memv member))))
+				    (when (and memx (= (length items) 3))
+				      (let ((mapf (cadr items))
+					    (map-items (caddr items)))
+					(cond ((eq? mapf 'car)         ; (memq x (map car y)) -> (assq x y)
+					       (lint-format "perhaps use assoc: ~A" caller
+							    (lists->string form (list (case current-eqf ((eq?) 'assq) ((eqv?) 'assv) ((equal?) 'assoc)) 
+										      selector map-items))))
+					      
+					      ((eq? selector #t)
+					       (if (eq? mapf 'null?)   ; (memq #t (map null? items)) -> (memq () items)
+						   (lint-format "perhaps ~A" caller 
+								(lists->string form (list 'memq () map-items)))
+						   (let ((b (if (eq? mapf 'b) 'c 'b))) 
+						     ;; (memq #t (map cadr items)) -> (member #t items (lambda (a b) (cadr b)))
+						     (lint-format "perhaps avoid 'map: ~A" caller 
+								  (lists->string form `(member #t ,map-items (lambda (a ,b) (,mapf ,b))))))))
+					      
+					      ((and (pair? selector)
+						    (eq? (car selector) 'string->symbol) ; this could be extended, but it doesn't happen
+						    (eq? mapf 'string->symbol)
+						    (not (and (pair? map-items)
+							      (eq? (car map-items) 'quote))))
+					       (lint-format "perhaps ~A" caller  
+							    ;; (memq (string->symbol x) (map string->symbol y)) -> (member x y string=?)
+							    (lists->string form `(member ,(cadr selector) ,map-items string=?))))
+					      
+					      (else            
+					       ;; (member x (map b items)) -> (member x items (lambda (a c) (equal? a (b c))))
+					       (let ((b (if (eq? mapf 'b) 'c 'b))) ; a below can't collide because eqf won't return 'a
+						 (lint-format "perhaps avoid 'map: ~A" caller 
+							      (lists->string form `(member ,selector ,map-items 
+											   (lambda (a ,b) (,current-eqf a (,mapf ,b)))))))))))))
+				 
+				 ((string->list)             ; (memv c (string->list s)) -> (char-position c s)
+				  (lint-format "perhaps ~A" caller 
+					       (lists->string form (cons 'char-position (cons (cadr form) (cdr items))))))
+				 
+				 ((cons)                     ; (member x (cons y z)) -> (or (equal? x y) (member x z))
+				  (if (and (not (pair? selector))
+					   (len=3? items))
+				      (lint-format "perhaps avoid 'cons: ~A" caller
+						   (lists->string form `(or (,current-eqf ,selector ,(cadr items))
+									    (,head ,selector ,(caddr items)))))))
+				 
+				 ((append)                   ; (member x (append (list x) y)) -> (or (equal? x x) (member x y))
+				  (if (and (not (pair? selector))
+					   (len=3? items)
+					   (len=2? (cadr items))
+					   (eq? (caadr items) 'list))
+				      (lint-format "perhaps ~A" caller
+						   (lists->string form `(or (,current-eqf ,selector ,(cadadr items))
+									    (,head ,selector ,(caddr items))))))))))))
+		     (when (and (memq head '(memq memv))
+				(quoted-pair? items))
+		       (let ((nitems (length (cadr items))))
+			 
+			 (if (pair? selector)                        ; (memv (string-ref x 0) '(+ -)) -> #f etc
+			     (let ((sig (arg-signature (car selector) env)))
+			       (if (and (pair? sig)
+					(symbol? (car sig))
+					(not (eq? (car sig) 'values)))
+				   (let ((vals (let ((car-sig-val (symbol->value (car sig))))
+						 (map (lambda (item)
+							(if (car-sig-val item) item (values)))
+						      (cadr items)))))
+				     (if (not (= (length vals) nitems))
+					 (lint-format "perhaps ~A" caller
+						      (lists->string form
+								     (and (pair? vals)
+									  `(,head ,selector ',vals)))))))))
+			 (if (> nitems 20)
+			     (lint-format "perhaps use a hash-table here, rather than ~A" caller (truncated-list->string form)))
+			 
+			 (let ((bad (lint-find-if (lambda (x)
+						    (not (or (symbol? x)
+							     (char? x)
+							     (number? x)
+							     (procedure? x) ; (memq abs '(1 #_abs 2)) !
+							     (memq x '(#f #t () #<unspecified> #<undefined> #<eof>)))))
+						  (cadr items))))
+			   (if bad
+			       (lint-format (if (and (pair? bad)
+						     (eq? (car bad) 'unquote))
+						(values "stray comma? ~A" caller)  ; (memq x '(a (unquote b) c))
+						(values "pointless list member: ~S in ~A" caller bad))
+					    ;; quoted item here is caught above    ; (memq x '(a (+ 1 2) 3))
+					    form)))))))
 		    
-		    (let ((current-eqf (case head ((memq assq) 'eq?) ((memv assv) 'eqv?) (else 'equal?)))
-			  (selector-eqf (car (eqf selector env)))
-			  (one-item (and (memq head '(memq memv member)) (list-one? items))))
-		      ;; one-item assoc doesn't simplify cleanly
-		      
-		      (if one-item
-			  (let* ((target (one-item items))
-				 (iter-eqf (eqf target env)))
-			    (if (or (symbol? target)
-				    (unquoted-pair? target))
-				(set! target (list 'quote target))) ; ; (member x (list "asdf")) -> (string=? x "asdf") -- maybe equal? here?
-			    (lint-format "perhaps ~A" caller (lists->string form (list (cadr iter-eqf) selector target))))
-			  
-			  ;; not one-item
-			  (letrec ((duplicates? (lambda (lst fnc)
-						  (and (pair? lst)
-						       (or (fnc (car lst) (cdr lst))
-							   (duplicates? (cdr lst) fnc)))))
-				   (duplicate-constants? (lambda (lst fnc)
-							   (and (pair? lst)
-								(or (and (constant? (car lst))
-									 (fnc (car lst) (cdr lst)))
-								    (duplicate-constants? (cdr lst) fnc))))))
-			    (if (and (symbol? selector-eqf)   ; (memq 1.0 x): perhaps memq -> memv
-				     (not (eq? selector-eqf current-eqf)))
-				(lint-format "~A: perhaps ~A -> ~A" caller (truncated-list->string form) head 
-					     (if (memq head '(memq memv member))
-						 (case selector-eqf ((eq?) 'memq) ((eqv?) 'memv) ((equal?) 'member))
-						 (case selector-eqf ((eq?) 'assq) ((eqv?) 'assv) ((equal?) 'assoc)))))
-			    
-			    ;; --------------------------------
-			    ;; check for head mismatch with items
-			    (when (pair? items)
-			      (when (or (eq? (car items) 'list)
-					(quoted-pair? items))
-				(let ((elements ((if (eq? (car items) 'quote) cadr cdr) items)))
-				  (let ((baddy #f))
-				    (catch #t 
-				      (lambda () 
-					(set! baddy ((if (eq? (car items) 'list) duplicate-constants? duplicates?)
-						     elements (symbol->value head))))
-				      (lambda args #f))
-				    (if (pair? baddy) ; (member x (list "asd" "abc" "asd"))
-					(lint-format "duplicated entry ~S in ~A" caller (car baddy) items)))
-				  
-				  (when (proper-list? elements)
-				    (let ((maxf #f)
-					  (keys (if (eq? (car items) 'quote)
-						    (if (memq head '(memq memv member))
-							elements 
-							(and (lint-every? pair? elements)
-							     (map car elements)))
-						    (if (memq head '(memq memv member))
-							(and (lint-every? code-constant? elements)
-							     elements)
-							(and (lint-every? (lambda (e)
-									    (and (len=2? e)
-										 (eq? (car e) 'quote)
-										 (pair? (cadr e))))
-									  elements)
-							     (map caadr elements)))))) 
-				      (when (proper-list? keys)
-					(if (eq? (car items) 'quote)
-					    (do ((p keys (cdr p)))
-						((or (null? p)
-						     (memq maxf '(equal? #t))))
-					      (let ((element (car p)))
-						(if (symbol? element)
-						    (if (not maxf)
-							(set! maxf 'eq?))
-						    (if (pair? element)
-							(begin
-							  (if (and (eq? (car element) 'quote)
-								   (pair? (cdr element)))
-							      (lint-format "stray quote? ~A" caller form)) ; (memq x '(a 'b c))
-							  (set! maxf #t))
-							(let ((type (if (symbol? element)
-									'eq?
-									(car (->eqf (->simple-type element))))))
-							  (if (or (memq maxf '(#f eq?))
-								  (memq type '(#t equal?)))
-							      (set! maxf type)))))))
-					    ;; else (list ...)
-					    (do ((p keys (cdr p)))
-						((or (null? p)
-						     (memq maxf '(equal? #t))))
-					      (let ((element (car p)))
-						(if (symbol? element)
-						    (set! maxf #t)
-						    (let ((type (car (eqf element env))))
-						      (if (or (memq maxf '(#f eq?))
-							      (memq type '(#t equal?)))
-							  (set! maxf type)))))))
-					(case maxf
-					  ((eq?)
-					   (if (not (memq head '(memq assq))) ; (member (car op) '(x y z))
-					       (lint-format "~A could be ~A in ~A" caller 
-							    head 
-							    (if (memq head '(memv member)) 'memq 'assq)
-							    form)))
-					  ((eqv?)
-					   (if (not (memq head '(memv assv))) ; (memq (strname 0) '(#\{ #\[ #\()))
-					       (lint-format "~A ~Aould be ~A in ~A" caller 
-							    head 
-							    (if (memq head '(memq assq)) "sh" "c")
-							    (if (memq head '(memq member)) 'memv 'assv)
-							    form)))
-					  ((equal? #t)                        ; (memq (car op) '("a" #()))
-					   (if (not (memq head '(member assoc)))
-					       (lint-format "~A should be ~A in ~A" caller 
-							    head 
-							    (if (memq head '(memq memv)) 'member 'assoc)
-							    form))))))
-				    
-				    (if (and (= (length elements) 2)  ; (memq expr '(#t #f))
-					     (memq #t elements)
-					     (memq #f elements))
-					(lint-format "perhaps ~A" caller (lists->string form (list 'boolean? selector)))))))
-			      ;; not (memv x '(0 0.0)) -> (zero? x) because x might not be a number
-			      
-			      (case (car items)
-				((map)
-				 (let ((memx (memq head '(memq memv member))))
-				   (when (and memx (= (length items) 3))
-				     (let ((mapf (cadr items))
-					   (map-items (caddr items)))
-				       (cond ((eq? mapf 'car)         ; (memq x (map car y)) -> (assq x y)
-					      (lint-format "perhaps use assoc: ~A" caller
-							   (lists->string form (list (case current-eqf ((eq?) 'assq) ((eqv?) 'assv) ((equal?) 'assoc)) 
-										     selector map-items))))
-					     
-					     ((eq? selector #t)
-					      (if (eq? mapf 'null?)   ; (memq #t (map null? items)) -> (memq () items)
-						  (lint-format "perhaps ~A" caller 
-							       (lists->string form (list 'memq () map-items)))
-						  (let ((b (if (eq? mapf 'b) 'c 'b))) 
-						    ;; (memq #t (map cadr items)) -> (member #t items (lambda (a b) (cadr b)))
-						    (lint-format "perhaps avoid 'map: ~A" caller 
-								 (lists->string form `(member #t ,map-items (lambda (a ,b) (,mapf ,b))))))))
-					     
-					     ((and (pair? selector)
-						   (eq? (car selector) 'string->symbol) ; this could be extended, but it doesn't happen
-						   (eq? mapf 'string->symbol)
-						   (not (and (pair? map-items)
-							     (eq? (car map-items) 'quote))))
-					      (lint-format "perhaps ~A" caller  
-							   ;; (memq (string->symbol x) (map string->symbol y)) -> (member x y string=?)
-							   (lists->string form `(member ,(cadr selector) ,map-items string=?))))
-					     
-					     (else            
-					      ;; (member x (map b items)) -> (member x items (lambda (a c) (equal? a (b c))))
-					      (let ((b (if (eq? mapf 'b) 'c 'b))) ; a below can't collide because eqf won't return 'a
-						(lint-format "perhaps avoid 'map: ~A" caller 
-							     (lists->string form `(member ,selector ,map-items 
-											  (lambda (a ,b) (,current-eqf a (,mapf ,b)))))))))))))
-				
-				((string->list)             ; (memv c (string->list s)) -> (char-position c s)
-				 (lint-format "perhaps ~A" caller 
-					      (lists->string form (cons 'char-position (cons (cadr form) (cdr items))))))
-				
-				((cons)                     ; (member x (cons y z)) -> (or (equal? x y) (member x z))
-				 (if (and (not (pair? selector))
-					  (len=3? items))
-				     (lint-format "perhaps avoid 'cons: ~A" caller
-						  (lists->string form `(or (,current-eqf ,selector ,(cadr items))
-									   (,head ,selector ,(caddr items)))))))
-				
-				((append)                   ; (member x (append (list x) y)) -> (or (equal? x x) (member x y))
-				 (if (and (not (pair? selector))
-					  (len=3? items)
-					  (len=2? (cadr items))
-					  (eq? (caadr items) 'list))
-				     (lint-format "perhaps ~A" caller
-						  (lists->string form `(or (,current-eqf ,selector ,(cadadr items))
-									   (,head ,selector ,(caddr items))))))))))))
-		    (when (and (memq head '(memq memv))
-			       (quoted-pair? items))
-		      (let ((nitems (length (cadr items))))
-			
-			(if (pair? selector)                        ; (memv (string-ref x 0) '(+ -)) -> #f etc
-			    (let ((sig (arg-signature (car selector) env)))
-			      (if (and (pair? sig)
-				       (symbol? (car sig))
-				       (not (eq? (car sig) 'values)))
-				  (let ((vals (let ((car-sig-val (symbol->value (car sig))))
-						(map (lambda (item)
-						       (if (car-sig-val item) item (values)))
-						     (cadr items)))))
-				    (if (not (= (length vals) nitems))
-					(lint-format "perhaps ~A" caller
-						     (lists->string form
-								    (and (pair? vals)
-									 `(,head ,selector ',vals)))))))))
-			(if (> nitems 20)
-			    (lint-format "perhaps use a hash-table here, rather than ~A" caller (truncated-list->string form)))
-			
-			(let ((bad (lint-find-if (lambda (x)
-						   (not (or (symbol? x)
-							    (char? x)
-							    (number? x)
-							    (procedure? x) ; (memq abs '(1 #_abs 2)) !
-							    (memq x '(#f #t () #<unspecified> #<undefined> #<eof>)))))
-						 (cadr items))))
-			  (if bad
-			      (lint-format (if (and (pair? bad)
-						    (eq? (car bad) 'unquote))
-					       (values "stray comma? ~A" caller)  ; (memq x '(a (unquote b) c))
-					       (values "pointless list member: ~S in ~A" caller bad))
-					   ;; quoted item here is caught above    ; (memq x '(a (+ 1 2) 3))
-					   form))))))))))
-	      
+		  ((4)
+		   (let ((func (list-ref form 3)))
+		     (if (symbol? func)
+			 (if (memq func '(eq? eqv? equal?))   ; (member x y eq?) -> (memq x y)
+			     (let ((op (if (eq? head 'member) ; (member (car x) entries equal?) -> (member (car x) entries)
+					   (case func ((eq?) 'memq) ((eqv?) 'memv) (else 'member))
+					   (case func ((eq?) 'assq) ((eqv?) 'assv) (else 'assoc)))))
+			       (lint-format "perhaps ~A" caller (lists->string form (list op (cadr form) (caddr form)))))
+			     (let ((sig (procedure-signature (symbol->value func)))) ; arg-signature here is too cranky
+			       (if (and (pair? sig)
+					(not (eq? 'boolean? (car sig)))
+					(not (and (pair? (car sig))
+						  (memq 'boolean? (car sig)))))
+				   (lint-format "~A is a questionable ~A function" caller func head)))) ; (member 1 x abs)
+			 ;; func not a symbol
+			 (when (and (len>2? func)
+				    (eq? (car func) 'lambda)
+				    (pair? (cadr func)))
+			   (if (not (memv (length (cadr func)) '(2 -1)))
+			       (lint-format "~A equality function (optional third arg) should take two arguments" caller head)
+			       (when (eq? head 'member)
+				 (when (and (= (length func) 3)                    ; (member 'a x (lambda (a b c) (eq? a b)))
+					    (pair? (caddr func)))
+				   (let ((eq (caddr func))
+					 (args (cadr func)))
+				     (if (and (memq (car eq) '(eq? eqv? equal?))
+					      (eq? (car args) (cadr eq))
+					      (len>1? (caddr eq))
+					      (eq? (caaddr eq) 'car)
+					      (pair? (cdr args))
+					      (eq? (cadr args) (cadr (caddr eq))))
+					 (lint-format "member might perhaps be ~A" ; (member 'a x (lambda (a b) (eq? a (car b))))
+						      caller
+						      (if (or (eq? func 'eq?)
+							      (eq? (caaddr func) 'eq?))
+							  'assq
+							  (if (eq? (caaddr func) 'eqv?) 
+							      'assv 
+							      'assoc))))))
+				 (when (pair? (cadr form))                         ; (member (abs x) lst (lambda (a b) (< b 2)))
+				   (let ((args (cadr func)))
+				     (when (and (pair? args)
+						(not (tree-memq (car args) (cddr func))))
+				       (lint-format "~A is ignored, so perhaps (member #f ...)" caller (car args)))))))))))))))
+		    
+
 	  (for-each (lambda (f)
 		      (hash-special f sp-memx))
 		    '(memq assq memv assv member assoc)))
-	
+	  
 	;; ---------------- car, cdr, etc ----------------
 	(let ()
 	  (define (sp-crx caller head form env)
@@ -9340,10 +9347,12 @@
 	
 	;; ---------------- values ----------------
 	(let ()
+	  (define (car-values? a b)                              ;  (values 2 (values 3 4) 5) -> (values 2 3 4 5)
+	    (and (pair? b) 
+		 (eq? (car b) 'values)))
+
 	  (define (sp-values caller head form env)
-	    (cond ((member 'values (cdr form) (lambda (a b)
-						(and (pair? b)   ;  (values 2 (values 3 4) 5) -> (values 2 3 4 5)
-						     (eq? (car b) 'values))))
+	    (cond ((member #f (cdr form) car-values?)
 		   (lint-format "perhaps ~A" caller (lists->string form (cons 'values (splice-if 'values (cdr form))))))
 		  ((len=2? form)
 		   (lint-format "perhaps ~A" caller 
