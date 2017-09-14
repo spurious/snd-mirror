@@ -46,14 +46,13 @@
 	      (temp (GtkTextIter)))
 	  (gtk_text_buffer_get_iter_at_mark repl_buf pos m)
 	  (if (gtk_text_iter_backward_search pos s7-prompt 0 temp previous #f)
-	      (if (not (gtk_text_iter_forward_search pos s7-prompt 0 next temp #f))
-		  (begin
+	      (begin
+		(if (not (gtk_text_iter_forward_search pos s7-prompt 0 next temp #f))
 		    (gtk_text_buffer_get_end_iter repl_buf next)
-		    (gtk_text_buffer_get_text repl_buf previous next #t))
-		  (begin
-		    (gtk_text_iter_backward_search next "\n" 0 pos temp #f)
-		    (gtk_text_iter_backward_search pos "\n" 0 next temp #f)
-		    (gtk_text_buffer_get_text repl_buf previous next #t)))
+		    (begin
+		      (gtk_text_iter_backward_search next "\n" 0 pos temp #f)
+		      (gtk_text_iter_backward_search pos "\n" 0 next temp #f)))
+		(gtk_text_buffer_get_text repl_buf previous next #t))
 	      "")))
 
       (define (repl-key-press w event data)
@@ -101,9 +100,9 @@
 	(gtk_text_buffer_get_end_iter repl_buf pos)
 	(gtk_text_buffer_insert_with_tags repl_buf pos 
 					  s7-prompt (length s7-prompt)
-					  (list prompt_not_editable))
-	(gdk_window_resize (gtk_widget_get_window shell) 400 200)
-	(gtk_main)))))
+					  (list prompt_not_editable)))
+      (gdk_window_resize (gtk_widget_get_window shell) 400 200)
+      (gtk_main))))
 
 
 #|

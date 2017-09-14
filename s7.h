@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "5.9"
-#define S7_DATE "3-Aug-17"
+#define S7_VERSION "5.10"
+#define S7_DATE "13-Sep-17"
 
 #include <stdint.h>           /* for int64_t */
 
@@ -438,6 +438,8 @@ s7_pointer s7_define_variable_with_documentation(s7_scheme *sc, const char *name
 s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
 s7_pointer s7_define_constant_with_documentation(s7_scheme *sc, const char *name, s7_pointer value, const char *help);
 bool s7_is_constant(s7_pointer p);
+bool s7_is_immutable(s7_pointer p);
+s7_pointer s7_immutable(s7_pointer p);
 
   /* These three functions add a symbol and its binding to either the top-level environment
    *    or the 'env' passed as the second argument to s7_define.
@@ -881,6 +883,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 13-Sep:    s7_immutable.
  * 3-Aug:     object->c_object name changes.
  * 28-Jul:    s7_make_c_pointer_with_type and s7_c_pointer_type.
  * 24-Jul:    int64_t rather than long long int, and various related changes.

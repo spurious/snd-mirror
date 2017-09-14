@@ -1074,7 +1074,7 @@ struct s7_scheme {
              flush_output_port_symbol, for_each_symbol, format_symbol, funclet_symbol,
              gc_symbol, gcd_symbol, gensym_symbol, geq_symbol, get_output_string_symbol, gt_symbol,
              hash_table_entries_symbol, hash_table_ref_symbol, hash_table_set_symbol, hash_table_star_symbol, hash_table_symbol, help_symbol, 
-             imag_part_symbol, inexact_to_exact_symbol, inlet_symbol, int_vector_ref_symbol, int_vector_set_symbol, int_vector_symbol,
+             imag_part_symbol, immutable_symbol, inexact_to_exact_symbol, inlet_symbol, int_vector_ref_symbol, int_vector_set_symbol, int_vector_symbol,
              integer_decode_float_symbol, integer_to_char_symbol, is_aritable_symbol, is_boolean_symbol, is_byte_vector_symbol,
              is_c_object_symbol, is_c_pointer_symbol, is_char_alphabetic_symbol, is_char_lower_case_symbol, is_char_numeric_symbol,
              is_char_symbol, is_char_upper_case_symbol, is_char_whitespace_symbol, is_complex_symbol, is_constant_symbol,
@@ -2021,6 +2021,7 @@ static int64_t not_heap = -1;
 #endif
 
 #define is_pair(p)                    (type(p) == T_PAIR)
+#define is_mutable_pair(p)            ((typeflag(p) & (0xff | T_IMMUTABLE)) == T_PAIR)
 #define is_null(p)                    ((_NFre(p)) == sc->nil)
 #define is_not_null(p)                ((_NFre(p)) != sc->nil)
 
@@ -3747,24 +3748,20 @@ static s7_pointer g_not(s7_scheme *sc, s7_pointer args)
 
 static bool not_b(s7_pointer p) {return(p == cur_sc->F);}
 
-
 bool s7_boolean(s7_scheme *sc, s7_pointer x)
 {
   return(x != sc->F);
 }
-
 
 bool s7_is_boolean(s7_pointer x)
 {
   return(type(x) == T_BOOLEAN);
 }
 
-
 s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
 {
   return(make_boolean(sc, x));
 }
-
 
 static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
@@ -3786,12 +3783,30 @@ bool s7_is_constant(s7_pointer p)
   return((type(p) != T_SYMBOL) || (is_immutable_symbol(p)));
 }
 
-
 static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_constant "(constant? obj) returns #t if obj is a constant (unsettable): (constant? pi) -> #t"
   #define Q_is_constant pl_bt
   check_boolean_method(sc, s7_is_constant, sc->is_constant_symbol, args);
+}
+
+
+bool s7_is_immutable(s7_pointer p)
+{
+  return(is_immutable(p));
+}
+
+s7_pointer s7_immutable(s7_pointer p)
+{
+  set_immutable(p);
+  return(p);
+}
+
+static s7_pointer g_immutable(s7_scheme *sc, s7_pointer args)
+{
+  #define H_immutable "(immutable sequence) declares that the sequence's entries can't be changed. The sequence is returned. (This function is work-in-progress)"
+  #define Q_immutable s7_make_circular_signature(sc, 0, 1, sc->T)
+  return(s7_immutable(car(args)));
 }
 
 
@@ -22041,8 +22056,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
   if (!is_string(x))
     method_or_bust(sc, x, sc->string_fill_symbol, args, T_STRING, 1); /* not two methods here */
 
-  if ((sc->safety > NO_SAFETY) &&
-      (is_immutable_string(x)))
+  if (is_immutable_string(x))
     return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't fill! ~S (it is immutable)"), x)));
 
   chr = cadr(args);
@@ -31751,7 +31765,7 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
 
   p = car(args);
-  if (is_pair(p))
+  if (is_mutable_pair(p)) /* this is currently 2.5x slower than is_pair */
     {
       set_car(p, cadr(args));
       return(car(p));
@@ -31761,7 +31775,7 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer set_car_p_pp(s7_pointer p1, s7_pointer p2)
 {
-  if (!is_pair(p1))
+  if (!is_mutable_pair(p1))
     simple_wrong_type_argument(cur_sc, cur_sc->set_car_symbol, p1, T_PAIR);
   set_car(p1, p2);
   return(p2);
@@ -31796,7 +31810,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
 
   p = car(args);
-  if (!is_pair(p))
+  if (!is_mutable_pair(p))
     method_or_bust(sc, p, sc->set_cdr_symbol, args, T_PAIR, 1);
 
   set_cdr(p, cadr(args));
@@ -31805,7 +31819,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer set_cdr_p_pp(s7_pointer p1, s7_pointer p2)
 {
-  if (!is_pair(p1))
+  if (!is_mutable_pair(p1))
     simple_wrong_type_argument(cur_sc, cur_sc->set_cdr_symbol, p1, T_PAIR);
   set_cdr(p1, p2);
   return(p2);
@@ -35651,8 +35665,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
       return(sc->nil);
     }
 
-  if ((sc->safety > NO_SAFETY) &&
-      (is_immutable(data)))
+  if (is_immutable(data))
     return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't sort! ~S (it is immutable)"), data)));
 
   lessp = cadr(args);
@@ -41115,11 +41128,6 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
   #define Q_reverse_in_place s7_make_signature(sc, 2, sc->is_sequence_symbol, sc->is_sequence_symbol)
 
   p = car(args);
-
-  if ((sc->safety > NO_SAFETY) &&
-      (is_immutable(p)))
-    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
-
   switch (type(p))
     {
     case T_NIL:
@@ -41128,6 +41136,8 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
     case T_PAIR:
       {
 	s7_pointer np;
+	if (is_immutable(p))
+	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
 	np = reverse_in_place(sc, sc->nil, p);
 	if (is_null(np))
 	  return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, a_proper_list_string));
@@ -41146,6 +41156,8 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       {
 	int32_t len;
 	char *s1, *s2;
+	if (is_immutable(p))
+	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
 	len = string_length(p);
 	if (len < 2) return(p);
 	s1 = string_value(p);
@@ -41158,6 +41170,8 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       {
 	s7_int len;
 	s7_int *s1, *s2;
+	if (is_immutable(p))
+	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = int_vector_elements(p);
@@ -41170,6 +41184,8 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       {
 	s7_int len;
 	s7_double *s1, *s2;
+	if (is_immutable(p))
+	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = float_vector_elements(p);
@@ -41182,6 +41198,8 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       {
 	s7_int len;
 	s7_pointer *s1, *s2;
+	if (is_immutable(p))
+	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = vector_elements(p);
@@ -41191,6 +41209,8 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       break;
 
     default:
+      if (is_immutable(p))
+	return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
       if ((is_simple_sequence(p)) &&
 	  (!has_methods(p)))
 	return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, s7_make_string_wrapper(sc, "a vector, string, or list")));
@@ -82078,6 +82098,7 @@ s7_scheme *s7_init(void)
   sc->symbol_to_dynamic_value_symbol = defun("symbol->dynamic-value", symbol_to_dynamic_value, 1, 0, false);
   s7_typed_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access,	2, 1, H_symbol_access, Q_symbol_access, NULL);
   sc->symbol_access_symbol = make_symbol(sc, "symbol-access");
+  sc->immutable_symbol =             defun("immutable",		immutable,		1, 0, false);
 
   sc->string_to_keyword_symbol =     defun("string->keyword",	string_to_keyword,      1, 0, false);
   sc->symbol_to_keyword_symbol =     defun("symbol->keyword",	symbol_to_keyword,	1, 0, false);
@@ -83367,7 +83388,7 @@ int main(int argc, char **argv)
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  * maybe pass \u... through in read_constant_string unchanged, or read in s7??  no worse than \x..;
  *
- * immutable sequence as bit 25? == elements can't be set, immutable let=no slot added/deleted, so values changed
+ * immutable sequence as bit 25? == elements can't be set, immutable let=no slot added/deleted, no values changed
  *   then immutable-let access->offsets (type?), auto-copy-on-write? or (constant-copied ...)?
  *   currently the define-constant cases are inconsistent
  *   slot-setter, symbol-setter, let-setter?
@@ -83385,6 +83406,16 @@ int main(int argc, char **argv)
  *   literator for lambda?
  *   c_object type table entries should also be s7_function, reported by object->let perhaps
  *     wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
+ *   if (constant x) -> is_immutable(x), x a vect, then chooser for (x 0) can be done at opt time
+ *   currently this is only partly implemented: vect only fill etc
+ *     and the check is independent of the safety setting (which governs auto-set in reader)
+ *
+ *   1: immutable is in place and docd, but no tests, patchy implementation
+ *        syntax?, pair, string, vector, hash-table, let: set! fill!           [sort!] [reverse!] [set-car|cdr!]
+ *        c-object? random-state? closure? built-in? bignum?
+ *        outlet?
+ *      we sort of need immutable? but the distinction between that and constant? is convoluted
+ *      set-car! use is_mutable_pair and mutable_method -> error
  *
  * symbol 8-bits->cycling number, let tracks range? inserts ordered? [see above]
  *   could opt recognize large heavily-used lets and use this?
@@ -83404,7 +83435,7 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921  1923
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2182
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2733
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2735
  * lg            |      |      |      || 211  | 161   149   144   134.9 135.0
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  2746  2742
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3071  2909

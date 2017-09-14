@@ -1807,6 +1807,7 @@
     
     (define (->lint-type c)
       (cond ((not (pair? c))	        (->simple-type c))
+	    ((procedure? (car c))       (return-type (car c) ()))     ; (#_abs ...)
 	    ((not (symbol? (car c)))    (or (pair? (car c)) 'pair?))
 	    ((not (eq? (car c) 'quote)) (or (return-type (car c) ()) (define->type c)))
 	    ((not (pair? (cdr c)))      (->simple-type c)) ; ??
@@ -4914,7 +4915,7 @@
 					    `(remainder ,arg1 ,(cadr arg2)))	    
 				       (and (len=3? (cadr arg2))      ; arg2 here is (* (quotient x y) y), arg1 is x
 					    (eq? (caadr arg2) 'quotient)
-					    (equal? arg1 (cadr (cadr arg2)))
+					    (equal? arg1 (cadadr arg2))
 					    (equal? (caddr arg2) (caddr (cadr arg2)))
 					    `(remainder ,arg1 ,(caddr arg2))))))
 			     
@@ -6124,6 +6125,7 @@
       (and (pair? tree)
 	   (or (eq? (car tree) 'apply-values)
 	       (if (and (eq? (car tree) 'list-values)
+			(pair? (cdr tree))              ; (assq '(list-values  .\ " (  \"))...)
 			(assq 'apply-values (cdr tree)))
 		   (or (not (= (length tree) 3))
 		       (not (and (pair? (caddr tree))
@@ -6153,6 +6155,51 @@
 	  (if (hash-table-ref special-case-table key)
 	      (format *stderr* "~A already has a value: ~A~%" key (hash-table-ref special-case-table key)))
 	  (hash-table-set! special-case-table key value))
+
+	(define string->char= 
+	  (let ((substring->char? (lambda (s2)
+				    (and (eq? (car s2) 'substring)
+					 (= (length s2) 4)
+					 (integer? (list-ref s2 2))
+					 (integer? (list-ref s2 3))
+					 (= (+ (list-ref s2 2) 1) (list-ref s2 3))))))
+	    (lambda (caller form original-form)
+	      ;; called by string=? and equal? returns true if it makes a suggestion
+	      ;;   look for args of form "x" (string x) (substring x 1 2) and reduces to char= (caller also tries args reversed)
+	      (and (pair? (caddr form))
+		   (let ((sug made-suggestion)
+			 (s1 (cadr form))
+			 (s2 (caddr form)))
+		     (cond ((string? s1)
+			    (when (= (length s1) 1)
+			      (if (eq? (car s2) 'string)          ; (equal? "[" (string r)) -> (char=? #\[ r)
+				  (if (not (len=2? s2))           ; (eqv? "a" (string)) or (string=? "a" (string a b))
+				      (lint-format "~A is #f" caller original-form)
+				      (lint-format "perhaps ~A" caller 
+						   (lists->string original-form (list 'char=? (string-ref s1 0) (cadr s2)))))
+				  (if (substring->char? s2)       ; (equal? "^" (substring s 0 1)) -> (char=? #\^ (string-ref s 0))
+				      (lint-format "perhaps ~A" caller
+						   (lists->string original-form `(char=? ,(string-ref s1 0) (string-ref ,(cadr s2) ,(caddr s2)))))))))
+			   ((not (pair? s1)))
+
+			   ((not (eq? (car s1) 'string))
+			    (if (and (substring->char? s1)        ; (string=? (substring x 0 1) (substring y 2 3))
+				     (substring->char? s2))
+				(lint-format "perhaps ~A" caller
+					     (lists->string original-form `(char=? (string-ref ,(cadr s1) ,(caddr s1)) (string-ref ,(cadr s2) ,(caddr s2)))))))
+
+			   ((eq? (car s2) 'string)                ; (string=? (string x) (string y)) -> (char=? x y)
+			    (if (not (eqv? (length s1) (length s2)))
+				(lint-format "~A is #f" caller original-form)
+				(if (len=2? s1)
+				    (lint-format "perhaps ~A" caller (lists->string original-form (list 'char=? (cadr s1) (cadr s2)))))))
+
+			   ((and (len=2? s1)                      ; (string=? (string x) (substring y 3 4)) -> (char=? x (string-ref y 3))
+				 (substring->char? s2))
+			    (lint-format "perhaps ~A" caller
+					 (lists->string original-form `(char=? ,(cadr s1) (string-ref ,(cadr s2) ,(caddr s2)))))))
+
+		     (not (= sug made-suggestion)))))))
 
 	;; ---------------- member and assoc ----------------
 	(let ()
@@ -6947,47 +6994,16 @@
 				       new-args))))))
 
 	    (when (and (eq? head 'string=?)
-		       (= (length form) 3))                ; (string=? (symbol->string a) (symbol->string b)) -> (eq? a b)
-	      (if (and (pair? (cadr form))
+		       (= (length form) 3))                
+	      (unless (string->char= caller form form)     ; (string=? "x" (string y))
+		(string->char= caller (cons (car form) (reverse (cdr form))) form))
+
+	      (if (and (pair? (cadr form))                 ; (string=? (symbol->string a) (symbol->string b)) -> (eq? a b)
 		       (eq? (caadr form) 'symbol->string)
 		       (pair? (caddr form))
 		       (eq? (caaddr form) 'symbol->string))
-		  (lint-format "perhaps ~A" caller (lists->string form (list 'eq? (cadadr form) (cadr (caddr form)))))
-		  (let ((s1 #f)
-			(s2 #f))
-		    (if (and (string? (cadr form))
-			     (= (length (cadr form)) 1))
-			(begin
-			  (set! s1 (cadr form))
-			  (set! s2 (caddr form)))
-			(if (and (string? (caddr form))
-				 (= (length (caddr form)) 1))
-			    (begin
-			      (set! s1 (caddr form))
-			      (set! s2 (cadr form)))))
-		    (if (and s1                         ; (string=? (substring r 0 1) "S")
-			     (pair? s2)
-			     (eq? (car s2) 'substring)       
-			     (= (length s2) 4)
-			     (eqv? (list-ref s2 2) 0)
-			     (eqv? (list-ref s2 3) 1))
-			(lint-format "perhaps ~A" caller
-				     (lists->string form (list 'char=? (list 'string-ref (cadr s2) 0) (string-ref s1 0))))))))
-	    
-	    (if (lint-every? (lambda (a)                     ; (string=? "#" (string (string-ref s 0))) -> (char=? #\# (string-ref s 0))
-			       (or (and (string? a)
-					(= (length a) 1))
-				   (and (len>1? a)
-					(eq? (car a) 'string))))
-			     (cdr form))
-		(lint-format "perhaps ~A" caller
-			     (lists->string form
-					    (cons (symbol "char" (substring (symbol->string head) 6))
-						  (map (lambda (a)
-							 (if (string? a)
-							     (string-ref a 0)
-							     (cadr a)))
-						       (cdr form)))))))
+		  (lint-format "perhaps ~A" caller (lists->string form (list 'eq? (cadadr form) (cadr (caddr form))))))))
+
 	  (for-each (lambda (f)
 		      (hash-special f sp-string<))
 		    '(string<? string>? string<=? string>=? string=? string-ci<? string-ci>? string-ci<=? string-ci>=? string-ci=?)))
@@ -8935,7 +8951,7 @@
 		    (let ((t1 (->lint-type arg1))          ; (eq? (floor pi) 'a) -> #f
 			  (t2 (->lint-type arg2)))
 		      ;; ->lint-type -> #t if unknown
-		      (when (not (compatible? t1 t2))
+		      (unless (compatible? t1 t2)
 			(set! expr #f)))
 		    
 		    (if (not (eq? expr 'unset))            ; (eq? x '()) -> (null? x)
@@ -8968,27 +8984,17 @@
 						  (list head 
 							(if (useless-copy? arg1) (cadr arg1) arg1)
 							(if (useless-copy? arg2) (cadr arg2) arg2)))))
-		  (if (and (string? (cadr form))
-			   (= (length (cadr form)) 1))
-		      (let ((s2 (caddr form)))
-			(if (pair? s2)
-			    (if (eq? (car s2) 'string)          ; (equal? "[" (string r)) -> (char=? #\[ r)
-				(lint-format "perhaps ~A" caller 
-					     (lists->string form (list 'char=? (string-ref (cadr form) 0) (cadr s2))))
-				(if (and (eq? (car s2) 'substring)
-					 (= (length s2) 4)      ; (equal? "^" (substring s 0 1)) -> (char=? #\^ (string-ref s 0))
-					 (eqv? (list-ref s2 2) 0)
-					 (eqv? (list-ref s2 3) 1))
-				    (lint-format "perhaps ~A" caller
-						 (lists->string form `(char=? ,(string-ref (cadr form) 0) (string-ref ,(cadr s2) 0)))))))))
+		  (unless (string->char= caller form form)
+		    (string->char= caller (cons (car form) (reverse (cdr form))) form))
 
 		  (if (and (not (eq? (cadr eq1) (cadr eq2)))    ; (eqv? ":" (string-ref s 0))
 			   (memq (cadr eq1) '(char=? string=?))
 			   (memq (cadr eq2) '(char=? string=?)))
 		      (lint-format "this can't be right: ~A" caller form))
 			
-		  ;; (equal? a (list b)) and equivalents happens a lot, but is the extra consing worse than 
-		  ;;    (and (pair? a) (equal? (car a) b) (null? (cdr a))) -- code readability seems more important here
+		  ;; (equal? a (list b)) and equivalents happen a lot (well, a few dozen times), but is the extra consing worse than 
+		  ;;    (and (pair? a) (null? (cdr a)) (equal? (car a) b)) -- code readability seems more important here
+		  ;;    also, a is often an expression, and let+local is worse than list
 
 		  (cond ((or (eq? (car eq1) 'equal?)
 			     (eq? (car eq2) 'equal?))
@@ -9028,8 +9034,7 @@
 
 		    (let ((t1 (->lint-type arg1))               ; (eqv? (floor pi) 'a) -> #f
 			  (t2 (->lint-type arg2)))
-		      ;(format *stderr* "rtn: ~A ~A~%" t1 t2)
-		      (when (not (compatible? t1 t2))
+		      (unless (compatible? t1 t2)
 			(lint-format "perhaps ~A -> #f" caller form)))
 		    )))
 		  ;; very few hits:
@@ -9054,7 +9059,7 @@
 						      (apply morally-equal? (cdr form)))))
 		      (let ((t1 (->lint-type arg1))       ; (morallly-equal? (floor pi) 'a) -> #f
 			    (t2 (->lint-type arg2)))
-			(when (not (compatible? t1 t2))
+			(unless (compatible? t1 t2)
 			  (lint-format "perhaps ~A -> #f" caller form)))))))
 
 	  (hash-special 'morally-equal? sp-morally-equal))
@@ -11790,7 +11795,7 @@
 		       (unused-var caller head local-var otype)
 		       (let ((vtype #f)) 
 			 (move-var-inward caller local-var)
-			 
+
 			 (when (and (not (memq (var-definer local-var) '(parameter named-let named-let*)))
 				    (pair? (var-history local-var))
 				    (or (zero? (var-set local-var))
@@ -18964,33 +18969,36 @@
 		(do ((changes ())
 		     (vs (cadr form) (cdr vs)))
 		    ((null? vs)
-		     (if (pair? changes)
-			 (let ((new-form (copy form)))
-			   (for-each 
-			    (lambda (v)
-			      (list-set! new-form 1 (remove-if (lambda (p) (equal? p v)) (cadr new-form)))
-			      (set! new-form (tree-subst (cadr v) (car v) new-form)))
-			    changes)
-			   (lint-format "assuming we see all set!s, the binding~A ~{~A~^, ~} ~A pointless: perhaps ~A" caller
-					(if (pair? (cdr changes)) "s" "")
-					changes 
-					(if (pair? (cdr changes)) "are" "is")
-					(lists->string form 
-						       (if (< (tree-leaves new-form) 100)
-							   (if (and (null? (cadr new-form))
-								    (null? (cdddr new-form))
-								    (not (and (pair? (caddr new-form))
-									      (hash-table-ref open-definers-table (caaddr new-form)))))
-							       (caddr new-form)
-							       new-form)
-							   (cons 'let 
-								 (cons (cadr new-form)
-								       (one-call-and-dots (cddr new-form))))))))))
+		     (when (pair? changes)
+		       (let ((new-form (copy form)))
+			 (for-each 
+			  (lambda (v)
+			    (list-set! new-form 1 (remove-if (lambda (p) (equal? p v)) (cadr new-form)))
+			    (set! new-form (tree-subst (cadr v) (car v) new-form)))
+			  changes)
+			 (lint-format "assuming we see all set!s, the binding~A ~{~A~^, ~} ~A pointless: perhaps ~A" caller
+				      (if (pair? (cdr changes)) "s" "")
+				      changes 
+				      (if (pair? (cdr changes)) "are" "is")
+				      (lists->string form 
+						     (if (< (tree-leaves new-form) 100)
+							 (if (and (null? (cadr new-form))
+								  (null? (cdddr new-form))
+								  (not (and (pair? (caddr new-form))
+									    (hash-table-ref open-definers-table (caaddr new-form)))))
+							     (caddr new-form)
+							     new-form)
+							 (cons 'let 
+							       (cons (cadr new-form)
+								     (one-call-and-dots (cddr new-form))))))))))
 		  (let ((v (car vs)))
 		    (when (and (len=2? v)
 			       (symbol? (cadr v))
 			       (not (set-target (cadr v) body env))
 			       (not (set-target (car v) body env))
+			       (let ((ev (var-member (cadr v) env))) ; perhaps its an outer var set in a function called in the let body (the set! is hidden from us)
+				 (or (not (var? ev))
+				     (zero? (var-set ev))))
 			       (let ((data (var-member (cadr v) env)))
 				 (or (not data)
 				     (and (not (eq? (var-definer data) 'parameter))
@@ -22598,6 +22606,6 @@
     #f))
 |#
 
-;;; 63 911262
+;;; 63 910894
 
 
