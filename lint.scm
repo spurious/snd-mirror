@@ -6025,7 +6025,10 @@
 					(hash-table-ref combinable-cxrs (car arg1)) 
 					(if arg2 (hash-table-ref combinable-cxrs (car arg2)) "")
 					(if arg3 (hash-table-ref combinable-cxrs (car arg3)) ""))
-			 (cadr (or arg3 arg2 arg1))))))))
+			 (let ((val (cadr (or arg3 arg2 arg1))))
+			   (if (keyword? val) ; tricky! ...(cddr :hi)... here is passed to lambda* below as last arg -> error because :hi has no argument!
+			       (lint-format "~A can't be a pair" (car form) val)
+			       val))))))))
 #|
     ;; this builds the lists below:
     (let ((ci ())

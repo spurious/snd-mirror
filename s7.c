@@ -1079,7 +1079,7 @@ struct s7_scheme {
              is_c_object_symbol, is_c_pointer_symbol, is_char_alphabetic_symbol, is_char_lower_case_symbol, is_char_numeric_symbol,
              is_char_symbol, is_char_upper_case_symbol, is_char_whitespace_symbol, is_complex_symbol, is_constant_symbol,
              is_continuation_symbol, is_defined_symbol, is_dilambda_symbol, is_eof_object_symbol, is_eq_symbol, is_equal_symbol,
-             is_eqv_symbol, is_even_symbol, is_exact_symbol, is_float_vector_symbol, is_gensym_symbol, is_hash_table_symbol,
+             is_eqv_symbol, is_even_symbol, is_exact_symbol, is_float_vector_symbol, is_gensym_symbol, is_hash_table_symbol, is_immutable_symbol,
              is_inexact_symbol, is_infinite_symbol, is_input_port_symbol, is_int_vector_symbol, is_integer_symbol, is_iterator_symbol,
              is_keyword_symbol, is_let_symbol, is_list_symbol, is_macro_symbol, is_morally_equal_symbol, is_nan_symbol, is_negative_symbol,
              is_null_symbol, is_number_symbol, is_odd_symbol, is_openlet_symbol, is_output_port_symbol, is_pair_symbol, 
@@ -1626,6 +1626,7 @@ static s7_scheme *cur_sc = NULL;
 
 #define is_simple_sequence(P)         (t_sequence_p[type(P)])
 #define is_sequence(P)                ((t_sequence_p[type(P)]) || (has_methods(P)))
+#define is_mutable_sequence(P)        (((t_sequence_p[type(P)]) || (has_methods(P))) && (!is_immutable(P)))
 #define is_mappable(P)                (t_mappable_p[type(P)])
 #define is_applicable(P)              (t_applicable_p[type(P)])
 /* this misses #() which actually is not applicable to anything, probably "" also, and inapplicable c-objects like random-state */
@@ -1892,6 +1893,7 @@ static s7_scheme *cur_sc = NULL;
 
 #define T_BYTE_VECTOR                 T_MUTABLE
 #define is_byte_vector(p)             ((is_string(p)) && ((typeflag(p) & T_BYTE_VECTOR) != 0))
+#define is_mutable_byte_vector(p)     ((typeflag(p) & (0xff | T_IMMUTABLE | T_BYTE_VECTOR)) == (T_STRING | T_BYTE_VECTOR))
 #define set_byte_vector(p)            typeflag(_TStr(p)) |= T_BYTE_VECTOR
 /* marks a string that the caller considers a byte_vector */
 
@@ -2252,6 +2254,7 @@ static int64_t not_heap = -1;
 #define list_4(Sc, A, B, C, D)        cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons_unchecked(Sc, C, cons(Sc, D, Sc->nil))))
 
 #define is_string(p)                  (type(p) == T_STRING)
+#define is_mutable_string(p)          ((typeflag(p) & (0xff | T_IMMUTABLE)) == T_STRING)
 #define string_value(p)               (_TStr(p))->object.string.svalue
 #define string_length(p)              (_TStr(p))->object.string.length
 #define string_hash(p)                (_TStr(p))->object.string.hash
@@ -2367,6 +2370,7 @@ static int64_t not_heap = -1;
 #define ROOTLET_SIZE 512
 #define let_id(p)                     (_TLid(p))->object.envr.id
 #define is_let(p)                     (type(p) == T_LET)
+#define is_mutable_let(p)             ((typeflag(p) & (0xff | T_IMMUTABLE)) == T_LET)
 #define let_slots(p)                  (_TLet(p))->object.envr.slots
 #define let_set_slots(p, Slot)        (_TLet(p))->object.envr.slots = _TSln(Slot)
 #define outlet(p)                     (_TLet(p))->object.envr.nxt
@@ -2416,6 +2420,7 @@ static int64_t not_heap = -1;
 #define vector_dimensions_allocated(p) ((_TVec(p))->object.vector.dim_info->dimensions_allocated)
 
 #define is_hash_table(p)              (type(p) == T_HASH_TABLE)
+#define is_mutable_hash_table(p)      ((typeflag(p) & (0xff | T_IMMUTABLE)) == T_HASH_TABLE)
 #define hash_table_mask(p)            (_THsh(p))->object.hasher.mask
 #define hash_table_element(p, i)      ((_THsh(p))->object.hasher.elements[i])
 #define hash_table_elements(p)        (_THsh(p))->object.hasher.elements
@@ -2965,7 +2970,7 @@ static s7_pointer car_a_list_string, cdr_a_list_string, caar_a_list_string, cadr
                   cddr_a_list_string, caaar_a_list_string, caadr_a_list_string, cadar_a_list_string, caddr_a_list_string,
                   cdaar_a_list_string, cdadr_a_list_string, cddar_a_list_string, cdddr_a_list_string, a_list_string, 
                   an_association_list_string, an_output_port_string, an_input_port_string, an_open_port_string, 
-                  a_normal_real_string, a_rational_string, a_boolean_string, a_number_string, a_let_string, 
+                  a_normal_real_string, a_rational_string, a_boolean_string, a_number_string, a_let_string, immutable_error_string,
                   a_procedure_string, a_proper_list_string, a_thunk_string, something_applicable_string, a_symbol_string, 
                   a_non_negative_integer_string, a_format_port_string, an_unsigned_byte_string, value_is_missing_string,
                   a_non_constant_symbol_string, an_eq_func_string, a_sequence_string, its_too_small_string, parameter_set_twice_string,
@@ -3547,6 +3552,15 @@ static s7_pointer find_and_apply_method(s7_scheme *sc, s7_pointer lt, s7_pointer
     return(wrong_type_argument(Sc, Method, Num, Obj, Type));	\
   } while (0)
 
+#define mutable_method_or_bust(Sc, Obj, Method, Args, Type, Num)	\
+  do {									\
+    if (has_methods(Obj))						\
+      return(find_and_apply_method(Sc, find_let(Sc, Obj), Method, Args)); \
+    if (is_immutable(Obj))						\
+      return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, Method, Obj))); \
+    return(wrong_type_argument(Sc, Method, Num, Obj, Type));		\
+  } while (0)
+
 #define method_or_bust_one_arg(Sc, Obj, Method, Args, Type)		\
   do {									\
     if (has_methods(Obj))						\
@@ -3807,6 +3821,13 @@ static s7_pointer g_immutable(s7_scheme *sc, s7_pointer args)
   #define H_immutable "(immutable sequence) declares that the sequence's entries can't be changed. The sequence is returned. (This function is work-in-progress)"
   #define Q_immutable s7_make_circular_signature(sc, 0, 1, sc->T)
   return(s7_immutable(car(args)));
+}
+
+static s7_pointer g_is_immutable(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_immutable "(immutable? sequence) returns #t if the sequence is immutable. (This function is work-in-progress)"
+  #define Q_is_immutable pl_bt
+  return((is_immutable(car(args))) ? sc->T : sc->F);
 }
 
 
@@ -6390,6 +6411,8 @@ static s7_pointer let_fill(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->fill_symbol, small_int(1), e, s7_make_string_wrapper(sc, "can't fill! owlet")));
   if (is_funclet(e))
     return(out_of_range(sc, sc->fill_symbol, small_int(1), e, s7_make_string_wrapper(sc, "can't fill! a funclet")));
+  if (is_immutable(e))
+    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, e)));
 
   val = cadr(args);
   if (val == sc->undefined)
@@ -7561,8 +7584,13 @@ static s7_pointer g_let_set(s7_scheme *sc, s7_pointer args)
   /* (let ((a 1)) (set! ((curlet) 'a) 32) a) */
   #define H_let_set "(let-set! env sym val) sets the symbol sym's value in the environment env to val"
   #define Q_let_set s7_make_signature(sc, 4, sc->T, sc->is_let_symbol, sc->is_symbol_symbol, sc->T)
+  s7_pointer obj;
 
-  return(s7_let_set(sc, car(args), cadr(args), caddr(args)));
+  obj = car(args);
+  if (is_immutable(obj))
+    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, obj));
+
+  return(s7_let_set(sc, obj, cadr(args), caddr(args)));
 }
 
 static s7_pointer let_set_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(s7_let_set(cur_sc, p1, p2, p3));}
@@ -20261,6 +20289,7 @@ static s7_pointer g_is_char_whitespace(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, is_char_whitespace(arg)));
 }
 
+/* TODO: if arg is char (eg string-ref...), no need for charp check -- similarly for char= etc */
 static bool is_char_whitespace_b(s7_pointer c) {return((s7_is_character(c)) && (is_char_whitespace(c)));}
 
 
@@ -21265,8 +21294,8 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 
   s7_pointer strng;
   strng = car(args);
-  if (!is_string(strng))
-    method_or_bust(sc, strng, sc->string_set_symbol, args, T_STRING, 1);
+  if (!is_mutable_string(strng))
+    mutable_method_or_bust(sc, strng, sc->string_set_symbol, args, T_STRING, 1);
   return(g_string_set_2(sc, strng, args, sc->string_set_symbol));
 }
 
@@ -21277,8 +21306,8 @@ static s7_pointer g_byte_vector_set(s7_scheme *sc, s7_pointer args)
 
   s7_pointer v;
   v = car(args);
-  if (!is_byte_vector(v))
-    method_or_bust(sc, v, sc->byte_vector_set_symbol, args, T_STRING, 1);
+  if (!is_mutable_byte_vector(v))
+    mutable_method_or_bust(sc, v, sc->byte_vector_set_symbol, args, T_STRING, 1);
   return(g_string_set_2(sc, v, args, sc->byte_vector_set_symbol));
 }
 
@@ -22055,9 +22084,8 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 
   if (!is_string(x))
     method_or_bust(sc, x, sc->string_fill_symbol, args, T_STRING, 1); /* not two methods here */
-
   if (is_immutable_string(x))
-    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't fill! ~S (it is immutable)"), x)));
+    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, x)));
 
   chr = cadr(args);
   if (!is_byte_vector(x))
@@ -30552,6 +30580,7 @@ s7_pointer s7_cddaar(s7_pointer p) {return(cddaar(p));}
 
 s7_pointer s7_set_car(s7_pointer p, s7_pointer q)
 {
+  /* TODO: should s7_set_car|cdr check is_immutable? */
   set_car(p, q);
   return(q);  /* was p? 5-Aug-17 */
 }
@@ -31501,8 +31530,8 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
 
   /* (let ((L '((1 2 3) (4 5 6)))) (list-set! L 1 2 32) L) */
 
-  if (!is_pair(lst))
-    method_or_bust(sc, lst, sc->list_set_symbol, cons(sc, lst, args), T_PAIR, 1);
+  if (!is_mutable_pair(lst))
+    mutable_method_or_bust(sc, lst, sc->list_set_symbol, cons(sc, lst, args), T_PAIR, 1);
 
   ind = car(args);
   if (!s7_is_integer(ind))
@@ -31588,8 +31617,8 @@ static s7_pointer g_list_set_ic(s7_scheme *sc, s7_pointer args)
   s7_pointer p, lst, val;
   s7_int i, index;
   lst = car(args);
-  if (!is_pair(lst))
-    method_or_bust(sc, lst, sc->list_set_symbol, args, T_PAIR, 1);
+  if (!is_mutable_pair(lst))
+    mutable_method_or_bust(sc, lst, sc->list_set_symbol, args, T_PAIR, 1);
 
   index = s7_integer(cadr(args));
   if ((index < 0) || (index > sc->max_list_length))
@@ -31730,6 +31759,7 @@ static void init_car_a_list(void)
   too_many_indices_string =       s7_make_permanent_string("too many indices");
   value_is_missing_string =       s7_make_permanent_string("~A argument '~A's value is missing");
   parameter_set_twice_string =    s7_make_permanent_string("parameter set twice, ~S in ~S");
+  immutable_error_string =        s7_make_permanent_string("can't ~S ~S (it is immutable)");
 #if (!HAVE_COMPLEX_NUMBERS)
   no_complex_numbers_string =     s7_make_permanent_string("this version of s7 does not support complex numbers");
 #endif
@@ -31770,12 +31800,12 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
       set_car(p, cadr(args));
       return(car(p));
     }
-  method_or_bust(sc, p, sc->set_car_symbol, args, T_PAIR, 1);
+  mutable_method_or_bust(sc, p, sc->set_car_symbol, args, T_PAIR, 1);
 }
 
 static s7_pointer set_car_p_pp(s7_pointer p1, s7_pointer p2)
 {
-  if (!is_mutable_pair(p1))
+  if (!is_pair(p1))
     simple_wrong_type_argument(cur_sc, cur_sc->set_car_symbol, p1, T_PAIR);
   set_car(p1, p2);
   return(p2);
@@ -31811,7 +31841,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!is_mutable_pair(p))
-    method_or_bust(sc, p, sc->set_cdr_symbol, args, T_PAIR, 1);
+    mutable_method_or_bust(sc, p, sc->set_cdr_symbol, args, T_PAIR, 1);
 
   set_cdr(p, cadr(args));
   return(cdr(p));
@@ -31819,7 +31849,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer set_cdr_p_pp(s7_pointer p1, s7_pointer p2)
 {
-  if (!is_mutable_pair(p1))
+  if (!is_pair(p1))
     simple_wrong_type_argument(cur_sc, cur_sc->set_cdr_symbol, p1, T_PAIR);
   set_cdr(p1, p2);
   return(p2);
@@ -33744,10 +33774,8 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
        */
       return(wrong_type_argument(sc, sc->vector_fill_symbol, 1, x, T_VECTOR));
     }
-
-  if ((sc->safety > NO_SAFETY) &&
-      (is_immutable_vector(x)))
-    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't fill! ~S (it is immutable)"), x)));
+  if (is_immutable_vector(x))
+    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, x)));
 
   fill = cadr(args);
   if (is_float_vector(x))
@@ -34612,6 +34640,8 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
   vec = car(args);
   if (!s7_is_vector(vec))
     method_or_bust(sc, vec, sc->vector_set_symbol, args, T_VECTOR, 1);
+  if (is_immutable(vec))
+    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec));
 
   if (vector_length(_TSet(vec)) == 0)
     return(out_of_range(sc, sc->vector_set_symbol, small_int(1), vec, its_too_large_string));
@@ -34717,6 +34747,8 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
   if (!s7_is_vector(vec))
     method_or_bust(sc, vec, sc->vector_set_symbol, list_3(sc, vec, cadr(args), find_symbol_unchecked(sc, caddr(args))), T_VECTOR, 1);
   /* the list_3 happens only if we find the method */
+  if (is_immutable(vec))
+    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec));
 
   if (vector_rank(vec) > 1)
     return(g_vector_set(sc, set_plist_3(sc, vec, cadr(args), find_symbol_unchecked(sc, caddr(args)))));
@@ -34737,6 +34769,8 @@ static s7_pointer c_vector_set_3(s7_scheme *sc, s7_pointer vec, s7_int index, s7
 
   if (!s7_is_vector(vec))
     method_or_bust(sc, vec, sc->vector_set_symbol, list_3(sc, vec, make_integer(sc, index), val), T_VECTOR, 1);
+  if (is_immutable(vec))
+    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec));
 
   if (vector_rank(vec) > 1)
     return(g_vector_set(sc, set_plist_3(sc, vec, make_integer(sc, index), val)));
@@ -35276,6 +35310,8 @@ static s7_pointer univect_set(s7_scheme *sc, s7_pointer args, bool flt)
   vec = car(args);
   if (type(vec) != typ)
     method_or_bust(sc, vec, caller, args, typ, 1);
+  if (is_immutable(vec))
+    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, caller, vec));
 
   if (vector_rank(vec) > 1)
     {
@@ -35666,7 +35702,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     }
 
   if (is_immutable(data))
-    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't sort! ~S (it is immutable)"), data)));
+    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->sort_symbol, data)));
 
   lessp = cadr(args);
   if (type(lessp) < T_GOTO)
@@ -37379,6 +37415,8 @@ static void extend_hash_free_list(void)
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
 {
   hash_entry_t *x;
+  /* if (is_immutable(table)) abort(); */
+
   x = (*hash_table_checker(table))(sc, table, key);
 
   if (x)
@@ -37426,8 +37464,8 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 
   s7_pointer table;
   table = car(args);
-  if (!is_hash_table(table))
-    method_or_bust(sc, table, sc->hash_table_set_symbol, args, T_HASH_TABLE, 1);
+  if (!is_mutable_hash_table(table))
+    mutable_method_or_bust(sc, table, sc->hash_table_set_symbol, args, T_HASH_TABLE, 1);
   return(s7_hash_table_set(sc, table, cadr(args), caddr(args)));
 }
 
@@ -37589,6 +37627,8 @@ static s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer val, table;
   table = car(args);
+  if (is_immutable(table))
+    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, table)));
   val = cadr(args);
   if (hash_table_entries(table) > 0)
     {
@@ -38492,7 +38532,8 @@ s7_pointer s7_c_object_let(s7_pointer obj)
 
 s7_pointer s7_c_object_set_let(s7_pointer obj, s7_pointer e)
 {
-  c_object_set_let(obj, e);
+  if (!is_immutable(obj))
+    c_object_set_let(obj, e);
   return(e);
 }
 
@@ -41136,8 +41177,8 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
     case T_PAIR:
       {
 	s7_pointer np;
-	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
+	if (is_immutable(p)) /* TODO: prealloc error str here + symbol for reverse! = elist_3 */
+	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	np = reverse_in_place(sc, sc->nil, p);
 	if (is_null(np))
 	  return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, a_proper_list_string));
@@ -41157,7 +41198,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 	int32_t len;
 	char *s1, *s2;
 	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
+	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	len = string_length(p);
 	if (len < 2) return(p);
 	s1 = string_value(p);
@@ -41171,7 +41212,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 	s7_int len;
 	s7_int *s1, *s2;
 	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
+	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = int_vector_elements(p);
@@ -41185,7 +41226,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 	s7_int len;
 	s7_double *s1, *s2;
 	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
+	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = float_vector_elements(p);
@@ -41199,7 +41240,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 	s7_int len;
 	s7_pointer *s1, *s2;
 	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
+	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = vector_elements(p);
@@ -41210,7 +41251,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 
     default:
       if (is_immutable(p))
-	return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
+	return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
       if ((is_simple_sequence(p)) &&
 	  (!has_methods(p)))
 	return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, s7_make_string_wrapper(sc, "a vector, string, or list")));
@@ -41229,9 +41270,8 @@ static s7_pointer pair_fill(s7_scheme *sc, s7_pointer args)
   s7_int i, start = 0, end, len;
 
   obj = car(args);
-  if ((sc->safety > NO_SAFETY) &&
-      (is_immutable_pair(obj)))
-    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't fill! ~S (it is immutable)"), obj)));
+  if (is_immutable_pair(obj))
+    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, obj)));
 
   val = cadr(args);
   len = s7_list_length(sc, obj);
@@ -51847,7 +51887,7 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 	      opc->v1.p = s_slot;
 	      obj = slot_value(s_slot);
 	      if ((!has_methods(obj)) &&
-		  (is_sequence(obj)))
+		  (is_mutable_sequence(obj)))
 		{
 		  s7_pointer index;
 		  switch (type(obj))
@@ -63969,6 +64009,8 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 	    eval_range_error(sc, "vector-set!: index must not be negative: ~S", sc->code);
 	  if (index >= vector_length(obj))
 	    eval_range_error(sc, "vector-set!: index must be less than vector length: ~S", sc->code);
+	  if (is_immutable(obj))
+	    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, obj));
 	  vector_setter(obj)(sc, obj, index, value);
 	  sc->value = _NFre(value);
 	}
@@ -63991,6 +64033,9 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 	  eval_range_error(sc, "string-set!: index must not be negative: ~S", sc->code);
 	if (index >= string_length(obj))
 	  eval_range_error(sc, "string-set!: index must be less than string length: ~S", sc->code);
+	if (is_immutable(obj))
+	  s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->string_set_symbol, obj));
+
 	if (s7_is_character(value))
 	  {
 	    string_value(obj)[index] = (char)s7_character(value);
@@ -64022,10 +64067,14 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
       break;
       
     case T_HASH_TABLE:
+      if (is_immutable(obj))
+	s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->hash_table_set_symbol, obj));
       sc->value = s7_hash_table_set(sc, obj, arg, value);
       break;
       
     case T_LET:
+      if (is_immutable(obj))
+	s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, obj));
       sc->value = s7_let_set(sc, obj, arg, value);
       break;
       
@@ -64242,6 +64291,8 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	settee = car(sc->code);
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no index for vector-set!: ~S", sc->code);
+	if (is_immutable(cx))
+	  s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, cx));
 
 	if ((!is_null(cddr(settee))) &&
 	    (is_normal_vector(cx)))
@@ -64337,6 +64388,8 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	    if ((ind < 0) ||
 		(ind >= string_length(cx)))
 	      out_of_range(sc, sc->string_set_symbol, small_int(2), index, (ind < 0) ? its_negative_string : its_too_large_string);
+	    if (is_immutable(cx))
+	      s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->string_set_symbol, cx));
 	    
 	    val = cadr(sc->code);
 	    if (!is_pair(val))
@@ -64440,6 +64493,8 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	settee = car(sc->code);
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no key for hash-table-set!: ~S", sc->code);
+	if (is_immutable(cx))
+	  s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->hash_table_set_symbol, cx));
 
 	if (!is_null(cddr(settee)))
 	  {
@@ -64492,6 +64547,8 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	settee = car(sc->code);
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no identifier for let-set!: ~S", sc->code);
+	if (is_immutable(cx))
+	  s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, cx));
 	
 	if (!is_null(cddr(settee)))
 	  {
@@ -82099,6 +82156,7 @@ s7_scheme *s7_init(void)
   s7_typed_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access,	2, 1, H_symbol_access, Q_symbol_access, NULL);
   sc->symbol_access_symbol = make_symbol(sc, "symbol-access");
   sc->immutable_symbol =             defun("immutable",		immutable,		1, 0, false);
+  sc->is_immutable_symbol =          defun("immutable?",	is_immutable,		1, 0, false);
 
   sc->string_to_keyword_symbol =     defun("string->keyword",	string_to_keyword,      1, 0, false);
   sc->symbol_to_keyword_symbol =     defun("symbol->keyword",	symbol_to_keyword,	1, 0, false);
@@ -83388,6 +83446,18 @@ int main(int argc, char **argv)
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  * maybe pass \u... through in read_constant_string unchanged, or read in s7??  no worse than \x..;
  *
+ * c_object type table entries should also be s7_function, reported by object->let perhaps
+ *    wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
+ *
+ * symbol 8-bits->cycling number, let tracks range? inserts ordered? [see above]
+ *   could opt recognize large heavily-used lets and use this?
+ *
+ * ex lint for specific ques: turn off lint-format, seek all calls of f global|local|with a specific arg etc
+ *   (requires lint on set of files, then specialize report-usage)
+ *   does this give who-calls?
+ *   or change to new call, reporting changes etc
+ *
+ * --------------------------------
  * immutable sequence as bit 25? == elements can't be set, immutable let=no slot added/deleted, no values changed
  *   then immutable-let access->offsets (type?), auto-copy-on-write? or (constant-copied ...)?
  *   currently the define-constant cases are inconsistent
@@ -83403,27 +83473,24 @@ int main(int argc, char **argv)
  *     and how to recognize immutable values/symbols/bindings etc?
  *   (define x (let ((documentation "help for x")) (* pi 3))) -- there is room for this but it's currently the number print name
  *   add constant = set completely-immutable-value bit, but since callable anytime, every seq-set always has to check it
- *   literator for lambda?
- *   c_object type table entries should also be s7_function, reported by object->let perhaps
- *     wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
+ *   literator for lambda?  
+ *   locklet to lock out any new fields or outlet change? -> hash-table + outlet or added hash-table->slots?
  *   if (constant x) -> is_immutable(x), x a vect, then chooser for (x 0) can be done at opt time
  *   currently this is only partly implemented: vect only fill etc
  *     and the check is independent of the safety setting (which governs auto-set in reader)
+ *   constant bindings in let/hash-table via immutable cons args
+ *   should immutable sequence include that in printout? 
+ *     readable out needs "(immutable...)"
+ *   mark opt funcs that assume mutability
+ *   we need to check this in lint (var-immutable field?)
  *
- *   1: immutable is in place and docd, but no tests, patchy implementation
- *        syntax?, pair, string, vector, hash-table, let: set! fill!           [sort!] [reverse!] [set-car|cdr!]
- *        c-object? random-state? closure? built-in? bignum?
- *        outlet?
- *      we sort of need immutable? but the distinction between that and constant? is convoluted
- *      set-car! use is_mutable_pair and mutable_method -> error
- *
- * symbol 8-bits->cycling number, let tracks range? inserts ordered? [see above]
- *   could opt recognize large heavily-used lets and use this?
- *
- * ex lint for specific ques: turn off lint-format, seek all calls of f global|local|with a specific arg etc
- *   (requires lint on set of files, then specialize report-usage)
- *   does this give who-calls?
- *   or change to new call, reporting changes etc
+ *   1: immutable is in place and docd, but no tests (t688), patchy implementation
+ *        syntax?, pair, *vector, hash-table, let: set! 
+ *        closure? -- immutable source? built-in? -- set! blocked? outlet? -- how to set it?
+ *   2: [fill!] [sort!] [reverse!] [set-car|cdr! (assuming opt checks bit first)]
+ *   3: [string-set! etc unopt]
+ *   4: c_object (set_let is only case I think)
+ *      immutable is senseless: random-state bignum
  *
  * ----------------------------------------------------------------------------
  *
@@ -83431,9 +83498,9 @@ int main(int argc, char **argv)
  * tmac          |      |      |      || 9052 |  615   259   261   261   261
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1053  1050
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1109  1109
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1378  1378
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921  1923
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2182
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1378  1383
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921  1917
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2155
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436  2436
  * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2735
  * lg            |      |      |      || 211  | 161   149   144   134.9 135.0
@@ -83447,7 +83514,7 @@ int main(int argc, char **argv)
  * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7537  7531
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.9  11.8
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.8  17.8
- * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.4  39.3
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.4  39.2
  *                                    || 139  | 129   126   87.2  83.4  82.7
  * 
  * ----------------------------------------------------------------------------

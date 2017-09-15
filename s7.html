@@ -4947,8 +4947,16 @@ via <code>(varlet (curlet) *libgsl*)</code>.
 <b><em class=def id="immutable">immutable</em></b> declares a sequence to be immutable (its elements can't be changed), and
 <b><em class=def id="constantp">constant?</em></b> returns #t if its argument
 is a constant.  A constant in s7 is really constant: it can't be set or rebound.
-(At the moment, the function <b>immutable</b> is only partly implemented).
+(At the moment, the function <b>immutable</b> is only partly implemented; 
+<b><em class=def id="immutablep">immutable?</em></b> also exists).
 </p>
+
+<!-- 
+In s7, "constant" refers to the connection a piece of program text and its value, whereas
+"immutable" refers to a value, a sequence in particular.  So 'pi is a constant, as are 1.3, #(0 1), etc.
+The only non-constant entities are mutable symbols.  
+The vector (vector 1 2 3) is immutable only if you wrap it: (immutable (vector 1 2 3)).
+-->
 
 <pre class="indented">
 &gt; (define-constant var 32)
