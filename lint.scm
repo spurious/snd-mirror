@@ -103,14 +103,14 @@
 	      cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=?
 	      char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? 
 	      char-position char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<?
-	      char=? char>=? char>? char? complex complex? cond cons constant? continuation? cos
+	      char=? char>=? char>? char? complex complex? cond cons continuation? cos
 	      cosh curlet current-error-port current-input-port current-output-port cyclic-sequences
 	      defined? denominator dilambda? do dynamic-wind
 	      eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt
 	      float? float-vector float-vector-ref float-vector? floor for-each funclet 
 	      gcd gensym gensym?
 	      hash-table hash-table* hash-table-entries hash-table-ref hash-table? help hook-functions
-	      if imag-part inexact->exact inexact? infinite? inlet input-port? 
+	      if imag-part immutable? inexact->exact inexact? infinite? inlet input-port? 
 	      int-vector int-vector-ref int-vector? iterator-at-end? iterator-sequence integer->char
 	      integer-decode-float integer-length integer? iterator?
 	      keyword->symbol keyword?
@@ -142,7 +142,7 @@
 			      (for-each
 			       (lambda (op) 
 				 (set! (ht op) #t))
-			       '(symbol? gensym? keyword? let? openlet? iterator? constant? macro? c-pointer? c-object? 
+			       '(symbol? gensym? keyword? let? openlet? iterator? macro? c-pointer? c-object? 
 			         input-port? output-port? eof-object? integer? number? real? complex? rational? random-state? 
 			         char? string? list? pair? vector? float-vector? int-vector? byte-vector? hash-table? 
 			         continuation? procedure? dilambda? boolean? float? proper-list? sequence? null? gensym 
@@ -181,7 +181,7 @@
 			         catch throw error procedure-documentation procedure-signature help procedure-source funclet 
 			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
 			         exit dilambda make-hook hook-functions stacktrace tree-leaves tree-memq object->let
-				 getenv directory? file-exists? type-of
+				 getenv directory? file-exists? type-of immutable! immutable?
 				 list-values apply-values unquote))
 			      ht))
 
@@ -233,7 +233,7 @@
 		  '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
 		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
 		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?
-		    unspecified? c-object? constant?))
+		    unspecified? c-object? immutable?))
 		 h))
 
 	(booleans (let ((h (make-hash-table)))
@@ -244,7 +244,7 @@
 		     char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
 		     output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer? c-object?
 		     unspecified? exact? inexact? defined? provided? even? odd? char-whitespace? char-numeric? char-alphabetic?
-		     negative? positive? zero? constant? infinite? nan? char-upper-case? char-lower-case? directory? file-exists?))
+		     negative? positive? zero? immutable? infinite? nan? char-upper-case? char-lower-case? directory? file-exists?))
 		  h))
 
 	(notables (let ((h (make-hash-table)))
@@ -860,6 +860,10 @@
 			 (symbol? (car p))))
 	       (null? p)))))
     
+    (denote (constant? x)
+      (or (not (symbol? x))
+	  (immutable? x)))
+
     (denote (code-constant? x)
       (and (constant? x)
 	   (or (not (pair? x))
@@ -878,14 +882,14 @@
 				     cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=?
 				     char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? 
 				     char-position char-upcase char-upper-case? char-whitespace? char<=? char<?
-				     char=? char>=? char>? char? complex complex? cons constant? continuation? cos
+				     char=? char>=? char>? char? complex complex? cons continuation? cos
 				     cosh cyclic-sequences
 				     denominator dilambda? 
 				     eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt
 				     float? float-vector-ref float-vector? floor 
 				     gcd gensym?
 				     hash-table-entries hash-table-ref hash-table? 
-				     imag-part inexact->exact inexact? infinite? inlet input-port? 
+				     imag-part immutable? inexact->exact inexact? infinite? inlet input-port? 
 				     int-vector-ref int-vector? iterator-at-end? iterator-sequence integer->char
 				     integer-decode-float integer-length integer? iterator?
 				     keyword->symbol keyword?

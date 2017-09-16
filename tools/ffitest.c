@@ -944,7 +944,7 @@ int main(int argc, char **argv)
     {fprintf(stderr, "%d: %s is not an environment?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
   
   s7_define_constant(sc, "a_constant", s7_t(sc));
-  if (!s7_is_constant(s7_name_to_value(sc, "a_constant")))
+  if (!s7_is_immutable(s7_name_to_value(sc, "a_constant")))
     {fprintf(stderr, "%d: a_constant is not a constant?\n", __LINE__);}
   if (!s7_is_defined(sc, "a_constant"))
     {fprintf(stderr, "%d: a_constant is not defined?\n", __LINE__);}

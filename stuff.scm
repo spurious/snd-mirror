@@ -1170,7 +1170,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	   (apply inlet slots))
 	(for-each (lambda (slot)
 		    (if (not (or (assq (car slot) slots)
-				 (constant? (car slot)))) ; immutable symbol
+				 (immutable? (car slot)))) ; immutable symbol
 			(set! slots (cons slot slots))))
 		  pe))))
 
@@ -2133,7 +2133,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		    (for-each (lambda (c)
 				(if (and (or (procedure? (cdr c))
 					     (macro? (cdr c)))
-					 (not (constant? (car c))))
+					 (not (immutable? (car c))))
 				    (varlet lt (car c) (symbol "[" (symbol->string (car c)) "]"))))
 			      (rootlet))
 		    (sublet lt)))))))
@@ -2147,7 +2147,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	   (for-each
 	    (lambda (op) 
 	      (set! (ht op) #t))
-	    '(symbol? gensym? keyword? let? openlet? iterator? constant? macro? c-pointer? c-object? 
+	    '(symbol? gensym? keyword? let? openlet? iterator? macro? c-pointer? c-object? immutable?
 	      input-port? output-port? eof-object? integer? number? real? complex? rational? random-state? 
 	      char? string? list? pair? vector? float-vector? int-vector? byte-vector? hash-table? 
 	      continuation? procedure? dilambda? boolean? float? proper-list? sequence? null? gensym 
@@ -2195,7 +2195,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	(baddies (list #_eval #_eval-string #_load #_autoload #_define-constant #_define-expansion #_require
 		       #_string->symbol #_symbol->value #_symbol->dynamic-value #_symbol-table #_symbol #_keyword->symbol 
 		       #_defined? #_symbol-access
-		       #_call/cc #_gc #_read
+		       #_call/cc #_gc #_read #_immutable!
 		       #_open-output-file #_call-with-output-file #_with-output-to-file
 		       #_open-input-file #_call-with-input-file #_with-input-from-file
 		       #_current-output-port #_current-error-port #_current-input-port
