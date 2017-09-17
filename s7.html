@@ -6192,92 +6192,18 @@ can't be changed.
 </div>
 </details>
 
-<!--
+
 <details>
-<summary class="indented">mutable constants</summary>
+<summary class="indented">notes on constants</summary>
 <div class="indented">
 
-<p>How should s7 treat this:
-<code>(string-set! "hiho" 1 #\z)</code>, or 
-<code>(vector-set! #(1 2 3) 1 32)</code>, or
-<code>(list-set! '(1 2 3) 1 32)</code>?
-Originally, in s7, the first two were errors, and the third was allowed, which doesn't make much sense.
-Guile and Common Lisp accept all three, but that leads to weird cases where we can reach
-into a function's body:
-</p>
-
 <pre class="indented">
-&gt; (let ((x (lambda () '(1 2 3)))) (list-set! (x) 1 32) (x))
-<em class="gray">(1 32 3)</em> ; s7, Guile
-&gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
-<em class="gray">(1 32 3)</em> ; Clisp
-&gt; (let ((x (lambda () (list 1 2 3)))) (list-set! (x) 1 32) (x))
-<em class="gray">(1 2 3)</em>
-</pre>
-
-<p>
-But it's possible to reach into a function's closure, even when the
-closed-over thing is a constant:
-</p>
-
-<pre class="indented">
-&gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
-<em class="gray">(1 32 3)</em>
-&gt; (let ((xx (let ((x '(1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
-<em class="gray">(1 32 3)</em>
-&gt; (let ((xx (let ((x (list 1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
-<em class="gray">(1 32 3)</em>
-</pre>
-
-<p>
-And it's possible to reach into a constant list via list-set! (or set-car! of course):
-</p>
-
-<pre class="indented">
-&gt; (let* ((x '(1 2)) (y (list x)) (z (car y))) (list-set! z 1 32) (list x y z))
-<em class="gray">((1 32) ((1 32)) (1 32))</em>
-</pre>
-
-<p>
-It would be a programmer's nightmare to have to keep track of which piece of a list is
-constant, and an implementor's nightmare to copy every list.  set! in all its forms is
-used for its side-effects, so why should we try to put a fence around them?
-If we flush "immutable constant" because it is a ham-fisted, whack-it-with-a-shovel approach,
-the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly an error:
-</p>
-
-<pre class="indented">
-&gt; (setf (elt (symbol-name 'xyz) 1) #\X)
-<em class="gray">*** - Attempt to modify a read-only string: "XYZ"</em>
-</pre>
-
-<p>And in Guile:
-</p>
-
-<pre class="indented">
-&gt; (string-set! (symbol-&gt;string 'symbol-&gt;string) 1 #\X)
-<em class="gray">ERROR: string is read-only: "symbol-&gt;string"</em>
-</pre>
-
-<p>So both have a notion of immutable strings.  
-I wonder what other Scheme programmers (not implementors!) want in this situation.
-Currently, there are no immutable list, string, or vector constants, and
-symbol-&gt;string
-returns a copy of the string.
-copy can protect some values.  Or combine object-&gt;string and string-&gt;symbol:
-</p>
-
-<pre class="indented">
+&gt; (let ((x (lambda () "hiho"))) (string-set! (x) 1 #\x) (x))
+<em class="gray">"hxho"</em>
 &gt; (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
 <em class="gray">"hiho"</em>
-&gt; (let ((x (string-&gt;symbol "hiho"))) (string-set! (symbol-&gt;string x) 1 #\x) (symbol-&gt;string x))
-<em class="gray">"hiho"</em>
-&gt; (define (immutable obj) (string-&gt;symbol (object-&gt;string obj :readable)))
-<em class="gray">immutable</em>
-&gt; (define (symbol-&gt;object sym) (eval-string (symbol-&gt;string sym)))
-<em class="gray">symbol-&gt;object</em>
-&gt; (symbol-&gt;object (immutable (list 1 2 3)))
-<em class="gray">(1 2 3)</em>
+&gt; (let ((x (lambda () (immutable! "hiho")))) (string-set! (x) 1 #\x) (x))
+<em class="red">error</em><em class="gray">: can't string-set! "hiho" (it is immutable)</em>
 </pre>
 
 <p>s7 normally tries to optimize garbage collection by
@@ -6312,7 +6238,7 @@ in lint.scm, and in the snd file tools/tgen.scm.
 
 </div>
 </details>
--->
+
 
 <details id="circle">
 <summary class="indented">circular lists</summary>

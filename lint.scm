@@ -865,7 +865,8 @@
 	  (immutable? x)))
 
     (denote (code-constant? x)
-      (and (constant? x)
+      (and (or (not (symbol? x))
+	       (immutable? x))
 	   (or (not (pair? x))
 	       (eq? (car x) 'quote))))
 

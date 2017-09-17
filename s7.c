@@ -3801,7 +3801,7 @@ s7_pointer s7_immutable(s7_pointer p)
 static s7_pointer g_immutable(s7_scheme *sc, s7_pointer args)
 {
   #define H_immutable "(immutable sequence) declares that the sequence's entries can't be changed. The sequence is returned. (This function is work-in-progress)"
-  #define Q_immutable s7_make_circular_signature(sc, 0, 1, sc->T)
+  #define Q_immutable s7_make_signature(sc, 2, sc->T, sc->T)
   return(s7_immutable(car(args)));
 }
 
@@ -83541,12 +83541,10 @@ int main(int argc, char **argv)
  *   (define x (let ((documentation "help for x")) (* pi 3))) -- there is room for this but it's currently the number print name
  *   locklet to lock out any new fields or outlet change? -> hash-table + outlet or added hash-table->slots?
  *   constant bindings in let/hash-table via immutable cons args?
- *   mark opt funcs that assume (im)mutability
  *   we need to check this in lint (var-immutable field?) and check (immutable! x) etc
  *   need to check for (immutable! ...) in loops in opt
- *   define-constant is (define name ...) (immutable! name)?
+ *   define-constant is (define name ...) (immutable! name)? why can't it be like define?
  *   may need to wrap current opt sets with immutable check if not sym as cadr
- *   rewrite or delete the constant section in s7.html
  *
  *   immutable!? in place
  *   [set-car|cdr! (assuming opt checks bit first)]
@@ -83566,7 +83564,7 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2151
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436  2436
  * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2739
- * lg            |      |      |      || 211  | 161   149   144   134.9 135.3
+ * lg            |      |      |      || 211  | 161   149   144   134.9 135.2
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  2746  2742
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3071  2909
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386  3386
