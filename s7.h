@@ -380,7 +380,6 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);                 /* (
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer func);
 
-
 s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_slot_value(s7_pointer slot);
 s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
@@ -626,49 +625,9 @@ void s7_c_type_set_copy          (s7_scheme *sc, int32_t tag, s7_pointer (*copy)
 void s7_c_type_set_fill          (s7_scheme *sc, int32_t tag, s7_pointer (*fill)(s7_scheme *sc, s7_pointer args));
 void s7_c_type_set_reverse       (s7_scheme *sc, int32_t tag, s7_pointer (*reverse)(s7_scheme *sc, s7_pointer args));
 
-
-#if (!DISABLE_DEPRECATED) 
-int32_t s7_new_type(const char *name,
-		char *(*print)(s7_scheme *sc, void *value), 
-		void (*free)(void *value), 
-		bool (*equal)(void *val1, void *val2),
-		void (*gc_mark)(void *val),
-		s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
-		s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
-
-int32_t s7_new_type_x(s7_scheme *sc,
-		  const char *name, 
-		  char *(*print)(s7_scheme *sc, void *value), 
-		  void (*free)(void *value), 
-		  bool (*equal)(void *val1, void *val2),
-		  void (*gc_mark)(void *val),
-		  s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
-		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
-		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
-		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer args),
-		  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj),
-		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer args));
-
-void s7_object_type_set_direct(int32_t tag, 
-			       s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index), 
-			       s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
-
-#define s7_is_object                 s7_is_c_object
-#define s7_object_type               s7_c_object_type
-#define s7_object_value              s7_c_object_value
-#define s7_object_value_checked      s7_c_object_value_checked
-#define s7_make_object               s7_make_c_object
-#define s7_make_object_with_let      s7_make_c_object_with_let
-#define s7_mark_object               s7_mark_c_object
-#define s7_object_let                s7_c_object_let
-#define s7_object_set_let            s7_c_object_set_let
-#define s7_set_object_print_readably s7_c_type_set_print_readably
-#endif
-
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
-   * s7_new_type describes the type for Scheme:
-   *   name:    the name used by describe-object
+   * s7_make_c_type creates a new C-based type for Scheme:
    *   print:   the function called whenever s7 is asked to display a value with this type
    *   free:    the function called when an object of this type is about to be garbage collected
    *   equal:   compare two objects of this type; (equal? obj1 obj2)
@@ -679,13 +638,10 @@ void s7_object_type_set_direct(int32_t tag,
    *            is passed to the apply function as the arguments).
    *   set:     a function that is called whenever an object of this type occurs as
    *            the target of a generalized set!
-   *
-   * in the extended version (s7_new_type_x), you can also set the following:
    *   length:  the function called when the object is asked what its length is.
    *   copy:    the function called when a copy of the object is needed.
    *   fill:    the function called to fill the object with some value.
-   *
-   *   s7_new_type and s7_new_typ_x return an integer that identifies the new type for the other functions.
+   *   reverse: similarly...
    *
    * s7_is_c_object returns true if 'p' holds a value of a type created by s7_new_type.
    * s7_c_object_type returns the c_object's type
@@ -876,6 +832,42 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_eval_form s7_eval
 
 #define s7_is_constant(Obj) ((!s7_is_symbol(Obj)) || (s7_is_immutable(Obj)))
+
+int32_t s7_new_type(const char *name,
+		char *(*print)(s7_scheme *sc, void *value), 
+		void (*free)(void *value), 
+		bool (*equal)(void *val1, void *val2),
+		void (*gc_mark)(void *val),
+		s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+		s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
+
+int32_t s7_new_type_x(s7_scheme *sc,
+		  const char *name, 
+		  char *(*print)(s7_scheme *sc, void *value), 
+		  void (*free)(void *value), 
+		  bool (*equal)(void *val1, void *val2),
+		  void (*gc_mark)(void *val),
+		  s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer args),
+		  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer args));
+
+void s7_object_type_set_direct(int32_t tag, 
+			       s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index), 
+			       s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
+
+#define s7_is_object                 s7_is_c_object
+#define s7_object_type               s7_c_object_type
+#define s7_object_value              s7_c_object_value
+#define s7_object_value_checked      s7_c_object_value_checked
+#define s7_make_object               s7_make_c_object
+#define s7_make_object_with_let      s7_make_c_object_with_let
+#define s7_mark_object               s7_mark_c_object
+#define s7_object_let                s7_c_object_let
+#define s7_object_set_let            s7_c_object_set_let
+#define s7_set_object_print_readably s7_c_type_set_print_readably
 #endif
 
 
@@ -884,7 +876,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 13-Sep:    s7_immutable, s7_is_immutable, removed s7_is_constant.
+ * 13-Sep:    s7_immutable, s7_is_immutable. define-constant follows lexical scope now.
  * 3-Aug:     object->c_object name changes.
  * 28-Jul:    s7_make_c_pointer_with_type and s7_c_pointer_type.
  * 24-Jul:    int64_t rather than long long int, and various related changes.

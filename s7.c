@@ -1077,7 +1077,7 @@ struct s7_scheme {
              imag_part_symbol, immutable_symbol, inexact_to_exact_symbol, inlet_symbol, int_vector_ref_symbol, int_vector_set_symbol, int_vector_symbol,
              integer_decode_float_symbol, integer_to_char_symbol, is_aritable_symbol, is_boolean_symbol, is_byte_vector_symbol,
              is_c_object_symbol, is_c_pointer_symbol, is_char_alphabetic_symbol, is_char_lower_case_symbol, is_char_numeric_symbol,
-             is_char_symbol, is_char_upper_case_symbol, is_char_whitespace_symbol, is_complex_symbol, 
+             is_char_symbol, is_char_upper_case_symbol, is_char_whitespace_symbol, is_complex_symbol, is_constant_symbol,
              is_continuation_symbol, is_defined_symbol, is_dilambda_symbol, is_eof_object_symbol, is_eq_symbol, is_equal_symbol,
              is_eqv_symbol, is_even_symbol, is_exact_symbol, is_float_vector_symbol, is_gensym_symbol, is_hash_table_symbol, is_immutable_symbol,
              is_inexact_symbol, is_infinite_symbol, is_input_port_symbol, is_int_vector_symbol, is_integer_symbol, is_iterator_symbol,
@@ -1835,6 +1835,7 @@ static s7_scheme *cur_sc = NULL;
 #define set_immutable(p)              typeflag(_NFre(p)) |= T_IMMUTABLE
 #define is_immutable_port(p)          ((typeflag(_TPrt(p)) & T_IMMUTABLE) != 0)
 #define is_immutable_symbol(p)        ((typeflag(_TSym(p)) & T_IMMUTABLE) != 0)
+#define is_immutable_slot(p)          ((typeflag(_TSlt(p)) & T_IMMUTABLE) != 0)
 #define is_immutable_pair(p)          ((typeflag(_TPair(p)) & T_IMMUTABLE) != 0)
 #define is_immutable_vector(p)        ((typeflag(_TVec(p)) & T_IMMUTABLE) != 0)
 #define is_immutable_string(p)        ((typeflag(_TStr(p)) & T_IMMUTABLE) != 0)
@@ -1992,6 +1993,10 @@ static s7_scheme *cur_sc = NULL;
 #define T_ITER_OK                     (1LL << (TYPE_BITS + 23))
 #define iter_ok(p)                    ((typeflag(_NFre(p)) & T_ITER_OK) != 0)  /* not TItr(p) here because this bit is globally unique */
 #define clear_iter_ok(p)              typeflag(_TItr(p)) &= (~T_ITER_OK)
+
+#define T_SYMCONS                     (1LL << (TYPE_BITS + 24))
+#define is_possibly_constant(p)       ((typeflag(_TSym(p)) & T_SYMCONS) != 0)
+#define set_possibly_constant(p)      typeflag(_TSym(p)) |= T_SYMCONS
 
 
 #define T_GC_MARK                     0x8000000000000000
@@ -3780,8 +3785,28 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
   check_boolean_method(sc, s7_is_boolean, sc->is_boolean_symbol, args);
 }
 
+static s7_pointer find_symbol(s7_scheme *sc, s7_pointer symbol);
+static bool is_constant_symbol(s7_scheme *sc, s7_pointer sym)
+{
+  if (is_immutable_symbol(sym))    /* for keywords */
+    return(true);
+  if (is_possibly_constant(sym))
+    {
+      s7_pointer slot;
+      slot = find_symbol(sc, sym);
+      return((is_slot(slot)) && (is_immutable_slot(slot)));
+    }
+  return(false);
+}
 
-#define is_constant(p) ((type(p) != T_SYMBOL) || (is_immutable_symbol(p)))
+#define is_constant(sc, p) ((type(p) != T_SYMBOL) || (is_constant_symbol(sc, p)))
+
+static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_constant "(constant? obj) returns #t if obj either evaluates to itself, or is a symbol whose binding is constant"
+  #define Q_is_constant pl_bt
+  return(make_boolean(sc, is_constant(sc, car(args))));
+}
 
 bool s7_is_immutable(s7_pointer p)
 {
@@ -6926,7 +6951,7 @@ to the let env, and returns env."
 	  return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), p, a_symbol_string));
 	}
 
-      if (is_immutable_symbol(sym))
+      if (is_constant_symbol(sc, sym))
 	return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), sym, a_non_constant_symbol_string));
 
       if (e == sc->rootlet)
@@ -7079,7 +7104,7 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	      return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), p, a_symbol_string));
 	    }
 
-	  if (is_immutable_symbol(sym))
+	  if (is_constant_symbol(sc, sym))
 	    return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), sym, a_non_constant_symbol_string));
 	  if ((is_slot(global_slot(sym))) &&
 	      (is_syntax(slot_value(global_slot(sym)))))
@@ -7184,7 +7209,7 @@ static s7_pointer inlet_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_po
 	    return(f);
 	  sym = cadar(p);
 	  if ((!is_symbol(sym)) ||
-	      (is_immutable_symbol(sym)) ||
+	      (is_possibly_constant(sym)) ||
 	      (sym == sc->let_ref_fallback_symbol) ||
 	      (sym == sc->let_set_fallback_symbol))
 	    return(f);
@@ -7436,7 +7461,7 @@ static s7_pointer let_ref_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_
       arg2 = caddr(expr);
       if ((car(arg1) == sc->cdr_symbol) &&
 	  (is_symbol(cadr(arg2))) &&
-	  (!is_immutable_symbol(cadr(arg2))))
+	  (!is_possibly_constant(cadr(arg2))))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
 	  set_opt_sym2(cdr(expr), cadr(arg1));
@@ -7492,7 +7517,7 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 
   if (env == sc->rootlet)
     {
-      if (is_immutable_symbol(symbol))  /* (let-set! (rootlet) :rest #f) */
+      if (is_constant_symbol(sc, symbol))  /* (let-set! (rootlet) :rest #f) */
 	return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 2, symbol, a_non_constant_symbol_string));
       y = global_slot(symbol);
       if (is_slot(y))
@@ -7656,9 +7681,9 @@ static s7_pointer let_set_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_
       arg3 = cadddr(expr);
       if ((car(arg1) == sc->cdr_symbol) &&
 	  (is_symbol(cadr(arg2))) &&
-	  (!is_immutable_symbol(cadr(arg2))) &&
+	  (!is_possibly_constant(cadr(arg2))) &&
 	  (is_symbol(arg3)) &&
-	  (!is_immutable_symbol(arg3)))
+	  (!is_possibly_constant(arg3)))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
 	  set_opt_sym2(cdr(expr), cadr(arg1));
@@ -8528,6 +8553,9 @@ s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   sym = make_symbol(sc, name);
   s7_define(sc, sc->nil, sym, value);
   set_immutable(sym);
+  set_possibly_constant(sym);
+  set_immutable(global_slot(sym));
+  set_immutable(local_slot(sym));
   return(sym);
 }
 
@@ -31845,7 +31873,7 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer set_car_p_pp(s7_pointer p1, s7_pointer p2)
 {
-  if (!is_pair(p1))
+  if (!is_mutable_pair(p1))
     simple_wrong_type_argument(cur_sc, cur_sc->set_car_symbol, p1, T_PAIR);
   set_car(p1, p2);
   return(p2);
@@ -31889,7 +31917,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer set_cdr_p_pp(s7_pointer p1, s7_pointer p2)
 {
-  if (!is_pair(p1))
+  if (!is_mutable_pair(p1))
     simple_wrong_type_argument(cur_sc, cur_sc->set_cdr_symbol, p1, T_PAIR);
   set_cdr(p1, p2);
   return(p2);
@@ -50726,10 +50754,6 @@ static bool p_pp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 	      pc_fallback(sc, pstart);
 	      return(return_false(sc, car_x, __func__, __LINE__));
 	    }
-	  if ((is_immutable(slot_value(slot))) &&
-	      ((car(car_x) == sc->set_car_symbol) ||
-	       (car(car_x) == sc->set_cdr_symbol)))
-	    return(return_false(sc, car_x, __func__, __LINE__));
 	  opc->v1.p = slot;
 	}
       
@@ -51871,7 +51895,7 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
   if (is_symbol(cadr(car_x)))
     {
       s7_pointer settee;
-      if ((is_immutable_symbol(cadr(car_x))) ||
+      if ((is_constant_symbol(sc, cadr(car_x))) ||
 	  (symbol_has_setter(cadr(car_x))))
 	return(return_false(sc, car_x, __func__, __LINE__));
       settee = find_symbol(sc, cadr(car_x));
@@ -53307,7 +53331,7 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int32_t len)
 	{
 	  s7_pointer sym;
 	  sym = car(var);
-	  if ((is_immutable_symbol(sym)) ||
+	  if ((is_constant_symbol(sc, sym)) ||
 	      (symbol_has_setter(sym)))
 	    return(return_false(sc, car_x, __func__, __LINE__));
 	  
@@ -55040,7 +55064,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
   if ((len == 1) &&
       (is_closure(f)) &&                        /* not lambda* that might get confused about arg names */
       (closure_arity_to_int(sc, f) == 1) &&     /* not a rest arg: not is_pair: (lambda (x . args) arg) */
-      (!is_immutable_symbol(car(closure_args(f)))))
+      (!is_constant_symbol(sc, car(closure_args(f)))))
     return(g_for_each_closure(sc, args));
 
   if (for_each_arg_is_null(sc, cdr(args))) return(sc->unspecified);
@@ -55262,7 +55286,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  /* if closure call is straightforward, use OP_MAP_1 */
 	  if ((len == 1) &&
 	      (fargs == 1) &&
-	      (!is_immutable_symbol(car(closure_args(f)))))
+	      (!is_constant_symbol(sc, car(closure_args(f)))))
 	    {
 	      /* g_map_closure here if not s7_tree_memq 'map takes more time than it saves */
 	      if (got_nil) return(sc->nil);
@@ -57076,7 +57100,7 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int32_t args, 
 		    default: return(vector_ref_ic);
 		    }
 		}
-	      if ((is_immutable_symbol(arg1)) &&
+	      if ((is_possibly_constant(arg1)) &&
 		  (is_slot(local_slot(arg1))))
 		{
 		  s7_pointer v;
@@ -58228,7 +58252,7 @@ static void init_choosers(s7_scheme *sc)
 
 static opt_t optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int32_t hop)
 {
-  if (is_immutable_symbol(car(expr)))
+  if (is_possibly_constant(car(expr)))
     hop = 1;
 
   if (is_closure(func))
@@ -58599,7 +58623,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 
   arg1 = cadr(expr);
   if ((bad_pairs == quotes) &&
-      (is_immutable_symbol(car(expr))))
+      (is_possibly_constant(car(expr))))
     hop = 1;
 
   if ((symbols == 1) &&
@@ -58981,7 +59005,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
   if ((s7_is_vector(func)) &&
       (is_all_x_safe(sc, arg1)))
     {
-      if ((is_immutable_symbol(car(expr))) &&
+      if ((is_possibly_constant(car(expr))) &&
 	  (vector_rank(func) == 1) &&
 	  (is_normal_vector(func)))
 	set_unsafe_optimize_op(expr, hop + OP_CVECTOR_A);
@@ -59071,7 +59095,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
   arg1 = cadr(expr);
   arg2 = caddr(expr);
   if ((bad_pairs == quotes) &&
-      (is_immutable_symbol(car(expr))))
+      (is_possibly_constant(car(expr))))
     hop = 1;
 
   if (((is_symbol(arg1)) &&
@@ -59554,7 +59578,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 		  (is_null(cdadr(arg1))) &&
 		  (is_pair(cddr(arg1))) &&
 		  (is_null(cdddr(arg1))) &&
-		  (!is_immutable_symbol(caadr(arg1))))
+		  (!is_possibly_constant(caadr(arg1))))
 		{
 		  set_c_call(expr, (c_call(expr) == g_for_each) ? g_for_each_closure : g_map_closure);
 		  set_unsafe_optimize_op(expr, HOP_C_FA_1);
@@ -59782,7 +59806,7 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
   /* end of bad symbol wrappers */
 
   if ((bad_pairs == quotes) &&
-      (is_immutable_symbol(car(expr))))
+      (is_possibly_constant(car(expr))))
     hop = 1;
 
   if ((is_c_function(func) &&
@@ -60053,7 +60077,7 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 		      (is_null(cadr(body_lambda))) &&
 		      (is_not_null(cddr(body_lambda))) &&
 		      (((is_symbol(cadr(error_lambda))) &&              /* (lambda args ... */
-			(!is_immutable_symbol(cadr(error_lambda)))) ||
+			(!is_possibly_constant(cadr(error_lambda)))) ||
 		       ((is_pair(cadr(error_lambda))) &&                /* (lambda (type info) ... */
 			(is_pair(cdadr(error_lambda))) && 
 			(is_null(cddadr(error_lambda))))) &&
@@ -60190,7 +60214,7 @@ static opt_t optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 
   if (bad_pairs > quotes) return(OPT_F);
   if ((bad_pairs == quotes) &&
-      (is_immutable_symbol(car(expr))))
+      (is_possibly_constant(car(expr))))
     hop = 1;
 
   if ((is_c_function(func)) &&
@@ -61177,7 +61201,7 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int32_t *ari
 
   if ((!is_pair(args)) && (!is_null(args)))
     {
-      if (is_constant(args))                       /* (lambda :a ...) */
+      if (is_constant(sc, args))                       /* (lambda :a ...) */
 	eval_error(sc, "lambda parameter '~S is a constant", args); /* not ~A here, (lambda #\null do) for example */
 
       /* we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
@@ -61194,7 +61218,7 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int32_t *ari
     {
       s7_pointer car_x;
       car_x = car(x);
-      if (is_constant(car_x))                       /* (lambda (pi) pi), constant here means not a symbol */
+      if (is_constant(sc, car_x))                      /* (lambda (pi) pi), constant here means not a symbol */
 	{
 	  if (is_pair(car_x))                          /* (lambda ((:hi . "hi") . "hi") 1) */
 	    eval_error(sc, "lambda parameter '~S is a pair (perhaps you want define* or lambda*?)", car_x);
@@ -61206,7 +61230,7 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int32_t *ari
     }
   if (is_not_null(x))
     {
-      if (is_constant(x))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
+      if (is_constant(sc, x))                         /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
 	eval_error(sc, "lambda :rest parameter '~S is a constant", x);
       i = -i - 1;
     }
@@ -61223,7 +61247,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int32_t
 
   if (!s7_is_list(sc, args))
     {
-      if (is_constant(args))                                  /* (lambda* :a ...) */
+      if (is_constant(sc, args))                                  /* (lambda* :a ...) */
 	eval_error(sc, "lambda* parameter '~S is a constant", args);
       if (is_symbol(args))
 	set_local(args);
@@ -61239,7 +61263,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int32_t
       car_w = car(w);
       if (is_pair(car_w))
 	{
-	  if (is_constant(car(car_w)))                            /* (lambda* ((:a 1)) ...) */
+	  if (is_constant(sc, car(car_w)))                            /* (lambda* ((:a 1)) ...) */
 	    eval_error(sc, "lambda* parameter '~A is a constant", car(car_w));
 	  if (symbol_is_in_arg_list(caar(w), cdr(w)))             /* (lambda* ((a 1) a) ...) */
 	    eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(car_w));
@@ -61266,7 +61290,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int32_t
 	{
 	  if (car_w != sc->key_rest_symbol)
 	    {
-	      if (is_constant(car_w))
+	      if (is_constant(sc, car_w))
 		{
 		  if (car_w == sc->key_allow_other_keys_symbol)
 		    {
@@ -61297,7 +61321,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int32_t
 		}
 	      else
 		{
-		  if (is_immutable_symbol(cadr(w)))
+		  if (is_possibly_constant(cadr(w)))
 		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't bind an immutable object: ~S"), w)));
 		}
 	      set_local(cadr(w));
@@ -61306,7 +61330,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int32_t
     }
   if (is_not_null(w))
     {
-      if (is_constant(w))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
+      if (is_constant(sc, w))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
 	eval_error(sc, "lambda* :rest parameter '~A is a constant", w);
       if (is_symbol(w))
 	set_local(w);
@@ -62438,7 +62462,7 @@ static s7_pointer check_let(s7_scheme *sc)
 	eval_error(sc, "named let has no body: ~A", sc->code);
       if (!is_pair(cddr(sc->code)))             /* (let hi () . =>) */
 	eval_error(sc, "named let stray dot? ~A", sc->code);
-      if (is_immutable_symbol(car(sc->code)))
+      if (is_constant_symbol(sc, car(sc->code)))
 	return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't bind an immutable object: ~S"), sc->code)));
       set_local(car(sc->code));
       start = cadr(sc->code);
@@ -62470,7 +62494,7 @@ static s7_pointer check_let(s7_scheme *sc)
       if (!(is_symbol(y)))
 	eval_error(sc, "bad variable ~S in let", carx);
 
-      if (is_immutable_symbol(y))
+      if (is_constant_symbol(sc, y))
 	return(s7_error(sc, sc->wrong_type_arg_symbol,	set_elist_2(sc, s7_make_string_wrapper(sc, "can't bind an immutable object: ~S"), x)));
 
       /* check for name collisions -- not sure this is required by Scheme */
@@ -62599,7 +62623,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	eval_error(sc, "named let* has no body: ~A", sc->code);
       if (!is_pair(cddr(sc->code)))                 /* (let* hi () . =>) */
 	eval_error(sc, "named let* stray dot? ~A", sc->code);
-      if (is_immutable_symbol(car(sc->code)))
+      if (is_constant_symbol(sc, car(sc->code)))
 	return(s7_error(sc, sc->wrong_type_arg_symbol,	set_elist_2(sc, s7_make_string_wrapper(sc, "can't bind an immutable object: ~S"), sc->code)));
       set_local(car(sc->code));
       if ((!is_null(cadr(sc->code))) &&
@@ -62635,7 +62659,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
       if (!(is_symbol(var)))                        /* (let* ((3 1)) 1) */
 	eval_error(sc, "bad variable ~S in let*", var);
 
-      if (is_immutable_symbol(var))                 /* (let* ((pi 3)) ...) */
+      if (is_constant_symbol(sc, var))                 /* (let* ((pi 3)) ...) */
 	return(s7_error(sc, sc->wrong_type_arg_symbol,	set_elist_2(sc, s7_make_string_wrapper(sc, "can't bind an immutable object: ~S"), var_and_val)));
 
       /* currently (let* ((a 1) (a (+ a 1))) a) is 2, not an error. */
@@ -62743,7 +62767,7 @@ static s7_pointer check_letrec(s7_scheme *sc, bool letrec)
 	eval_error_with_caller(sc, "~A: bad variable ~S", caller, carx);
 
       y = car(carx);
-      if (is_immutable_symbol(y))
+      if (is_constant_symbol(sc, y))
 	return(s7_error(sc, sc->wrong_type_arg_symbol,	set_elist_2(sc, s7_make_string_wrapper(sc, "can't bind an immutable object: ~S"), x)));
 
       if (!is_pair(cdr(carx)))                /* (letrec ((x . 1))...) */
@@ -62793,7 +62817,7 @@ static s7_pointer check_let_temporarily(s7_scheme *sc)
 
       if (is_symbol(car(carx)))
 	{
-	  if (is_immutable_symbol(car(carx))) /* (let-temporarily ((pi 3)) ...) */
+	  if (is_constant_symbol(sc, car(carx))) /* (let-temporarily ((pi 3)) ...) */
 	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't bind an immutable object: ~S"), x)));
 	  if (is_syntactic(car(carx)))        /* (let-temporarily ((if 3)) ...) */
 	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set! ~S"), car(carx))));
@@ -63283,7 +63307,7 @@ static s7_pointer check_define(s7_scheme *sc)
 	{
 	  if ((is_pair(car(sc->code))) &&
 	      (!symbol_has_setter(func)) &&
-	      (!is_immutable_symbol(func)))
+	      (!is_possibly_constant(func)))
 	    pair_set_syntax_symbol(sc->code, sc->define_funchecked_symbol);
 	  else pair_set_syntax_symbol(sc->code, sc->define_unchecked_symbol);
 	}
@@ -63430,8 +63454,8 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
 	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
       set_local(x);
     }
-  if (is_immutable_symbol(x))
-    eval_error_with_caller(sc, "~A: ~S is immutable", caller, x);
+  if (is_constant_symbol(sc, x))
+    eval_error_with_caller(sc, "~A: ~S is constant", caller, x);
 
   if (!is_pair(cdr(sc->code)))                /* (define-macro (...)) */
     eval_error_with_caller(sc, "~A ~A, but no body?", caller, x);
@@ -63768,8 +63792,8 @@ static s7_pointer check_set(s7_scheme *sc)
 	eval_error(sc, "set! can't change ~S", car(sc->code));
       else
 	{
-	  if (is_immutable_symbol(car(sc->code)))                    /* (set! pi 3) */
-	    eval_error(sc, "set!: can't alter immutable object: ~S", car(sc->code));
+	  if (is_constant_symbol(sc, car(sc->code)))                    /* (set! pi 3) */
+	    eval_error(sc, "set!: can't alter constant binding: ~S", car(sc->code));
 	}
     }
 
@@ -65160,7 +65184,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	  if (!is_symbol(car(y)))                        /* (do ((3 2)) ()) */
 	    eval_error(sc, "do step variable: ~S is not a symbol?", y);
 
-	  if (is_immutable_symbol(car(y)))               /* (do ((pi 3 (+ pi 1))) ((= pi 4)) pi) */
+	  if (is_constant_symbol(sc, car(y)))            /* (do ((pi 3 (+ pi 1))) ((= pi 4)) pi) */
 	    eval_error(sc, "do step variable: ~S is immutable", y);
 
 	  if (is_pair(cdr(y)))
@@ -66722,7 +66746,7 @@ static int32_t unknown_ex(s7_scheme *sc, s7_pointer f)
   int32_t hop;
   
   code = sc->code;
-  hop = (is_immutable_symbol(car(code))) ? 1 : 0;
+  hop = (is_constant_symbol(sc, car(code))) ? 1 : 0;
   /* fprintf(stderr, "%s: local: %d, hop: %d\n", DISPLAY(code), is_local_symbol(code), hop); */
 
   switch (type(f))
@@ -66781,7 +66805,7 @@ static int32_t unknown_g_ex(s7_scheme *sc, s7_pointer f)
   int32_t hop;
 
   code = sc->code;
-  hop = (is_immutable_symbol(car(code))) ? 1 : 0;
+  hop = (is_constant_symbol(sc, car(code))) ? 1 : 0;
   /* fprintf(stderr, "unknown_g_ex: %s, local: %d, hop: %d\n", DISPLAY_80(sc->code), is_local_symbol(sc->code), hop); */
 
   sym_case = is_symbol(cadr(code));
@@ -66921,7 +66945,7 @@ static int32_t unknown_gg_ex(s7_scheme *sc, s7_pointer f)
   s7_pointer code;
   
   code = sc->code;
-  hop = (is_immutable_symbol(car(code))) ? 1 : 0;
+  hop = (is_constant_symbol(sc, car(code))) ? 1 : 0;
   s1 = is_symbol(cadr(code));
   s2 = is_symbol(caddr(code));
   
@@ -67034,7 +67058,7 @@ static int32_t unknown_all_s_ex(s7_scheme *sc, s7_pointer f)
 	(!is_slot(find_symbol(sc, car(arg)))))
       return(fall_through);
 
-  hop = (is_immutable_symbol(car(code))) ? 1 : 0;
+  hop = (is_constant_symbol(sc, car(code))) ? 1 : 0;
 
   switch (type(f))
     {
@@ -67096,7 +67120,7 @@ static int32_t unknown_a_ex(s7_scheme *sc, s7_pointer f)
   int32_t hop;
 
   code = sc->code;
-  hop = (is_immutable_symbol(car(code))) ? 1 : 0;
+  hop = (is_constant_symbol(sc, car(code))) ? 1 : 0;
 
 #if DEBUGGING
   if (!has_all_x(cdr(code)))
@@ -67184,7 +67208,7 @@ static int32_t unknown_aa_ex(s7_scheme *sc, s7_pointer f)
   /* fprintf(stderr, "unknown_aa: %d %s %s\n", type(f), DISPLAY(f), DISPLAY(sc->code)); */
   
   code = sc->code;
-  hop = (is_immutable_symbol(car(code))) ? 1 : 0;
+  hop = (is_constant_symbol(sc, car(code))) ? 1 : 0;
   set_arglist_length(code, small_int(2));
   annotate_args(sc, cdr(code), sc->envir);
   
@@ -67235,7 +67259,7 @@ static int32_t unknown_all_x_ex(s7_scheme *sc, s7_pointer f)
   int32_t num_args, hop;
 
   code = sc->code;
-  hop = (is_immutable_symbol(car(code))) ? 1 : 0;
+  hop = (is_constant_symbol(sc, car(code))) ? 1 : 0;
   num_args = integer(arglist_length(code));
 
   switch (type(f))
@@ -68190,7 +68214,7 @@ static int32_t define1_ex(s7_scheme *sc)
    *   This happens when we reload a file that calls define-constant.
    */
   /* sc->code is a symbol at this point */
-  if (is_immutable_symbol(sc->code))                                  /* (define pi 3) or (define (pi a) a) */
+  if (is_constant_symbol(sc, sc->code))                                  /* (define pi 3) or (define (pi a) a) */
     {
       s7_pointer x;
       
@@ -73421,7 +73445,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = car(sc->code);
 	  if (is_pair(sc->code)) sc->code = car(sc->code); /* (define-constant (ex3 a)...) */
 	  if (is_symbol(sc->code))
-	    set_immutable(sc->code);
+	    {
+	      s7_pointer slot;
+	      slot = find_symbol(sc, sc->code);
+	      /* set_immutable(sc->code); */ /* obsolete */
+	      set_possibly_constant(sc->code);
+	      set_immutable(slot);
+	    }
 	  break;
 	  
 	case OP_DEFINE_CONSTANT:
@@ -73433,7 +73463,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (symbol_id(car(sc->code)) == 0) &&           /* else (let iter ... (define-constant iter iter) ...) -> segfault on later calls */
 	      (is_null(cddr(sc->code))))
 	    {
-	      set_immutable(car(sc->code));
+	      s7_pointer sym;
+	      sym = car(sc->code);
+	      /* set_immutable(sym); */ /* obsolete */
+	      set_immutable(global_slot(sym)); /* id == 0 so its global */
+	      set_possibly_constant(sym);
+	      {
+		s7_pointer slot;
+		slot = find_symbol(sc, sym);
+		if (slot != global_slot(sym))
+		  fprintf(stderr, "%s slots: %p %p %p\n", DISPLAY(sym), slot, global_slot(sym), local_slot(sym));
+	      }
 	      sc->value = find_symbol_checked(sc, car(sc->code));
 	      goto START;
 	    }
@@ -82220,6 +82260,7 @@ s7_scheme *s7_init(void)
   sc->symbol_access_symbol = make_symbol(sc, "symbol-access");
   sc->immutable_symbol =             defun("immutable!",	immutable,		1, 0, false);
   sc->is_immutable_symbol =          defun("immutable?",	is_immutable,		1, 0, false);
+  sc->is_constant_symbol =           defun("constant?",	        is_constant,		1, 0, false);
 
   sc->string_to_keyword_symbol =     defun("string->keyword",	string_to_keyword,      1, 0, false);
   sc->symbol_to_keyword_symbol =     defun("symbol->keyword",	symbol_to_keyword,	1, 0, false);
@@ -83522,65 +83563,61 @@ int main(int argc, char **argv)
  *   or change to new call, reporting changes etc
  *
  * --------------------------------
- * immutable sequence as bit 25? == elements can't be set, immutable let=no slot added/deleted, no values changed
- *   then immutable-let access->offsets (type?), auto-copy-on-write? or (constant-copied ...)?
- *   currently the define-constant cases are inconsistent: need details!
- *   slot-setter, symbol-setter, let-setter?
- *   (define fnc (let ((setter...)) (lambda ...))) (define lt (let ((setter (lambda..))) (inlet...)))? -- and all the others like documentation/tester
- *     but where is this outlet saved esp. if vector? for let, a new union.
- *     vect get/set should be s7_function (multi-dim indices for example)
- *     string a new union as long as not associated with symbol, hash-table has extensible dproc
- *     pair can use opt fields, c_pointer has room already, immutable slot can use expr/pending_value
- *     so no problem at the s7_cell level, how to handle (eg) (let ((lt (let ((setter (lambda...))) (proc-creates-let...))))...)
- *       but how to access these?
- *       (define str (let ((documentation "a string")) "asdf")) -- (documentation str) is not in curlet
- *     and how to recognize immutable values/symbols/bindings etc?
- *   (define x (let ((documentation "help for x")) (* pi 3))) -- there is room for this but it's currently the number print name
- *   locklet to lock out any new fields or outlet change? -> hash-table + outlet or added hash-table->slots?
- *   constant bindings in let/hash-table via immutable cons args?
- *   we need to check this in lint (var-immutable field?) and check (immutable! x) etc
- *   define-constant is (define name ...) (immutable! name)? why can't it be like define?
- *     define_constant_with_doc extended? let-constant
- *     dc sets immutable on the symbol -- instead set possibly_immutable (for opt), and set immutable on the slot
- *     do we need the symbol bit at all? is_immutable_symbol covers all?
- *     but then what is the point of define-constant?
- *     perhaps: from here inwards, this symbol only has this binding (no inner ones allowed and no sets)
- *       so possible_constant -> check slot and possible_setter -> check_slot
- *     then check has_setter, if any get slot and check is_immutable
- *     so global define-constant works as it does now, and symbol-access -> setter, but local define-constant is now local
- *     setter+symbol=symbol-access, is always local to slot
- *     on any slot: setter/documentation/signature etc (any user-defined stuff): each slot needs a let field
- *       current pending-value/expr used by do (pending-value elsewhere: lambda* arg checks, letrec)
- *       slt.expr = slot_expression is slot_setter (used for stepper in do, lambda* defaults , letrec in some way) [slot_has_setter = accessor old style]
- *     so symbol-access -> ?? [procedure-setter|signature|documentation, s7_...with_documentation=symbol_set_help a kludge!]
- *     (define f (let ((setter (lambda (x val)...)) (documentation "help")) (lambda (x) ...)))
- *     (let ((x (let ((setter ...)) 32)))...) isn't right, (define x 32 :setter...)? == anything trailing is part of the binding's local let
- *     (let/let ((x 32 :setter...)) x) -- this could also work for a function (define f (lambda ...) :setter...)??
- *     perhaps use lets: (define x (inlet :value 32 :setter|documentation|signature...)) and set sees setter etc?
- *     so symbol-access goes away, but this means no direct use of the variable, (x 'value) rather than x
- *       can 'fallback-ref be used? -- it refers to (x <any arg>) where arg is not a field name
+ * symbol-access -> symbol-setter via dilambda:
+(define x (dilambda 3 (lambda (val) (error...)))) ; x=3, and is not settable
+(let ((x (let ((old-x 3)) ; x=3, and setter ensures it is always an integer
+           (dilambda 
+             old-x 
+             (let ((signature '(integer? #t))
+                   (documentation "x is an integer"))
+               (lambda (val)
+                 (if (integer? val)
+                     (set! old-x val) ; this returns val in s7
+                     old-x)))))))
+  ;; (documentation 'x) = "x is an integer"
+  ;; (signature 'x) = 'integer?
+  ;; (setter 'x) = the function above
+  ;; x = 3 (or whatever is the value of old-x)
+  ...)
+
+ * setter for vect element? inlet field?  vect get/set should be s7_function (multi-dim indices for example)
+ *   lambda* and one arg = set var itself
+ * locklet?
+ * lint support for all of these changes?
+ * but this is ambiguous: var with func value looks like a normal dilambda
+ *   (variable value setter documentation signature)? or (with-setter 3 (lambda ...))
+ *   (define x 3 ...) as in CL? so define is a macro*? and (let ((x val setter))...)
+ *   so all binders can take trailing args at least setter, maybe + doc/sig
+ *   treating "dilambda" above as just noise, but how does setter get current value?
+ *      say it is in scope, so "x" is the x being defined?
+(let ((x 3 ; x=3, and setter ensures it is always an integer
+        (let ((signature '(integer? #t))
+              (documentation "x is an integer"))
+          (lambda (val)
+            (if (integer? val) val x))))
+  ...)
  *
  * ----------------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7  17.8
  * tmac          |      |      |      || 9052 |  615   259   261   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1053  1050
- * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1109  1109
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1378  1347
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921  1926
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1053  1049
+ * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1109  1115
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1378  1341
+ * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921  1925
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2151
- * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436  2436
- * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2739
+ * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436  2426
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2735
  * lg            |      |      |      || 211  | 161   149   144   134.9 135.2
- * tform         |      |      | 6816 || 3714 | 3530  3361  3295  2746  2742
- * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3071  2909
+ * tform         |      |      | 6816 || 3714 | 3530  3361  3295  2746  2755
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3071  2907
  * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386  3386
- * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964  3964
+ * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964  3965
  * tsort         |      |      |      || 8584 | 4869  4080  4010  4012  4012
- * titer         |      |      |      || 5971 | 5224  4768  4707  4562  4562
- * bench         |      |      |      || 7012 | 6378  6327  5934  5106  5099
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7537  7531
- * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.9  11.8
+ * titer         |      |      |      || 5971 | 5224  4768  4707  4562  4554
+ * bench         |      |      |      || 7012 | 6378  6327  5934  5106  5089
+ * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7537  7535
+ * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.9  11.9
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.8  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.4  39.2
  *                                    || 139  | 129   126   87.2  83.4  82.7

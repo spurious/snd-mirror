@@ -103,7 +103,7 @@
 	      cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=?
 	      char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? 
 	      char-position char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<?
-	      char=? char>=? char>? char? complex complex? cond cons continuation? cos
+	      char=? char>=? char>? char? complex complex? cond cons continuation? cos constant?
 	      cosh curlet current-error-port current-input-port current-output-port cyclic-sequences
 	      defined? denominator dilambda? do dynamic-wind
 	      eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt
@@ -142,7 +142,7 @@
 			      (for-each
 			       (lambda (op) 
 				 (set! (ht op) #t))
-			       '(symbol? gensym? keyword? let? openlet? iterator? macro? c-pointer? c-object? 
+			       '(symbol? gensym? keyword? let? openlet? iterator? macro? c-pointer? c-object? constant?
 			         input-port? output-port? eof-object? integer? number? real? complex? rational? random-state? 
 			         char? string? list? pair? vector? float-vector? int-vector? byte-vector? hash-table? 
 			         continuation? procedure? dilambda? boolean? float? proper-list? sequence? null? gensym 
@@ -233,7 +233,7 @@
 		  '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
 		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
 		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?
-		    unspecified? c-object? immutable?))
+		    unspecified? c-object? immutable? constant?))
 		 h))
 
 	(booleans (let ((h (make-hash-table)))
@@ -244,7 +244,7 @@
 		     char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
 		     output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer? c-object?
 		     unspecified? exact? inexact? defined? provided? even? odd? char-whitespace? char-numeric? char-alphabetic?
-		     negative? positive? zero? immutable? infinite? nan? char-upper-case? char-lower-case? directory? file-exists?))
+		     negative? positive? zero? immutable? constant? infinite? nan? char-upper-case? char-lower-case? directory? file-exists?))
 		  h))
 
 	(notables (let ((h (make-hash-table)))
@@ -860,13 +860,8 @@
 			 (symbol? (car p))))
 	       (null? p)))))
     
-    (denote (constant? x)
-      (or (not (symbol? x))
-	  (immutable? x)))
-
     (denote (code-constant? x)
-      (and (or (not (symbol? x))
-	       (immutable? x))
+      (and (constant? x)
 	   (or (not (pair? x))
 	       (eq? (car x) 'quote))))
 
@@ -883,7 +878,7 @@
 				     cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=?
 				     char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? 
 				     char-position char-upcase char-upper-case? char-whitespace? char<=? char<?
-				     char=? char>=? char>? char? complex complex? cons continuation? cos
+				     char=? char>=? char>? char? complex complex? cons continuation? cos constant?
 				     cosh cyclic-sequences
 				     denominator dilambda? 
 				     eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt
