@@ -339,6 +339,26 @@
 
 ;;; 14-8-16: moved let-temporarily to s7.c
 
+(define-macro (let/setter vars . body)
+  (let ((setters (map (lambda (binding)
+			 (and (pair? (cddr binding))
+			      (caddr binding)))
+		       vars))
+	(gsetters (gensym)))
+    `(let ((,gsetters (list ,@setters))
+	   ,@(map (lambda (binding)
+		    (list (car binding) (cadr binding)))
+		  vars))
+       ,@(do ((setter setters (cdr setter))
+	      (var vars (cdr var))
+	      (i 0 (+ i 1))
+	      (result ()))
+	     ((null? setter)
+	      (reverse result))
+	   (if (car setter)
+	       (set! result (cons `(set! (symbol-setter (quote ,(caar var))) (list-ref ,gsetters ,i)) result))))
+       ,@body)))
+
 (define-macro (while test . body)      ; while loop with predefined break and continue
   `(call-with-exit
     (lambda (break) 
@@ -1183,7 +1203,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define-macro (reflective-let vars . body)
   `(let ,vars
      ,@(map (lambda (vr)
-	      `(set! (symbol-access ',(car vr))
+	      `(set! (symbol-setter ',(car vr))
 		     (lambda (s v)
 		       (format *stderr* "~S -> ~S~%" s v)
 		       v)))
@@ -1270,13 +1290,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	 (define ,ne ,e)
 	 ,@(map (lambda (sym)
 		  (if (symbol? sym)
-		      `(set! (symbol-access ',sym)
+		      `(set! (symbol-setter ',sym)
 			     (lambda (s v)  
 			       (let ((,nv ,(if (not (with-let (sublet e 'sym sym) 
-						      (symbol-access sym)))
+						      (symbol-setter sym)))
 					       'v
 					       `(begin (,(procedure-source (with-let (sublet e 'sym sym) 
-									     (symbol-access sym))) 
+									     (symbol-setter sym))) 
 							s v)))))
 				 (with-let (sublet ,ne ',sym ,nv)
 				   (set! ,place ,value))
@@ -1339,7 +1359,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (let ((a 1)) (let ((v (reactive-vector a (+ a 1) 2))) (set! a 4) v)) -> #(4 5 2)
 (let* ((a 1) (v (reactive-vector a (+ a 1) 2))) (set! a 4) v) -> #(4 5 2)
 (let* ((a 1) (v (reactive-vector a (+ a 1) (* 2 (_ 0))))) (set! a 4) v) -> #(4 5 8)
-;;; mock-vector could also be used for constant or reflective vectors, etc -- just like symbol-access but element-wise
+;;; mock-vector could also be used for constant or reflective vectors, etc -- just like symbol-setter but element-wise
 |#
 
 ;; another experiment:
@@ -1350,10 +1370,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		   'port port
 		   'ctrl ctrl)
     (let* ((syms (gather-symbols args e () ()))
-	   (sa's (map symbol-access syms)))
+	   (sa's (map symbol-setter syms)))
       `(begin
 	 ,@(map (lambda (sym sa)
-		  `(set! (symbol-access ',sym) 
+		  `(set! (symbol-setter ',sym) 
 			 (lambda (s v)
 			   (let ((result (if ,sa (apply ,sa s v ()) v)))
 			     (with-let (sublet ,e ',sym result)
@@ -1367,8 +1387,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; part of the complexity comes from the hope to be tail-callable, but even a version
 ;;;   using dynamic-wind is complicated because of shadowing
 ;;; what I think we want here is a globally accessible way to see set! that does not
-;;;   require non-local state (not a hook with its list of functions, or symbol-access)
-;;;   and that doesn't bring s7 to a halt.  Perhaps a symbol-access function that
+;;;   require non-local state (not a hook with its list of functions, or symbol-setter)
+;;;   and that doesn't bring s7 to a halt.  Perhaps a symbol-setter function that
 ;;;   traverses the let-chain (like *features*) looking for something??  But the relevant
 ;;;   chain is on the stack (is it?), so it won't be quick.  And weak refs are asking for trouble.
 ;;;   (let ((a 1)) (define (set-a x) (set! a x)) (let ((b 2)) (reactive-set! b (+ a 1)) (set-a 3) b))
@@ -1423,18 +1443,18 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	    (nsyms ()))
 	(for-each (lambda (s)
 		    (if (and (with-let (sublet e (quote gs) s) 
-			       (symbol-access gs))
+			       (symbol-setter gs))
 			     (not (assq s bindings)))
 			(if (not (memq s setters))
 			    (begin
 			      (set! setters (cons s setters))
 			      (set! nsyms (cons (cons s (cdr (procedure-source (with-let (sublet e (quote gs) s) 
-										 (symbol-access gs)))))
+										 (symbol-setter gs)))))
 						nsyms)))
 			    (let ((prev (assq s accessors)))
 			      (if prev ; merge the two functions
 				  (set-cdr! prev (append (cdddr (procedure-source (with-let (sublet e (quote gs) s) 
-										    (symbol-access gs))))
+										    (symbol-setter gs))))
 							 (cdr prev))))))))
 		  bsyms)
 
@@ -1447,14 +1467,14 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	     ,@(map (lambda (sa)
 		      (if (assq (car sa) bindings)
 			  (values)
-			  `(set! (symbol-access ',(car sa))
+			  `(set! (symbol-setter ',(car sa))
 				 (lambda (,(gensym) ,v)
 				   (,(rlet-symbol (car sa)) ,v)
 				   ,@(cdr sa)
 				   ,v))))
 		    accessors)
 	     ,@(map (lambda (ns)
-		      `(set! (symbol-access ',(car ns))
+		      `(set! (symbol-setter ',(car ns))
 			     (apply lambda ',(cdr ns))))
 		    nsyms)
 	     ,@body))))))
@@ -1476,13 +1496,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
        (define (one-access s1 v)
 	 (let* ((syms (map car e))
-		(sa's (map (lambda (s) (symbol-access s e)) syms)))
+		(sa's (map (lambda (s) (symbol-setter s e)) syms)))
 	   (dynamic-wind
-	       (lambda () (for-each (lambda (s) (if (not (eq? s s1)) (set! (symbol-access s e) #f))) syms))
+	       (lambda () (for-each (lambda (s) (if (not (eq? s s1)) (set! (symbol-setter s e) #f))) syms))
 	       (lambda () (f s1 v))
-	       (lambda () (for-each (lambda (s a) (set! (symbol-access s e) a)) syms sa's)))))
+	       (lambda () (for-each (lambda (s a) (set! (symbol-setter s e) a)) syms sa's)))))
 
-       (for-each (lambda (s) (set! (symbol-access s e) one-access)) (map car e)))
+       (for-each (lambda (s) (set! (symbol-setter s e) one-access)) (map car e)))
      f))
 
 
@@ -1490,13 +1510,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   `(let ((accessors ()))
      (dynamic-wind
 	 (lambda ()
-	   (set! accessors (map symbol-access ',vars)))
+	   (set! accessors (map symbol-setter ',vars)))
 	 (lambda ()
 	   ,@body)
 	 (lambda ()
 	   (for-each
 	    (lambda (var accessor)
-	      (set! (symbol-access var) accessor))
+	      (set! (symbol-setter var) accessor))
 	    ',vars accessors)))))
 
 ;; (let ((a 1) (b 2)) (with-accessors (a b) (let ((c 3)) (reactive-set! c (+ (* 2 a) (* 3 b))) (set! a 4) c)))
@@ -1504,7 +1524,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 #|
 (let ((x 0.0)) (reactive-let ((y (sin x))) (set! x 1.0) y)) -- so "lifting" comes for free?
 
-(map (lambda (s) (symbol-access (car s) e)) e)
+(map (lambda (s) (symbol-setter (car s) e)) e)
 
 (let ((a 1))
   (reactive-let ((b (+ a 1))
@@ -1725,10 +1745,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
       (vlp (gensym)))
   
   ;; local symbol access -- this does not affect any other uses of these symbols
-  (set! (symbol-access '*display-spacing* (curlet))
+  (set! (symbol-setter '*display-spacing* (curlet))
 	(lambda (s v) (if (and (integer? v) (not (negative? v))) v *display-spacing*)))
   
-  (set! (symbol-access '*display-print-length* (curlet))
+  (set! (symbol-setter '*display-print-length* (curlet))
 	(lambda (s v) (if (and (integer? v) (not (negative? v))) v *display-print-length*)))
   
   ;; export *display* -- just a convenience
@@ -2194,7 +2214,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	   ht))
 	(baddies (list #_eval #_eval-string #_load #_autoload #_define-constant #_define-expansion #_require
 		       #_string->symbol #_symbol->value #_symbol->dynamic-value #_symbol-table #_symbol #_keyword->symbol 
-		       #_defined? #_symbol-access
+		       #_defined? #_symbol-setter
 		       #_call/cc #_gc #_read #_immutable!
 		       #_open-output-file #_call-with-output-file #_with-output-to-file
 		       #_open-input-file #_call-with-input-file #_with-input-from-file
@@ -2215,7 +2235,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		  (cond ((symbol? tree)
 			 (let ((val (symbol->value tree)))
 			   ;; don't accept any symbol with an accessor
-			   (if (or (symbol-access tree)
+			   (if (or (symbol-setter tree)
 				   (memq tree '(*s7* unquote abort))
 				   (let? val))  ; not sure about this
 			       (quit #f))

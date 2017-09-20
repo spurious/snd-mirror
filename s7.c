@@ -776,7 +776,7 @@ typedef struct s7_cell {
       uint32_t length;
       union {
 	bool needs_free;            /* string GC */
-	uint32_t setter;          /* symbol-access */
+	uint32_t setter;          /* symbol-setter */
 	int32_t temp_len;           /* temp string length (sc->tmp_strs) */
       } str_ext;
       char *svalue;
@@ -1107,7 +1107,7 @@ struct s7_scheme {
              stacktrace_symbol, string_append_symbol, string_downcase_symbol, string_eq_symbol, string_fill_symbol,
              string_geq_symbol, string_gt_symbol, string_leq_symbol, string_lt_symbol, string_position_symbol, string_ref_symbol,
              string_set_symbol, string_symbol, string_to_number_symbol, string_to_symbol_symbol, string_upcase_symbol,
-             sublet_symbol, substring_symbol, subtract_symbol, symbol_access_symbol, symbol_symbol, symbol_to_dynamic_value_symbol,
+             sublet_symbol, substring_symbol, subtract_symbol, symbol_setter_symbol, symbol_symbol, symbol_to_dynamic_value_symbol,
              symbol_to_keyword_symbol, symbol_to_string_symbol, symbol_to_value_symbol, s7_version_symbol,
              tan_symbol, tanh_symbol, throw_symbol, string_to_byte_vector_symbol, 
              tree_count_symbol, truncate_symbol, type_of_symbol,
@@ -1768,7 +1768,7 @@ static s7_scheme *cur_sc = NULL;
 #define symbol_set_has_setter(p)      typeflag(_TSym(p)) |= T_HAS_SETTER
 #define slot_has_setter(p)            ((typeflag(_TSlt(p)) & T_HAS_SETTER) != 0)
 #define slot_set_has_setter(p)        typeflag(_TSlt(p)) |= T_HAS_SETTER
-/* marks a slot or symbol that has a setter */
+/* marks a slot that has a setter or symbol that might have a setter */
 
 #define T_WITH_LET_LET                T_LINE_NUMBER
 #define is_with_let_let(p)            ((typeflag(_TLet(p)) & T_WITH_LET_LET) != 0)
@@ -1997,6 +1997,11 @@ static s7_scheme *cur_sc = NULL;
 #define T_SYMCONS                     (1LL << (TYPE_BITS + 24))
 #define is_possibly_constant(p)       ((typeflag(_TSym(p)) & T_SYMCONS) != 0)
 #define set_possibly_constant(p)      typeflag(_TSym(p)) |= T_SYMCONS
+
+#define T_HAS_LET_ARG                 T_SYMCONS
+#define has_let_arg(p)                ((typeflag(_NFre(p)) & T_HAS_LET_ARG) != 0)
+#define set_has_let_arg(p)            typeflag(_NFre(p)) |= T_HAS_LET_ARG
+/* p is_procedure, but no checker for it, so use _NFre */
 
 
 #define T_GC_MARK                     0x8000000000000000
@@ -4710,6 +4715,7 @@ static void mark_rootlet(s7_scheme *sc)
   set_mark(ge);
   while (tmp < top)
     S7_MARK(slot_value(*tmp++));
+  /* slot_setter is handled below with an explicit list -- more code than its worth probably */
 }
 
 void s7_mark_c_object(s7_pointer p)
@@ -7485,25 +7491,43 @@ static s7_pointer call_setter(s7_scheme *sc, s7_pointer slot, s7_pointer old_val
 
   if (is_procedure_or_macro(func))
     {
-      if (is_c_function(func))
+      if (has_let_arg(func))
 	{
-	  set_car(sc->t2_1, slot_symbol(slot));
-	  set_car(sc->t2_2, old_value);
-      	  new_value = c_function_call(func)(sc, sc->t2_1);
+	  if (is_c_function(func))
+	    {
+	      set_car(sc->t3_1, slot_symbol(slot));
+	      set_car(sc->t3_2, old_value);
+	      set_car(sc->t3_3, sc->envir);
+	      new_value = c_function_call(func)(sc, sc->t3_1);
+	    }
+	  else
+	    {
+	      bool old_off;
+	      old_off = sc->gc_off;
+	      sc->gc_off = true;
+	      new_value = s7_apply_function(sc, func, list_3(sc, slot_symbol(slot), old_value, sc->envir));
+	      sc->gc_off = old_off;
+	    }
 	}
       else
 	{
-	  bool old_off;
-	  old_off = sc->gc_off;
-	  sc->gc_off = true;
-	  new_value = s7_apply_function(sc, func, list_2(sc, slot_symbol(slot), old_value));
-	  sc->gc_off = old_off;
+	  if (is_c_function(func))
+	    {
+	      set_car(sc->t2_1, slot_symbol(slot));
+	      set_car(sc->t2_2, old_value);
+	      new_value = c_function_call(func)(sc, sc->t2_1);
+	    }
+	  else
+	    {
+	      bool old_off;
+	      old_off = sc->gc_off;
+	      sc->gc_off = true;
+	      new_value = s7_apply_function(sc, func, list_2(sc, slot_symbol(slot), old_value));
+	      sc->gc_off = old_off;
+	    }
 	}
     }
   else return(old_value);
-
-  if (new_value == sc->error_symbol)
-    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, s7_make_string_wrapper(sc, "can't set! ~S to ~S"), slot_symbol(slot), old_value)));
   return(new_value);
 }
 
@@ -10989,12 +11013,12 @@ static s7_pointer g_sharp_readers_set(s7_scheme *sc, s7_pointer args)
 	  if ((!is_pair(car(x))) ||
 	      (!s7_is_character(caar(x))) ||
 	      (!s7_is_procedure(cdar(x))))
-	    return(sc->error_symbol);
+	    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set *#readers* to ~S"), cadr(args))));
 	}
       if (is_null(x))
 	return(cadr(args));
     }
-  return(sc->error_symbol);
+  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set *#readers* to ~S"), cadr(args))));
 }
 
 
@@ -24818,11 +24842,11 @@ static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
       s7_pointer x;
       for (x = cadr(args); is_pair(x); x = cdr(x))
 	if (!is_string(car(x)))
-	  return(sc->error_symbol);
+	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set *load-path* to ~S"), cadr(args))));
       if (is_null(x))
 	return(cadr(args));
     }
-  return(sc->error_symbol);
+  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set *load-path* to ~S"), cadr(args))));
 }
 
 static s7_pointer g_cload_directory_set(s7_scheme *sc, s7_pointer args)
@@ -24830,7 +24854,7 @@ static s7_pointer g_cload_directory_set(s7_scheme *sc, s7_pointer args)
   s7_pointer cl_dir;
   cl_dir = cadr(args);
   if (!is_string(cl_dir))
-    return(sc->error_symbol);
+    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set *cload-directory* to ~S"), cadr(args))));
   s7_symbol_set_value(sc, sc->cload_directory_symbol, cl_dir);
   if (safe_strlen(string_value(cl_dir)) > 0)
     s7_add_to_load_path(sc, (const char *)(string_value(cl_dir)));
@@ -27819,7 +27843,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
   full_typ = typeflag(obj);
 
   /* if debugging all of these bits are being watched, so we need to access them directly */
-  snprintf(buf, 512, "type: %d (%s), flags: #x%" PRIx64 "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  snprintf(buf, 512, "type: %d (%s), flags: #x%" PRIx64 "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	   typ,
 	   type_name(sc, obj, NO_ARTICLE),
 	   full_typ,
@@ -27912,6 +27936,10 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   ((full_typ & T_HAS_METHODS) != 0) ?    " has-methods" : "",
 	   /* bit 23 */
 	   ((full_typ & T_ITER_OK) != 0) ?        " iter-ok" : "",
+	   /* bit 24 */
+	   ((full_typ & T_SYMCONS) != 0) ?        ((is_symbol(obj)) ? " possibly-constant" : 
+						   ((is_procedure(obj)) ? " has-let-arg" :
+						    " ?24?")) : "",
 	   /* bit 55 */
 	   (((full_typ & T_GC_MARK) != 0) && (in_heap(obj))) ? " gc-marked" : "");
   return(buf);
@@ -33298,10 +33326,10 @@ void s7_provide(s7_scheme *sc, const char *feature) {c_provide(sc, s7_make_symbo
 
 static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
 {
-  /* symbol_access for set/let of *features* which can only be changed via provide */
+  /* symbol_setter for set/let of *features* which can only be changed via provide */
   if (s7_is_list(sc, cadr(args)))
     return(cadr(args));
-  return(sc->error_symbol);
+  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set *features* to ~S"), cadr(args))));
 }
 
 static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
@@ -39141,7 +39169,7 @@ static bool is_sequence_b(s7_pointer p) {return(is_simple_sequence(p));}
 
 
 
-/* -------------------------------- symbol-access ------------------------------------------------ */
+/* -------------------------------- symbol-setter ------------------------------------------------ */
 
 static uint32_t protect_setter(s7_scheme *sc, s7_pointer acc)
 {
@@ -39162,7 +39190,7 @@ static uint32_t protect_setter(s7_scheme *sc, s7_pointer acc)
   return(loc);
 }
 
-s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
+s7_pointer s7_symbol_setter(s7_scheme *sc, s7_pointer sym)
 {
   /* these refer to the rootlet */
   if ((is_slot(global_slot(sym))) &&
@@ -39171,7 +39199,7 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
   return(sc->F);
 }
 
-s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer func)
+s7_pointer s7_symbol_set_setter(s7_scheme *sc, s7_pointer symbol, s7_pointer func)
 {
   if (slot_has_setter(global_slot(symbol)))
     {
@@ -39183,6 +39211,8 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 	    return(func);
 	  vector_element(sc->protected_setters, index) = func;
 	  slot_set_setter(global_slot(symbol), func);
+	  if ((func != sc->F) && (s7_is_aritable(sc, func, 3)))
+	    set_has_let_arg(func);
 	  return(func);
 	}
     }
@@ -39193,22 +39223,24 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
       symbol_global_setter_index(symbol) = protect_setter(sc, func);  
     }
   slot_set_setter(global_slot(symbol), func);
+  if ((func != sc->F) && (s7_is_aritable(sc, func, 3)))
+    set_has_let_arg(func);
   return(func);
 }
 
-/* (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
- *    so set symbol-access before use!
+/* (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-setter 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
+ *    so set symbol-setter before use!
  */
 
-static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_symbol_setter(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_access "(symbol-access sym (env (curlet))) is the function called when the symbol is set!."
-  #define Q_symbol_access s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_procedure_symbol), sc->is_symbol_symbol, sc->is_let_symbol)
+  #define H_symbol_setter "(symbol-setter sym (env (curlet))) is the function called when the symbol is set!."
+  #define Q_symbol_setter s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_procedure_symbol), sc->is_symbol_symbol, sc->is_let_symbol)
   s7_pointer sym, p;
 
   sym = car(args);
   if (!is_symbol(sym))
-    method_or_bust_one_arg(sc, sym, sc->symbol_access_symbol, args, T_SYMBOL);
+    method_or_bust_one_arg(sc, sym, sc->symbol_setter_symbol, args, T_SYMBOL);
   if (is_keyword(sym))
     return(sc->F);
 
@@ -39221,7 +39253,7 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
       else
 	{
 	  if (!is_let(e))
-	    return(wrong_type_argument(sc, sc->symbol_access_symbol, 2, e, T_LET));
+	    return(wrong_type_argument(sc, sc->symbol_setter_symbol, 2, e, T_LET));
 	  old_e = sc->envir;
 	  sc->envir = e;
 	  p = find_symbol(sc, sym);
@@ -39239,18 +39271,17 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
-
-static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_symbol_set_setter(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer sym, func, p;
 
   sym = car(args);
   if (!is_symbol(sym))                 /* no check method because no method name? */
-    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 1, sym, "a symbol"));
+    return(s7_wrong_type_arg_error(sc, "set! symbol-setter", 1, sym, "a symbol"));
   if (is_keyword(sym))
-    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 1, sym, "a normal symbol (a keyword can't be set)"));
+    return(s7_wrong_type_arg_error(sc, "set! symbol-setter", 1, sym, "a normal symbol (a keyword can't be set)"));
 
-  /* (set! (symbol-access sym) f) or (set! (symbol-access sym env) f) */
+  /* (set! (symbol-setter sym) f) or (set! (symbol-setter sym env) f) */
   if (is_pair(cddr(args)))
     {
       s7_pointer e, old_e;
@@ -39261,7 +39292,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
       else
 	{
 	  if (!is_let(e))
-	    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "a let"));
+	    return(s7_wrong_type_arg_error(sc, "set! symbol-setter", 2, e, "a let"));
 	  old_e = sc->envir;
 	  sc->envir = e;
 	  p = find_symbol(sc, sym);
@@ -39276,14 +39307,14 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 
   if ((!is_procedure_or_macro(func)) &&
       (func != sc->F))
-    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 3, func, "a function or #f"));
+    return(s7_wrong_type_arg_error(sc, "set! symbol-setter", 3, func, "a function or #f"));
 
   if (!is_slot(p))
     return(sc->F);
 
   if (p == global_slot(sym))
     {
-      s7_symbol_set_access(sc, sym, func); /* special GC protection for global vars */
+      s7_symbol_set_setter(sc, sym, func); /* special GC protection for global vars */
       return(func);
     }
 
@@ -39291,31 +39322,29 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
   if (func != sc->F)
     {
       slot_set_has_setter(p);
+      if (s7_is_aritable(sc, func, 3))
+	set_has_let_arg(func);
       symbol_set_has_setter(sym);
     }
   return(func);
 }
 
 
-static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer symbol, s7_pointer new_value)
+static s7_pointer bind_symbol_with_setter(s7_scheme *sc, opcode_t op, s7_pointer symbol, s7_pointer new_value)
 {
   /* this refers to (define (sym ...)) and friends -- define cases
    *    see call_setter for the set! cases
    */
   s7_pointer func;
 
-  func = g_symbol_access(sc, set_plist_2(sc, symbol, sc->envir));
+  func = g_symbol_setter(sc, set_plist_2(sc, symbol, sc->envir));
   if (is_procedure_or_macro(func))
     {
       if (is_c_function(func))
 	{
-	  s7_pointer old_value;
-	  old_value = new_value;
 	  set_car(sc->t2_1, symbol);
 	  set_car(sc->t2_2, new_value);
 	  new_value = c_function_call(func)(sc, sc->t2_1);
-	  if (new_value == sc->error_symbol)
- 	    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, s7_make_string_wrapper(sc, "can't bind ~S to ~S"), symbol, old_value)));
 	}
       else
 	{
@@ -61321,7 +61350,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int32_t
 		}
 	      else
 		{
-		  if (is_possibly_constant(cadr(w)))
+		  if (is_constant(sc, cadr(w)))                   /* (lambda* (a :rest x)...) where x is locally a constant */
 		    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't bind an immutable object: ~S"), w)));
 		}
 	      set_local(cadr(w));
@@ -68239,7 +68268,7 @@ static int32_t define1_ex(s7_scheme *sc)
       if ((is_slot(x)) &&
 	  (slot_has_setter(x)))
 	{
-	  sc->value = bind_accessed_symbol(sc, OP_DEFINE_WITH_SETTER, sc->code, sc->value);
+	  sc->value = bind_symbol_with_setter(sc, OP_DEFINE_WITH_SETTER, sc->code, sc->value);
 	  if (sc->value == sc->no_value)
 	    return(goto_APPLY);
 	  /* if all goes well, OP_DEFINE_WITH_SETTER will jump to DEFINE2 */
@@ -73916,20 +73945,38 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    func = slot_setter(lx);
 		    if (is_procedure_or_macro(func))
 		      {
-			if (is_c_function(func))
+			if (has_let_arg(func))
 			  {
-			    set_car(sc->t2_1, sc->code);
-			    set_car(sc->t2_2, sc->value);
-			    sc->value = c_function_call(func)(sc, sc->t2_1);
-			    if (sc->value == sc->error_symbol) /* backwards compatibility... (but still used I think in g_features_set) */
-			      return(s7_error(sc, sc->error_symbol, set_elist_3(sc, s7_make_string_wrapper(sc, "can't set ~S to ~S"), car(sc->t2_1), car(sc->t2_2))));
+			    if (is_c_function(func))
+			      {
+				set_car(sc->t3_1, sc->code);
+				set_car(sc->t3_2, sc->value);
+				set_car(sc->t3_3, sc->envir);
+				sc->value = c_function_call(func)(sc, sc->t3_1);
+			      }
+			    else
+			      {
+				sc->args = list_3(sc, sc->code, sc->value, sc->envir);
+				push_stack(sc, OP_SET_WITH_SETTER, sc->args, lx); /* op, args, code */
+				sc->code = func;
+				goto APPLY;
+			      }
 			  }
 			else
 			  {
-			    sc->args = list_2(sc, sc->code, sc->value);
-			    push_stack(sc, OP_SET_WITH_SETTER, sc->args, lx); /* op, args, code */
-			    sc->code = func;
-			    goto APPLY;
+			    if (is_c_function(func))
+			      {
+				set_car(sc->t2_1, sc->code);
+				set_car(sc->t2_2, sc->value);
+				sc->value = c_function_call(func)(sc, sc->t2_1);
+			      }
+			    else
+			      {
+				sc->args = list_2(sc, sc->code, sc->value);
+				push_stack(sc, OP_SET_WITH_SETTER, sc->args, lx); /* op, args, code */
+				sc->code = func;
+				goto APPLY;
+			      }
 			  }
 		      }
 		  }
@@ -73945,8 +73992,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  
 	case OP_SET_WITH_SETTER:
-	  if (sc->value == sc->error_symbol) /* backwards compatibility... */
-	    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, s7_make_string_wrapper(sc, "can't set ~S"), sc->code)));
 	  slot_set_value(sc->code, sc->value);
 	  break;
 
@@ -75627,8 +75672,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	case OP_DEFINE_MACRO_WITH_SETTER:
-	  if (sc->value == sc->error_symbol) /* backwards compatibility... */
-	    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, s7_make_string_wrapper(sc, "can't define-macro ~S to ~S"), car(sc->args), cadr(sc->args))));
 	  sc->code = sc->value;
 	  if ((!is_pair(sc->code)) ||
 	      (!is_pair(car(sc->code))) ||
@@ -75650,7 +75693,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if ((is_slot(x)) &&
 		  (slot_has_setter(x)))
 		{
-		  sc->value = bind_accessed_symbol(sc, OP_DEFINE_MACRO_WITH_SETTER, caar(sc->code), sc->code);
+		  sc->value = bind_symbol_with_setter(sc, OP_DEFINE_MACRO_WITH_SETTER, caar(sc->code), sc->code);
 		  if (sc->value == sc->no_value)
 		    goto APPLY;
 		  sc->code = sc->value;
@@ -82256,8 +82299,8 @@ s7_scheme *s7_init(void)
   sc->symbol_symbol =                defun("symbol",		symbol,			1, 0, true);
   sc->symbol_to_value_symbol =       defun("symbol->value",	symbol_to_value,	1, 1, false);
   sc->symbol_to_dynamic_value_symbol = defun("symbol->dynamic-value", symbol_to_dynamic_value, 1, 0, false);
-  s7_typed_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access,	2, 1, H_symbol_access, Q_symbol_access, NULL);
-  sc->symbol_access_symbol = make_symbol(sc, "symbol-access");
+  s7_typed_dilambda(sc, "symbol-setter", g_symbol_setter, 1, 1, g_symbol_set_setter,	2, 1, H_symbol_setter, Q_symbol_setter, NULL);
+  sc->symbol_setter_symbol = make_symbol(sc, "symbol-setter");
   sc->immutable_symbol =             defun("immutable!",	immutable,		1, 0, false);
   sc->is_immutable_symbol =          defun("immutable?",	is_immutable,		1, 0, false);
   sc->is_constant_symbol =           defun("constant?",	        is_constant,		1, 0, false);
@@ -82698,12 +82741,12 @@ s7_scheme *s7_init(void)
 
   /* -------- *features* -------- */
   sc->features_symbol = s7_define_variable(sc, "*features*", sc->nil);
-  s7_symbol_set_access(sc, sc->features_symbol, s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "*features* setter"));
+  s7_symbol_set_setter(sc, sc->features_symbol, s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "*features* setter"));
 
   /* -------- *load-path* -------- */
   sc->load_path_symbol = s7_define_variable_with_documentation(sc, "*load-path*", sc->nil, 
 			   "*load-path* is a list of directories (strings) that the load function searches if it is passed an incomplete file name");
-  s7_symbol_set_access(sc, sc->load_path_symbol, s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "*load-path* setter"));
+  s7_symbol_set_setter(sc, sc->load_path_symbol, s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "*load-path* setter"));
 
 #ifdef CLOAD_DIR
   sc->cload_directory_symbol = s7_define_variable(sc, "*cload-directory*", s7_make_string(sc, (char *)CLOAD_DIR));
@@ -82711,7 +82754,7 @@ s7_scheme *s7_init(void)
 #else
   sc->cload_directory_symbol = s7_define_variable(sc, "*cload-directory*", make_empty_string(sc, 0, 0));
 #endif
-  s7_symbol_set_access(sc, sc->cload_directory_symbol, s7_make_function(sc, "(set *cload-directory*)", g_cload_directory_set, 2, 0, false, 
+  s7_symbol_set_setter(sc, sc->cload_directory_symbol, s7_make_function(sc, "(set *cload-directory*)", g_cload_directory_set, 2, 0, false, 
                            "*cload-directory* setter"));
 
 
@@ -82743,7 +82786,7 @@ s7_scheme *s7_init(void)
   /* -------- *#readers* -------- */
   sym = s7_define_variable(sc, "*#readers*", sc->nil);
   sc->sharp_readers = global_slot(sym);
-  s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "*#readers* setter"));
+  s7_symbol_set_setter(sc, sym, s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "*#readers* setter"));
 
   /* sigh... I don't like these! */
   s7_define_constant(sc, "nan.0", real_NaN);
@@ -83424,7 +83467,6 @@ s7_scheme *s7_init(void)
 	       s7_cons(sc, sc->let_ref_fallback_symbol, s7_make_function(sc, "s7-let-ref", g_s7_let_ref_fallback, 2, 0, false, "*s7* reader")),
 	       s7_cons(sc, sc->let_set_fallback_symbol, s7_make_function(sc, "s7-let-set", g_s7_let_set_fallback, 3, 0, false, "*s7* writer"))))));
 
-
 #if (!DISABLE_DEPRECATED)
   s7_eval_c_string(sc, "(begin                                                    \n\
                           (define global-environment         rootlet)             \n\
@@ -83434,6 +83476,7 @@ s7_scheme *s7_init(void)
                           (define make-random-state          random-state)        \n\
                           (define make-complex               complex)             \n\
                           (define make-keyword               string->keyword)     \n\
+                          (define symbol-access              symbol-setter)       \n\
                           (define (constant? obj) (or (not (symbol? obj)) (immutable? obj))) \n\
                           (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000)))))");
 #endif
@@ -83550,6 +83593,7 @@ int main(int argc, char **argv)
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  * maybe pass \u... through in read_constant_string unchanged, or read in s7??  no worse than \x..;
+ * vect get/set should be s7_function (multi-dim indices for example)
  *
  * c_object type table entries should also be s7_function, reported by object->let perhaps
  *    wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
@@ -83562,40 +83606,11 @@ int main(int argc, char **argv)
  *   does this give who-calls?
  *   or change to new call, reporting changes etc
  *
- * --------------------------------
- * symbol-access -> symbol-setter via dilambda:
-(define x (dilambda 3 (lambda (val) (error...)))) ; x=3, and is not settable
-(let ((x (let ((old-x 3)) ; x=3, and setter ensures it is always an integer
-           (dilambda 
-             old-x 
-             (let ((signature '(integer? #t))
-                   (documentation "x is an integer"))
-               (lambda (val)
-                 (if (integer? val)
-                     (set! old-x val) ; this returns val in s7
-                     old-x)))))))
-  ;; (documentation 'x) = "x is an integer"
-  ;; (signature 'x) = 'integer?
-  ;; (setter 'x) = the function above
-  ;; x = 3 (or whatever is the value of old-x)
-  ...)
-
- * setter for vect element? inlet field?  vect get/set should be s7_function (multi-dim indices for example)
- *   lambda* and one arg = set var itself
- * locklet?
- * lint support for all of these changes?
- * but this is ambiguous: var with func value looks like a normal dilambda
- *   (variable value setter documentation signature)? or (with-setter 3 (lambda ...))
- *   (define x 3 ...) as in CL? so define is a macro*? and (let ((x val setter))...)
- *   so all binders can take trailing args at least setter, maybe + doc/sig
- *   treating "dilambda" above as just noise, but how does setter get current value?
- *      say it is in scope, so "x" is the x being defined?
-(let ((x 3 ; x=3, and setter ensures it is always an integer
-        (let ((signature '(integer? #t))
-              (documentation "x is an integer"))
-          (lambda (val)
-            (if (integer? val) val x))))
-  ...)
+ * setter for vect element? lambda (sym ind1 ind2... val env) is ambiguous
+ * locklet? maybe use immutable here and in hash-table (would (let...(immutable! (curlet))) be trouble?)
+ * setter for dilambda (s7test?)
+ * lint support for all of these changes? (check define-constant handling at least)
+ * t693.scm inlet? etc
  *
  * ----------------------------------------------------------------------------
  *
@@ -83605,9 +83620,9 @@ int main(int argc, char **argv)
  * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1109  1115
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1378  1341
  * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921  1925
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2151
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2161
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436  2426
- * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2735
+ * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2732
  * lg            |      |      |      || 211  | 161   149   144   134.9 135.2
  * tform         |      |      | 6816 || 3714 | 3530  3361  3295  2746  2755
  * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3071  2907

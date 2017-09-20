@@ -377,8 +377,8 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix);                    /* (
 bool s7_is_keyword(s7_pointer obj);                                         /* (keyword? obj) */
 s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);                 /* (make-keyword key) */
 
-s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
-s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer func);
+s7_pointer s7_symbol_setter(s7_scheme *sc, s7_pointer sym);
+s7_pointer s7_symbol_set_setter(s7_scheme *sc, s7_pointer symbol, s7_pointer func);
 
 s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_slot_value(s7_pointer slot);
@@ -868,6 +868,9 @@ void s7_object_type_set_direct(int32_t tag,
 #define s7_object_let                s7_c_object_let
 #define s7_object_set_let            s7_c_object_set_let
 #define s7_set_object_print_readably s7_c_type_set_print_readably
+
+#define s7_symbol_access s7_symbol_setter
+#define s7_symbol_set_access s7_symbol_set_setter
 #endif
 
 
@@ -876,7 +879,8 @@ void s7_object_type_set_direct(int32_t tag,
  * 
  *        s7 changes
  *
- * 13-Sep:    s7_immutable, s7_is_immutable. define-constant follows lexical scope now.
+ * 18-Sep:    s7_immutable, s7_is_immutable. define-constant follows lexical scope now.
+ *            s7_symbol_access -> s7_symbol_setter, symbol-access -> symbol-setter.
  * 3-Aug:     object->c_object name changes.
  * 28-Jul:    s7_make_c_pointer_with_type and s7_c_pointer_type.
  * 24-Jul:    int64_t rather than long long int, and various related changes.

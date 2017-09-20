@@ -220,7 +220,7 @@ indented and on a sort of brownish background.
   <li><a href="#IO">IO and other OS functions</a>
   <li><a href="#errors">errors</a>
   <li><a href="#autoload">autoload</a>
-  <li><a href="#constants">define-constant, symbol-access</a>
+  <li><a href="#constants">define-constant, symbol-setter</a>
   <li><a href="#miscellanea">marvels and curiousities:</a> 
 
   <ul>
@@ -4941,7 +4941,7 @@ via <code>(varlet (curlet) *libgsl*)</code>.
 </p>
 
 
-<div class="header" id="constants"><h4>define-constant and symbol-access</h4></div>
+<div class="header" id="constants"><h4>define-constant and symbol-setter</h4></div>
 
 <p><b><em class=def id="defineconstant">define-constant</em></b> defines a symbol whose value is always the same (within the current lexical scope),
 <b><em class=def id="constantp">constant?</em></b> returns #t if its argument is a constant,
@@ -4975,14 +4975,24 @@ so local constants behave as you'd expect:
 &gt; (let ((x 3)) (set! x (let () (define-constant x 32) x))) ; outer x is not a constant
 32
 </pre>
-<p>But watch out for the top-level:
+<p>But watch out for deferred bindings:
 </p>
 
 <pre class="indented">
-(define (func a) (let ((cvar (+ a 1))) cvar))
-(define-constant cvar 23) ; cvar is now globally constant so it can't be shadowed
-(func 1)                  ; here we're trying to shadow cvar
+&gt; (define (func a) (let ((cvar (+ a 1))) cvar))
+<em class="gray">func</em>
+&gt; (define-constant cvar 23) ; cvar is now globally constant so it can't be shadowed
+<em class="gray">23</em>
+&gt; (func 1)                  ; here we're trying to shadow cvar
 <em class="red">error</em><em class="gray">: can't bind an immutable object: ((cvar (+ a 1)))</em>
+&gt; (let ((x 1)) 
+     (define z (let ()
+                 (define-constant x 3) 
+                 (lambda (y) 
+                   (let ((x y))  ; this x is the inner constant x
+                     x)))) 
+     (z 1))  ; so this is an error even though the outer x is not a constant
+<em class="red">error</em><em class="gray">: can't bind an immutable object: ((x y))</em>
 </pre>
 
 <p>
@@ -4995,12 +5005,13 @@ variable trace (informative function upon set or keeping a history of past value
 variable's values or doing automatic conversions upon set), and notification upon set (either in Scheme
 or in C; I wanted this many years ago in Snd).  The notification function is especially useful if
 you have a Scheme variable and want to reflect any change in its value immediately in C (see <a href="#notify">below</a>).
-In s7, <em class=def id="symbolaccess">symbol-access</em> sets this function.
+In s7, <em class=def id="symbolsetter">symbol-setter</em> sets this function.
 </p>
 
-<p>Each environment is a set of symbols and their associated values.  symbol-access places a function (or macro) between a symbol
-and its value in a given environment.  The accessor function takes two arguments, the symbol and the new value, and
-returns the value that is actually set.  For example, the function can ensure that a variable is always an integer:
+<p>Each environment is a set of symbols and their associated values.  symbol-setter places a function (or macro) between a symbol
+and its value in a given environment.  The setter function takes two arguments, the symbol and the new value, and
+returns the value that is actually set.  If the setter function accepts a third argument, the current (symbol-relative) environment
+is also passed (the weird argument order is an historical artifact).
 </p>
 
 <pre class="indented">
@@ -5009,9 +5020,9 @@ returns the value that is actually set.  For example, the function can ensure th
 	(y 3)  ; will always keep its initial value
 	(z 3)) ; will report set!
 
-    (set! (symbol-access 'x) (lambda (s v) (if (integer? v) v x)))
-    (set! (symbol-access 'y) (lambda (s v) y))
-    (set! (symbol-access 'z) (lambda (s v) (format *stderr* "z ~A -&gt; ~A~%" z v) v))
+    (set! (symbol-setter 'x) (lambda (s v) (if (integer? v) v x)))
+    (set! (symbol-setter 'y) (lambda (s v) y))
+    (set! (symbol-setter 'z) (lambda (s v) (format *stderr* "z ~A -&gt; ~A~%" z v) v))
   
     (set! x 3.3) ; x does not change because 3.3 is not an integer
     (set! y 3.3) ; y does not change
@@ -5027,7 +5038,7 @@ returns the value that is actually set.  For example, the function can ensure th
 &gt; (define-macro (reflective-let vars . body)
     `(let ,vars
        ,@(map (lambda (vr)
-	        `(set! (symbol-access ',(car vr))
+	        `(set! (symbol-setter ',(car vr))
 		       (lambda (s v)
 		         (format *stderr* "~S -&gt; ~S~%" s v)
 		         v)))
@@ -5037,7 +5048,7 @@ returns the value that is actually set.  For example, the function can ensure th
 &gt; (reflective-let ((a 1)) (set! a 2))
 <em class="gray">2</em>     ; prints "a -&gt; 2"
 &gt;(let ((a 0))
-     (set! (symbol-access 'a)
+     (set! (symbol-setter 'a)
       (let ((history (make-vector 3 0))
 	    (position 0))
 	(lambda (s v)
@@ -5047,24 +5058,60 @@ returns the value that is actually set.  For example, the function can ensure th
 	  v)))
      (set! a 1)
      (set! a 2)
-     ((funclet (symbol-access 'a)) 'history))
+     ((funclet (symbol-setter 'a)) 'history))
 <em class="gray">#(1 2 0)</em>
 </pre>
 
-<p>Or implement reactive programming:
+<p>define-constant is more restrictive than a symbol-setter that raises an error: the latter
+does not block nested (possibly non-constant) bindings of the symbol.  The symbol-setters
+are kind of ugly.  Here's a macro that lets you put the let variable's setter after
+the initial value:
+</p>
+
+<pre class="indented">
+(define-macro (let/setter vars . body)
+  ;; (let/setter ((name value [setter])...) ...)
+  (let ((setters (map (lambda (binding)
+			 (and (pair? (cddr binding))
+			      (caddr binding)))
+		       vars))
+	(gsetters (gensym)))
+    `(let ((,gsetters (list ,@setters))
+	   ,@(map (lambda (binding)
+		    (list (car binding) (cadr binding)))
+		  vars))
+       ,@(do ((setter setters (cdr setter))
+	      (var vars (cdr var))
+	      (i 0 (+ i 1))
+	      (result ()))
+	     ((null? setter)
+	      (reverse result))
+	   (if (car setter)
+	       (set! result (cons `(set! (symbol-setter (quote ,(caar var))) (list-ref ,gsetters ,i)) result))))
+       ,@body)))
+
+(let ((a 3))
+  (let/setter ((a 1)
+	       (b 2 (lambda (s v)
+		      (+ v a)))) ; this is the outer "a"
+   (set! a (+ a 1))
+   (set! b (+ a b))
+   (display (list a b)) (newline)))
+</pre>
+
+<p>Reactive programming:
 </p>
 <pre class="indented">
 (let ((a 1)
       (b 2)
       (c 3))
-  (set! (symbol-access 'b) (lambda (s v) (set! a (+ v c)) v))
-  (set! (symbol-access 'c) (lambda (s v) (set! a (+ b v)) v))
+  (set! (symbol-setter 'b) (lambda (s v) (set! a (+ v c)) v))
+  (set! (symbol-setter 'c) (lambda (s v) (set! a (+ b v)) v))
   (set! a (+ b c)) ; a will be updated if b or c is set
   (set! b 4)
   (set! c 5)
   a)               ; a is 9 = (+ 4 5)
 </pre>
-
 
 <details>
 <summary class="indented">reactive-let</summary>
@@ -5096,7 +5143,7 @@ returns the value that is actually set.  For example, the function can ensure th
 <em class="gray">"a -&gt; 3"</em>
 </pre>
 
-<p>In the reactive-let example, the macro notices that '-b- depends on 'a, so it sets up a symbol-access on 'a
+<p>In the reactive-let example, the macro notices that '-b- depends on 'a, so it sets up a symbol-setter on 'a
 so that <code>(set! a 3)</code> triggers <code>(set! -b- (+ a 1))</code>.  I'm using -name- to distinguish
 the variables that can change value at any time; in the Lisp community, +name+ is often used to mark a constant,
 so this seems like a natural convention.
@@ -5989,7 +6036,7 @@ the generic functions mechanism, much like a c-object:
 <li>for-each and map accept different length arguments; the operation stops when any argument reaches its end.
 <li>for-each and map accept any applicable object as the first argument, and any sequence or iterator as a trailing argument.
 <li>letrec*, but without conviction.
-<li>set! and *-set! return the new value (modulo symbol-access), not #&lt;unspecified&gt;.
+<li>set! and *-set! return the new value (modulo symbol-setter), not #&lt;unspecified&gt;.
 <li>define and its friends return the new value.
 <li>port-closed? 
 <li>list? means "pair or null", proper-list? is r5rs list?, float? means "real and not rational", sequence? = length.
@@ -6192,7 +6239,7 @@ to keep it from being evaluated, but
 <p>These examples bring up another odd corner of scheme: else.  In <code>(cond (else 1))</code>
 the 'else is evaluated (like any cond test), so its value might be #f; in <code>(case 0 (else 1))</code>
 it is not evaluated (like any case key), so it's just a symbol.  
-Since symbol accessors are local in s7, 
+Since symbol setters are local in s7, 
 someone can <code>(let ((else #f)) (cond (else 1)))</code> even if we protect the rootlet 'else.
 Of course, in scheme this kind of trouble is pervasive, so rather than make 'else a constant
 I think the best path is to use unlet:
@@ -8232,7 +8279,7 @@ int main(int argc, char **argv)
 
   s7_define_function(s7, "notify-C", scheme_set_notification, 2, 0, false, "called if notified-var is set!");
   s7_define_variable(s7, "notified-var", s7_make_integer(s7, 0));
-  <em class=red>s7_symbol_set_access</em>(s7, s7_make_symbol(s7, "notified-var"), s7_name_to_value(s7, "notify-C"));
+  <em class=red>s7_symbol_set_setter</em>(s7, s7_make_symbol(s7, "notified-var"), s7_name_to_value(s7, "notify-C"));
 
   if (argc == 2)
     {

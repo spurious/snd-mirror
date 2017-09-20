@@ -146,7 +146,7 @@
 			         input-port? output-port? eof-object? integer? number? real? complex? rational? random-state? 
 			         char? string? list? pair? vector? float-vector? int-vector? byte-vector? hash-table? 
 			         continuation? procedure? dilambda? boolean? float? proper-list? sequence? null? gensym 
-			         symbol->string string->symbol symbol symbol->value symbol->dynamic-value symbol-access 
+			         symbol->string string->symbol symbol symbol->value symbol->dynamic-value symbol-setter 
 			         string->keyword symbol->keyword keyword->symbol outlet rootlet curlet unlet sublet varlet 
 			         cutlet inlet owlet coverlet openlet let-ref let-set! make-iterator iterate iterator-sequence
 			         iterator-at-end? provided? provide defined? c-pointer port-line-number port-filename 
@@ -2114,7 +2114,7 @@
 		    vars))
 	(initialize-bad-var-names *report-bad-variable-names*)
 
-	(set! (symbol-access '*report-bad-variable-names*) ; update these local variables if the global variable changes
+	(set! (symbol-setter '*report-bad-variable-names*) ; update these local variables if the global variable changes
 	      (lambda (sym val)
 		(when (lint-every? symbol? val)
 		  (initialize-bad-var-names val))
@@ -14624,12 +14624,12 @@
 							   ((let-ref) 'let-set!))
 							 (append (cdadr form) (cddr form))))))
 				    
-				    ((and (eq? target 'symbol-access)
+				    ((and (eq? target 'symbol-setter)
 					  (len>1? setval)
 					  (eq? (car setval) 'lambda)
 					  (list? (cadr setval))
 					  (not (= (length (cadr setval)) 2)))
-				     (lint-format "symbol-access function should take 2 arguments: ~A" caller (truncated-list->string form)))
+				     (lint-format "symbol-setter function should take 2 arguments: ~A" caller (truncated-list->string form)))
 				    
 				    ((or (string? target)
 					 (vector? target))

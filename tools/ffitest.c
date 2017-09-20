@@ -1627,7 +1627,7 @@ int main(int argc, char **argv)
 
   s7_define_function(sc, "notify-C", scheme_set_notification, 2, 0, false, "called if notified-var is set!");
   s7_define_variable(sc, "notified-var", s7_make_integer(sc, 0));
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "notified-var"), s7_name_to_value(sc, "notify-C"));
+  s7_symbol_set_setter(sc, s7_make_symbol(sc, "notified-var"), s7_name_to_value(sc, "notify-C"));
   s7_eval_c_string(sc, "(set! notified-var 32)");
   p = s7_name_to_value(sc, "notified-var");
   if (s7_integer(p) != 32)
