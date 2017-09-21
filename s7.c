@@ -6927,6 +6927,9 @@ to the let env, and returns env."
 	return(wrong_type_argument_with_type(sc, sc->varlet_symbol, 1, e, a_let_string));
     }
 
+  if (is_immutable(e))
+    return(s7_wrong_type_arg_error(sc, "varlet", 1, e, "a mutable let"));
+
   for (x = cdr(args); is_pair(x); x = cdr(x))
     {
       p = car(x);
@@ -7010,6 +7013,10 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
    *   let-ref and others will use the old slot!  What's the un-id?  Perhaps the next one?
    *   (let ((b 1)) (let ((b 2)) (cutlet (curlet) 'b)) b)
    */
+
+  if (is_immutable(e))
+    return(s7_wrong_type_arg_error(sc, "cutlet", 1, e, "a mutable let"));
+
   for (syms = cdr(args); is_pair(syms); syms = cdr(syms))
     {
       s7_pointer sym, slot;
@@ -7594,6 +7601,8 @@ s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_point
 {
   if (!is_let(env))
     return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 1, env, a_let_string));
+  if (is_immutable(env)) /* opt_p_ppp_fff can't check at opt time for immutable let, and it calls us */
+    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, env));
 
   if (!is_symbol(symbol))
     {
@@ -7611,13 +7620,7 @@ static s7_pointer g_let_set(s7_scheme *sc, s7_pointer args)
   /* (let ((a 1)) (set! ((curlet) 'a) 32) a) */
   #define H_let_set "(let-set! env sym val) sets the symbol sym's value in the environment env to val"
   #define Q_let_set s7_make_signature(sc, 4, sc->T, sc->is_let_symbol, sc->is_symbol_symbol, sc->T)
-  s7_pointer obj;
-
-  obj = car(args);
-  if (is_immutable(obj))
-    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, obj));
-
-  return(s7_let_set(sc, obj, cadr(args), caddr(args)));
+  return(s7_let_set(sc, car(args), cadr(args), caddr(args)));
 }
 
 static s7_pointer let_set_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(s7_let_set(cur_sc, p1, p2, p3));}
@@ -33318,6 +33321,12 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 {
   #define H_provide "(provide symbol) adds symbol to the *features* list"
   #define Q_provide s7_make_signature(sc, 2, sc->is_symbol_symbol, sc->is_symbol_symbol)
+
+  if ((is_immutable(sc->envir)) && 
+      (sc->envir != sc->nil))
+    s7_error(sc, sc->error_symbol, 
+	     set_elist_2(sc, make_string_wrapper_with_length(sc, "can't provide '~S (current environment is immutable)", 51), car(args)));
+
   return(c_provide(sc, car(args)));
 }
 
@@ -40686,8 +40695,8 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       return(source);
     }
 
-  have_indices = (is_pair(cddr(args)));
   dest = cadr(args);
+  have_indices = (is_pair(cddr(args)));
   if ((source == dest) && (!have_indices))
     return(dest);
   
@@ -40771,6 +40780,9 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	return(wrong_type_argument_with_type(sc, sc->copy_symbol, 2, dest, a_sequence_string));	
       return(dest);
     }
+
+  if ((is_immutable(dest)) && (dest != sc->nil))
+    return(s7_wrong_type_arg_error(sc, "copy", 2, dest, "a mutable object"));
 
   switch (type(dest))
     {
@@ -41584,6 +41596,7 @@ static s7_pointer string_append(s7_scheme *sc, s7_pointer args)
 
       sc->temp9 = new_str;
       sv = make_string_wrapper_with_length(sc, (const char *)string_value(new_str), len);
+      typeflag(sv) &= (~T_IMMUTABLE); /* we are mutating the string below */
       if (is_byte_vector(new_str))
 	set_byte_vector(sv);
       sc->temp10 = sv;
@@ -41605,6 +41618,7 @@ static s7_pointer string_append(s7_scheme *sc, s7_pointer args)
       set_plist_2(sc, sc->nil, sc->nil);
       sc->temp9 = sc->nil;
       sc->temp10 = sc->nil;
+      typeflag(sv) |= T_IMMUTABLE; /* just in case GC cares? */
       string_length(sv) = 0;
     }
 
@@ -68279,6 +68293,10 @@ static int32_t define1_ex(s7_scheme *sc)
 
 static void define2_ex(s7_scheme *sc)
 {
+  if ((is_immutable(sc->envir)) && 
+      (is_let(sc->envir))) /* not () */
+    eval_error_no_return(sc, sc->syntax_error_symbol, "define ~S: let is immutable", sc->code);
+
   if ((is_any_closure(sc->value)) &&
       ((!(is_let(closure_let(sc->value)))) ||
        (!(is_funclet(closure_let(sc->value))))))  /* otherwise it's (define f2 f1) or something similar */
@@ -75677,6 +75695,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (!is_pair(car(sc->code))) ||
 	      (!is_symbol(caar(sc->code))))
 	    eval_error(sc, "define-macro: ~S does not look like a macro?", sc->code);
+	  if ((is_immutable(sc->envir)) && 
+	      (is_let(sc->envir))) /* not () */
+	    eval_error_no_return(sc, sc->syntax_error_symbol, "define-macro ~S: let is immutable", caar(sc->code));
 	  sc->value = make_macro(sc, sc->cur_op);
 	  break;
 	  
@@ -75699,6 +75720,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = sc->value;
 		}
 	    }
+	  if ((is_immutable(sc->envir)) && 
+	      (is_let(sc->envir))) /* not () */
+	    eval_error_no_return(sc, sc->syntax_error_symbol, "define-macro ~S: let is immutable", caar(sc->code));
 	  sc->value = make_macro(sc, sc->cur_op);
 	  break;
 	  
@@ -83593,7 +83617,6 @@ int main(int argc, char **argv)
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  * maybe pass \u... through in read_constant_string unchanged, or read in s7??  no worse than \x..;
- * vect get/set should be s7_function (multi-dim indices for example)
  *
  * c_object type table entries should also be s7_function, reported by object->let perhaps
  *    wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
@@ -83607,35 +83630,35 @@ int main(int argc, char **argv)
  *   or change to new call, reporting changes etc
  *
  * setter for vect element? lambda (sym ind1 ind2... val env) is ambiguous
- * locklet? maybe use immutable here and in hash-table (would (let...(immutable! (curlet))) be trouble?)
- * setter for dilambda (s7test?)
- * lint support for all of these changes? (check define-constant handling at least)
- * t693.scm inlet? etc
+ *   (let ((v (vector 1))) (set! (procedure|vector-setter v) ...)) -- i.e. the (applicable) value
+ *   need generic setter func (and documentation, signature)
+ *   vect get/set should be s7_function (multi-dim indices for example)
+ *   if all these cell-local setters were s7_functions this would be easy to implement
  *
  * ----------------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  ||  16  | 17.4  17.5  17.6  17.7  17.8
- * tmac          |      |      |      || 9052 |  615   259   261   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1111  1058  1053  1049
- * tref          |      |      | 2372 || 2125 | 1375  1231  1125  1109  1115
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  3254  1772  1378  1341
- * teq           |      |      | 6612 || 2777 | 2129  1978  1988  1921  1925
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2356  2215  2172  2161
- * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2527  2436  2436  2426
- * lint          |      |      |      || 4041 | 3376  3114  3003  2726  2732
- * lg            |      |      |      || 211  | 161   149   144   134.9 135.2
- * tform         |      |      | 6816 || 3714 | 3530  3361  3295  2746  2755
- * tcopy         |      |      | 13.6 || 3183 | 3404  3229  3092  3071  2907
- * tmap          |      |      |  9.3 || 5279 |       3939  3387  3386  3386
- * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  4008  3963  3964  3965
- * tsort         |      |      |      || 8584 | 4869  4080  4010  4012  4012
- * titer         |      |      |      || 5971 | 5224  4768  4707  4562  4554
- * bench         |      |      |      || 7012 | 6378  6327  5934  5106  5089
- * thash         |      |      | 50.7 || 8778 | 8488  8057  7550  7537  7535
- * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  12.6  11.7  11.9  11.9
- * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  18.6  17.7  17.8  17.8
- * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  41.1  39.7  39.4  39.2
- *                                    || 139  | 129   126   87.2  83.4  82.7
+ *           12  |  13  |  14  |  15  ||  16  | 17.4  17.7  17.8
+ * tmac          |      |      |      || 9052 |  615   261   261
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1050
+ * tref          |      |      | 2372 || 2125 | 1375  1109  1115
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1341
+ * teq           |      |      | 6612 || 2777 | 2129  1921  1925
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2155
+ * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426
+ * lint          |      |      |      || 4041 | 3376  2726  2732
+ * lg            |      |      |      || 211  | 161   134.9 134.9
+ * tform         |      |      | 6816 || 3714 | 3530  2746  2755
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3071  2920
+ * tmap          |      |      |  9.3 || 5279 |       3386  3386
+ * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  3964  3965
+ * tsort         |      |      |      || 8584 | 4869  4012  4012
+ * titer         |      |      |      || 5971 | 5224  4562  4569
+ * bench         |      |      |      || 7012 | 6378  5106  5088
+ * thash         |      |      | 50.7 || 8778 | 8488  7537  7535
+ * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  11.9  11.9
+ * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  17.8  17.8
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  39.4  39.2
+ *                                    || 139  | 129   83.4  82.7
  * 
  * ----------------------------------------------------------------------------
  */

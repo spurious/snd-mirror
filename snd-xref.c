@@ -895,7 +895,7 @@ static const char *help_urls[HELP_NAMES_SIZE] = {
  "extsnd.html#stopplayer", "extsnd.html#stopplaying", "extsnd.html#stopplayinghook", "extsnd.html#stopplayingselectionhook",
  "sndscm.html#stretchenvelope", "sndscm.html#stretchsoundviadft", "s7.html#stringtobytevector", "s7.html#stringposition",
  "s7.html#sublet", "sndscm.html#superimposeffts", "extsnd.html#swapchannels", "sndscm.html#swapselectionchannels",
- "s7.html#symboltodynamicvalue", "s7.html#symboltovalue", "s7.html#symbolaccess", "s7.html#symboltable",
+ "s7.html#symboltodynamicvalue", "s7.html#symboltovalue", "s7.html#symbolsetter", "s7.html#symboltable",
  "extsnd.html#sync", "sndscm.html#sync-everything", "extsnd.html#syncmax", "extsnd.html#syncstyle",
  "extsnd.html#syncdmarks", "sndscm.html#syncdmixes", "sndscm.html#syncup", "sndclm.html#table-lookup",
  "sndclm.html#table-lookup?", "sndclm.html#tanhsin", "sndclm.html#tanhsin?", "sndclm.html#tap",
@@ -1745,7 +1745,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11608] = {
+static const char *snd_names[11606] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -7385,7 +7385,6 @@ static const char *snd_names[11608] = {
     "textual-port?", "r7rs.scm",
     "tgamma", "libm.scm",
     "third", "stuff.scm",
-    "time", "libc.scm",
     "time.make", "libc.scm",
     "times->samples", "ws.scm",
     "timespec.make", "libc.scm",
@@ -7554,7 +7553,7 @@ static const char *snd_names[11608] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5804);
+  s7_autoload_set_names(sc, snd_names, 5803);
 }
 #endif
 
