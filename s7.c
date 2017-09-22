@@ -1890,6 +1890,7 @@ static s7_scheme *cur_sc = NULL;
 
 #define T_BYTE_VECTOR                 T_MUTABLE
 #define is_byte_vector(p)             ((is_string(p)) && ((typeflag(p) & T_BYTE_VECTOR) != 0))
+#define is_byte_vector_not_string(p)  ((typeflag(p) & T_BYTE_VECTOR) != 0)
 #define is_mutable_byte_vector(p)     ((typeflag(p) & (0xff | T_IMMUTABLE | T_BYTE_VECTOR)) == (T_STRING | T_BYTE_VECTOR))
 #define set_byte_vector(p)            typeflag(_TStr(p)) |= T_BYTE_VECTOR
 /* marks a string that the caller considers a byte_vector */
@@ -2263,6 +2264,7 @@ static int64_t not_heap = -1;
 #define is_mutable_string(p)          ((typeflag(p) & (0xff | T_IMMUTABLE)) == T_STRING)
 #define string_value(p)               (_TStr(p))->object.string.svalue
 #define string_length(p)              (_TStr(p))->object.string.length
+#define byte_vector_length(p)         (_TStr(p))->object.string.length
 #define string_hash(p)                (_TStr(p))->object.string.hash
 #define string_needs_free(p)          (_TStr(p))->object.string.str_ext.needs_free
 #define string_temp_true_length(p)    (_TStr(p))->object.string.str_ext.temp_len
@@ -3558,12 +3560,14 @@ static s7_pointer find_and_apply_method(s7_scheme *sc, s7_pointer lt, s7_pointer
     return(wrong_type_argument(Sc, Method, Num, Obj, Type));	\
   } while (0)
 
+static s7_pointer immutable_object_error(s7_scheme *sc, s7_pointer info) {return(s7_error(sc, sc->error_symbol, info));}
+
 #define mutable_method_or_bust(Sc, Obj, Method, Args, Type, Num)	\
   do {									\
     if (has_methods(Obj))						\
       return(find_and_apply_method(Sc, find_let(Sc, Obj), Method, Args)); \
     if (is_immutable(Obj))						\
-      return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, Method, Obj))); \
+      return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, Method, Obj))); \
     return(wrong_type_argument(Sc, Method, Num, Obj, Type));		\
   } while (0)
 
@@ -6421,7 +6425,7 @@ static s7_pointer let_fill(s7_scheme *sc, s7_pointer args)
   if (is_funclet(e))
     return(out_of_range(sc, sc->fill_symbol, small_int(1), e, s7_make_string_wrapper(sc, "can't fill! a funclet")));
   if (is_immutable(e))
-    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, e)));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->fill_symbol, e)));
 
   val = cadr(args);
   if (val == sc->undefined)
@@ -7602,7 +7606,7 @@ s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_point
   if (!is_let(env))
     return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 1, env, a_let_string));
   if (is_immutable(env)) /* opt_p_ppp_fff can't check at opt time for immutable let, and it calls us */
-    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, env));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, env)));
 
   if (!is_symbol(symbol))
     {
@@ -7635,7 +7639,7 @@ static s7_pointer g_lint_let_set_1(s7_scheme *sc, s7_pointer lt1, s7_pointer sym
   if (!is_let(lt))
     return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 1, lt, a_let_string));
   if (is_immutable(lt))
-    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, lt));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, lt)));
 
   if (lt == sc->rootlet)
     {
@@ -21255,7 +21259,7 @@ static s7_pointer g_string_ref_2(s7_scheme *sc, s7_pointer strng, s7_pointer arg
     return(out_of_range(sc, caller, small_int(2), index, its_too_large_string));
 
   str = string_value(strng);
-  if (is_byte_vector(strng))
+  if (is_byte_vector_not_string(strng))
     return(small_int((unsigned char)(str[ind])));
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
 }
@@ -21271,19 +21275,6 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, strng, sc->string_ref_symbol, args, T_STRING, 1);
   return(g_string_ref_2(sc, strng, args, sc->string_ref_symbol));
 }
-
-static s7_pointer g_byte_vector_ref(s7_scheme *sc, s7_pointer args)
-{
-  #define H_byte_vector_ref "(byte-vector-ref vect index) returns the byte at the index-th element of the byte-vector vect"
-  #define Q_byte_vector_ref s7_make_signature(sc, 3, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol)
-  
-  s7_pointer v;
-  v = car(args);
-  if (!is_byte_vector(v))
-    method_or_bust(sc, v, sc->byte_vector_ref_symbol, args, T_STRING, 1);
-  return(g_string_ref_2(sc, v, args, sc->byte_vector_ref_symbol));
-}
-
 
 
 /* -------------------------------- string-set! -------------------------------- */
@@ -21340,18 +21331,6 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   return(g_string_set_2(sc, strng, args, sc->string_set_symbol));
 }
 
-static s7_pointer g_byte_vector_set(s7_scheme *sc, s7_pointer args)
-{
-  #define H_byte_vector_set "(byte-vector-set! vect index byte) sets the index-th element of the byte-vector vect to the integer byte"
-  #define Q_byte_vector_set s7_make_signature(sc, 4, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol, sc->is_integer_symbol)
-
-  s7_pointer v;
-  v = car(args);
-  if (!is_mutable_byte_vector(v))
-    mutable_method_or_bust(sc, v, sc->byte_vector_set_symbol, args, T_STRING, 1);
-  return(g_string_set_2(sc, v, args, sc->byte_vector_set_symbol));
-}
-
 static s7_pointer string_ref_p_pi(s7_pointer p1, s7_int i1)
 {
   if (!is_string(p1))
@@ -21392,13 +21371,60 @@ static s7_pointer string_set_p_pip_direct(s7_pointer p1, s7_int i1, s7_pointer p
 
 static s7_pointer string_set_unchecked(s7_pointer p1, s7_int i1, s7_pointer p2) {string_value(p1)[i1] = s7_character(p2); return(p2);}
 
+
+
+/* ---------------- byte-vectors ---------------- */
+
+static s7_pointer g_byte_vector_ref(s7_scheme *sc, s7_pointer args)
+{
+  #define H_byte_vector_ref "(byte-vector-ref vect index) returns the byte at the index-th element of the byte-vector vect"
+  #define Q_byte_vector_ref s7_make_signature(sc, 3, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol)
+  
+  s7_pointer v;
+  v = car(args);
+  if (!is_byte_vector(v))
+    method_or_bust(sc, v, sc->byte_vector_ref_symbol, args, T_STRING, 1);
+  return(g_string_ref_2(sc, v, args, sc->byte_vector_ref_symbol));
+}
+
 static s7_int byte_vector_ref_i(s7_pointer p1, s7_int i1)
 {
   if (!is_byte_vector(p1))
     simple_wrong_type_argument_with_type(cur_sc, cur_sc->byte_vector_ref_symbol, p1, s7_make_string(cur_sc, "a byte-vector"));
-  if ((i1 < 0) || (i1 >= string_length(p1)))
+  if ((i1 < 0) || (i1 >= byte_vector_length(p1)))
     out_of_range(cur_sc, cur_sc->byte_vector_ref_symbol, small_int(2), make_integer(cur_sc, i1), (i1 < 0) ? its_negative_string : its_too_large_string);
-  return((s7_int)((unsigned char)(string_value(p1)[i1])));
+  return((s7_int)((unsigned int)(string_value(p1)[i1])));
+}
+
+static s7_pointer byte_vector_ref_unchecked(s7_pointer p1, s7_int i1) {return(small_int(((unsigned char *)string_value(p1))[i1]));}
+
+static s7_pointer byte_vector_ref_p_pi(s7_pointer p1, s7_int i1)
+{
+  if (!is_byte_vector(p1))
+    simple_wrong_type_argument(cur_sc, cur_sc->byte_vector_ref_symbol, p1, T_STRING);
+  if ((i1 < 0) || (i1 >= byte_vector_length(p1)))
+    out_of_range(cur_sc, cur_sc->byte_vector_ref_symbol, small_int(2), make_integer(cur_sc, i1), (i1 < 0) ? its_negative_string : its_too_large_string);
+  return(small_int(((unsigned int)(string_value(p1))[i1])));
+}
+
+static s7_pointer byte_vector_ref_p_pi_direct(s7_pointer p1, s7_int i1)
+{
+  if ((i1 < 0) || (i1 >= byte_vector_length(p1)))
+    out_of_range(cur_sc, cur_sc->byte_vector_ref_symbol, small_int(2), make_integer(cur_sc, i1), (i1 < 0) ? its_negative_string : its_too_large_string);
+  return(small_int((unsigned int)(string_value(p1)[i1])));
+}
+
+
+static s7_pointer g_byte_vector_set(s7_scheme *sc, s7_pointer args)
+{
+  #define H_byte_vector_set "(byte-vector-set! vect index byte) sets the index-th element of the byte-vector vect to the integer byte"
+  #define Q_byte_vector_set s7_make_signature(sc, 4, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol, sc->is_integer_symbol)
+
+  s7_pointer v;
+  v = car(args);
+  if (!is_mutable_byte_vector(v))
+    mutable_method_or_bust(sc, v, sc->byte_vector_set_symbol, args, T_STRING, 1);
+  return(g_string_set_2(sc, v, args, sc->byte_vector_set_symbol));
 }
 
 static s7_int byte_vector_set_i(s7_pointer p1, s7_int i1, s7_int i2)
@@ -21407,10 +21433,40 @@ static s7_int byte_vector_set_i(s7_pointer p1, s7_int i1, s7_int i2)
     simple_wrong_type_argument_with_type(cur_sc, cur_sc->byte_vector_set_symbol, p1, s7_make_string(cur_sc, "a byte-vector"));
   if ((i2 < 0) || (i2 > 255))
     simple_wrong_type_argument_with_type(cur_sc, cur_sc->byte_vector_set_symbol, make_integer(cur_sc, i2), an_unsigned_byte_string);
-  if ((i1 < 0) || (i1 >= string_length(p1)))
+  if ((i1 < 0) || (i1 >= byte_vector_length(p1)))
     simple_out_of_range(cur_sc, cur_sc->byte_vector_set_symbol, make_integer(cur_sc, i1), (i1 < 0) ? its_negative_string : its_too_large_string);
   string_value(p1)[i1] = (char)i2;
   return(i2);
+}
+
+static s7_pointer byte_vector_set_unchecked(s7_pointer p1, s7_int i1, s7_pointer p2) {string_value(p1)[i1] = (char)s7_integer(p2); return(p2);}
+
+static s7_pointer byte_vector_set_p_pip(s7_pointer p1, s7_int i1, s7_pointer p2)
+{
+  s7_int ic;  /* not int32_t here! */
+  if (!is_byte_vector(p1))
+    simple_wrong_type_argument(cur_sc, cur_sc->byte_vector_set_symbol, p1, T_STRING);
+  if (!s7_is_integer(p2))
+    simple_wrong_type_argument(cur_sc, cur_sc->byte_vector_set_symbol, p2, T_INTEGER);
+  if ((i1 < 0) || (i1 >= byte_vector_length(p1)))
+    out_of_range(cur_sc, cur_sc->byte_vector_set_symbol, small_int(2), make_integer(cur_sc, i1), (i1 < 0) ? its_negative_string : its_too_large_string);
+  ic = s7_integer(p2);
+  if ((ic < 0) || (ic > 255))
+    return(wrong_type_argument_with_type(cur_sc, cur_sc->byte_vector_set_symbol, 3, p2, an_unsigned_byte_string));
+  string_value(p1)[i1] = (char)ic;
+  return(p2);
+}
+
+static s7_pointer byte_vector_set_p_pip_direct(s7_pointer p1, s7_int i1, s7_pointer p2) 
+{
+  s7_int ic;  /* not int32_t here! */
+  if ((i1 < 0) || (i1 >= byte_vector_length(p1)))
+    out_of_range(cur_sc, cur_sc->byte_vector_set_symbol, small_int(2),make_integer(cur_sc, i1), (i1 < 0) ? its_negative_string : its_too_large_string);
+  ic = s7_integer(p2);
+  if ((ic < 0) || (ic > 255))
+    return(wrong_type_argument_with_type(cur_sc, cur_sc->byte_vector_set_symbol, 3, p2, an_unsigned_byte_string));
+  string_value(p1)[i1] = (char)ic;
+  return(p2);
 }
 
 
@@ -21473,7 +21529,7 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_tem
   for (pos = string_value(newstr), x = args; is_not_null(x); pos += string_length(car(x)), x = cdr(x))
     memcpy(pos, string_value(car(x)), string_length(car(x)));
 
-  if (is_byte_vector(car(args)))
+  if (is_byte_vector_not_string(car(args)))
     set_byte_vector(newstr);
 
   return(newstr);
@@ -22126,10 +22182,10 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
   if (!is_string(x))
     method_or_bust(sc, x, sc->string_fill_symbol, args, T_STRING, 1); /* not two methods here */
   if (is_immutable_string(x))
-    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, x)));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->fill_symbol, x)));
 
   chr = cadr(args);
-  if (!is_byte_vector(x))
+  if (!is_byte_vector_not_string(x))
     {
       if (!s7_is_character(chr))
 	{
@@ -22159,7 +22215,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
     }
   if (end == 0) return(chr);
 
-  if (!is_byte_vector(x))
+  if (!is_byte_vector_not_string(x))
     memset((void *)(string_value(x) + start), (int)character(chr), end - start);
   else memset((void *)(string_value(x) + start), (int)byte, end - start);
 
@@ -25585,7 +25641,7 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
 
     case T_STRING:
       iterator_length(iter) = string_length(e);
-      if (is_byte_vector(e))
+      if (is_byte_vector_not_string(e))
 	iterator_next(iter) = byte_vector_iterate;
       else iterator_next(iter) = string_iterate;
       break;
@@ -28662,7 +28718,7 @@ static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use
 	{
 	  s7_pointer seq;
 	  seq = iterator_sequence(obj);
-	  if ((is_string(seq)) && (!is_byte_vector(seq)))
+	  if ((is_string(seq)) && (!is_byte_vector_not_string(seq)))
 	    {
 	      port_write_string(port)(sc, "(make-iterator \"", 16, port);
 	      port_write_string(port)(sc, (char *)(string_value(seq) + iterator_position(obj)), string_length(seq) - iterator_position(obj), port);
@@ -28849,7 +28905,7 @@ static void syntax_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 
 static void string_to_port_1(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
-  if (is_byte_vector(obj))
+  if (is_byte_vector_not_string(obj))
     byte_vector_to_port(sc, obj, port, use_write);
   else string_to_port(sc, obj, port, use_write);
 }
@@ -31065,10 +31121,8 @@ static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
 }
 
 
-bool s7_tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
+static bool tree_memq_1(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
 {
-  if (sym == tree) return(true);
-  if (!is_pair(tree)) return(false);
   if (car(tree) == sc->quote_symbol)
     {
       if ((is_symbol(sym)) || (is_pair(sym)) || (!is_pair(cdr(tree))))
@@ -31077,11 +31131,21 @@ bool s7_tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
     }
   do {
     if ((sym == cdr(tree)) ||    /* "sym" need not be a symbol */
-	(s7_tree_memq(sc, sym, car(tree))))
+	(sym == car(tree)))
+      return(true);
+    if ((is_pair(car(tree))) &&
+	(tree_memq_1(sc, sym, car(tree))))
       return(true);
     tree = cdr(tree);
   } while (is_pair(tree));
   return(false);
+}
+
+bool s7_tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
+{
+  if (sym == tree) return(true);
+  if (!is_pair(tree)) return(false);
+  return(tree_memq_1(sc, sym, tree));
 }
 
 static s7_pointer g_tree_memq(s7_scheme *sc, s7_pointer args)
@@ -33880,7 +33944,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->vector_fill_symbol, 1, x, T_VECTOR));
     }
   if (is_immutable_vector(x))
-    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, x)));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->fill_symbol, x)));
 
   fill = cadr(args);
   if (is_float_vector(x))
@@ -34746,7 +34810,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
   if (!s7_is_vector(vec))
     method_or_bust(sc, vec, sc->vector_set_symbol, args, T_VECTOR, 1);
   if (is_immutable(vec))
-    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec)));
 
   if (vector_length(_TSet(vec)) == 0)
     return(out_of_range(sc, sc->vector_set_symbol, small_int(1), vec, its_too_large_string));
@@ -34853,7 +34917,7 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, vec, sc->vector_set_symbol, list_3(sc, vec, cadr(args), find_symbol_unchecked(sc, caddr(args))), T_VECTOR, 1);
   /* the list_3 happens only if we find the method */
   if (is_immutable(vec))
-    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec)));
 
   if (vector_rank(vec) > 1)
     return(g_vector_set(sc, set_plist_3(sc, vec, cadr(args), find_symbol_unchecked(sc, caddr(args)))));
@@ -34875,7 +34939,7 @@ static s7_pointer c_vector_set_3(s7_scheme *sc, s7_pointer vec, s7_int index, s7
   if (!s7_is_vector(vec))
     method_or_bust(sc, vec, sc->vector_set_symbol, list_3(sc, vec, make_integer(sc, index), val), T_VECTOR, 1);
   if (is_immutable(vec))
-    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec)));
 
   if (vector_rank(vec) > 1)
     return(g_vector_set(sc, set_plist_3(sc, vec, make_integer(sc, index), val)));
@@ -35416,7 +35480,7 @@ static s7_pointer univect_set(s7_scheme *sc, s7_pointer args, bool flt)
   if (type(vec) != typ)
     method_or_bust(sc, vec, caller, args, typ, 1);
   if (is_immutable(vec))
-    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, caller, vec));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, caller, vec)));
 
   if (vector_rank(vec) > 1)
     {
@@ -35807,7 +35871,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     }
 
   if (is_immutable(data))
-    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->sort_symbol, data)));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->sort_symbol, data)));
 
   lessp = cadr(args);
   if (type(lessp) < T_GOTO)
@@ -36042,14 +36106,14 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 #if (!WITH_GMP)
 	if (is_c_function(lessp))
 	  {
-	    if (((!is_byte_vector(data)) && (compare_func == g_char_less_2)) ||
-		((is_byte_vector(data)) && (compare_func == g_less_2)))
+	    if (((!is_byte_vector_not_string(data)) && (compare_func == g_char_less_2)) ||
+		((is_byte_vector_not_string(data)) && (compare_func == g_less_2)))
 	      {
 		qsort((void *)vector_elements(data), len, sizeof(unsigned char), byte_less);
 		return(data);
 	      }
-	    if (((!is_byte_vector(data)) && (compare_func == g_char_greater_2)) ||
-		((is_byte_vector(data)) && (compare_func == g_greater_2)))
+	    if (((!is_byte_vector_not_string(data)) && (compare_func == g_char_greater_2)) ||
+		((is_byte_vector_not_string(data)) && (compare_func == g_greater_2)))
 	      {
 		qsort((void *)vector_elements(data), len, sizeof(unsigned char), byte_greater);
 		return(data);
@@ -36062,7 +36126,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	elements = s7_vector_elements(vec);
 	chrs = (unsigned char *)string_value(data);
 
-	if (is_byte_vector(data))
+	if (is_byte_vector_not_string(data))
 	  {
 	    for (i = 0; i < len; i++)
 	      elements[i] = small_int(chrs[i]);
@@ -36078,7 +36142,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	    sc->v = vec;
 	    qsort((void *)elements, len, sizeof(s7_pointer), sort_func);
 
-	    if (is_byte_vector(data))
+	    if (is_byte_vector_not_string(data))
 	      {
 		for (i = 0; i < len; i++)
 		  chrs[i] = (char)integer(elements[i]);
@@ -36300,7 +36364,7 @@ static s7_pointer vector_into_string(s7_pointer vect, s7_pointer dest)
   len = vector_length(vect);
   str = (unsigned char *)string_value(dest);
   
-  if (is_byte_vector(dest))
+  if (is_byte_vector_not_string(dest))
     {
       for (i = 0; i < len; i++)
 	str[i] = (unsigned char)integer(elements[i]);
@@ -37733,7 +37797,7 @@ static s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
   s7_pointer val, table;
   table = car(args);
   if (is_immutable(table))
-    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, table)));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->fill_symbol, table)));
   val = cadr(args);
   if (hash_table_entries(table) > 0)
     {
@@ -40613,7 +40677,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  {
 	    s7_pointer ns;
 	    ns = s7_make_string_with_length(sc, string_value(source), string_length(source));
-	    if (is_byte_vector(source))
+	    if (is_byte_vector_not_string(source))
 	      set_byte_vector(ns);
 	    return(ns);
 	  }
@@ -40723,7 +40787,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_STRING:
-      if (is_byte_vector(source))
+      if (is_byte_vector_not_string(source))
 	get = byte_vector_getter;
       else get = string_getter;
       end = string_length(source);
@@ -40798,7 +40862,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_STRING:
-      if (is_byte_vector(dest))
+      if (is_byte_vector_not_string(dest))
 	set = byte_vector_setter;
       else set = string_setter;
       dest_len = string_length(dest);
@@ -41096,7 +41160,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
     case T_STRING:
       if (is_normal_vector(dest))
 	{
-	  if (is_byte_vector(source))
+	  if (is_byte_vector_not_string(source))
 	    {
 	      for (i = start, j = 0; i < end; i++, j++)
 		vector_element(dest, j) = make_integer(sc, (s7_int)((unsigned char)string_value(source)[i]));
@@ -41178,7 +41242,7 @@ also accepts a string or vector argument."
 	np = make_string_uncopied_with_length(sc, dest, len);
 	dest += len;
 	while (source < end) *(--dest) = *source++;
-	if (is_byte_vector(p))
+	if (is_byte_vector_not_string(p))
 	  set_byte_vector(np);
       }
       break;
@@ -41287,7 +41351,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       {
 	s7_pointer np;
 	if (is_immutable(p)) /* TODO: prealloc error str here + symbol for reverse! = elist_3 */
-	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
+	  return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	np = reverse_in_place(sc, sc->nil, p);
 	if (is_null(np))
 	  return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, a_proper_list_string));
@@ -41307,7 +41371,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 	int32_t len;
 	char *s1, *s2;
 	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
+	  return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	len = string_length(p);
 	if (len < 2) return(p);
 	s1 = string_value(p);
@@ -41321,7 +41385,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 	s7_int len;
 	s7_int *s1, *s2;
 	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
+	  return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = int_vector_elements(p);
@@ -41335,7 +41399,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 	s7_int len;
 	s7_double *s1, *s2;
 	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
+	  return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = float_vector_elements(p);
@@ -41349,7 +41413,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 	s7_int len;
 	s7_pointer *s1, *s2;
 	if (is_immutable(p))
-	  return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
+	  return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
 	len = vector_length(p);
 	if (len < 2) return(p);
 	s1 = vector_elements(p);
@@ -41360,7 +41424,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 
     default:
       if (is_immutable(p))
-	return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
+	return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->reverseb_symbol, p)));
       if ((is_simple_sequence(p)) &&
 	  (!has_methods(p)))
 	return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, s7_make_string_wrapper(sc, "a vector, string, or list")));
@@ -41380,7 +41444,7 @@ static s7_pointer pair_fill(s7_scheme *sc, s7_pointer args)
 
   obj = car(args);
   if (is_immutable_pair(obj))
-    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->fill_symbol, obj)));
+    return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->fill_symbol, obj)));
 
   val = cadr(args);
   len = s7_list_length(sc, obj);
@@ -41586,7 +41650,7 @@ static s7_pointer string_append(s7_scheme *sc, s7_pointer args)
 
   len = total_sequence_length(sc, args, sc->string_append_symbol, (is_byte_vector(car(args))) ? T_INTEGER : T_CHARACTER);
   new_str = make_empty_string(sc, len, 0);
-  if (is_byte_vector(car(args)))
+  if (is_byte_vector_not_string(car(args)))
     set_byte_vector(new_str);
 
   if (len > 0)
@@ -41597,7 +41661,7 @@ static s7_pointer string_append(s7_scheme *sc, s7_pointer args)
       sc->temp9 = new_str;
       sv = make_string_wrapper_with_length(sc, (const char *)string_value(new_str), len);
       typeflag(sv) &= (~T_IMMUTABLE); /* we are mutating the string below */
-      if (is_byte_vector(new_str))
+      if (is_byte_vector_not_string(new_str))
 	set_byte_vector(sv);
       sc->temp10 = sv;
 
@@ -41720,7 +41784,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(s7_vector_to_list(sc, obj));
 
     case T_STRING:
-      if (is_byte_vector(obj))
+      if (is_byte_vector_not_string(obj))
 	return(byte_vector_to_list(sc, string_value(obj), string_length(obj)));
       return(s7_string_to_list(sc, string_value(obj), string_length(obj)));
 
@@ -41905,7 +41969,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 
     case T_STRING:
       return(s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj, 
-				  sc->type_symbol, (is_byte_vector(obj)) ? sc->is_byte_vector_symbol : sc->is_string_symbol,
+				  sc->type_symbol, (is_byte_vector_not_string(obj)) ? sc->is_byte_vector_symbol : sc->is_string_symbol,
 				  sc->length_symbol, s7_length(sc, obj))));
 
     case T_PAIR:
@@ -44767,7 +44831,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
     case T_STRING:                       /* (#("12" "34") 0 1) -> #\2 */
       if (is_null(cdr(indices)))
 	{
-	  if (is_byte_vector(obj))       /* ((vector (byte-vector 1)) 0 0) */
+	  if (is_byte_vector_not_string(obj)) /* ((vector (byte-vector 1)) 0 0) */
 	    return(small_int((uint32_t)(character(string_ref_1(sc, obj, car(indices))))));
 	  return(string_ref_1(sc, obj, car(indices)));
 	}
@@ -50628,7 +50692,8 @@ static bool p_pi_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 	    {
 	      if (((is_string(obj)) && (checker == sc->is_string_symbol)) ||
 		  ((s7_is_vector(obj)) && (checker == sc->is_vector_symbol)) ||
-		  ((is_pair(obj)) && (checker == sc->is_pair_symbol)))
+		  ((is_pair(obj)) && (checker == sc->is_pair_symbol)) ||
+		  ((is_byte_vector(obj)) && (checker == sc->is_byte_vector_symbol)))
 		opc->v3.p_pi_f = s7_p_pi_direct_function(s_func);
 	    }
 	}
@@ -50659,7 +50724,7 @@ static bool p_pi_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 		    break;
 		  case T_STRING: 
 		    if (denominator(slot_value(slot)) <= string_length(obj))
-		      opc->v3.p_pi_f = string_ref_unchecked; 
+		      opc->v3.p_pi_f = (is_byte_vector_not_string(obj)) ? byte_vector_ref_unchecked : string_ref_unchecked; 
 		    break;
 		  }
 	      return(true);
@@ -51179,7 +51244,8 @@ static bool p_pip_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 	  obj = slot_value(opc->v1.p);
 	  if (((is_string(obj)) && (checker == sc->is_string_symbol)) ||
 	      ((s7_is_vector(obj)) && (checker == sc->is_vector_symbol)) ||
-	      ((is_pair(obj)) && (checker == sc->is_pair_symbol)))
+	      ((is_pair(obj)) && (checker == sc->is_pair_symbol)) ||
+	      ((is_byte_vector(obj)) && (checker == sc->is_byte_vector_symbol)))
 	    opc->v3.p_pip_f = s7_p_pip_direct_function(s_func);
 	}
       
@@ -51213,7 +51279,7 @@ static bool p_pip_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 		    break;
 		  case T_STRING: 
 		    if (denominator(slot_value(slot)) <= string_length(obj))
-		      opc->v3.p_pip_f = string_set_unchecked; 
+		      opc->v3.p_pip_f = (is_byte_vector_not_string(obj)) ? byte_vector_set_unchecked : string_set_unchecked; 
 		    break;
 		  }
 	      
@@ -51636,11 +51702,14 @@ static bool p_implicit(s7_scheme *sc, s7_pointer car_x, int32_t len)
 	      /* TODO: c-object implicit ref if direct exists (pi case) */
 	      switch (type(obj))
 		{
-		case T_STRING:     opc->v3.p_pi_f = string_ref_p_pi_direct;	  break;
 		case T_PAIR:       opc->v3.p_pi_f = list_ref_p_pi_direct;	  break;
 		case T_HASH_TABLE: opc->v3.p_pp_f = hash_table_ref_p_pp_direct;   break;
 		case T_LET:        opc->v3.p_pp_f = let_ref_p_pp;		  break;
 		  
+		case T_STRING:
+		  opc->v3.p_pi_f = (is_byte_vector_not_string(obj)) ? byte_vector_ref_p_pi_direct : string_ref_p_pi_direct;
+		  break;
+
 		case T_VECTOR:
 		case T_INT_VECTOR:
 		case T_FLOAT_VECTOR:
@@ -51675,7 +51744,7 @@ static bool p_implicit(s7_scheme *sc, s7_pointer car_x, int32_t len)
 			      if ((is_string(obj)) &&
 				  (is_step_end(opc->v2.p)) &&
 				  (denominator(slot_value(opc->v2.p)) <= string_length(obj)))
-				opc->v3.p_pi_f = string_ref_unchecked;
+				opc->v3.p_pi_f = (is_byte_vector_not_string(obj)) ? byte_vector_ref_unchecked : string_ref_unchecked;
 			      else
 				{
 				  if ((s7_is_vector(obj)) &&
@@ -52024,7 +52093,7 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 		  switch (type(obj))
 		    {
 		    case T_STRING:     
-		      opc->v3.p_pip_f = string_set_p_pip_direct;
+		      opc->v3.p_pip_f = (is_byte_vector_not_string(obj)) ? byte_vector_set_p_pip_direct : string_set_p_pip_direct;
 		      break;
 
 		    case T_VECTOR:     
@@ -52083,7 +52152,7 @@ static bool opt_cell_set(s7_scheme *sc, s7_pointer car_x)
 			    {
 			      if ((is_string(obj)) &&
 				  (denominator(slot_value(opc->v2.p)) <= string_length(obj)))
-				opc->v3.p_pip_f = string_set_unchecked;
+				opc->v3.p_pip_f = (is_byte_vector_not_string(obj)) ? byte_vector_set_unchecked : string_set_unchecked;
 			      else
 				{
 				  if (s7_is_vector(obj))
@@ -64141,7 +64210,7 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 	  if (index >= vector_length(obj))
 	    eval_range_error(sc, "vector-set!: index must be less than vector length: ~S", sc->code);
 	  if (is_immutable(obj))
-	    s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, obj));
+	    immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, obj));
 	  vector_setter(obj)(sc, obj, index, value);
 	  sc->value = _NFre(value);
 	}
@@ -64165,7 +64234,7 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 	if (index >= string_length(obj))
 	  eval_range_error(sc, "string-set!: index must be less than string length: ~S", sc->code);
 	if (is_immutable(obj))
-	  s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->string_set_symbol, obj));
+	  immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->string_set_symbol, obj));
 
 	if (s7_is_character(value))
 	  {
@@ -64174,7 +64243,7 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 	  }
 	else
 	  {
-	    if ((is_byte_vector(obj)) &&
+	    if ((is_byte_vector_not_string(obj)) &&
 		(s7_is_integer(value)))
 	      {
 		int32_t ic;
@@ -64199,13 +64268,13 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
       
     case T_HASH_TABLE:
       if (is_immutable(obj))
-	s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->hash_table_set_symbol, obj));
+	immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->hash_table_set_symbol, obj));
       sc->value = s7_hash_table_set(sc, obj, arg, value);
       break;
       
     case T_LET:
       if (is_immutable(obj))
-	s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, obj));
+	immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, obj));
       sc->value = s7_let_set(sc, obj, arg, value);
       break;
       
@@ -64423,7 +64492,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no index for vector-set!: ~S", sc->code);
 	if (is_immutable(cx))
-	  s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, cx));
+	  immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, cx));
 
 	if ((!is_null(cddr(settee))) &&
 	    (is_normal_vector(cx)))
@@ -64520,7 +64589,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
 		(ind >= string_length(cx)))
 	      out_of_range(sc, sc->string_set_symbol, small_int(2), index, (ind < 0) ? its_negative_string : its_too_large_string);
 	    if (is_immutable(cx))
-	      s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->string_set_symbol, cx));
+	      immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->string_set_symbol, cx));
 	    
 	    val = cadr(sc->code);
 	    if (!is_pair(val))
@@ -64535,7 +64604,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
 		  }
 		else
 		  {
-		    if ((is_byte_vector(cx)) &&
+		    if ((is_byte_vector_not_string(cx)) &&
 			(s7_is_integer(val)))
 		      {
 			int32_t ic;
@@ -64625,7 +64694,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no key for hash-table-set!: ~S", sc->code);
 	if (is_immutable(cx))
-	  s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->hash_table_set_symbol, cx));
+	  immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->hash_table_set_symbol, cx));
 
 	if (!is_null(cddr(settee)))
 	  {
@@ -64679,7 +64748,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no identifier for let-set!: ~S", sc->code);
 	if (is_immutable(cx))
-	  s7_error(sc, sc->error_symbol, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, cx));
+	  immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, cx));
 	
 	if (!is_null(cddr(settee)))
 	  {
@@ -67515,7 +67584,7 @@ static int32_t string_a_ex(s7_scheme *sc)
   if ((index < string_length(s)) &&
       (index >= 0))
     {
-      if (is_byte_vector(s))
+      if (is_byte_vector_not_string(s))
 	sc->value = small_int((unsigned char)string_value(s)[index]);
       else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
       return(goto_START);
@@ -67798,7 +67867,7 @@ static void apply_string(s7_scheme *sc)                            /* -------- s
 	  if ((index >= 0) &&
 	      (index < string_length(sc->code)))
 	    {
-	      if (is_byte_vector(sc->code))
+	      if (is_byte_vector_not_string(sc->code))
 		sc->value = small_int((unsigned char)(string_value(sc->code))[index]);
 	      else sc->value = s7_make_character(sc, ((unsigned char *)string_value(sc->code))[index]);
 	      return;
@@ -83046,6 +83115,11 @@ s7_scheme *s7_init(void)
   s7_set_p_pi_direct_function(slot_value(global_slot(sc->string_ref_symbol)), string_ref_p_pi_direct);
   s7_set_p_pip_direct_function(slot_value(global_slot(sc->string_set_symbol)), string_set_p_pip_direct);
 
+  s7_set_p_pi_function(slot_value(global_slot(sc->byte_vector_ref_symbol)), byte_vector_ref_p_pi);
+  s7_set_p_pi_direct_function(slot_value(global_slot(sc->byte_vector_ref_symbol)), byte_vector_ref_p_pi_direct);
+  s7_set_p_pip_function(slot_value(global_slot(sc->byte_vector_set_symbol)), byte_vector_set_p_pip);
+  s7_set_p_pip_direct_function(slot_value(global_slot(sc->byte_vector_set_symbol)), byte_vector_set_p_pip_direct);
+
   s7_set_p_pp_function(slot_value(global_slot(sc->hash_table_ref_symbol)), hash_table_ref_p_pp);
   s7_set_p_ppp_function(slot_value(global_slot(sc->hash_table_set_symbol)), hash_table_set_p_ppp);
   s7_set_p_pp_direct_function(slot_value(global_slot(sc->hash_table_ref_symbol)), hash_table_ref_p_pp_direct);
@@ -83617,6 +83691,7 @@ int main(int argc, char **argv)
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
  * maybe pass \u... through in read_constant_string unchanged, or read in s7??  no worse than \x..;
+ * doc entry could be a thunk, doc/sig for var without a setter? = slot_pending/expr + bits? collisions?
  *
  * c_object type table entries should also be s7_function, reported by object->let perhaps
  *    wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
@@ -83634,19 +83709,20 @@ int main(int argc, char **argv)
  *   need generic setter func (and documentation, signature)
  *   vect get/set should be s7_function (multi-dim indices for example)
  *   if all these cell-local setters were s7_functions this would be easy to implement
+ *   for string, nowhere to put the pointer?
  *
- * ----------------------------------------------------------------------------
+ * --------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.7  17.8
  * tmac          |      |      |      || 9052 |  615   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1050
- * tref          |      |      | 2372 || 2125 | 1375  1109  1115
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1049
+ * tref          |      |      | 2372 || 2125 | 1375  1109  1121
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1341
  * teq           |      |      | 6612 || 2777 | 2129  1921  1925
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2155
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2152
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426
- * lint          |      |      |      || 4041 | 3376  2726  2732
- * lg            |      |      |      || 211  | 161   134.9 134.9
+ * lint          |      |      |      || 4041 | 3376  2726  2710
+ * lg            |      |      |      || 211  | 161   134.9 134.7
  * tform         |      |      | 6816 || 3714 | 3530  2746  2755
  * tcopy         |      |      | 13.6 || 3183 | 3404  3071  2920
  * tmap          |      |      |  9.3 || 5279 |       3386  3386
@@ -83660,5 +83736,5 @@ int main(int argc, char **argv)
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  39.4  39.2
  *                                    || 139  | 129   83.4  82.7
  * 
- * ----------------------------------------------------------------------------
+ * --------------------------------------------------------------
  */

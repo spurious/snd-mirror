@@ -960,118 +960,10 @@ giving the new symbol name's prefix.  gensym? returns #t if its argument is a sy
 <em class="gray">4</em>
 </pre>
 
-<p>A bacro is a macro that expands its body and evaluates
-the result in the calling environment. 
-</p>
-
-<pre class="indented">
-(define setf
-  (let ((args (gensym))
-        (name (gensym)))
-     (apply <em class=red>define-bacro</em> `((,name . ,args)        
-			   (unless (null? ,args)
-			     (apply set! (car ,args) (cadr ,args) ())
-			     (apply setf (cddr ,args)))))))
-</pre>
-
-
-<p>
-The setf argument is a gensym (created when setf is defined) so that its name does not shadow any existing
-variable.  Bacros expand in the calling environment, and a normal argument name
-might shadow something in that environment while the bacro is being expanded.
-Similarly, if you introduce bindings in the bacro expansion code, you need to
-keep track of which environment you want things to happen in.  Use with-let
-and gensym liberally.  
-stuff.scm has bacro-shaker which can find inadvertent name collisions,
-but it is flighty and easily confused.
-See s7test.scm for many examples of macros including such perennial favorites as
-loop, dotimes, do*, enum, pushnew, and defstruct.
-The calling environment itself is (outlet (curlet)) from within a bacro, so
-</p>
-
-<pre class="indented">
-(define-bacro (holler)
-  `(format *stderr* "(~S~{ ~S ~S~^~})~%" 
-	   (let ((f __func__))
-	     (if (pair? f) (car f) f))
-	   (map (lambda (slot)
-		  (values (symbol-&gt;keyword (car slot)) (cdr slot)))		  
-		(reverse (map values ,(outlet (curlet)))))))
-
-(define (f1 a b)
-  (holler)
-  (+ a b))
-
-(f1 2 3) ; prints out "(f1 :a 2 :b 3)" and returns 5
-</pre>
-
-
 <blockquote>
-
 <div class="indented">
 
-<p>
-Since a bacro (normally) sheds its define-time environment:
-</p>
-
-<pre class="indented">
-(define call-bac
-  (let ((<em class=red>x</em> 2))
-    (define-bacro (m a) `(+ ,a ,<em class=red>x</em>))))
-
-&gt; (call-bac 1) 
-<em class="red">error: </em><em class="gray">x: unbound variable</em>
-</pre>
-<p>
-A macro here returns 3.  But don't be hasty!  The bacro can get its define-time environment (its closure)
-via funclet, so in fact, define-macro is a special case of define-bacro!  We can define
-macros that work in all four ways: the expansion can happen in either the definition or calling environment,
-as can the evaluation of that expansion.  In a bacro, both happen in the calling environment
-if we take no other action, and in a normal macro (define-macro), the expansion happens in the definition
-environment, and the evaluation in the calling environment.
-Here's a brief example of all four:
-</p>
-
-<pre class="indented">
-(let ((x 1) (y 2)) 
-  (define-bacro (bac1 a) 
-     `(+ ,x y ,a))        ; expand and eval in calling env
-  (let ((x 32) (y 64)) 
-    (bac1 3)))            ; (with-let (inlet 'x 32 'y 64) (+ 32 y 3))
--&gt; 99                     ;  with-let and inlet refer to <a href="#environments">environments</a>
-
-(let ((x 1) (y 2))        ; this is like define-macro
-  (define-bacro (bac2 a) 
-    (with-let (sublet (funclet bac2) :a a)
-      `(+ ,x y ,a)))      ; expand in definition env, eval in calling env
-  (let ((x 32) (y 64)) 
-    (bac2 3)))            ; (with-let (inlet 'x 32 'y 64) (+ 1 y 3))
--&gt; 68
-
-(let ((x 1) (y 2))
-  (define-bacro (bac3 a) 
-    (let ((e (with-let (sublet (funclet bac3) :a a)
-	       `(+ ,x y ,a))))
-      `(with-let ,(sublet (funclet bac3) :a a)
-	 ,e)))           ; expand and eval in definition env 
-  (let ((x 32) (y 64)) 
-    (bac3 3)))           ; (with-let (inlet 'x 1 'y 2) (+ 1 y 3))
--&gt; 6
-
-(let ((x 1) (y 2))
-  (define-bacro (bac4 a) 
-    (let ((e `(+ ,x y ,a)))
-      `(with-let ,(sublet (funclet bac4) :a a)
-	 ,e)))           ; expand in calling env, eval in definition env
-  (let ((x 32) (y 64))     
-    (bac4 3)))           ; (with-let (inlet 'x 1 'y 2) (+ 32 y 3))
--&gt; 37
-</pre>
-</div>
-
-<div class="indented">
-
-<p>As the setf example shows, a macro is a first-class citizen of s7.  You can
+<p>A macro is a first-class citizen of s7.  You can
 pass it as a function argument, apply it to a list, return it from a function,
 call it recursively, 
 and assign it to a variable.  You can even set its procedure-setter!
@@ -1133,6 +1025,116 @@ state.
 
 
 <details>
+<summary class="indented">bacros</summary>
+<div class="indented">
+
+<p>A bacro is a macro that expands its body and evaluates
+the result in the calling environment. 
+</p>
+
+<pre class="indented">
+(define setf
+  (let ((args (gensym))
+        (name (gensym)))
+     (apply <em class=red>define-bacro</em> `((,name . ,args)        
+			   (unless (null? ,args)
+			     (apply set! (car ,args) (cadr ,args) ())
+			     (apply setf (cddr ,args)))))))
+</pre>
+
+
+<p>
+The setf argument is a gensym (created when setf is defined) so that its name does not shadow any existing
+variable.  Bacros expand in the calling environment, and a normal argument name
+might shadow something in that environment while the bacro is being expanded.
+Similarly, if you introduce bindings in the bacro expansion code, you need to
+keep track of which environment you want things to happen in.  Use with-let
+and gensym liberally.  
+stuff.scm has bacro-shaker which can find inadvertent name collisions,
+but it is flighty and easily confused.
+See s7test.scm for many examples of macros including such perennial favorites as
+loop, dotimes, do*, enum, pushnew, and defstruct.
+The calling environment itself is (outlet (curlet)) from within a bacro, so
+</p>
+
+<pre class="indented">
+(define-bacro (holler)
+  `(format *stderr* "(~S~{ ~S ~S~^~})~%" 
+	   (let ((f __func__))
+	     (if (pair? f) (car f) f))
+	   (map (lambda (slot)
+		  (values (symbol-&gt;keyword (car slot)) (cdr slot)))		  
+		(reverse (map values ,(outlet (curlet)))))))
+
+(define (f1 a b)
+  (holler)
+  (+ a b))
+
+(f1 2 3) ; prints out "(f1 :a 2 :b 3)" and returns 5
+</pre>
+
+<p>
+Since a bacro (normally) sheds its define-time environment:
+</p>
+
+<pre class="indented">
+(define call-bac
+  (let ((<em class=red>x</em> 2))
+    (define-bacro (m a) `(+ ,a ,<em class=red>x</em>))))
+
+&gt; (call-bac 1) 
+<em class="red">error: </em><em class="gray">x: unbound variable</em>
+</pre>
+<p>
+A macro here returns 3.  But don't be hasty!  The bacro can get its define-time environment (its closure)
+via funclet, so in fact, define-macro is a special case of define-bacro!  We can define
+macros that work in all four ways: the expansion can happen in either the definition or calling environment,
+as can the evaluation of that expansion.  In a bacro, both happen in the calling environment
+if we take no other action, and in a normal macro (define-macro), the expansion happens in the definition
+environment, and the evaluation in the calling environment.
+Here's a brief example of all four:
+</p>
+
+<pre class="indented">
+(let ((x 1) (y 2)) 
+  (define-bacro (bac1 a) 
+     `(+ ,x y ,a))        ; expand and eval in calling env
+  (let ((x 32) (y 64)) 
+    (bac1 3)))            ; (with-let (inlet 'x 32 'y 64) (+ 32 y 3))
+-&gt; 99                     ;  with-let and inlet refer to <a href="#environments">environments</a>
+
+(let ((x 1) (y 2))        ; this is like define-macro
+  (define-bacro (bac2 a) 
+    (with-let (sublet (funclet bac2) :a a)
+      `(+ ,x y ,a)))      ; expand in definition env, eval in calling env
+  (let ((x 32) (y 64)) 
+    (bac2 3)))            ; (with-let (inlet 'x 32 'y 64) (+ 1 y 3))
+-&gt; 68
+
+(let ((x 1) (y 2))
+  (define-bacro (bac3 a) 
+    (let ((e (with-let (sublet (funclet bac3) :a a)
+	       `(+ ,x y ,a))))
+      `(with-let ,(sublet (funclet bac3) :a a)
+	 ,e)))           ; expand and eval in definition env 
+  (let ((x 32) (y 64)) 
+    (bac3 3)))           ; (with-let (inlet 'x 1 'y 2) (+ 1 y 3))
+-&gt; 6
+
+(let ((x 1) (y 2))
+  (define-bacro (bac4 a) 
+    (let ((e `(+ ,x y ,a)))
+      `(with-let ,(sublet (funclet bac4) :a a)
+	 ,e)))           ; expand in calling env, eval in definition env
+  (let ((x 32) (y 64))     
+    (bac4 3)))           ; (with-let (inlet 'x 1 'y 2) (+ 32 y 3))
+-&gt; 37
+</pre>
+</div>
+</details>
+
+
+<details>
 <summary class="indented">backquote details</summary>
 <div class="indented">
 
@@ -1178,7 +1180,7 @@ other hand, seem unnecessary.
 </p>
 </div>
 </details>
-
+</blockquote>
 
 <p>s7 macros are not hygienic.  For example,
 </p>
@@ -1353,6 +1355,7 @@ a with-let that captures the current environment, and at each use of a macro arg
 wrap it in a with-let that re-establishes that environment. 
 </p>
 
+<blockquote>
 <div class="indented">
 <pre>
 (define-macro (swap a b) ; assume a and b are symbols
@@ -1390,6 +1393,7 @@ wrap it in a with-let that re-establishes that environment.
 <em class="gray">(2 3 1)</em>
 </pre>
 </div>
+</blockquote>
 
 <p>
 If you want the macro's expanded result
@@ -1437,7 +1441,7 @@ to be evaluated in its definition environment:
 -->
 
 
-
+<blockquote>
 <div class="indented">
 
 <p>Here is Peter Seibel's wonderful once-only macro:
@@ -1475,7 +1479,6 @@ to be evaluated in its definition environment:
 <p>Sadly, with-let is simpler.
 </p>
 </div>
-
 </blockquote>
 
 <!--
