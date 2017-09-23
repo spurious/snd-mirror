@@ -14,12 +14,8 @@ extern "C" {
 #endif
 
 MUS_EXPORT mus_long_t clm_default_table_size_c(void);
-#if (!DISABLE_DEPRECATED)
-MUS_EXPORT mus_float_t clm_default_frequency_c(void);
-#endif
 
 MUS_EXPORT mus_any *mus_xen_gen(mus_xen *x);
-
 MUS_EXPORT bool mus_is_xen(Xen obj);
 MUS_EXPORT const char *mus_fft_window_xen_name(mus_fft_window_t i);
 MUS_EXPORT Xen mus_xen_to_object(mus_xen *gn);

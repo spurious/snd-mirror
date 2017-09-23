@@ -1,13 +1,13 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "5.10"
-#define S7_DATE "13-Sep-17"
+#define S7_VERSION "5.11"
+#define S7_DATE "18-Sep-17"
 
 #include <stdint.h>           /* for int64_t */
 
 typedef int64_t s7_int;       /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
-typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
+typedef double s7_double;     /*   similarly for Scheme reals; only double works in C++ */
 
 /* old forms... */
 typedef s7_int s7_Int;
@@ -561,10 +561,6 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
    * s7_call_with_location passes some information to the error handler.  
    */
 
-void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, 
-				    s7_function set_fnc, int32_t req_args, int32_t opt_args, const char *doc);
-  /* this is now the same as s7_dilambda (different args) */
-
 bool s7_is_dilambda(s7_pointer obj);
 s7_pointer s7_dilambda(s7_scheme *sc, 
 		       const char *name,
@@ -871,6 +867,10 @@ void s7_object_type_set_direct(int32_t tag,
 
 #define s7_symbol_access s7_symbol_setter
 #define s7_symbol_set_access s7_symbol_set_setter
+
+void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, 
+				    s7_function set_fnc, int32_t req_args, int32_t opt_args, const char *doc);
+  /* this is now the same as s7_dilambda (different args) */
 #endif
 
 

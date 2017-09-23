@@ -2378,7 +2378,6 @@ static int64_t not_heap = -1;
 #define ROOTLET_SIZE 512
 #define let_id(p)                     (_TLid(p))->object.envr.id
 #define is_let(p)                     (type(p) == T_LET)
-#define is_mutable_let(p)             ((typeflag(p) & (0xff | T_IMMUTABLE)) == T_LET)
 #define let_slots(p)                  (_TLet(p))->object.envr.slots
 #define let_set_slots(p, Slot)        (_TLet(p))->object.envr.slots = _TSln(Slot)
 #define outlet(p)                     (_TLet(p))->object.envr.nxt
@@ -36680,6 +36679,14 @@ static uint32_t hash_map_let(s7_scheme *sc, s7_pointer table, s7_pointer key)
   return(slots);
 }
 
+static uint32_t len_upto_8(s7_scheme *sc, s7_pointer p)
+{
+  s7_pointer x;
+  uint32_t i;   /* unrolling this loop saves 10-15% */
+  for (i = 0, x = p; (is_pair(x)) && (i < 8); i++, x = cdr(x));
+  return(i);
+}
+
 static uint32_t hash_map_pair(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   /* len+loc(car) is not horrible, but it means (for example) every list '(set! ...) is hashed to the same location,
@@ -36709,6 +36716,7 @@ static uint32_t hash_map_pair(s7_scheme *sc, s7_pointer table, s7_pointer key)
 	    loc += hash_loc(sc, table, caar(p1)) + 1;
 	}
     }
+  loc = (loc << 3) | len_upto_8(sc, key);
   return(loc);
 }
 
@@ -37584,8 +37592,6 @@ static void extend_hash_free_list(void)
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
 {
   hash_entry_t *x;
-  /* if (is_immutable(table)) abort(); */
-
   x = (*hash_table_checker(table))(sc, table, key);
 
   if (x)
@@ -38938,11 +38944,12 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
   return(c_set_setter(sc, p, setter));
 }
 
-
+#if (!DISABLE_DEPRECATED)
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int32_t req_args, int32_t opt_args, const char *doc)
 {
   s7_dilambda(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc);
 }
+#endif
 
 
 /* -------------------------------- arity -------------------------------- */
@@ -83711,6 +83718,9 @@ int main(int argc, char **argv)
  *   if all these cell-local setters were s7_functions this would be easy to implement
  *   for string, nowhere to put the pointer?
  *
+ * tree-set-memq opt: if known symbol list, no need to check in g_tree_set_memq
+ *   also same opt as tree_memq earlier (reduce recursion)
+ *
  * --------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.7  17.8
@@ -83719,10 +83729,10 @@ int main(int argc, char **argv)
  * tref          |      |      | 2372 || 2125 | 1375  1109  1121
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1341
  * teq           |      |      | 6612 || 2777 | 2129  1921  1925
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2152
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2104
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426
- * lint          |      |      |      || 4041 | 3376  2726  2710
- * lg            |      |      |      || 211  | 161   134.9 134.7
+ * lint          |      |      |      || 4041 | 3376  2726  2683
+ * lg            |      |      |      || 211  | 161   134.9 133.2
  * tform         |      |      | 6816 || 3714 | 3530  2746  2755
  * tcopy         |      |      | 13.6 || 3183 | 3404  3071  2920
  * tmap          |      |      |  9.3 || 5279 |       3386  3386

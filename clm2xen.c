@@ -524,31 +524,6 @@ static Xen g_set_clm_table_size(Xen val)
 }
 
 
-#if (!DISABLE_DEPRECATED)
-#define S_clm_default_frequency "clm-default-frequency"
-
-static mus_float_t clm_default_frequency = 0.0;
-#if HAVE_SCHEME
-  static s7_pointer clm_default_frequency_symbol;
-#endif
-
-mus_float_t clm_default_frequency_c(void) {return(clm_default_frequency);}
-
-static Xen g_clm_default_frequency(void) {return(C_double_to_Xen_real(clm_default_frequency));}
-
-static Xen g_set_clm_default_frequency(Xen val) 
-{
-  #define H_clm_default_frequency "(" S_clm_default_frequency "): the default frequency for most generators (0.0)"
-  Xen_check_type(Xen_is_double(val), val, 1, S_set S_clm_default_frequency, "a number");
-  clm_default_frequency = Xen_real_to_C_double(val);
-#if HAVE_SCHEME
-  s7_symbol_set_value(s7, clm_default_frequency_symbol, s7_make_real(s7, clm_default_frequency));
-#endif
-  return(val);
-}
-#endif
-
-
 /* ---------------- AM and simple stuff ---------------- */
 
 static const char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] = 
@@ -12491,11 +12466,6 @@ Xen_wrap_1_arg(g_make_all_pass_bank_w, g_make_all_pass_bank)
 Xen_wrap_1_arg(g_pink_noise_w, g_pink_noise)
 Xen_wrap_3_args(g_out_bank_w, g_out_bank)
 
-#if (!DISABLE_DEPRECATED)
-Xen_wrap_no_args(g_clm_default_frequency_w, g_clm_default_frequency)
-Xen_wrap_1_arg(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
-#endif
-
 #if HAVE_SCHEME
 Xen_wrap_2_args(g_piano_noise_w, g_piano_noise)
 Xen_wrap_6_args(g_singer_filter_w, g_singer_filter)
@@ -13753,11 +13723,6 @@ static void mus_xen_init(void)
 
 #if HAVE_SCHEME
   init_choosers(s7);
-#endif
-
-#if (!DISABLE_DEPRECATED)
-  Xen_define_typed_dilambda(S_clm_default_frequency, g_clm_default_frequency_w, H_clm_default_frequency,
-			    S_set S_clm_default_frequency, g_set_clm_default_frequency_w, 0, 0, 1, 0, pl_d, pl_dr);
 #endif
 
 
