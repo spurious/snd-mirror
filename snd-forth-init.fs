@@ -1,6 +1,6 @@
 \ .snd_forth -- start up file for Snd/Forth
 \
-\ @(#)snd-forth-init.fs	1.43 11/11/14
+\ @(#)snd-forth-init.fs	1.44 9/25/17
 \
 
 \ You can install the *.fs scripts with:
@@ -101,7 +101,6 @@ require clm-ins
 	then
 ;
 
-440.0 to *clm-default-frequency*
 #t to *clm-play*
 #t to *clm-statistics*
 #t to *clm-verbose*

@@ -1110,7 +1110,7 @@ struct s7_scheme {
              sublet_symbol, substring_symbol, subtract_symbol, symbol_setter_symbol, symbol_symbol, symbol_to_dynamic_value_symbol,
              symbol_to_keyword_symbol, symbol_to_string_symbol, symbol_to_value_symbol, s7_version_symbol,
              tan_symbol, tanh_symbol, throw_symbol, string_to_byte_vector_symbol, 
-             tree_count_symbol, truncate_symbol, type_of_symbol,
+             tree_count_symbol, tree_leaves_symbol, tree_memq_symbol, tree_set_memq_symbol, truncate_symbol, type_of_symbol,
              unlet_symbol, 
              values_symbol, varlet_symbol, vector_append_symbol, vector_dimensions_symbol, vector_fill_symbol, vector_ref_symbol,
              vector_set_symbol, vector_symbol, 
@@ -3168,7 +3168,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_CLOSURE_AP, HOP_CLOSURE_AP, OP_CLOSURE_PA, HOP_CLOSURE_PA, 
       OP_CLOSURE_ANY_ALL_X, HOP_CLOSURE_ANY_ALL_X, 
 
-      OP_CLOSURE_STAR_A, HOP_CLOSURE_STAR_A, OP_CLOSURE_STAR_AA, HOP_CLOSURE_STAR_AA, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X,
+      OP_CLOSURE_STAR_A, HOP_CLOSURE_STAR_A, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X,
 
       OP_SAFE_THUNK, HOP_SAFE_THUNK, 
       OP_SAFE_THUNK_E, HOP_SAFE_THUNK_E, 
@@ -3395,7 +3395,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "closure_ap", "h_closure_ap", "closure_pa", "h_closure_pa", 
       "closure_any_all_x", "h_closure_any_all_x", 
 
-      "closure*_a", "h_closure*_a", "closure*_aa", "h_closure*_aa", "closure*_all_x", "h_closure*_all_x",
+      "closure*_a", "h_closure*_a", "closure*_all_x", "h_closure*_all_x",
 
       "safe_thunk", "h_safe_thunk", 
       "safe_thunk_e", "h_safe_thunk_e", 
@@ -3935,18 +3935,14 @@ static void mark_slot(s7_pointer p)
   if (slot_has_setter(p))
     S7_MARK(slot_setter(p));
 
-  if (is_gensym(slot_symbol(p))) /* (let () (apply define (gensym) (list 32)) (gc) (gc) (curlet)) */
+  /* if (is_gensym(slot_symbol(p))) */ /* (let () (apply define (gensym) (list 32)) (gc) (gc) (curlet)) */
     set_mark(slot_symbol(p));
 }
 
 static void mark_symbol(s7_pointer p)
 {
-  if (is_gensym(p))
+  /* if (is_gensym(p)) */
     set_mark(p);
-  /* don't set the mark bit of a normal symbol!  It wrecks the check against SYNTACTIC_TYPE,
-   *   slowing everything down by a large amount.
-   * (this comment is obsolete I think)
-   */
 }
 
 static void mark_noop(s7_pointer p) {}
@@ -13585,8 +13581,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  if (denominator(pw) == 3)
 	    return(make_real(sc, cbrt(real_to_double(sc, n, "expt")))); /* (expt 27 1/3) should be 3, not 3.0... */
 
-	  /* but: (expt 512/729 1/3) -> 0.88888888888889
-	   */
+	  /* but: (expt 512/729 1/3) -> 0.88888888888889 */
 	  /* and 4 -> sqrt(sqrt...) etc? */
 	}
 
@@ -13599,8 +13594,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       if (x > 0.0)
 	return(make_real(sc, pow(x, y)));
-      /* tricky cases abound here: (expt -1 1/9223372036854775807)
-       */
+      /* tricky cases abound here: (expt -1 1/9223372036854775807) */
     }
 
   /* (expt 0+i 1e+16) = 0.98156860153485-0.19111012657867i ?
@@ -13613,6 +13607,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- lcm -------------------------------- */
 static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 {
+  /* (/ (* m n) (gcd m n)), (lcm a b c) -> (lcm a (lcm b c)) */
   #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
   #define Q_lcm pcl_f
 
@@ -31176,18 +31171,43 @@ static s7_pointer g_tree_set_memq(s7_scheme *sc, s7_pointer args)
 {
   #define H_tree_set_memq "(tree-set-memq symbols tree) returns #t if any of the list of symbols is in the tree"
   #define Q_tree_set_memq s7_make_signature(sc, 3, sc->is_boolean_symbol, sc->is_list_symbol, sc->is_list_symbol)
-  s7_pointer syms, p, tree;
+  s7_pointer syms, p;
   syms = car(args);
   if (!is_pair(syms)) return(sc->F);
-  tree = cadr(args);
   clear_symbol_list(sc);
   for (p = syms; is_pair(p); p = cdr(p))
     if (is_symbol(car(p)))
       add_symbol_to_list(sc, car(p));
-  return(make_boolean(sc, tree_set_memq(sc, tree)));
+  return(make_boolean(sc, tree_set_memq(sc, cadr(args))));
 }
 
 static bool tree_set_memq_b_pp(s7_pointer syms, s7_pointer tree) {return(g_tree_set_memq(cur_sc, set_plist_2(cur_sc, syms, tree)) != cur_sc->F);}
+
+static s7_pointer tree_set_memq_syms;
+static s7_pointer g_tree_set_memq_1(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  clear_symbol_list(sc);
+  for (p = car(args); is_pair(p); p = cdr(p))
+    add_symbol_to_list(sc, car(p));
+  return(make_boolean(sc, tree_set_memq(sc, cadr(args))));
+}
+
+static s7_pointer tree_set_memq_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_pointer expr, bool ops)
+{
+  if ((is_pair(cadr(expr))) &&
+      (caadr(expr) == sc->quote_symbol) &&
+      (is_pair(cadadr(expr))))
+    {
+      s7_pointer p;
+      for (p = cadadr(expr); is_pair(p); p = cdr(p))
+	if (!is_symbol(car(p)))
+	  return(f);
+      return(tree_set_memq_syms);
+    }
+  return(f);
+}
+
 
 static s7_int tree_count(s7_scheme *sc, s7_pointer x, s7_pointer p, s7_int count)
 {
@@ -58315,14 +58335,17 @@ static void init_choosers(s7_scheme *sc)
   member_sq = make_function_with_class(sc, f, "member", g_member_sq, 2, 0, false, "member opt");
 
   /* memq */
-  f = set_function_chooser(sc, sc->memq_symbol, memq_chooser);
-  /* is pure-s7, use member here */
+  f = set_function_chooser(sc, sc->memq_symbol, memq_chooser);  /* is pure-s7, use member here */
   memq_2 = make_function_with_class(sc, f, "memq", g_memq_2, 2, 0, false, "memq opt");
   memq_3 = make_function_with_class(sc, f, "memq", g_memq_3, 2, 0, false, "memq opt");
   memq_4 = make_function_with_class(sc, f, "memq", g_memq_4, 2, 0, false, "memq opt");
   memq_any = make_function_with_class(sc, f, "memq", g_memq_any, 2, 0, false, "memq opt");
   memq_car = make_function_with_class(sc, f, "memq", g_memq_car, 2, 0, false, "memq opt");
   memq_car_2 = make_function_with_class(sc, f, "memq", g_memq_car_2, 2, 0, false, "memq opt");
+
+  /* tree-set-memq */
+  f = set_function_chooser(sc, sc->tree_set_memq_symbol, tree_set_memq_chooser);
+  tree_set_memq_syms = make_function_with_class(sc, f, "tree-set-memq", g_tree_set_memq_1, 2, 0, false, "tree-set-memq opt");
 
   /* read-line */
   read_line_uncopied = s7_make_function(sc, "read-line", g_read_line_uncopied, 1, 1, false, "read-line opt");
@@ -59251,7 +59274,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	    {
 	      set_unsafely_optimized(expr);
 	      if (closure_star_arity_to_int(sc, func) == 2)
-		set_optimize_op(expr, ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_AA));
+		set_optimize_op(expr, ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_ALL_X));
 	      else set_optimize_op(expr, ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
 	      set_opt_lambda(expr, func);
 	    }
@@ -59845,7 +59868,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	{
 	  set_unsafely_optimized(expr);
 	  if (closure_star_arity_to_int(sc, func) == 2)
-	    set_optimize_op(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_AA));
+	    set_optimize_op(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_ALL_X));
 	  else set_optimize_op(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
 	  annotate_args(sc, cdr(expr), e);
 	  set_opt_lambda(expr, func);
@@ -67154,7 +67177,7 @@ static int32_t unknown_gg_ex(s7_scheme *sc, s7_pointer f)
 	  annotate_args(sc, cdr(code), sc->envir);
 	  set_arglist_length(code, small_int(2));
 	  if (closure_star_arity_to_int(sc, f) == 2)
-	    return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_AA)));
+	    return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_ALL_X)));
 	  return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X)));
 	}
       break;
@@ -67361,7 +67384,7 @@ static int32_t unknown_aa_ex(s7_scheme *sc, s7_pointer f)
 	{
 	  set_arglist_length(code, small_int(2));
 	  if (closure_star_arity_to_int(sc, f) == 2)
-	    return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_AA)));
+	    return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_AA : OP_CLOSURE_STAR_ALL_X)));
 	  return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X)));
 	}
       break;
@@ -72711,8 +72734,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto BEGIN1;
 		  }
 
-		case OP_CLOSURE_STAR_AA:
-		  /* in the AA case closure_arity==2 and args=2 so we could simplify the all_x cases below */
 		case OP_CLOSURE_STAR_ALL_X:
 		  if (!closure_star_is_ok(sc, code, MATCH_UNSAFE_CLOSURE_STAR, integer(arglist_length(code))))
 		    {
@@ -72720,7 +72741,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;		       
 		      break;
 		    }
-		case HOP_CLOSURE_STAR_AA:
 		case HOP_CLOSURE_STAR_ALL_X:
 		  {
 		    s7_pointer p, old_args;
@@ -75608,7 +75628,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_false(sc, sc->value))
 	    goto START;
 	  sc->value = c_call(cdr(sc->code))(sc, cadr(sc->code));
-	  goto START;
+	  break; /* goto START; */
 
 	  
 	  /* -------------------------------- OR -------------------------------- */
@@ -75696,7 +75716,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_true(sc, sc->value))
 	    goto START;
 	  sc->value = c_call(cdr(sc->code))(sc, cadr(sc->code));
-	  goto START;
+	  break; /* goto START; */
 
 	  /* by going direct without a push_stack on the last one we get tail calls,
 	   *   but if the last arg (also in "and" above) is "values", there is a slight
@@ -82833,10 +82853,10 @@ s7_scheme *s7_init(void)
   set_scope_safe(slot_value(global_slot(sc->apply_values_symbol)));
   set_scope_safe(slot_value(global_slot(sc->list_values_symbol)));
 
-  defun("tree-leaves",   tree_leaves,   1, 0, false);
-  defun("tree-memq",     tree_memq,     2, 0, false);
-  defun("tree-set-memq", tree_set_memq, 2, 0, false);
-  sc->tree_count_symbol = defun("tree-count", tree_count, 2, 1, false);
+  sc->tree_leaves_symbol =   defun("tree-leaves",   tree_leaves,   1, 0, false);
+  sc->tree_memq_symbol =     defun("tree-memq",     tree_memq,     2, 0, false);
+  sc->tree_set_memq_symbol = defun("tree-set-memq", tree_set_memq, 2, 0, false);
+  sc->tree_count_symbol =    defun("tree-count",    tree_count,    2, 1, false);
 
 
   /* -------- *features* -------- */
@@ -83496,13 +83516,10 @@ s7_scheme *s7_init(void)
                                 (lambda (clause)                                                              \n\
 	                          (let ((val (eval (car clause))))                                            \n\
                                     (when val                                                                 \n\
-                                      (return (if (null? (cdr clause))                                        \n\
-                                                  val                                                         \n\
-                                                  (if (eq? (cadr clause) '=>)                                 \n\
-                                                      ((eval (caddr clause)) val)                             \n\
-	                                              (if (null? (cddr clause))                               \n\
-                                                          (cadr clause)                                       \n\
-                                                          (apply values (map quote (cdr clause))))))))))      \n\
+                                      (return (cond ((null? (cdr clause)) val)                                \n\
+                                                    ((eq? (cadr clause) '=>) ((eval (caddr clause)) val))     \n\
+                                                    ((null? (cddr clause)) (cadr clause))                     \n\
+                                                    (else (apply values (map quote (cdr clause)))))))))       \n\
                                 clauses)                                                                      \n\
                               (values))))"); /* this is not redundant */
 
@@ -83717,30 +83734,29 @@ int main(int argc, char **argv)
  *   vect get/set should be s7_function (multi-dim indices for example)
  *   if all these cell-local setters were s7_functions this would be easy to implement
  *   for string, nowhere to put the pointer?
+ *   for list does setter follow fragment?
  *
- * tree-set-memq opt: if known symbol list, no need to check in g_tree_set_memq
- *   also same opt as tree_memq earlier (reduce recursion)
  *
  * --------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.7  17.8
  * tmac          |      |      |      || 9052 |  615   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1049
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1048
  * tref          |      |      | 2372 || 2125 | 1375  1109  1121
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1341
- * teq           |      |      | 6612 || 2777 | 2129  1921  1925
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2104
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1340
+ * teq           |      |      | 6612 || 2777 | 2129  1921  1927
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2068
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426
- * lint          |      |      |      || 4041 | 3376  2726  2683
- * lg            |      |      |      || 211  | 161   134.9 133.2
+ * lint          |      |      |      || 4041 | 3376  2726  2679
+ * lg            |      |      |      || 211  | 161   134.9 133.1
  * tform         |      |      | 6816 || 3714 | 3530  2746  2755
- * tcopy         |      |      | 13.6 || 3183 | 3404  3071  2920
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3071  2919
  * tmap          |      |      |  9.3 || 5279 |       3386  3386
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  3964  3965
  * tsort         |      |      |      || 8584 | 4869  4012  4012
  * titer         |      |      |      || 5971 | 5224  4562  4569
  * bench         |      |      |      || 7012 | 6378  5106  5088
- * thash         |      |      | 50.7 || 8778 | 8488  7537  7535
+ * thash         |      |      | 50.7 || 8778 | 8488  7537  7533
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  11.9  11.9
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  17.8  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  39.4  39.2

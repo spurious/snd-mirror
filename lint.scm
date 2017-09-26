@@ -20936,22 +20936,20 @@
 						func-name func-name vname))))))
 		      (vector-set! old 2 (cons func (vector-ref old 2))))))))))
     
-    (define unreducers '(define define*
-			  ;; these propagate backwards and we're not returning the new env in this loop,
-			  ;; lvars can be null, so splicing a new local into vars is a mess, 
-			  ;; but if the defined name is not reduced, it can occur later as itself (not via car),
-			  ;; so without lots of effort (a dummy var if null lvars, etc), we can only handle
-			  ;; functions within a function (fvar not #f).
-			  ;; but adding that possibility got no hits
-				
-			  list-values apply-values append quasiquote unquote
-			  define-constant define-macro define-macro* define-expansion 
-			  define-syntax let-syntax letrec-syntax match syntax-rules 
-			  require import module cond-expand reader-cond while case-lambda
-			  call-with-values let-values define-values let*-values multiple-value-bind))
-
     (define (reduce-tree new-form leaves env fvar orig-form)
-      (unless (tree-set-memq unreducers new-form)
+      (unless (tree-set-memq '(define define*
+				;; these propagate backwards and we're not returning the new env in this loop,
+				;; lvars can be null, so splicing a new local into vars is a mess, 
+				;; but if the defined name is not reduced, it can occur later as itself (not via car),
+				;; so without lots of effort (a dummy var if null lvars, etc), we can only handle
+				;; functions within a function (fvar not #f).
+				;; but adding that possibility got no hits
+				list-values apply-values append quasiquote unquote
+				define-constant define-macro define-macro* define-expansion 
+				define-syntax let-syntax letrec-syntax match syntax-rules 
+				require import module cond-expand reader-cond while case-lambda
+				call-with-values let-values define-values let*-values multiple-value-bind)
+			     new-form)
 	(call-with-exit
 	 (lambda (quit)
 	   (let ((outer-vars (if fvar
@@ -22608,6 +22606,6 @@
     #f))
 |#
 
-;;; 63 910894
+;;; 62 910885
 
 

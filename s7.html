@@ -1710,12 +1710,11 @@ Here's a generic FFT:
 	(let ((temp (data j)))
 	  (set! (data j) (data i))
 	  (set! (data i) temp)))
-    (do ((m (/ n 2)))
+    (do ((m (/ n 2) (/ m 2)))
         ((or (&lt; m 2) 
              (&lt; j m))
          (set! j (+ j m)))
-     (set! j (- j m))
-     (set! m (/ m 2))))
+     (set! j (- j m))))
   (do ((ipow (floor (log n 2)))
        (prev 1)
        (lg 0 (+ lg 1))
@@ -2629,8 +2628,7 @@ keeps a circular buffer of the calls to that function:
 
 <pre class="indented">
 (define func (let ((history (let ((lst (make-list 8 #f)))
-			      (set-cdr! (list-tail lst 7) lst)
-			      lst)))
+			      (set-cdr! (list-tail lst 7) lst))))
 	       (lambda (x y)
 		 (let ((result (+ x y)))
 		   (set-car! history (list result x y))
@@ -3696,22 +3694,18 @@ handler.  Here is a sketch of the situation:
 </p>
 
 <pre class="indented">
-(let ()
-  (catch #t
-	 (lambda ()
-	   (let ((res (call/cc 
-                        (lambda (ok) 
-			  (error 'cerror "an error" ok)))))
-	     (display res) (newline)))
-	 (lambda args
-	   (if (and (eq? (car args) 'cerror)
-		    (<em class=red>continuation?</em> (cadadr args)))
-	       (begin
-		 (display "continuing...")
-		 ((cadadr args) 2)))
-	   (display "oops"))))
-
-continuing...2
+(catch #t
+       (lambda ()
+         (let ((res (call/cc 
+                      (lambda (ok) 
+                        (error 'cerror "an error" ok)))))
+           (display res) (newline)))
+       (lambda args
+         (when (and (eq? (car args) 'cerror)
+                    (<em class=red>continuation?</em> (cadadr args)))
+           (display "continuing...")
+           ((cadadr args) 2))
+         (display "oops")))
 </pre>
 
 <p>In a more general case, the error handler is separate from the
@@ -4528,7 +4522,7 @@ the dumb "lambda".  Here are more useful examples:
 <pre class="indented">
 (openlet          ; a soft port for format that sends its output to *stderr* and returns the string
   (inlet 'format (lambda (port str . args)
- 	           (display (apply format #f str args) *stderr*))))
+ 	           (apply format *stderr* str args))))
 
 (define (open-output-log name)
   ;; return a soft output port that does not hold its output file open
@@ -4729,7 +4723,7 @@ map-with-exit would be
 
 <pre class="indented">
 (define-macro (catch-case clauses . body)
-  (let ((base `(lambda () ,@body)))
+  (let ((base (cons 'lambda (cons () body))))
     (for-each (lambda (clause)
 	        (let ((tag (car clause)))
 	          (set! base `(lambda () 
@@ -5438,7 +5432,7 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 	      (define (traverse tree)
 		(if (pair? tree)                                             
 		    (cons (traverse (car tree))                             
-			  (case (cdr tree) ((()) ()) (else =&gt; traverse)))
+			  (case (cdr tree) ((())) (else =&gt; traverse)))
 		    (if (memq tree '(and or not)) tree                 
 			(and (symbol? tree) (provided? tree)))))
 	      (if (eval (traverse e))

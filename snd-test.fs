@@ -2,8 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 2006/08/05 00:09:28
-\ Changed: 2016/11/17 15:24:33
-\ Changed: 2016/12/28 23:20:33
+\ Changed: 2017/09/25 22:10:36
 
 \ Tags:  FIXME - something is wrong
 \        XXX   - info marker
@@ -1060,7 +1059,6 @@ SIGINT lambda: { sig -- }
      #( <'> transform-type fourier-transform )
      #( <'> with-file-monitor #t )
      #( <'> clm-table-size 512 )
-     #( <'> clm-default-frequency 0.0 )
      #( <'> with-verbose-cursor #f )
      #( <'> with-inset-graph #f )
      #( <'> with-interrupts #t )
@@ -1159,7 +1157,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> channel-style 1 )
      #( <'> clipping #f )
      #( <'> clm-table-size 512 )
-     #( <'> clm-default-frequency 0.0 )
      #( <'> color-cutoff 0.003 )
      #( <'> color-inverted #t )
      #( <'> color-scale 1.0 )
@@ -2156,7 +2153,7 @@ black-and-white-colormap constant *better-colormap*
      'channels-combined 'channels-separate 'channels-superimposed 
      'chans 'clear-listener 'clip-hook
      'clipping 'clm-channel 'clm-table-size 
-     'clm-default-frequency 'close-hook 'close-sound 'color->list
+     'close-hook 'close-sound 'color->list
      'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted
      'color-scale 'color?  'colormap 'colormap-name 'colormap-ref
      'colormap-size 'colormap? 'comb 'comb?  'combined-data-color
@@ -7327,7 +7324,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> save-as-dialog-auto-comment <'> window-width <'> window-x
      <'> window-y <'> with-gl <'> with-mix-tags <'> x-axis-style
      <'> beats-per-minute <'> zoom-color <'> mix-tag-height <'> mix-tag-width
-     <'> with-relative-panes <'> clm-table-size <'> clm-default-frequency
+     <'> with-relative-panes <'> clm-table-size
      <'> mark-tag-width <'> mark-tag-height ) each to prc
     vct-5 prc set-xt snd-test-catch to tag
     tag if

@@ -421,7 +421,6 @@
 
 ;; other minor differences: 
 ;;  in s7, single-quote can occur in a name
-;;  s7 doesn't currently implement #\xxxx characters
 
 
 ;; records

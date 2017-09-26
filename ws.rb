@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 #
 # Created: 03/04/08 17:05:03
-# Changed: 17/08/14 05:49:00
+# Changed: 17/09/25 22:15:33
 
 # module WS
 #   ws_getlogin
@@ -431,16 +431,13 @@ def clm_player(s)
   end
 end
 
-trace_var(:$clm_default_frequency) do |val|
-  set_clm_default_frequency(val)
-end
 trace_var(:$clm_table_size) do |val|
   set_clm_table_size(val)
 end
 
 with_silence do
   # warning: undefined variable
-  $clm_version            = "ruby 2017/08/14"
+  $clm_version            = "ruby 2017/09/25"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -461,7 +458,7 @@ with_silence do
   $clm_statistics         ||= false
   $clm_table_size         ||= 512
   $clm_verbose            ||= false
-  $clm_default_frequency  ||= 0.0
+  $clm_default_frequency  ||= 440.0
   $clm_locsig_type        ||= locsig_type
   $clm_search_list        ||= (ENV["CLM_SEARCH_PATH"] or ".").split(/:/)
 

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 2005/02/18 10:18:34
-# Changed: 2017/08/14 06:13:35
+# Changed: 2017/09/25 22:17:08
 
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
@@ -1551,7 +1551,6 @@ def test_00
    [:transform_type, $fourier_transform],
    [:with_file_monitor, true],
    [:clm_table_size, 512],
-   [:clm_default_frequency, 0.0],
    [:with_verbose_cursor, false],
    [:with_inset_graph, false],
    [:with_interrupts, true],
@@ -1647,7 +1646,6 @@ def test_01
    ["channel_style", channel_style(), 1],
    ["clipping", clipping(), false],
    ["clm_table_size", clm_table_size(), 512],
-   ["clm_default_frequency", clm_default_frequency(), 0.0],
    ["color_cutoff", color_cutoff(), 0.003],
    ["color_inverted", color_inverted(), true],
    ["color_scale", color_scale(), 1.0],
@@ -2479,8 +2477,7 @@ def test_03
    :channel_property, :channel_style, :channel_widgets, :channels,
    :channels_combined, :channels_separate, :channels_superimposed,
    :chans, :clear_listener, :clip_hook,
-   :clipping, :clm_channel, :clm_table_size,
-   :clm_default_frequency, :close_hook, :close_sound,
+   :clipping, :clm_channel, :clm_table_size, :close_hook, :close_sound,
    :color_cutoff, :color_orientation_dialog, :color_hook, :color_inverted,
    :color_scale, :color?, :colormap, :colormap_name, :colormap_ref,
    :colormap_size, :colormap?, :comb, :comb?, :combined_data_color,

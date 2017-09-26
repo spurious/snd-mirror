@@ -2,9 +2,9 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 04/03/15 19:25:58
-\ Changed: 15/02/25 16:05:57
+\ Changed: 17/09/25 22:08:35
 \
-\ @(#)clm.fs	1.121 2/25/15
+\ @(#)clm.fs	1.122 9/25/17
 
 \ clm-print		( fmt :optional args -- )
 \ clm-message		( fmt :optional args -- )
@@ -281,7 +281,7 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-"fth 2015/02/25"  value *clm-version*
+"fth 2017/09/25"  value *clm-version*
 #f 	      	  value *locsig*
 mus-lshort    	  value *clm-audio-format*
 #f            	  value *clm-comment*
@@ -325,7 +325,7 @@ mus-file-buffer-size       value *clm-file-buffer-size*
 mus-clipping               value *clm-clipped*
 mus-array-print-length     value *clm-array-print-length*
 clm-table-size             value *clm-table-size*
-clm-default-frequency      value *clm-default-frequency*
+440.0                      value *clm-default-frequency*
 
 \ for backward compatibility
 *clm-sample-type* value *clm-data-format*
@@ -334,9 +334,6 @@ clm-default-frequency      value *clm-default-frequency*
 	val
 ; trace-var
  
-<'> *clm-default-frequency* lambda: <{ val -- res }>
-	val set-clm-default-frequency
-; trace-var
 <'> *clm-table-size* lambda: <{ val -- res }>
 	val set-clm-table-size
 ; trace-var
