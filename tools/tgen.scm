@@ -30,7 +30,7 @@
 
 (mus-sound-preload "1a.snd")
 
-(define* (env-1 g f) (env g))
+(define (env-1 g) (env g))
 (define (make-env-1 size) (make-env M :length 10))
 
 (define pulsed-env-1 pulsed-env)
