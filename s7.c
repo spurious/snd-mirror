@@ -847,7 +847,7 @@ typedef struct s7_cell {
 
     struct {                        /* additional object types (C) */
       int32_t type;
-      void *value;                  /*  the value the caller associates with the object */
+      void *value;                  /*  the value the caller associates with the c_object */
       s7_pointer e;                 /*   the method list, if any (openlet) */
       void (*mark)(void *val);
     } c_obj;
@@ -1209,7 +1209,7 @@ struct s7_scheme {
 #endif
 
   /* setter and quasiquote functions */
-  s7_pointer vector_set_function, string_set_function, list_set_function, hash_table_set_function, let_set_function, object_set_function,
+  s7_pointer vector_set_function, string_set_function, list_set_function, hash_table_set_function, let_set_function, c_object_set_function,
              apply_values_function, multivector_function, apply_function, vector_function, last_function;
 
   s7_pointer wrong_type_arg_info, out_of_range_info, simple_wrong_type_arg_info, simple_out_of_range_info;
@@ -1237,8 +1237,8 @@ struct s7_scheme {
   opt_info *free_opts;
   jmp_buf opt_exit;
   int32_t pc, funcalls, unwraps;
-  #define OPTS_SIZE 128      /* 128 overflows twice in s7test, 64 overflows 4 times in s7test, once in tall! */
-  opt_info *opts[OPTS_SIZE]; /* this form is a lot faster than opt_info**! */
+  #define OPTS_SIZE 256        /* 128 overflows twice in s7test, 64 overflows 4 times in s7test, once in tall, pqw-vox needs 173 */
+  opt_info *opts[OPTS_SIZE+1]; /* this form is a lot faster than opt_info**! */
 };
 
 /* (*s7* 'safety) settings */
@@ -5719,8 +5719,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, uint32_t len, uint
 	    {
 	      char *kstr;
 	      uint32_t klen;
-	      klen = symbol_name_length(x) - 1;
-	      /* can't use tmpbuf_* here (or not safely I think) because name is already using tmpbuf */
+	      klen = symbol_name_length(x) - 1;           /* can't use tmpbuf_* here (or not safely I think) because name is already using tmpbuf */
 	      kstr = (char *)malloc((klen + 1) * sizeof(char));
 	      memcpy((void *)kstr, (void *)name, klen);
 	      kstr[klen] = 0;
@@ -25286,12 +25285,12 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
 
   /* since the arguments are evaluated before we get here, we can get some confusing situations:
    *   (with-input-from-string "#x2.1" (read))
-   *   (read) -> whatever it can get from the current input port!
-   *   ";with-input-from-string argument 2, #<eof>, is untyped but should be a thunk"
+   *     (read) -> whatever it can get from the current input port!
+   *     ";with-input-from-string argument 2, #<eof>, is untyped but should be a thunk"
+   *   (with-input-from-string "" (read-line)) -> hangs awaiting stdin input
    */
   return(with_input(sc, open_and_protect_input_string(sc, str), args));
 }
-
 
 
 /* -------------------------------- with-input-from-file -------------------------------- */
@@ -28045,7 +28044,7 @@ static const char *check_name(int32_t typ)
 
 static s7_pointer check_seti(s7_scheme *sc, s7_pointer x, const char *func, int32_t line)
 {
-  if (is_immutable(x)) /* can be vector|pair|string -- incomplete constant arg check I think, TODO: handle immutable vectors */
+  if (is_immutable(x))
     {
       fprintf(stderr, "%s%s[%d]: set! immutable %s: %s%s\n", BOLD_TEXT, func, line, type_name(sc, x, NO_ARTICLE), DISPLAY(x), UNBOLD_TEXT);
       if (stop_at_error) abort();
@@ -29245,10 +29244,12 @@ void s7_newline(s7_scheme *sc, s7_pointer port)
   s7_write_char(sc, '\n', port);
 }
 
+#define newline_char chars[(unsigned char)'\n']
+
 static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 {
   #define H_newline "(newline (port (current-output-port))) writes a carriage return to the port"
-  #define Q_newline s7_make_signature(sc, 2, sc->is_unspecified_symbol, sc->is_output_port_symbol)
+  #define Q_newline s7_make_signature(sc, 2, sc->is_char_symbol, sc->is_output_port_symbol)
   s7_pointer port;
 
   if (is_not_null(args))
@@ -29256,15 +29257,16 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   else port = sc->output_port;
   if (!is_output_port(port))
     {
-      if (port == sc->F) return(sc->unspecified);
+      if (port == sc->F) return(newline_char);
       method_or_bust_with_type_one_arg(sc, port, sc->newline_symbol, args, an_output_port_string);
     }
   s7_newline(sc, port);
-  return(sc->unspecified);
+  return(newline_char);
+  /* return(sc->unspecified) until 28-Sep-17, but for example (display c) returns c */
 }
 
-static s7_pointer newline_p(void) {s7_write_char(cur_sc, '\n', cur_sc->output_port); return(cur_sc->unspecified);}
-static s7_pointer newline_p_p(s7_pointer port) {s7_write_char(cur_sc, '\n', port); return(cur_sc->unspecified);}
+static s7_pointer newline_p(void) {s7_write_char(cur_sc, '\n', cur_sc->output_port); return(newline_char);}
+static s7_pointer newline_p_p(s7_pointer port) {s7_write_char(cur_sc, '\n', port); return(newline_char);}
 
 
 /* -------------------------------- write -------------------------------- */
@@ -31729,7 +31731,7 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
   if ((index < 0) || (index > sc->max_list_length))
     return(out_of_range(sc, sc->list_set_symbol, small_int(arg_num), ind, (index < 0) ? its_negative_string : its_too_large_string));
 
-  for (i = 0, p = _TSet(lst); (i < index) && is_pair(p); i++, p = cdr(p)) {}
+  for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
 
   if (!is_pair(p))
     {
@@ -34834,7 +34836,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
   if (is_immutable(vec))
     return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->vector_set_symbol, vec)));
 
-  if (vector_length(_TSet(vec)) == 0)
+  if (vector_length(vec) == 0)
     return(out_of_range(sc, sc->vector_set_symbol, small_int(1), vec, its_too_large_string));
 
   if (vector_rank(vec) > 1)
@@ -38502,9 +38504,13 @@ static s7_pointer g_is_c_object(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_internal_c_object_set(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_c_object_set(s7_scheme *sc, s7_pointer args)
 {
-  return((*(c_object_set(sc, car(args))))(sc, car(args), cdr(args)));
+  s7_pointer p;
+  p = car(args);
+  if (is_c_object(p)) 
+    return((*(c_object_set(sc, p)))(sc, p, cdr(args)));
+  return(sc->F);
 }
 
 int32_t s7_make_c_type(s7_scheme *sc, const char *name)
@@ -38925,19 +38931,40 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 
     case T_C_OBJECT: 
-      /* this can satisfy procedure? if T_SAFE_PROCEDURE bit is set -- has apply method, see s7_c_type_set_apply */
       check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
-      return(make_boolean(sc, (c_object_set(sc, p) != fallback_set)));
-      /* unfortunately ref/set are not s7_functions (they have an extra object arg), so we can't return c_object_set */
+      if  (c_object_set(sc, p) != fallback_set)
+	return(sc->c_object_set_function);      /* for example ((procedure-setter obj) obj 0 1.0) if s7test block */
+      return(sc->F);
 
     case T_LET:
       check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
+      return(slot_value(global_slot(sc->let_set_symbol)));
       break;
 
     case T_ITERATOR:
       if (is_any_closure(iterator_sequence(p)))
 	return(closure_setter(iterator_sequence(p)));
-      return(sc->F);
+      return(sc->F);                            /* (set! (iter) val) doesn't fit the other setters */
+
+    case T_PAIR:
+      return(slot_value(global_slot(sc->list_set_symbol)));
+
+    case T_HASH_TABLE:
+      return(slot_value(global_slot(sc->hash_table_set_symbol)));
+
+    case T_STRING:
+      if (is_byte_vector(p))
+	return(slot_value(global_slot(sc->byte_vector_set_symbol)));
+      return(slot_value(global_slot(sc->string_set_symbol)));
+
+    case T_VECTOR:
+      return(slot_value(global_slot(sc->vector_set_symbol)));
+
+    case T_INT_VECTOR:
+      return(slot_value(global_slot(sc->int_vector_set_symbol)));
+
+    case T_FLOAT_VECTOR:
+      return(slot_value(global_slot(sc->float_vector_set_symbol)));
     }
   return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure or a reasonable facsimile thereof"));
 }
@@ -47615,7 +47642,6 @@ static bool i_add_any_ok(s7_scheme *sc, opt_info *opc, s7_pointer car_x)
     {
       if (is_pair(cdr(p)))
 	{
-	  /* TODO: 3-way case if it were able to handle symbols and constants */
 	  if (!int_optimize(sc, set_plist_1(sc, set_elist_3(sc, head, car(p), cadr(p)))))
 	    break;
 	  cur_len++;
@@ -48797,8 +48823,7 @@ static bool d_dd_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 		      pc_fallback(sc, start);
 		    }
 		}
-	      else return(return_false(sc, car_x, __func__, __LINE__)); /* arg1 trouble */
-	      /* TODO: d_ddd has a similar bug and check arg2 */
+	      else return(return_false(sc, car_x, __func__, __LINE__)); /* arg1 trouble -- usually no slot found */
 	    }
 	  else
 	    {
@@ -49875,7 +49900,7 @@ static bool opt_b_pp_sfo(void *p)
   return(o->v3.b_pp_f(slot_value(o->v1.p), o->v4.p_p_f(slot_value(o->v2.p))));
 }
 
-static s7_pointer opt_p_p_s(void *p); /* TODO: remove this when p* precedes b* */
+static s7_pointer opt_p_p_s(void *p);
 
 static bool b_pp_sf_combinable(s7_scheme *sc, opt_info *opc)
 {
@@ -51716,7 +51741,7 @@ static bool cell_all_x_ok(s7_scheme *sc, s7_pointer expr, int32_t start)
   if (opt)
     {
       opt_info *opc;
-      pc_fallback(sc, start + 1); /* ?? TODO: are int|float_all_x_ok because all previous checks clean up via pc_fallback? */
+      pc_fallback(sc, start + 1);
       opc = sc->opts[start];
       opc->v2.all_f = opt;
       opc->v7.fp = opt_unwrap_cell;
@@ -51753,7 +51778,6 @@ static bool p_implicit(s7_scheme *sc, s7_pointer car_x, int32_t len)
 	  opc->v1.p = s_slot;
 	  if (len == 2)
 	    {
-	      /* TODO: c-object implicit ref if direct exists (pi case) */
 	      switch (type(obj))
 		{
 		case T_PAIR:       opc->v3.p_pi_f = list_ref_p_pi_direct;	  break;
@@ -51774,10 +51798,8 @@ static bool p_implicit(s7_scheme *sc, s7_pointer car_x, int32_t len)
 		  
 		case T_C_OBJECT:
 		  if (c_object_direct_ref(sc, obj))
-		    opc->v3.p_pi_f = c_object_pi_direct;
-		  /* this doesn't currently work because in opt_dotimes, safe_stepper is false;
-		   *   do_is_safe or whoever can't tell that (obj i) does not affect i!
-		   */
+		    opc->v3.p_pi_f = c_object_pi_direct; /* we insist on int index below */
+		  break;
 		  
 		default: 
 		  return(return_false(sc, car_x, __func__, __LINE__));
@@ -53618,7 +53640,7 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int32_t len)
 	      
 	      for (p = cadr(car_x), slot = let_slots(frame); is_pair(p); p = cdr(p), slot = next_slot(slot))
 		{
-		  /* TODO: put off this decision until it is needed (ref/set) 
+		  /* this could be put off until it is needed (ref/set), but this code is not called much
 		   *    another choice: go from init downto 0: init is lim
 		   */
 		  if (slot_symbol(slot) == cadr(stop))
@@ -55785,29 +55807,12 @@ static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 
 static bool is_simple_code(s7_scheme *sc, s7_pointer form)
 {
-  /* TODO: perhaps tree_memq here? the cycle check below is inadequate, and the last check looks dumb */
-  s7_pointer tmp, sp;
-  for (tmp = form, sp = form; is_pair(tmp); tmp = cdr(tmp), sp = cdr(sp))
+  s7_pointer tmp;
+  for (tmp = form; is_pair(tmp); tmp = cdr(tmp))
     {
       if (is_pair(car(tmp)))
 	{
-	  if ((tmp == car(tmp)) || /* try to protect against #1=(#1) -- do we actually need cyclic_sequences here? */
-	      (!is_simple_code(sc, car(tmp))))
-	    return(false);
-	}
-      else
-	{
-	  if ((car(tmp) == sc->unquote_symbol) ||
-	      ((is_null(car(tmp))) && (is_null(cdr(tmp)))))
-	    return(false);
-	}
-      tmp = cdr(tmp);
-      if (!is_pair(tmp)) break;
-      if (tmp == sp) return(false);
-      if (is_pair(car(tmp)))
-	{
-	  if ((tmp == car(tmp)) || /* try to protect against #1=(#1) -- do we actually need cyclic_sequences here? */
-	      (!is_simple_code(sc, car(tmp))))
+	  if (!is_simple_code(sc, car(tmp)))
 	    return(false);
 	}
       else
@@ -55850,7 +55855,9 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
    */
 
   /* if no element of the list is a list or unquote, just return the original quoted */
-  if (is_simple_code(sc, form))
+
+  if ((cyclic_sequences(sc, form, false) == sc->T) ||
+      (is_simple_code(sc, form))) 
     return(list_2(sc, sc->quote_symbol, form));
 
   {
@@ -55860,17 +55867,16 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
     bool dotted = false;
 
     len = s7_list_length(sc, form);
+#if DEBUGGING
     if (len == 0)
-      {
-	/* a circular form, apparently */
-	return(list_2(sc, sc->quote_symbol, form));
-      }
+      fprintf(stderr, "quasiquote_1: cyclic?? %s\n", DISPLAY(form));
+#endif
+
     if (len < 0)
       {
 	len = -len;
 	dotted = true;
       }
-
     old_scw = sc->w;
     loc = s7_gc_protect(sc, old_scw);
 
@@ -56786,7 +56792,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7
 
   set_global_slot(x, permanent_slot(x, syn));
   set_initial_slot(x, permanent_slot(x, syn));
-  set_local_slot(x, global_slot(x));
+  /* set_local_slot(x, global_slot(x)); */
   typeflag(x) = SYNTACTIC_TYPE;  /* symbol syntactic etc */
   symbol_set_local(x, 0LL, sc->nil);
   symbol_set_ctr(x, 0;)
@@ -60525,7 +60531,6 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 {
   opcode_t op;
   s7_pointer p, body;
-  /* TODO: those not allowed need to be passed back and treated as unsafe symbols (find_uncomplicated_symbol etc) */
 
   op = (opcode_t)syntax_opcode(func);
   sc->w = e;
@@ -61944,9 +61949,6 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	  
 	  /* define and friends are not safe: (define (a) (define b 3)...) tries to put b in the current env,
 	   *   but in a safe func, that's a constant.  See s7test L 1865 for an example.
-	   */
-	  /* TODO: how to tell that the temp env can be freed? -- check results for func/macro/let? 
-	   *   not captured? but how to catch that?
 	   */
 	default:
 	  /* try to catch weird cases like:
@@ -64482,11 +64484,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	if ((is_null(cdr(settee))) ||
 	    (!is_null(cddr(settee))))
 	  {
-	    /* no-index or multi-index case -- use slow version.
-	     *  TODO: ambiguity here -- is (set! (obj a b) v) actually (set! ((obj a) b) v)?
-	     *  perhaps look at setter? c-object-set takes 1 arg -- is this a bug?
-	     */
-	    push_op_stack(sc, sc->object_set_function);
+	    push_op_stack(sc, sc->c_object_set_function);
 	    if (is_null(cdr(settee)))
 	      {
 		push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), cddr(sc->code));
@@ -64516,7 +64514,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
 		sc->value = (*(c_object_set(sc, cx)))(sc, cx, sc->t2_1);
 		return(goto_START);
 	      }
-	    push_op_stack(sc, sc->object_set_function);
+	    push_op_stack(sc, sc->c_object_set_function);
 	    sc->args = list_2(sc, index, cx);
 	    sc->code = cdr(sc->code);
 	    return(goto_EVAL_ARGS);
@@ -64524,7 +64522,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
 	else
 	  {
 	    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), cdr(sc->code));
-	    push_op_stack(sc, sc->object_set_function);
+	    push_op_stack(sc, sc->c_object_set_function);
 	    sc->code = cadr(settee);
 	  }
 	return(goto_EVAL);
@@ -66262,18 +66260,13 @@ static bool opt_dotimes(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool saf
 		{
 		  sc->pc = 0;
 		  fp(o);
-		  /* TODO: are these type checks needed now? -- could check setter+integer etc in cell_optimize */
+#if DEBUGGING
 		  if (!is_integer(slot_value(step_slot)))
-		    {
-		      slot_set_value(step_slot, g_add_1s(sc, set_plist_2(sc, small_int(1), slot_value(step_slot))));
-		      if (is_true(sc, g_equal_2(sc, set_plist_2(sc, slot_value(step_slot), slot_value(end_slot))))) break;
-		    }
-		  else
-		    {
-		      step = s7_integer(slot_value(step_slot)) + 1;
-		      slot_set_value(step_slot, make_integer(sc, step));
-		      if (step == s7_integer(slot_value(end_slot))) break;
-		    }
+		    fprintf(stderr, "%d not int: %s\n", __LINE__, DISPLAY(step_slot));
+#endif
+		  step = s7_integer(slot_value(step_slot)) + 1;
+		  slot_set_value(step_slot, make_integer(sc, step));
+		  if (step == s7_integer(slot_value(end_slot))) break;
 		}
 	    }
 	  else
@@ -66281,17 +66274,13 @@ static bool opt_dotimes(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool saf
 	      while (true)
 		{
 		  func(sc, car(code));
+#if DEBUGGING
 		  if (!is_integer(slot_value(step_slot)))
-		    {
-		      slot_set_value(step_slot, g_add_1s(sc, set_plist_2(sc, small_int(1), slot_value(step_slot))));
-		      if (is_true(sc, g_equal_2(sc, set_plist_2(sc, slot_value(step_slot), slot_value(end_slot))))) break;
-		    }
-		  else
-		    {
-		      step = s7_integer(slot_value(step_slot)) + 1;
-		      slot_set_value(step_slot, make_integer(sc, step));
-		      if (step == s7_integer(slot_value(end_slot))) break;
-		    }
+		    fprintf(stderr, "%d not int: %s\n", __LINE__, DISPLAY(step_slot));
+#endif
+		  step = s7_integer(slot_value(step_slot)) + 1;
+		  slot_set_value(step_slot, make_integer(sc, step));
+		  if (step == s7_integer(slot_value(end_slot))) break;
 		}
 	    }
 	}
@@ -70007,7 +69996,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	EVAL:
 	case OP_EVAL:
-
 	  /* main part of evaluation
 	   *   at this point, it's sc->code we care about; sc->args is not set yet.
 	   */
@@ -82207,6 +82195,7 @@ s7_scheme *s7_init(void)
   sc->with_let_symbol =          assign_syntax(sc, "with-let",        OP_WITH_LET,          small_int(1), max_arity,    with_let_help);
   sc->let_temporarily_symbol =   assign_syntax(sc, "let-temporarily", OP_LET_TEMPORARILY,   small_int(2), max_arity,    let_temporarily_help);
   set_immutable(sc->with_let_symbol);
+  set_local_slot(sc->with_let_symbol, global_slot(sc->with_let_symbol)); /* for set_locals */
 
   sc->quote_unchecked_symbol =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED);
   sc->begin1_symbol =                assign_internal_syntax(sc, "begin",       OP_BEGIN1);
@@ -82530,6 +82519,7 @@ s7_scheme *s7_init(void)
   sc->curlet_symbol =                defun("curlet",		curlet,			0, 0, false);
   sc->unlet_symbol =                 defun("unlet",		unlet,			0, 0, false);
   set_immutable(sc->unlet_symbol);
+  set_local_slot(sc->unlet_symbol, global_slot(sc->unlet_symbol)); /* for set_locals */
   /* unlet (and with-let) don't actually need to be immutable, but s7.html says they are... */
   sc->sublet_symbol =                defun("sublet",		sublet,			1, 0, true);
   sc->varlet_symbol =                unsafe_defun("varlet",	varlet,			1, 0, true);
@@ -82770,7 +82760,7 @@ s7_scheme *s7_init(void)
   sc->car_symbol =                   defun("car",		car,			1, 0, false);
   sc->cdr_symbol =                   defun("cdr",		cdr,			1, 0, false);
   sc->set_car_symbol =               defun("set-car!",		set_car,		2, 0, false);
-  sc->set_cdr_symbol =               unsafe_defun("set-cdr!",	set_cdr,		2, 0, false);
+  sc->set_cdr_symbol =               defun("set-cdr!",	        set_cdr,		2, 0, false); /* was unsafe 27-Sep-17 */
   sc->caar_symbol =                  defun("caar",		caar,			1, 0, false);
   sc->cadr_symbol =                  defun("cadr",		cadr,			1, 0, false);
   sc->cdar_symbol =                  defun("cdar",		cdar,			1, 0, false);
@@ -82922,8 +82912,7 @@ s7_scheme *s7_init(void)
 #endif
   s7_define_function(sc, "s7-optimize", g_optimize, 1, 0, false, "short-term debugging aid");
 
-  sym = s7_define_function(sc, "(c-object set)", g_internal_c_object_set, 1, 0, true, "internal object setter redirection");
-  sc->object_set_function = slot_value(global_slot(sym));
+  sc->c_object_set_function = slot_value(global_slot(s7_define_function(sc, "#<c-object-setter>", g_c_object_set, 1, 0, true, "c-object setter")));
 
   set_scope_safe(slot_value(global_slot(sc->call_with_input_string_symbol)));
   set_scope_safe(slot_value(global_slot(sc->call_with_input_file_symbol)));
@@ -83702,7 +83691,6 @@ s7_scheme *s7_init(void)
                           (define make-complex               complex)             \n\
                           (define make-keyword               string->keyword)     \n\
                           (define symbol-access              symbol-setter)       \n\
-                          (define (constant? obj) (or (not (symbol? obj)) (immutable? obj))) \n\
                           (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000)))))");
 #endif
 #if DEBUGGING
@@ -83823,6 +83811,8 @@ int main(int argc, char **argv)
  *
  * c_object type table entries should also be s7_function, reported by object->let perhaps
  *    wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
+ * signatures for c_object funcs? s7_procedure_set_signature? all c_object funcs are implicit in type table
+ *   c_function_signature(func) = signature; but this is the c_func not the s7_function=slot_value(global_slot(sc->c_object_set_function)) etc
  *
  * symbol 8-bits->cycling number, let tracks range? inserts ordered? [see above]
  *   could opt recognize large heavily-used lets and use this?
@@ -83834,37 +83824,39 @@ int main(int argc, char **argv)
  *
  * setter for vect element? lambda (sym ind1 ind2... val env) is ambiguous
  *   (let ((v (vector 1))) (set! (procedure|vector-setter v) ...)) -- i.e. the (applicable) value
- *   need generic setter func (and documentation, signature)
+ *   need generic setter func=procedure-setter for get (and set if func) (and documentation, signature)
  *   vect get/set should be s7_function (multi-dim indices for example)
  *   if all these cell-local setters were s7_functions this would be easy to implement
  *   for string, nowhere to put the pointer?
  *   for list does setter follow fragment?
+ * maybe c-object-setter should be available as c-object-set! (currently #<c-object-setter>), c-object-ref?
  *
+ * *s7* should be a normal let
  *
  * --------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.7  17.8
  * tmac          |      |      |      || 9052 |  615   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1048
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1050
  * tref          |      |      | 2372 || 2125 | 1375  1109  1121
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1340
  * teq           |      |      | 6612 || 2777 | 2129  1921  1928
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2058
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2072
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426
- * lint          |      |      |      || 4041 | 3376  2726  2676
+ * lint          |      |      |      || 4041 | 3376  2726  2678
  * lg            |      |      |      || 211  | 161   134.9 133.0
  * tform         |      |      | 6816 || 3714 | 3530  2746  2755
  * tcopy         |      |      | 13.6 || 3183 | 3404  3071  2919
- * tmap          |      |      |  9.3 || 5279 |       3386  3386
+ * tmap          |      |      |  9.3 || 5279 |       3386  3388
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  3964  3965
  * tsort         |      |      |      || 8584 | 4869  4012  4012
  * titer         |      |      |      || 5971 | 5224  4562  4553
- * bench         |      |      |      || 7012 | 6378  5106  5087
+ * bench         |      |      |      || 7012 | 6378  5106  5085
  * thash         |      |      | 50.7 || 8778 | 8488  7537  7531
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  11.9  11.9
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  17.8  17.8
- * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  39.4  38.9
- *                                    || 139  | 129   83.4  82.2
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  39.4  38.7
+ *                                    || 139  | 129   83.4  82.0
  * 
  * --------------------------------------------------------------
  */
