@@ -1197,7 +1197,7 @@ struct s7_scheme {
              when_s_symbol, when_a_symbol, when_p_symbol, when_unchecked_symbol, 
              with_baffle_unchecked_symbol, with_let_s_symbol, with_let_unchecked_symbol, 
              dox_slot_symbol, 
-             do_no_vars_symbol, do_no_vars_no_opt_symbol, dotimes_one_step_symbol;
+             do_no_vars_symbol, do_no_vars_no_opt_symbol;
 
 #if WITH_GMP
   s7_pointer bignum_symbol, is_bignum_symbol;
@@ -1727,7 +1727,7 @@ static s7_scheme *cur_sc = NULL;
 
   static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int32_t line)
   {
-    if (is_global(symbol)) /* || (is_syntactic(symbol))) */
+    if (is_global(symbol))
       fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
     typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
   }
@@ -3081,7 +3081,6 @@ enum {OP_NO_OP, OP_GC_PROTECT,
       OP_SAFE_DO, OP_SAFE_DO_STEP, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, 
       OP_DOTIMES_P, OP_DOTIMES_STEP_P,
       OP_DO_NO_VARS, OP_DO_NO_VARS_NO_OPT, OP_DO_NO_VARS_NO_OPT_1,
-      OP_DOTIMES_ONE_STEP,
 
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_3, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6,
       OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV,
@@ -3311,7 +3310,6 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "safe_do", "safe_do_step", "dox", "dox_step", "dox_step_p", 
       "dotimes_p", "dotimes_step_p",
       "do_no_vars", "do_no_vars_no_opt", "do_no_vars_no_opt_1",
-      "dotimes_one_step",
 
       "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_3", "safe_c_pp_5", "safe_c_pp_6",
       "eval_args_p_2", "eval_args_p_2_mv", "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv",
@@ -6741,18 +6739,21 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
       s7_pointer sym;
       x = slot_value(inits[i]);
       sym = slot_symbol(inits[i]);
-      if (is_procedure(x))
+      if (!is_immutable(sym))
 	{
-	  if (((!is_global(sym)) &&                  /* it might be shadowed locally */
-	       (s7_symbol_local_value(sc, sym, sc->envir) != slot_value(global_slot(sym)))) ||
-	      (x != slot_value(global_slot(sym))))   /* it's not shadowed, but has been changed globally */
-	    make_slot_1(sc, sc->w, sym, x);
-	}
-      else
-	{
-	  if ((is_syntax(x)) &&
-	      (local_slot(sym) != sc->nil))          /* this can be a freed cell, will be nil if unchanged */
-	    make_slot_1(sc, sc->w, sym, x);
+	  if (is_procedure(x))
+	    {
+	      if (((!is_global(sym)) &&                  /* it might be shadowed locally */
+		   (s7_symbol_local_value(sc, sym, sc->envir) != slot_value(global_slot(sym)))) ||
+		  (x != slot_value(global_slot(sym))))   /* it's not shadowed, but has been changed globally */
+		make_slot_1(sc, sc->w, sym, x);
+	    }
+	  else
+	    {
+	      if ((is_syntax(x)) &&
+		  (local_slot(sym) != sc->nil))          /* this can be a freed cell, will be nil if unchanged */
+		make_slot_1(sc, sc->w, sym, x);
+	    }
 	}
     }
   /* if (set! + -) then + needs to be overridden, but the local bit isn't set,
@@ -29255,6 +29256,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   if (is_not_null(args))
     port = car(args);
   else port = sc->output_port;
+
   if (!is_output_port(port))
     {
       if (port == sc->F) return(newline_char);
@@ -29265,8 +29267,22 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   /* return(sc->unspecified) until 28-Sep-17, but for example (display c) returns c */
 }
 
-static s7_pointer newline_p(void) {s7_write_char(cur_sc, '\n', cur_sc->output_port); return(newline_char);}
-static s7_pointer newline_p_p(s7_pointer port) {s7_write_char(cur_sc, '\n', port); return(newline_char);}
+static s7_pointer newline_p(void) 
+{
+  s7_newline(cur_sc, cur_sc->output_port); 
+  return(newline_char);
+}
+
+static s7_pointer newline_p_p(s7_pointer port) 
+{
+  if (!is_output_port(port))
+    {
+      if (port == cur_sc->F) return(newline_char);
+      s7_wrong_type_arg_error(cur_sc, "newline", 1, port, "an open output port");
+    }
+  s7_newline(cur_sc, port);
+  return(newline_char);
+}
 
 
 /* -------------------------------- write -------------------------------- */
@@ -65302,8 +65318,7 @@ static bool is_simple_expression(s7_scheme *sc, s7_pointer x)
 {
   return((!is_pair(x)) ||
 	 ((is_optimized(x)) &&
-	  (is_all_x_safe(sc, x)) &&
-	  (car(x) != sc->quote_symbol)));
+	  (is_all_x_safe(sc, x))));
 }
 	
 static bool tree_has_definers(s7_scheme *sc, s7_pointer tree)
@@ -65393,7 +65408,6 @@ static s7_pointer check_do(s7_scheme *sc)
       (has_opt_back(sc->code)))
     {
       s7_pointer vars, end, body, p;
-      int32_t nvars, nsteps = 0;
 
       pair_set_syntax_symbol(sc->code, sc->do_unchecked_symbol);
 
@@ -65418,58 +65432,6 @@ static s7_pointer check_do(s7_scheme *sc)
       body = cddr(sc->code);
       if (tree_has_definers(sc, body))
 	return(sc->code);
-
-      /* TODO: set up init/step choices */
-      for (nvars = 0, p = vars; is_pair(p); nvars++, p = cdr(p))
-	if (is_pair(cddar(p)))
-	  {
-	    x = car(p);
-	    nsteps++;
-	  }
-      /* 1/1 2/2 1/n n/m.  0/n almost never (only make-index where currently cell_optimize has no chance) */
-#if 1
-      if ((nvars > 1) &&
-	  (nsteps == 1))
-	{
-	  /* temporary */
-	  for (nvars = 0, p = vars; is_pair(p); nvars++, p = cdr(p))
-	    {
-	      s7_pointer v;
-	      v = car(p);
-	      if (is_simple_expression(sc, cadr(v)))
-		set_x_call(cdr(v), all_x_eval(sc, cdr(v), sc->envir, let_symbol_is_safe));
-	      else return(sc->code);
-	    }
-
-	  if (!is_simple_expression(sc, caddr(x)))  /* x is the stepper */
-	    return(sc->code);
-	  if (is_pair(caddr(x)))
-	    {
-	      set_x_call(cddr(x), all_x_eval(sc, cddr(x), sc->envir, let_symbol_is_safe));
-	      if (c_callee(cddr(x)) == all_x_c_add1)
-		{
-		  if ((c_callee(end) == all_x_c_ss) &&
-		      (caar(end) == sc->eq_symbol) &&
-		      (cadar(end) == car(x)))
-		    {
-		      bool has_set = false;
-		      if ((is_null(cdr(body))) &&
-			  (do_is_safe(sc, body, sc->w = list_1(sc, car(x)), sc->nil, &has_set)))
-			{
-			  if (!has_set)
-			    {
-			      pair_set_syntax_symbol(sc->code, sc->dotimes_one_step_symbol); /* safe dotimes */
-			      return(sc->nil);
-			    }
-			}
-		    }
-		}
-	    }
-	  
-	  /* inits all non-pair, or all allx, or any */
-	  /* steppers allx, +1 -1 cdr */
-	}
-#endif
 
       /* 1/1 is of course the biggy -- can 1/n share its code? */
       /* need to start: do_op_1step_no_opt[_1] = set up frame goto check end, then push _1, set code, goto begin1, step via allx
@@ -65703,48 +65665,6 @@ static s7_pointer check_do(s7_scheme *sc)
       return(sc->nil);
     }
   return(sc->code);
-}
-
-static s7_pointer make_do_frame(s7_scheme *sc)
-{
-  int64_t id;
-  s7_pointer frame, vars;
-
-  new_frame(sc, sc->envir, frame);           /* new frame is not tied into the symbol lookup process yet */
-  sc->temp11 = frame;
-  id = let_id(frame);
-
-  for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
-    {
-      s7_pointer v, slot;
-      v = car(vars);
-      new_cell_no_check(sc, slot, T_SLOT);
-      slot_set_symbol(slot, car(v));
-      slot_set_value(slot, sc->F);
-      set_next_slot(slot, let_slots(frame)); /* GC protect it right away */
-      let_set_slots(frame, slot);
-      symbol_set_local(slot_symbol(slot), id, slot);
-      slot_set_value(slot, c_call(cdr(v))(sc, cadr(v)));
-      slot_set_expression(slot, cddr(v));
-      if (is_pair(cddr(v)))
-	dox_set_slot1(frame, slot);
-    }
-
-  sc->temp11 = sc->nil;
-  return(frame);
-}
-
-static void update_steppers(s7_scheme *sc)
-{
-  /* TODO: probably need to use pending_expr here etc */
-  s7_pointer v;
-  for (v = let_slots(sc->envir); is_slot(v); v = next_slot(v))
-    {
-      s7_pointer step_expr;
-      step_expr = slot_expression(v);
-      if (!is_null(step_expr))
-	slot_set_value(v, c_call(step_expr)(sc, car(step_expr)));
-    }
 }
 
 static bool has_safe_steppers(s7_scheme *sc, s7_pointer frame)
@@ -69342,80 +69262,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto BEGIN1;
 
 
-	DOTIMES_ONE_STEP:
-	case OP_DOTIMES_ONE_STEP:
-	  {
-	    s7_pointer end, stepper, end_slot;
-	    s7_int lim = 0; /* make the compiler happy */
-
-	    /* fprintf(stderr, "dotimes one step %s\n", DISPLAY(sc->code)); */
-
-	    sc->envir = make_do_frame(sc);
-	    /* fprintf(stderr, "frame: %s\n", DISPLAY(sc->envir)); */
-
-	    end = cadr(sc->code);
-	    do_all_x_end(end);
-
-	    stepper = dox_slot1(sc->envir);
-	    end_slot = find_symbol(sc, caddar(end)); /* can't trust local slot here (local_symbol?) */
-	    if (is_t_integer(slot_value(end_slot)))
-	      {
-		/* TODO: need to make sure step not set */
-		lim = integer(slot_value(end_slot));
-		denominator(slot_value(stepper)) = lim;
-		set_step_end(stepper);
-	      }
-
-	    if (s7_optimize_nr(sc, cddr(sc->code)))
-	      {
-		s7_pointer step_expr;
-		step_expr = car(slot_expression(stepper));
-		/* fprintf(stderr, "slot: %s, end: %s %s\n", DISPLAY(stepper), DISPLAY(end), DISPLAY(slot_expression(stepper))); */
-
-		if ((is_slot(stepper)) &&
-		    (c_callee(end) == all_x_c_ss) &&
-		    (c_callee(car(end)) == g_equal_2) &&
-		    (cadar(end) == slot_symbol(stepper)) &&
-		    (is_t_integer(slot_value(stepper))) &&
-		    /* (is_safe_stepper(stepper)) && */
-		    (caar(end) = sc->add_symbol) &&
-		    (cadar(end) == cadr(step_expr)) &&
-		    (is_t_integer(caddr(step_expr))) &&
-		    (integer(caddr(step_expr)) == 1) &&
-		    (is_step_end(stepper)))
-		  {
-		    opt_info *o;
-		    s7_pointer (*fp)(void *o);
-		    s7_pointer val;
-		    o = sc->opts[0];
-		    fp = o->v7.fp;
-		    val = make_mutable_integer(sc, integer(slot_value(stepper)));
-		    slot_set_value(stepper, val);
-		    for (; integer(val) < lim; integer(val)++)
-		      {
-			sc->pc = 0;
-			fp(o);
-		      }
-		    sc->value = sc->T;
-		    sc->code = cdr(end);
-		    goto SAFE_DO_END_CLAUSES; /* no multiple-values here */
-		  }
-		  
-		while (true)
-		  {
-		    sc->pc = 0;
-		    sc->opts[0]->v7.fp(sc->opts[0]);
-		    update_steppers(sc);
-		    /* TODO: get the stepper and handle direct in more than just +1 (do_let|dotimes) */
-		    do_all_x_end(end);
-		  }
-	      }
-	  }
-	  push_stack_no_args(sc, OP_DOX_STEP, sc->code);
-	  sc->code = _TPair(cddr(sc->code));
-	  goto BEGIN1;
-
-
 	  /* -------------------------------- */
 	SAFE_DOTIMES:
 	case OP_SAFE_DOTIMES:
@@ -69836,7 +69682,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (op == sc->safe_do_symbol)	 goto SAFE_DO;
 
 	      if (op == sc->do_no_vars_symbol)   goto DO_NO_VARS;
-	      if (op == sc->dotimes_one_step_symbol)   goto DOTIMES_ONE_STEP;
 	      goto SIMPLE_DO;
 	    }
 	  
@@ -82194,8 +82039,8 @@ s7_scheme *s7_init(void)
   sc->macroexpand_symbol =       assign_syntax(sc, "macroexpand",     OP_MACROEXPAND,       small_int(1), small_int(1), macroexpand_help);
   sc->with_let_symbol =          assign_syntax(sc, "with-let",        OP_WITH_LET,          small_int(1), max_arity,    with_let_help);
   sc->let_temporarily_symbol =   assign_syntax(sc, "let-temporarily", OP_LET_TEMPORARILY,   small_int(2), max_arity,    let_temporarily_help);
-  set_immutable(sc->with_let_symbol);
   set_local_slot(sc->with_let_symbol, global_slot(sc->with_let_symbol)); /* for set_locals */
+  set_immutable(sc->with_let_symbol);
 
   sc->quote_unchecked_symbol =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED);
   sc->begin1_symbol =                assign_internal_syntax(sc, "begin",       OP_BEGIN1);
@@ -82243,7 +82088,6 @@ s7_scheme *s7_init(void)
   sc->dox_symbol =                   assign_internal_syntax(sc, "do",          OP_DOX);
   sc->do_no_vars_symbol =            assign_internal_syntax(sc, "do",          OP_DO_NO_VARS);
   sc->do_no_vars_no_opt_symbol =     assign_internal_syntax(sc, "do",          OP_DO_NO_VARS_NO_OPT);
-  sc->dotimes_one_step_symbol =      assign_internal_syntax(sc, "do",          OP_DOTIMES_ONE_STEP);
 
   sc->lambda_unchecked_symbol =      assign_internal_syntax(sc, "lambda",      OP_LAMBDA_UNCHECKED);
   sc->lambda_star_unchecked_symbol = assign_internal_syntax(sc, "lambda*",     OP_LAMBDA_STAR_UNCHECKED);
@@ -82518,8 +82362,8 @@ s7_scheme *s7_init(void)
   sc->rootlet_symbol =               defun("rootlet",		rootlet,		0, 0, false);
   sc->curlet_symbol =                defun("curlet",		curlet,			0, 0, false);
   sc->unlet_symbol =                 defun("unlet",		unlet,			0, 0, false);
-  set_immutable(sc->unlet_symbol);
   set_local_slot(sc->unlet_symbol, global_slot(sc->unlet_symbol)); /* for set_locals */
+  set_immutable(sc->unlet_symbol);
   /* unlet (and with-let) don't actually need to be immutable, but s7.html says they are... */
   sc->sublet_symbol =                defun("sublet",		sublet,			1, 0, true);
   sc->varlet_symbol =                unsafe_defun("varlet",	varlet,			1, 0, true);
@@ -82912,7 +82756,7 @@ s7_scheme *s7_init(void)
 #endif
   s7_define_function(sc, "s7-optimize", g_optimize, 1, 0, false, "short-term debugging aid");
 
-  sc->c_object_set_function = slot_value(global_slot(s7_define_function(sc, "#<c-object-setter>", g_c_object_set, 1, 0, true, "c-object setter")));
+  sc->c_object_set_function = s7_make_function(sc, "#<c-object-setter>", g_c_object_set, 1, 0, true, "c-object setter");
 
   set_scope_safe(slot_value(global_slot(sc->call_with_input_string_symbol)));
   set_scope_safe(slot_value(global_slot(sc->call_with_input_file_symbol)));
@@ -83839,7 +83683,7 @@ int main(int argc, char **argv)
  * tmac          |      |      |      || 9052 |  615   261   261
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1050
  * tref          |      |      | 2372 || 2125 | 1375  1109  1121
- * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1340
+ * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1376
  * teq           |      |      | 6612 || 2777 | 2129  1921  1928
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2072
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426

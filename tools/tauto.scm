@@ -171,7 +171,7 @@
 		  symbol-table load local-symbol?
 		  global-environment current-environment make-procedure-with-setter procedure-with-setter? make-rectangular
 		  
-		  copy fill! hash-table-set! vector-set! let-set! list-values apply-values immutable
+		  copy fill! hash-table-set! vector-set! let-set! list-values apply-values immutable!
 		  
 		  mock-number mock-pair mock-string mock-char mock-vector mock-hash-table*
 		  mock-symbol mock-port mock-hash-table m mock->string make-local-method
