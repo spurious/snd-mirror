@@ -624,6 +624,12 @@ typedef struct {
 #endif
 } opt_info;
 
+typedef struct {
+  s7_pointer initial_slot;      /* for built-in symbols (unlet) */
+  uint32_t type;
+} symbol_info_t;
+
+#define symbol_tag_t uint32_t
 
 /* cell structure */
 typedef struct s7_cell {
@@ -776,24 +782,23 @@ typedef struct s7_cell {
       uint32_t length;
       union {
 	bool needs_free;            /* string GC */
-	uint32_t setter;          /* symbol-setter */
+	uint32_t setter;            /* symbol-setter address (for a global symbol = symbol_global_setter_index) */
 	int32_t temp_len;           /* temp string length (sc->tmp_strs) */
       } str_ext;
       char *svalue;
       uint64_t hash;                /* string hash-index */
-      s7_pointer initial_slot;      /* for built-in symbols (unlet) */
       union {
 	char *documentation;        /* symbol help */
 	s7_pointer ksym;            /* keyword->symbol */
       } doc;
+      symbol_info_t *info;
     } string;
 
     struct {                       /* symbols */
       s7_pointer name, global_slot, local_slot;
       int64_t id;
-      uint32_t ctr;                /* closure_is_ok (check func only defined once) */
-      uint16_t tag;                /* symbol lists (quick memq) */
-      uint8_t type;
+      uint32_t ctr;
+      symbol_tag_t tag;
     } sym;
 
     struct {                       /* syntax */
@@ -1049,7 +1054,7 @@ struct s7_scheme {
   int32_t c_object_types_size;
   int32_t num_c_object_types;
 
-  uint16_t syms_tag;
+  symbol_tag_t syms_tag;
   int32_t ht_iter_tag, baffle_ctr, bignum_precision;
   s7_pointer default_rng;
 
@@ -1068,7 +1073,7 @@ struct s7_scheme {
              char_position_symbol, char_to_integer_symbol, char_upcase_symbol, cload_directory_symbol, close_input_port_symbol, 
              close_output_port_symbol, complex_symbol, cons_symbol, copy_symbol, cos_symbol, cosh_symbol, coverlet_symbol, 
              curlet_symbol, current_error_port_symbol, current_input_port_symbol, current_output_port_symbol, cutlet_symbol, cyclic_sequences_symbol,
-             denominator_symbol, dilambda_symbol, display_symbol, divide_symbol, dynamic_wind_symbol,
+             denominator_symbol, dilambda_symbol, display_symbol, divide_symbol, documentation_symbol, dynamic_wind_symbol,
              eq_symbol, error_symbol, eval_string_symbol, eval_symbol, exact_to_inexact_symbol, exit_symbol, exp_symbol, expt_symbol,
              features_symbol, fill_symbol, float_vector_ref_symbol, float_vector_set_symbol, float_vector_symbol, floor_symbol, 
              flush_output_port_symbol, for_each_symbol, format_symbol, funclet_symbol,
@@ -1098,12 +1103,12 @@ struct s7_scheme {
              object_to_string_symbol, object_to_let_symbol, open_input_file_symbol, open_input_string_symbol, open_output_file_symbol, 
              open_output_string_symbol, openlet_symbol, outlet_symbol, owlet_symbol, 
              pair_filename_symbol, pair_line_number_symbol, peek_char_symbol, pi_symbol, port_filename_symbol, port_line_number_symbol,
-             procedure_documentation_symbol, procedure_signature_symbol, procedure_source_symbol, provide_symbol,
+             procedure_documentation_symbol, procedure_setter_symbol, procedure_signature_symbol, procedure_source_symbol, provide_symbol,
              quotient_symbol, 
              random_state_symbol, random_state_to_list_symbol, random_symbol, rationalize_symbol, read_byte_symbol,
              read_char_symbol, read_line_symbol, read_string_symbol, read_symbol, real_part_symbol, remainder_symbol,
              require_symbol, reverse_symbol, reverseb_symbol, rootlet_symbol, round_symbol,
-             set_car_symbol, set_cdr_symbol, sin_symbol, sinh_symbol, sort_symbol, sqrt_symbol,
+             setter_symbol, set_car_symbol, set_cdr_symbol, signature_symbol, sin_symbol, sinh_symbol, sort_symbol, sqrt_symbol,
              stacktrace_symbol, string_append_symbol, string_downcase_symbol, string_eq_symbol, string_fill_symbol,
              string_geq_symbol, string_gt_symbol, string_leq_symbol, string_lt_symbol, string_position_symbol, string_ref_symbol,
              string_set_symbol, string_symbol, string_to_number_symbol, string_to_symbol_symbol, string_upcase_symbol,
@@ -1137,7 +1142,7 @@ struct s7_scheme {
 
   /* syntax symbols et al */
   s7_pointer else_symbol, lambda_symbol, lambda_star_symbol, let_symbol, quote_symbol, unquote_symbol, macroexpand_symbol, 
-             define_expansion_symbol, baffle_symbol, with_let_symbol, documentation_symbol, signature_symbol, if_symbol, 
+             define_expansion_symbol, baffle_symbol, with_let_symbol, if_symbol, 
              when_symbol, unless_symbol, begin_symbol, cond_symbol, case_symbol, and_symbol, or_symbol, do_symbol, 
              define_symbol, define_star_symbol, define_constant_symbol, with_baffle_symbol, define_macro_symbol, 
              define_macro_star_symbol, define_bacro_symbol, define_bacro_star_symbol, letrec_symbol, letrec_star_symbol, 
@@ -1198,6 +1203,9 @@ struct s7_scheme {
              with_baffle_unchecked_symbol, with_let_s_symbol, with_let_unchecked_symbol, 
              dox_slot_symbol, 
              do_no_vars_symbol, do_no_vars_no_opt_symbol;
+
+  s7_pointer string_signature, vector_signature, float_vector_signature, int_vector_signature, byte_vector_signature,
+             c_object_signature, let_signature, hash_table_signature, pair_signature, iterator_signature;
 
 #if WITH_GMP
   s7_pointer bignum_symbol, is_bignum_symbol;
@@ -1781,6 +1789,9 @@ static s7_scheme *cur_sc = NULL;
 #define clear_simple_defaults(p)      typeflag(_TFnc(p)) &= (~T_SIMPLE_DEFAULTS)
 /* flag c_func_star arg defaults that need GC protection */
 
+#define T_NO_SETTER                   T_LINE_NUMBER
+#define closure_no_setter(p)          ((typeflag(_TClo(p)) & T_NO_SETTER) != 0)
+#define closure_set_no_setter(p)      typeflag(_TClo(p)) |= T_NO_SETTER
 
 #define T_SHARED                      (1 << (TYPE_BITS + 11))
 #define is_shared(p)                  ((typeflag(_TSeq(p)) & T_SHARED) != 0)
@@ -2312,12 +2323,12 @@ static int64_t not_heap = -1;
  *    callgrind says this is faster than an uint32_t!
  */
 #define symbol_syntax_op(p)           syntax_opcode(slot_value(global_slot(p)))
-#define symbol_type(p)                (_TSym(p))->object.sym.type
+#define symbol_type(p)                (symbol_name_cell(p))->object.string.info->type
 
 #define global_slot(p)                (_TSym(p))->object.sym.global_slot
 #define set_global_slot(p, Val)       (_TSym(p))->object.sym.global_slot = _TSld(Val)
-#define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
-#define set_initial_slot(p, Val)      (symbol_name_cell(p))->object.string.initial_slot = _TSld(Val)
+#define initial_slot(p)               (symbol_name_cell(p))->object.string.info->initial_slot
+#define set_initial_slot(p, Val)      (symbol_name_cell(p))->object.string.info->initial_slot = _TSld(Val)
 #define local_slot(p)                 (_TSym(p))->object.sym.local_slot
 #define set_local_slot(p, Val)        (_TSym(p))->object.sym.local_slot = _TSln(Val)
 #define keyword_symbol(p)             (symbol_name_cell(p))->object.string.doc.ksym
@@ -2331,6 +2342,7 @@ static int64_t not_heap = -1;
 #define symbol_increment_ctr(p)       (_TSym(p))->object.sym.ctr++
 #define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
 #define symbol_set_has_help(p)        set_documented(symbol_name_cell(p))
+#define symbol_info(p)                (symbol_name_cell(p))->object.string.info
 
 #define symbol_set_local(Symbol, Id, Slot) do {set_local_slot(Symbol, Slot); symbol_set_id(Symbol, Id); symbol_increment_ctr(Symbol);} while (0)
 /* set slot before id in case Slot is an expression that tries to find the current Symbol slot (using its old Id obviously) */
@@ -4083,6 +4095,7 @@ static void sweep(s7_scheme *sc)
 	  s1 = gp->list[i];
 	  if (is_free_and_clear(s1))
 	    {
+	      /* free(symbol_info(s1)); */
 	      remove_gensym_from_symbol_table(sc, s1); /* this uses symbol_name_cell data */
 	      free(symbol_name(s1));
 	      free(symbol_name_cell(s1));
@@ -5670,11 +5683,13 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, uint32_t len, uint
   /* name might not be null-terminated */
   s7_pointer x, str, p;
   unsigned char *base, *val;
+  size_t size;
+  size = sizeof(s7_cell) * 3 + sizeof(symbol_info_t) + len + 1;
 
-  base = (unsigned char *)malloc(sizeof(s7_cell) * 3 + len + 1);
+  base = (unsigned char *)malloc(size);
 #if DEBUGGING
   /* clear at least debugger_bits here and below */
-  memset((void *)base, 0, sizeof(s7_cell) * 3 + len + 1);
+  memset((void *)base, 0, size);
 #endif
   x = (s7_pointer)base;
   str = (s7_pointer)(base + sizeof(s7_cell));
@@ -5694,6 +5709,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, uint32_t len, uint
   typeflag(x) = T_SYMBOL;
   symbol_set_name_cell(x, str);
   set_global_slot(x, sc->undefined);                       /* was sc->nil */
+  symbol_info(x) = (symbol_info_t *)(base + 3 * sizeof(s7_cell) + len + 1);
   set_initial_slot(x, sc->undefined);
   symbol_set_local(x, 0LL, sc->nil);
   symbol_set_tag(x, 0);
@@ -6015,8 +6031,9 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   /* allocate the symbol in the heap so GC'd when inaccessible */
   new_cell(sc, x, T_SYMBOL | T_GENSYM);
   symbol_set_name_cell(x, str);
+  symbol_info(x) = NULL; /* (symbol_info_t *)calloc(1, sizeof(symbol_info_t)); */
   set_global_slot(x, sc->undefined);
-  set_initial_slot(x, sc->undefined);
+  /* set_initial_slot(x, sc->undefined); */
   symbol_set_local(x, 0LL, sc->nil);
   symbol_set_ctr(x, 0);
 
@@ -38427,18 +38444,18 @@ static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- procedure-signature -------------------------------- */
-static s7_pointer get_signature(s7_scheme *sc, s7_pointer x)
+static void init_signatures(s7_scheme *sc)
 {
-  check_closure_for(sc, x, sc->signature_symbol);
-  return(sc->F);
-}
-
-s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer func)
-{
-  if ((is_any_c_function(func)) ||
-      (is_c_macro(func)))
-    return((s7_pointer)c_function_signature(func));
-  return(get_signature(sc, func));
+  sc->string_signature = s7_make_signature(sc, 3, sc->is_char_symbol, sc->is_string_symbol, sc->is_integer_symbol);
+  sc->byte_vector_signature = s7_make_signature(sc, 3, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol);
+  sc->vector_signature = s7_make_circular_signature(sc, 2, 3, sc->T, sc->is_vector_symbol, sc->is_integer_symbol);
+  sc->float_vector_signature = s7_make_circular_signature(sc, 2, 3, sc->is_float_symbol, sc->is_float_vector_symbol, sc->is_integer_symbol);
+  sc->int_vector_signature = s7_make_circular_signature(sc, 2, 3, sc->is_integer_symbol, sc->is_int_vector_symbol, sc->is_integer_symbol);
+  sc->c_object_signature = s7_make_circular_signature(sc, 2, 3, sc->T, sc->is_c_object_symbol, sc->T);
+  sc->let_signature = s7_make_signature(sc, 3, sc->T, sc->is_let_symbol, sc->T);
+  sc->hash_table_signature = s7_make_signature(sc, 3, sc->T, sc->is_hash_table_symbol, sc->T); /* should this be circular? */
+  sc->pair_signature = s7_make_circular_signature(sc, 2, 3, sc->T, sc->is_pair_symbol, sc->is_integer_symbol);
+  sc->iterator_signature = s7_make_signature(sc, 1, sc->T);
 }
 
 static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
@@ -38448,22 +38465,54 @@ static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
   #define Q_procedure_signature s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_boolean_symbol), sc->is_procedure_symbol)
 
   p = car(args);
-  if (is_symbol(p)) 
+  if (is_symbol(p))
+    p = s7_symbol_value(sc, p);  /* lint depends on this currently */
+
+  switch (type(p))
     {
-      p = s7_symbol_value(sc, p);
-      if (is_procedure(p))
-	return(s7_procedure_signature(sc, p));
-      if (p == sc->undefined)
-	return(sc->F);
+    case T_C_FUNCTION:
+    case T_C_FUNCTION_STAR:
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+    case T_C_MACRO:
+      return((s7_pointer)c_function_signature(p));
+
+    case T_MACRO:   case T_MACRO_STAR:
+    case T_BACRO:   case T_BACRO_STAR:
+    case T_CLOSURE: case T_CLOSURE_STAR:
+      check_closure_for(sc, p, sc->signature_symbol); /* this examines funclet */
+      return(sc->F);
+
+    case T_HASH_TABLE:   return(sc->hash_table_signature);
+    case T_VECTOR:       return(sc->vector_signature);
+    case T_FLOAT_VECTOR: return(sc->float_vector_signature);
+    case T_INT_VECTOR:   return(sc->int_vector_signature);
+    case T_ITERATOR:     return(sc->iterator_signature);
+    case T_PAIR:         return(sc->pair_signature);
+    case T_STRING:       if (is_byte_vector(p))	return(sc->byte_vector_signature); return(sc->string_signature);
+
+    case T_C_OBJECT: 
+      check_two_methods(sc, p, sc->procedure_signature_symbol, sc->signature_symbol, args);
+      return(sc->c_object_signature);
+ 
+    case T_LET:
+      check_two_methods(sc, p, sc->procedure_signature_symbol, sc->signature_symbol, args);
+      return(sc->let_signature);
+
+    default:
+      break;
     }
-  else
-    {
-      if (is_procedure(p))
-	return(s7_procedure_signature(sc, p));
-    }
-  check_method(sc, p, sc->procedure_signature_symbol, list_1(sc, p));
   return(sc->F);
 }
+
+s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer func)
+{
+  return(g_procedure_signature(sc, set_plist_1(sc, func)));
+}
+
+#define signature(Sc, _P_) ((is_any_c_function(_P_)) ? ((s7_pointer)c_function_signature(_P_)) : s7_procedure_signature(Sc, _P_))
+
 
 /* -------------------------------- new types (c_objects) -------------------------------- */
 
@@ -38794,10 +38843,13 @@ static s7_pointer copy_c_object(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer c_object_type_to_let(s7_scheme *sc, s7_pointer cobj)
 {
-  /* should we make new wrappers every time this is called? or save the let somewhere and reuse it? */
-  return(sc->F);
-}
+  return(s7_inlet(sc, s7_list(sc, 4,
+			      s7_make_symbol(sc, "name"), c_object_scheme_name(sc, cobj),
+			      s7_make_symbol(sc, "setter"), (c_object_set(sc, cobj) != fallback_set) ? sc->c_object_set_function : sc->F)));
 
+  /* should we make new wrappers every time this is called? or save the let somewhere and reuse it? */
+  /* (load "s7test-block.so" (sublet (curlet) (cons 'init_func 'block_init))) */
+}
 
 
 
@@ -38918,6 +38970,12 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
   return(closure_setter(obj));
 }
 
+static s7_pointer funclet_setter(s7_scheme *sc, s7_pointer fnc)
+{
+  check_closure_for(sc, fnc, sc->setter_symbol);
+  return(sc->F);
+}
+
 static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_setter "(procedure-setter obj) returns the setter associated with obj, or #f"
@@ -38930,6 +38988,15 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     case T_MACRO:   case T_MACRO_STAR:
     case T_BACRO:   case T_BACRO_STAR:
     case T_CLOSURE: case T_CLOSURE_STAR:
+      if ((!is_procedure(closure_setter(p))) &&
+	  (!closure_no_setter(p)))
+	{
+	  s7_pointer f;
+	  f = funclet_setter(sc, p);
+	  if (is_procedure(f))
+	    closure_set_setter(p, f);
+	  else closure_set_no_setter(p);
+	}
       return(closure_setter(p));
 
     case T_C_FUNCTION:
@@ -38947,13 +39014,13 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 
     case T_C_OBJECT: 
-      check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
+      check_method(sc, p, sc->procedure_setter_symbol, args);
       if  (c_object_set(sc, p) != fallback_set)
 	return(sc->c_object_set_function);      /* for example ((procedure-setter obj) obj 0 1.0) if s7test block */
       return(sc->F);
 
     case T_LET:
-      check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
+      check_method(sc, p, sc->procedure_setter_symbol, args);
       return(slot_value(global_slot(sc->let_set_symbol)));
       break;
 
@@ -39144,11 +39211,9 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
 	return(sc->F);
 
     case T_LET:
-      /* check_method(sc, x, sc->arity_symbol, args); */
       return(s7_cons(sc, small_int(1), small_int(1)));
 
     case T_C_OBJECT:
-      /* check_method(sc, x, sc->arity_symbol, args); */
       if (is_procedure(x))
 	return(s7_cons(sc, small_int(0), max_arity));
       return(sc->F);
@@ -42235,13 +42300,12 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
       {
 	s7_pointer let, clet;
 	clet = c_object_let(obj);
-	let = s7_inlet(sc, s7_list(sc, 12,
+	let = s7_inlet(sc, s7_list(sc, 10,
 				   sc->value_symbol, obj,
 				   sc->type_symbol, sc->is_c_object_symbol,
 				   s7_make_symbol(sc, "c-object-type"), s7_make_integer(sc, c_object_type(obj)),
 				   s7_make_symbol(sc, "c-object-let"), clet,
-				   s7_make_symbol(sc, "class"), c_object_scheme_name(sc, obj),
-				   s7_make_symbol(sc, string_value(c_object_scheme_name(sc, obj))), c_object_type_to_let(sc, obj)));
+				   s7_make_symbol(sc, "class"), c_object_type_to_let(sc, obj)));
 	if ((is_let(clet)) &&
 	    ((has_methods(clet)) || (has_methods(obj))))
 	  {
@@ -42304,7 +42368,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 				   s7_make_symbol(sc, "arity"), s7_arity(sc, obj)));
 	gc_loc = s7_gc_protect(sc, let);
 
-	sig = s7_procedure_signature(sc, obj);
+	sig = signature(sc, obj);
 	if (is_pair(sig))
 	  s7_varlet(sc, let, sc->signature_symbol, sig);
 	
@@ -42349,7 +42413,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 				   sc->type_symbol, (is_procedure(obj)) ? sc->is_procedure_symbol : sc->is_macro_symbol,
 				   s7_make_symbol(sc, "arity"), s7_arity(sc, obj)));
 
-	sig = s7_procedure_signature(sc, obj);
+	sig = signature(sc, obj);
 	if (is_pair(sig))
 	  s7_varlet(sc, let, sc->signature_symbol, sig);
 	
@@ -47129,7 +47193,7 @@ static bool i_pi_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
   if (pfunc)
     {
       s7_pointer sig;
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if (is_pair(sig))
 	{
 	  s7_pointer arg1, arg2;
@@ -47280,7 +47344,7 @@ static bool i_ii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
   if (ifunc)
     {
       s7_pointer sig;
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if (is_pair(sig))
 	{
 	  s7_pointer arg1, arg2;
@@ -47545,7 +47609,7 @@ static bool i_pii_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
   if (pfunc)
     {
       s7_pointer sig;
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if ((is_pair(sig)) &&
 	  (is_symbol(cadr(car_x))))
 	{
@@ -47687,7 +47751,7 @@ static bool int_all_x_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_poi
 {
   s7_pointer sig;
   s7_function opt;
-  sig = s7_procedure_signature(sc, s_func);	  
+  sig = signature(sc, s_func);	  
   if ((is_pair(sig)) &&
       (car(sig) == sc->is_integer_symbol))
     {
@@ -47965,7 +48029,7 @@ static bool d_v_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer c
   if (flt_func)
     {
       s7_pointer sig;
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if ((is_pair(sig)) &&
 	  (is_symbol(cadr(car_x))))           /* look for (oscil g) */
 	{
@@ -48316,7 +48380,7 @@ static bool d_vd_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
       if (vfunc)
 	{
 	  s7_pointer sig;
-	  sig = s7_procedure_signature(sc, s_func);
+	  sig = signature(sc, s_func);
 	  if ((is_pair(sig)) &&
 	      (is_symbol(cadr(sig))))
 	    {
@@ -49293,7 +49357,7 @@ static bool d_vid_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
 	{
 	  s7_pointer sig;
 	  opc->v4.d_vid_f = flt;
-	  sig = s7_procedure_signature(sc, s_func);
+	  sig = signature(sc, s_func);
 	  if (is_pair(sig))
 	    {
 	      int32_t start;
@@ -49354,7 +49418,7 @@ static bool d_vdd_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
     {
       s7_pointer sig;
       opc->v4.d_vdd_f = flt;
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if (is_pair(sig))
 	{
 	  s7_pointer slot, obj, checker;
@@ -49548,7 +49612,7 @@ static bool float_all_x_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_p
 {
   s7_pointer sig;
   s7_function opt;
-  sig = s7_procedure_signature(sc, s_func);	  
+  sig = signature(sc, s_func);	  
   if ((is_pair(sig)) &&
       ((car(sig) == sc->is_float_symbol) ||
        (car(sig) == sc->is_real_symbol)))
@@ -49871,6 +49935,71 @@ static bool b_idp_ok(s7_scheme *sc, s7_pointer s_func, s7_pointer car_x, s7_poin
 
 
 /* -------- b_pp -------- */
+static s7_pointer opt_arg_type(s7_scheme *sc, s7_pointer argp)
+{
+  s7_pointer arg, slot;
+  arg = car(argp);
+  if (is_pair(arg))
+    {
+      if (is_symbol(car(arg)))
+	{
+	  if ((is_global(car(arg))) ||
+	      ((is_slot(global_slot(car(arg)))) &&
+	       (find_symbol(sc, car(arg)) == global_slot(car(arg)))))
+	    {
+	      s7_pointer a_func;
+	      a_func = slot_value(global_slot(car(arg)));
+	      if (is_c_function(a_func))
+		{
+		  s7_pointer sig;
+		  sig = signature(sc, a_func);
+		  if (is_pair(sig))
+		    {
+		      if ((car(sig) == sc->is_integer_symbol) ||
+			  ((is_pair(car(sig))) && (direct_memq(sc->is_integer_symbol, car(sig)))))
+			return(sc->is_integer_symbol);
+		      if ((car(sig) == sc->is_float_symbol) ||
+			  ((is_pair(car(sig))) && (direct_memq(sc->is_float_symbol, car(sig)))))
+			return(sc->is_float_symbol);
+		      if ((car(sig) == sc->is_real_symbol) ||
+			  (car(sig) == sc->is_number_symbol))
+			{
+			  int32_t start;
+			  start = sc->pc;
+			  if (int_optimize(sc, argp))
+			    {
+			      pc_fallback(sc, start);
+			      return(sc->is_integer_symbol);
+			    }
+			  if (float_optimize(sc, argp))
+			    {
+			      pc_fallback(sc, start);
+			      return(sc->is_float_symbol);
+			    }
+			  pc_fallback(sc, start);
+			}
+		      return(car(sig)); /* we want the function's return type in this context */
+		    }
+		}
+	    }
+	  slot = find_symbol(sc, car(arg));
+	  if ((is_slot(slot)) &&
+	      (is_sequence(slot_value(slot))))
+	    return(s7_procedure_signature(sc, slot_value(slot)));
+	}
+      return(sc->T);
+    }
+  if (is_symbol(arg))
+    {
+      slot = find_symbol(sc, arg);
+      if ((!is_slot(slot)) ||
+	  (has_methods(slot_value(slot))))
+	return(sc->T);
+      return(s7_type_of(slot_value(slot)));
+    }
+  return(s7_type_of(arg));
+}
+
 static bool opt_b_pp_ff(void *p)
 {
   opt_info *o = (opt_info *)p;
@@ -50024,22 +50153,18 @@ static bool b_pp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
     {
       if (!b_pp_ff_combinable(sc, opc))
 	opc->v7.fb = opt_b_pp_ff;
-      if ((s7_b_pp_direct_function(s_func)) &&
-	  (is_pair(cadr(car_x))) &&
-	  (is_pair(caddr(car_x))) &&
-	  (caadr(car_x) == caaddr(car_x)))
+      if (s7_b_pp_direct_function(s_func))
 	{
-	  s7_pointer arg_slot, call_sig;
-	  call_sig = s7_procedure_signature(sc, s_func);
-	  arg_slot = find_symbol(sc, caadr(car_x));
-	  if ((is_c_function(slot_value(arg_slot))) &&
-	      (cadr(call_sig) == caddr(call_sig)))
+	  s7_pointer call_sig, arg1_type, arg2_type;
+	  call_sig = signature(sc, s_func);
+	  arg1_type = opt_arg_type(sc, cdr(car_x));
+	  arg2_type = opt_arg_type(sc, cddr(car_x));
+	  /* fprintf(stderr, "%s %s %s\n", DISPLAY(call_sig), DISPLAY(arg1_type), DISPLAY(arg2_type)); */
+	  if ((cadr(call_sig) == ((is_pair(arg1_type)) ? car(arg1_type) : arg1_type)) &&
+	      (caddr(call_sig) == ((is_pair(arg2_type)) ? car(arg2_type) : arg2_type)))
 	    {
-	      s7_pointer arg_sig;
-	      arg_sig = s7_procedure_signature(sc, slot_value(arg_slot));
-	      if ((is_pair(arg_sig)) &&
-		  (car(arg_sig) == cadr(call_sig)))
-		opc->v3.b_pp_f = s7_b_pp_direct_function(s_func);
+	      opc->v3.b_pp_f = s7_b_pp_direct_function(s_func);
+	      return(true);
 	    }
 	}
       return(true);
@@ -50757,7 +50882,7 @@ static bool p_pi_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
     {
       s7_pointer obj = NULL, slot, sig, checker = NULL;
 
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if ((is_pair(sig)) &&
 	  (is_pair(cdr(sig))) &&
 	  (is_symbol(cadr(sig))))
@@ -50934,7 +51059,7 @@ static bool p_pp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
     {
       s7_pointer slot, sig, checker = NULL;
       
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if ((is_pair(sig)) &&
 	  (is_pair(cdr(sig))) &&
 	  (is_symbol(cadr(sig))))
@@ -51313,7 +51438,7 @@ static bool p_pip_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
     {
       s7_pointer obj = NULL, slot, sig, checker = NULL;
 
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if ((is_pair(sig)) &&
 	  (is_pair(cdr(sig))) &&
 	  (is_symbol(cadr(sig))))
@@ -51531,7 +51656,7 @@ static bool p_ppp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer
       int32_t start;
       s7_pointer sig, checker = NULL;
 
-      sig = s7_procedure_signature(sc, s_func);
+      sig = signature(sc, s_func);
       if ((is_pair(sig)) &&
 	  (is_pair(cdr(sig))) &&
 	  (is_symbol(cadr(sig))))
@@ -51922,66 +52047,6 @@ static bool opt_cell_quote(s7_scheme *sc, s7_pointer car_x)
 }
 
 /* -------- cell_set -------- */
-static s7_pointer opt_arg_type(s7_scheme *sc, s7_pointer argp)
-{
-  s7_pointer arg;
-  arg = car(argp);
-  if (is_pair(arg))
-    {
-      if ((is_symbol(car(arg))) &&
-	  ((is_global(car(arg))) ||
-	   ((is_slot(global_slot(car(arg)))) &&
-	    (find_symbol(sc, car(arg)) == global_slot(car(arg))))))
-	{
-	  s7_pointer a_func;
-	  a_func = slot_value(global_slot(car(arg)));
-	  if (is_c_function(a_func))
-	    {
-	      s7_pointer sig;
-	      sig = s7_procedure_signature(sc, a_func);
-	      if (is_pair(sig))
-		{
-		  if ((car(sig) == sc->is_integer_symbol) ||
-		      ((is_pair(car(sig))) && (direct_memq(sc->is_integer_symbol, car(sig)))))
-		    return(sc->is_integer_symbol);
-		  if ((car(sig) == sc->is_float_symbol) ||
-		      ((is_pair(car(sig))) && (direct_memq(sc->is_float_symbol, car(sig)))))
-		    return(sc->is_float_symbol);
-		  if ((car(sig) == sc->is_real_symbol) ||
-		      (car(sig) == sc->is_number_symbol))
-		    {
-		      int32_t start;
-		      start = sc->pc;
-		      if (int_optimize(sc, argp))
-			{
-			  pc_fallback(sc, start);
-			  return(sc->is_integer_symbol);
-			}
-		      if (float_optimize(sc, argp))
-			{
-			  pc_fallback(sc, start);
-			  return(sc->is_float_symbol);
-			}
-		      pc_fallback(sc, start);
-		    }
-		  return(car(sig)); /* we want the function's return type in this context */
-		}
-	    }
-	}
-      return(sc->T);
-    }
-  if (is_symbol(arg))
-    {
-      s7_pointer slot;
-      slot = find_symbol(sc, arg);
-      if ((!is_slot(slot)) ||
-	  (has_methods(slot_value(slot))))
-	return(sc->T);
-      return(s7_type_of(slot_value(slot)));
-    }
-  return(s7_type_of(arg));
-}
-
 static s7_pointer opt_set_p_p_f(void *p)
 {
   opt_info *o = (opt_info *)p;
@@ -53577,7 +53642,7 @@ static bool opt_cell_do(s7_scheme *sc, s7_pointer car_x, int32_t len)
 			  if (is_c_function(sf))
 			    {
 			      s7_pointer sig;
-			      sig = s7_procedure_signature(sc, sf);
+			      sig = signature(sc, sf);
 			      if ((is_pair(sig)) &&
 				  ((car(sig) == sc->is_integer_symbol) ||
 				   ((is_pair(car(sig))) &&
@@ -54212,7 +54277,7 @@ static s7_pointer func_returns(s7_scheme *sc, s7_pointer func)
       if (!is_symbol(rtnf)) return(sc->F);
       rtnf = find_symbol_checked(sc, rtnf);
       if (!is_c_function(rtnf)) return(sc->F);
-      rtnf = s7_procedure_signature(sc, rtnf);
+      rtnf = signature(sc, rtnf);
       if (!is_pair(rtnf)) return(sc->F);
       return(car(rtnf));
     }
@@ -54483,7 +54548,7 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 	  int32_t start;
 	  
 	  start = sc->pc;
-	  sig = s7_procedure_signature(sc, s_func);
+	  sig = signature(sc, s_func);
 	  opc = alloc_opo(sc, car_x);
 	  switch (len)
 	    {
@@ -56828,6 +56893,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   unheap(x);
   set_type(x, T_SYMBOL);
   symbol_set_name_cell(x, str);
+  symbol_info(x) = (symbol_info_t *)calloc(1, sizeof(symbol_info_t));
   symbol_set_local(x, 0LL, sc->nil);
   symbol_set_ctr(x, 0);
 
@@ -65654,8 +65720,8 @@ static s7_pointer check_do(s7_scheme *sc)
 		   (car(step_expr) == sc->cdr_symbol) ||
 		   (car(step_expr) == sc->cddr_symbol) ||	
 		   ((is_pair(cadr(var))) &&
-		    (is_pair(s7_procedure_signature(sc, c_function_base(opt_cfunc(step_expr))))) &&
-		    (car(s7_procedure_signature(sc, c_function_base(opt_cfunc(step_expr)))) != sc->T) &&
+		    (is_pair(signature(sc, c_function_base(opt_cfunc(step_expr))))) &&
+		    (car(signature(sc, c_function_base(opt_cfunc(step_expr)))) != sc->T) &&
 		    (caadr(var) == car(step_expr)))))
 		/* i.e. accept char-position as init/step, but not iterate */
 		set_safe_stepper(cddr(var));
@@ -66511,25 +66577,13 @@ static int32_t safe_dotimes_ex(s7_scheme *sc)
 
 	  /* (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) -- we need the frame even if the loop is not evaluated */
 
-	  /* safe_dotimes: if null (or constant) body, set step=end and quit (here end is (= step lim) so nothing can happen)
-	   *   TODO: break out this case in check_do
+	  /* safe_dotimes: (car(body) is known to be a pair here)
 	   *   if 1-expr body look for syntactic case, if let(*) goto do_let, else opt_dotimes
 	   *       if they are unhappy, got safe_dotimes_step_p
-	   *   TODO: another case for check_do
 	   *   else goto opt_dotimes then safe_dotimes_step_o
 	   *   if multi-line body, check opt_dotimes, then safe_dotimes_step
 	   */
 
-	  if ((is_null(sc->code)) ||
-	      ((!is_pair(car(sc->code))) &&
-	       (is_null(cdr(sc->code)))))
-	    {
-	      numerator(slot_value(sc->args)) = s7_integer(end_val);
-	      sc->value = sc->T;
-	      sc->code = cdadr(code);
-	      return(goto_SAFE_DO_END_CLAUSES);
-	    }
-	  
 	  if (s7_integer(init_val) == s7_integer(end_val))
 	    {
 	      sc->value = sc->T;
@@ -69376,7 +69430,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    /* simple_do: set up local env, check end (c_c?), goto simple_do_ex
 	     *   if latter gets s7_optimize, run locally, else goto simple_do_step.
 	     *   but is not 1 expr body, etc -- just goto simple_do_step,
-	     *   TODO: make this decision in check_do
 	     */
 	    s7_pointer init, end, code;
 
@@ -82193,8 +82246,10 @@ s7_scheme *s7_init(void)
   sc->when_unchecked_symbol =        assign_internal_syntax(sc, "when",        OP_WHEN_UNCHECKED);
   sc->unless_unchecked_symbol =      assign_internal_syntax(sc, "unless",      OP_UNLESS_UNCHECKED);
 
-  sc->documentation_symbol =  make_symbol(sc, "documentation");
-  sc->signature_symbol =      make_symbol(sc, "signature");
+  sc->documentation_symbol =    make_symbol(sc, "documentation");
+  sc->signature_symbol =        make_symbol(sc, "signature");
+  sc->setter_symbol =           make_symbol(sc, "setter");
+  sc->procedure_setter_symbol = make_symbol(sc, "procedure-setter");
 
 #if WITH_IMMUTABLE_UNQUOTE
   /* this code solves the various unquote redefinition troubles
@@ -82757,6 +82812,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "s7-optimize", g_optimize, 1, 0, false, "short-term debugging aid");
 
   sc->c_object_set_function = s7_make_function(sc, "#<c-object-setter>", g_c_object_set, 1, 0, true, "c-object setter");
+  /* c_function_signature(sc->c_object_set_function) = s7_make_circular_signature(sc, 2, 3, sc->T, sc->is_c_object_symbol, sc->T); */
 
   set_scope_safe(slot_value(global_slot(sc->call_with_input_string_symbol)));
   set_scope_safe(slot_value(global_slot(sc->call_with_input_file_symbol)));
@@ -83552,6 +83608,7 @@ s7_scheme *s7_init(void)
 
   save_unlet(sc);
   init_s7_let(sc);          /* set up *s7* */
+  init_signatures(sc);      /* depends on procedure symbols */
   already_inited = true;
 
   return(sc);
@@ -83648,56 +83705,51 @@ int main(int argc, char **argv)
  * libc needs many type checks
  * is_type replacing is_symbol etc [all_x_is_*_s if_is_* safe_is_*]
  *   is_type_car|cdr|a in all 3 cases
- *   need symbol->type-checker-recog->type -- symbol_type: object.sym.type
+ *   need symbol->type-checker-recog->type -- symbol_type: object.sym.info->type
  * maybe pass \u... through in read_constant_string unchanged, or read in s7??  no worse than \x..;
  * doc entry could be a thunk, doc/sig for var without a setter? = slot_pending/expr + bits? collisions?
- * b_pp_direct for char= et al
  *
  * c_object type table entries should also be s7_function, reported by object->let perhaps
  *    wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
  * signatures for c_object funcs? s7_procedure_set_signature? all c_object funcs are implicit in type table
- *   c_function_signature(func) = signature; but this is the c_func not the s7_function=slot_value(global_slot(sc->c_object_set_function)) etc
- *
- * symbol 8-bits->cycling number, let tracks range? inserts ordered? [see above]
- *   could opt recognize large heavily-used lets and use this?
+ *   c_function_signature(func) = signature (see c_object_set_function above)
+ * maybe c-object-setter should be available as c-object-set! (currently #<c-object-setter>), c-object-ref?
  *
  * ex lint for specific ques: turn off lint-format, seek all calls of f global|local|with a specific arg etc
  *   (requires lint on set of files, then specialize report-usage)
  *   does this give who-calls?
  *   or change to new call, reporting changes etc
  *
- * setter for vect element? lambda (sym ind1 ind2... val env) is ambiguous
- *   (let ((v (vector 1))) (set! (procedure|vector-setter v) ...)) -- i.e. the (applicable) value
- *   need generic setter func=procedure-setter for get (and set if func) (and documentation, signature)
- *   vect get/set should be s7_function (multi-dim indices for example)
- *   if all these cell-local setters were s7_functions this would be easy to implement
- *   for string, nowhere to put the pointer?
- *   for list does setter follow fragment?
- * maybe c-object-setter should be available as c-object-set! (currently #<c-object-setter>), c-object-ref?
- *
+ * new proc-sig cases could be used in opt (as in b_pp_direct)
  * *s7* should be a normal let
+ * is_procedure uses need to take c_obj into account [and goto/cont] [check macro signature]
+ *   and finally p*->* as with arity, maybe leaving only procedure-source
+ *   does p-setter currently notice closure-setters? (let ((setter (lambda ...))) (lambda...))
+ *   [p-sig closure checks for signature, but maybe not procedure-signature, p-setter does not check I think]
+ *   [p-doc closure checks documentation, so ^ is consistent]
+ * t705->s7test [dilambda now unneeded] + tester->s7.html
  *
  * --------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.7  17.8
  * tmac          |      |      |      || 9052 |  615   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1050
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1049
  * tref          |      |      | 2372 || 2125 | 1375  1109  1121
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1376
- * teq           |      |      | 6612 || 2777 | 2129  1921  1928
+ * teq           |      |      | 6612 || 2777 | 2129  1921  1933
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2072
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426
- * lint          |      |      |      || 4041 | 3376  2726  2678
+ * lint          |      |      |      || 4041 | 3376  2726  2677
  * lg            |      |      |      || 211  | 161   134.9 133.0
- * tform         |      |      | 6816 || 3714 | 3530  2746  2755
- * tcopy         |      |      | 13.6 || 3183 | 3404  3071  2919
- * tmap          |      |      |  9.3 || 5279 |       3386  3388
- * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  3964  3965
+ * tform         |      |      | 6816 || 3714 | 3530  2746  2750
+ * tcopy         |      |      | 13.6 || 3183 | 3404  3071  2918
+ * tmap          |      |      |  9.3 || 5279 |       3386  3382
+ * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  3964  3964
  * tsort         |      |      |      || 8584 | 4869  4012  4012
- * titer         |      |      |      || 5971 | 5224  4562  4553
- * bench         |      |      |      || 7012 | 6378  5106  5085
+ * titer         |      |      |      || 5971 | 5224  4562  4537
+ * bench         |      |      |      || 7012 | 6378  5106  5081
  * thash         |      |      | 50.7 || 8778 | 8488  7537  7531
- * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  11.9  11.9
+ * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  11.9  11.8
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  17.8  17.8
  * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  39.4  38.7
  *                                    || 139  | 129   83.4  82.0

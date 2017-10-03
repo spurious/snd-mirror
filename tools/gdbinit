@@ -216,8 +216,8 @@ define s7cell
   end
 
   if (($type == T_SYMBOL) || ($is_bad_type))
-      printf "sym:            name: %p, global_slot: %p, local_slot: %p, \n                    id: %d, tag: %d, accessor: %u\n", \
-         $cell.object.sym.name, $cell.object.sym.global_slot, $cell.object.sym.local_slot, $cell.object.sym.id, $cell.object.sym.tag, $cell.object.string.str_ext.accessor
+      printf "sym:            name: %p, global_slot: %p, local_slot: %p, \n                    id: %d, tag: %d, setter: %u\n", \
+         $cell.object.sym.name, $cell.object.sym.global_slot, $cell.object.sym.local_slot, $cell.object.sym.id, $cell.object.sym.info->tag, $cell.object.string.str_ext.setter
   end
 
   if (($type == T_SYNTAX) || ($is_bad_type))
