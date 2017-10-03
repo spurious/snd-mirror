@@ -11,7 +11,7 @@
 (define nb-database "nb.db")
 
 (define nb 
-  (let ((documentation "(nb file note) adds 'note' to the info asociated with 'file'"))
+  (let ((+documentation+ "(nb file note) adds 'note' to the info asociated with 'file'"))
     (lambda (file note)
       (let ((ptr (gdbm-open nb-database 'create)))
 	(if (gdbm? ptr)
@@ -26,7 +26,7 @@
 	      (gdbm-close! ptr)))))))
 
 (define unb 
-  (let ((documentation "(unb file) removes file's info from the nb (gdbm) data base"))
+  (let ((+documentation+ "(unb file) removes file's info from the nb (gdbm) data base"))
     (lambda (file)
       (let ((ptr (gdbm-open nb-database 'write)))
 	(if (gdbm? ptr)
@@ -35,7 +35,7 @@
 	      (gdbm-close! ptr)))))))
 
 (define prune-db
-  (letrec ((documentation "(prune-db) cleans up the nb (gdbm) data base by removing references to non-existent files")
+  (letrec ((+documentation+ "(prune-db) cleans up the nb (gdbm) data base by removing references to non-existent files")
 	   (collect-files (lambda (ptr key files)
 			    (if key
 				(collect-files ptr (gdbm-next-key ptr key) (cons key files))
@@ -60,7 +60,7 @@
 (define nb-mouse-response-time 0)
 
 (define files-popup-info
-  (let ((documentation "(files-popup-info type position name) is intended as a mouse-enter-label hook function. 
+  (let ((+documentation+ "(files-popup-info type position name) is intended as a mouse-enter-label hook function. 
 It causes a description of the file to popup when the mouse crosses the filename")
 
 	(file-info (lambda (file)

@@ -5,7 +5,7 @@
 ;;; -------- snd-hooks
 
 (define snd-hooks
-  (let ((documentation "(snd-hooks) -> list of all global (not channel-specific) hooks"))
+  (let ((+documentation+ "(snd-hooks) -> list of all global (not channel-specific) hooks"))
     (lambda ()
       (list after-graph-hook after-lisp-graph-hook lisp-graph-hook before-transform-hook mix-release-hook save-hook mus-error-hook
 	    mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook update-hook
@@ -21,7 +21,7 @@
 	    before-exit-hook before-close-hook clip-hook))))
 
 (define reset-all-hooks
-  (let ((documentation "(reset-all-hooks) removes all Snd hook functions"))
+  (let ((+documentation+ "(reset-all-hooks) removes all Snd hook functions"))
     (lambda ()
       (for-each 
        (lambda (n)
@@ -41,7 +41,7 @@
 ;;; -------- describe-hook
 
 (define describe-hook 
-  (let ((documentation "(describe-hook hook) -> description of functions on 'hook'"))
+  (let ((+documentation+ "(describe-hook hook) -> description of functions on 'hook'"))
     (lambda (hook)
       (for-each 
        (lambda (n) 
@@ -52,7 +52,7 @@
 ;;; -------- local hook
 
 (define with-local-hook 
-  (let ((documentation "(with-local-hook hook local-hook-procs thunk) evaluates thunk with hook set to local-hook-procs (a list), then restores hook to its previous state"))
+  (let ((+documentation+ "(with-local-hook hook local-hook-procs thunk) evaluates thunk with hook set to local-hook-procs (a list), then restores hook to its previous state"))
     (lambda (hook local-hook-procs thunk)
       (let ((old-hook-procs (hook-functions hook)))
 	(set! (hook-functions hook) local-hook-procs)
@@ -64,6 +64,6 @@
 ;;; -------- hook-member --------
 
 (define hook-member 
-  (let ((documentation "(hook-member value hook) returns non-#f if 'value' is a member of the hook's function list"))
+  (let ((+documentation+ "(hook-member value hook) returns non-#f if 'value' is a member of the hook's function list"))
     (lambda (value hook) 
       (member value (hook-functions hook)))))

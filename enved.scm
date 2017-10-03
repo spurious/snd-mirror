@@ -12,7 +12,7 @@
 
 (define channel-envelope
   (dilambda
-   (let ((documentation "(channel-envelope snd chn) returns the current enved envelope associated with snd's channel chn"))
+   (let ((+documentation+ "(channel-envelope snd chn) returns the current enved envelope associated with snd's channel chn"))
      (lambda (snd chn)
        (or (channel-property 'enved-envelope snd chn)
 	   ())))
@@ -160,7 +160,7 @@
 	      (set! (hook 'result) #t))))))
 
 (define start-enveloping
-  (let ((documentation "(start-enveloping) starts the enved processes, displaying an envelope editor in each channel"))
+  (let ((+documentation+ "(start-enveloping) starts the enved processes, displaying an envelope editor in each channel"))
     (lambda ()
       (hook-push after-open-hook create-initial-envelopes)
       (hook-push mouse-press-hook mouse-press-envelope)
@@ -169,7 +169,7 @@
       (hook-push key-press-hook enveloping-key-press))))
 
 (define stop-enveloping
-  (let ((documentation "(stop-enveloping) turns off the enved channel-specific envelope editors"))
+  (let ((+documentation+ "(stop-enveloping) turns off the enved channel-specific envelope editors"))
     (lambda ()
       (hook-remove after-open-hook create-initial-envelopes)
       (hook-remove mouse-press-hook mouse-press-envelope)
@@ -183,7 +183,7 @@
 ;;; some examples of using this envelope editor
 
 (define play-with-envs
-  (let ((documentation "(play-with-envs snd) sets channel amps during playback from the associated enved envelopes"))
+  (let ((+documentation+ "(play-with-envs snd) sets channel amps during playback from the associated enved envelopes"))
     (lambda* (sound)
       (do ((chans (channels sound))
 	   (chan 0 (+ 1 chan)))
@@ -199,7 +199,7 @@
 
 #|
 (define play-panned 
-  (let ((documentation "(play-panned snd) pans a mono sound following its enved envelope into a stereo sound"))
+  (let ((+documentation+ "(play-panned snd) pans a mono sound following its enved envelope into a stereo sound"))
     (lambda (sound)
       (let* ((bufsize 256)
 	     (data (make-float-vector (list 2 bufsize) 0.0))

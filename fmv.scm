@@ -13,7 +13,7 @@
 
 (define make-fm-violin 
 
-  (let ((documentation "(make-fm-violin frequency amplitude 
+  (let ((+documentation+ "(make-fm-violin frequency amplitude 
     (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) 
     (random-vibrato-rate 16.0) (periodic-vibrato-amplitude 0.0025) 
     (random-vibrato-amplitude 0.005) (noise-amount 0.0) 
@@ -156,7 +156,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 |#
   
 (define fm-violin-ins 
-  (let ((documentation "(fm-violin-ins startime dur freq amp degree (reverb-amount 0.0) (distance 1.0) :rest args) 
+  (let ((+documentation+ "(fm-violin-ins startime dur freq amp degree (reverb-amount 0.0) (distance 1.0) :rest args) 
 calls the fm-violin with the given args and mixes the results into the current sound"))
     (lambda* (startime dur freq amp degree (reverb-amount 0.0) (distance 1.0) :rest args)
       (let ((beg (floor (* startime (srate))))

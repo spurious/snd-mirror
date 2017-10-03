@@ -25,7 +25,7 @@
   input1 input2)
 
 (define make-zipper
-  (let ((documentation "(make-zipper ramp-env frame-size frame-env) makes a zipper generator.  'ramp-env' is 
+  (let ((+documentation+ "(make-zipper ramp-env frame-size frame-env) makes a zipper generator.  'ramp-env' is 
 an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping process, 
 'frame-size' is the maximum frame length during the zip in seconds (defaults to 0.05), and 
 'frame-env' is an envelope returning the current frame size during the zip process."))
@@ -42,7 +42,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 
 
 (define zipper 
-  (let ((documentation "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two samplers 'in1' and 'in2'"))
+  (let ((+documentation+ "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two samplers 'in1' and 'in2'"))
     (lambda (zp input1 input2)
       (let-set! zp 'input1 input1)
       (let-set! zp 'input2 input2)
@@ -99,7 +99,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 ;; (zip-sound 0 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
 
 (define zip-sound 
-  (let ((documentation "(zip-sound beg dur file1 file2 ramp-env size) zips the two files and mixes the result into the current sound"))
+  (let ((+documentation+ "(zip-sound beg dur file1 file2 ramp-env size) zips the two files and mixes the result into the current sound"))
     (lambda* (beg-in-seconds dur-in-seconds file1 file2 ramp size)
       (let* ((beg (seconds->samples beg-in-seconds))
 	     (dur (seconds->samples dur-in-seconds))

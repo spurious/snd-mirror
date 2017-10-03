@@ -14,7 +14,7 @@
     (require sndlib-ws.scm))
 
 (define make-biquad 
-  (let ((documentation "(make-biquad a0 a1 a2 b1 b2) returns a biquad filter (use with the CLM filter gen)"))
+  (let ((+documentation+ "(make-biquad a0 a1 a2 b1 b2) returns a biquad filter (use with the CLM filter gen)"))
     (lambda (a0 a1 a2 b1 b2)
       (make-filter 3 
 		   (float-vector a0 a1 a2) 

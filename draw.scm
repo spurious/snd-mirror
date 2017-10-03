@@ -113,7 +113,7 @@
 
 
 (define display-colored-samples 
-  (let ((documentation "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color 
+  (let ((+documentation+ "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color 
 whenever they're in the current view."))
     (lambda* (color beg dur snd chn)
       (let ((left (left-sample snd chn))
@@ -157,7 +157,7 @@ whenever they're in the current view."))
 
 
 (define color-samples 
-  (let ((documentation "(color-samples color beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"))
+  (let ((+documentation+ "(color-samples color beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"))
     (lambda* (color ubeg udur usnd uchn)
       (if (not (member display-samples-in-color (hook-functions after-graph-hook)))
 	  (hook-push after-graph-hook display-samples-in-color))
@@ -171,7 +171,7 @@ whenever they're in the current view."))
 
 
 (define uncolor-samples 
-  (let ((documentation "(uncolor-samples snd chn) cancels sample coloring in the given channel"))
+  (let ((+documentation+ "(uncolor-samples snd chn) cancels sample coloring in the given channel"))
     (lambda* (usnd uchn)
       (let* ((snd (or usnd (selected-sound) (car (sounds))))
 	     (chn (or uchn (selected-channel snd) 0)))
@@ -180,7 +180,7 @@ whenever they're in the current view."))
 
 
 (define display-previous-edits 
-  (let ((documentation "(display-previous-edits snd chn) displays all edits of the current sound, with older versions gradually fading away"))
+  (let ((+documentation+ "(display-previous-edits snd chn) displays all edits of the current sound, with older versions gradually fading away"))
     (lambda (snd chn)
       (let ((edits (edit-position snd chn)))
 	(when (> edits 0)
@@ -203,7 +203,7 @@ whenever they're in the current view."))
 
 
 (define overlay-sounds
-  (let ((documentation "(overlay-sounds . args) overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3)"))
+  (let ((+documentation+ "(overlay-sounds . args) overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3)"))
     (lambda args
       (let ((base (if (integer? (car args)) 
 		      (integer->sound (car args)) 
@@ -224,7 +224,7 @@ whenever they're in the current view."))
 
 
 (define samples-via-colormap 
-  (let ((documentation "(samples-via-colormap snd chn) displays time domain graph using current colormap (just an example of colormap-ref)"))
+  (let ((+documentation+ "(samples-via-colormap snd chn) displays time domain graph using current colormap (just an example of colormap-ref)"))
     (lambda (snd chn)
       (let ((data (make-graph-data snd chn))
 	    (cr (make-cairo (car (channel-widgets snd chn)))))

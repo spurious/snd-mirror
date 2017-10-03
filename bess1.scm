@@ -58,7 +58,7 @@
 	#t)))
 
 (define make-rt-violin 
-  (let ((documentation "(make-rt-violin dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1 100 0))) real time simple violin (see fm.html)"))
+  (let ((+documentation+ "(make-rt-violin dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1 100 0))) real time simple violin (see fm.html)"))
     (lambda* (dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1 100 0)))
       (let* ((frq-scl (hz->radians freq))
 	     (maxdev (* frq-scl fm-index)))

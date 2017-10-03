@@ -3,7 +3,7 @@
 (provide 'snd-pvoc.scm)
 
 (define make-pvocoder 
-  (let ((documentation "(make-pvocoder fftsize overlap interp analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"))
+  (let ((+documentation+ "(make-pvocoder fftsize overlap interp analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"))
 
     (lambda* (fftsize overlap interp analyze edit synthesize)
       (let ((N (or fftsize 512)))
@@ -48,7 +48,7 @@
 ;;     resynthesis func with fallback
 
 (define pvocoder 
-  (let ((documentation "(pvocoder pv input) is the phase-vocoder generator associated with make-pvocoder")
+  (let ((+documentation+ "(pvocoder pv input) is the phase-vocoder generator associated with make-pvocoder")
 	;; pvocoder list accessors
 	(pvoc-output (lambda (pv) (pv 0)))
 	(set-pvoc-output (lambda (pv val) (set! (pv 0) val)))
@@ -226,7 +226,7 @@
 ;;; -------- another version of the phase vocoder --------
 
 (define pvoc
-  (let ((documentation     "(pvoc fftsize overlap time pitch gate hoffset snd chn) applies the phase vocoder
+  (let ((+documentation+ "(pvoc fftsize overlap time pitch gate hoffset snd chn) applies the phase vocoder
   algorithm to the current sound (i.e. fft analysis, oscil bank resynthesis). 'pitch'
   specifies the pitch transposition ratio, 'time' - specifies the time dilation ratio,
   'gate' specifies a resynthesis gate in dB (partials with amplitudes lower than

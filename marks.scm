@@ -1,4 +1,4 @@
-;;; examples of mark-related functions
+;;; Examples of mark-related functions
 
 (provide 'snd-marks.scm)
 (require snd-selection.scm snd-hooks.scm)
@@ -24,7 +24,7 @@
 ;;; -------- mark-name->id is a global version of find-mark
 
 (define mark-name->id 
-  (let ((documentation "(mark-name->id name) is like find-mark but searches all currently accessible channels"))
+  (let ((+documentation+ "(mark-name->id name) is like find-mark but searches all currently accessible channels"))
     (lambda (name)
       (call-with-exit
        (lambda (return)
@@ -42,7 +42,7 @@
 ;;; -------- move-syncd-marks moves all syncd marks together
 
 (define move-syncd-marks 
-  (let ((documentation "(move-syncd-marks sync diff) moves all marks sharing sync by diff samples"))
+  (let ((+documentation+ "(move-syncd-marks sync diff) moves all marks sharing sync by diff samples"))
     (lambda (synch diff)
       (for-each (lambda (m)
 		  (set! (mark-sample m) (+ (mark-sample m) diff)))
@@ -52,7 +52,7 @@
 ;;; -------- describe-mark shows mark history
 
 (define describe-mark 
-  (let ((documentation "(describe-mark mark) returns a description of the movements of mark over the channel's edit history"))
+  (let ((+documentation+ "(describe-mark mark) returns a description of the movements of mark over the channel's edit history"))
     (lambda (id)
       (let ((mark-setting (catch 'no-such-mark (lambda () (mark-home id)) (lambda args #f))))
 	(if (not mark-setting)
@@ -97,7 +97,7 @@
 ;;; -------- syncronize sounds at a given mark
 
 (define syncup
-  (let ((documentation "(syncup marks) pads the channels with zeros so that all the given marks occur at the same time"))
+  (let ((+documentation+ "(syncup marks) pads the channels with zeros so that all the given marks occur at the same time"))
     (lambda ids
       (let* ((samps (map mark-sample ids))
 	     (max-samp (apply max samps)))
@@ -113,7 +113,7 @@
 ;;; -------- fit selection between marks, expanding via granulate (this needs some tweaking...)
 
 (define fit-selection-between-marks 
-  (let ((documentation "(fit-selection-between-marks m1 m2) fits (and mixes) the current selection (via granulate) between the given marks"))
+  (let ((+documentation+ "(fit-selection-between-marks m1 m2) fits (and mixes) the current selection (via granulate) between the given marks"))
     (lambda (m1 m2)
       (let ((m1-samp (mark-sample m1))
 	    (m2-samp (mark-sample m2))
@@ -156,7 +156,7 @@
 ;;; -------- pad-marks inserts silence before each in a list of marks
 
 (define pad-marks 
-  (let ((documentation "(pad-marks marks secs) inserts secs seconds of silence before each mark"))
+  (let ((+documentation+ "(pad-marks marks secs) inserts secs seconds of silence before each mark"))
     (lambda (ids secs)
       (let* ((silence-length (floor (* secs (srate))))
 	     (silence-samps (make-float-vector silence-length)))
@@ -173,7 +173,7 @@
 ;;; -------- play-syncd-marks
 
 (define play-syncd-marks 
-  (let ((documentation "(play-syncd-marks sync) starts playing from all marks sharing sync"))
+  (let ((+documentation+ "(play-syncd-marks sync) starts playing from all marks sharing sync"))
     (lambda (synch)
       (let ((chans 1)
 	    (rate 22050))
@@ -189,7 +189,7 @@
 	(start-playing chans rate)))))
 
 (define play-between-marks
-  (let ((documentation "(play-between-marks ...) plays the portion between the marks (searching for plausible default marks)"))
+  (let ((+documentation+ "(play-between-marks ...) plays the portion between the marks (searching for plausible default marks)"))
     (lambda args
       (let* ((snd (or (selected-sound) (car (sounds))))
 	     (chn (or (selected-channel) 0))
@@ -230,7 +230,7 @@
 ;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played
 
 (define report-mark-names
-  (let ((documentation "(report-mark-names) causes mark names to be printed as they are passed while playing"))
+  (let ((+documentation+ "(report-mark-names) causes mark names to be printed as they are passed while playing"))
     (lambda ()
       (hook-push start-playing-hook 
 		 (lambda (snd)
@@ -259,7 +259,7 @@
 ;;; -------- snap-marks
 
 (define snap-marks
-  (let ((documentation "snap-marks places marks at current selection boundaries"))
+  (let ((+documentation+ "snap-marks places marks at current selection boundaries"))
     (lambda ()
       (let ((ms ()))
 	(if (selection?)
@@ -276,7 +276,7 @@
 ;;; -------- define-selection-via-marks
 
 (define define-selection-via-marks 
-  (let ((documentation "(define-selection-via-marks m1 m2) defines the current selection to lie between the marks given"))
+  (let ((+documentation+ "(define-selection-via-marks m1 m2) defines the current selection to lie between the marks given"))
     (lambda (m1 m2)
       (let ((m1sc (mark-home m1))
 	    (m2sc (mark-home m2)))
@@ -296,7 +296,7 @@
 ;;; -------- snap-mark-to-beat
 
 (define snap-mark-to-beat
-  (let ((documentation "(snap-mark-to-beat) ensures that when a mark is dragged, its released position is always on a beat"))
+  (let ((+documentation+ "(snap-mark-to-beat) ensures that when a mark is dragged, its released position is always on a beat"))
     (lambda ()
       (hook-push mark-hook 
 		 (lambda (hook)
@@ -322,7 +322,7 @@
 ;;; write out each section of a file between marks as a separate file
 
 (define mark-explode 
-  (let ((documentation "(mark-explode header-type sample-type) splits a sound into a bunch of sounds based on mark placements"))
+  (let ((+documentation+ "(mark-explode header-type sample-type) splits a sound into a bunch of sounds based on mark placements"))
     (lambda* ((htype mus-next) (dformat mus-bfloat))
       (let ((start 0)
 	    (file-ctr 0)
@@ -351,7 +351,7 @@
 ;;; -------- save mark property lists
 
 (define save-mark-properties
-  (let ((documentation "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"))
+  (let ((+documentation+ "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"))
     (lambda ()
       (hook-push after-save-state-hook 
 		 (lambda (hook)
@@ -380,7 +380,7 @@
 
 
 (define mark-click-info 
-  (let ((documentation "(mark-click-info n) is a mark-click-hook function that describes a mark and its properties"))
+  (let ((+documentation+ "(mark-click-info n) is a mark-click-hook function that describes a mark and its properties"))
     (lambda (hook)
       (let ((n (hook 'id)))
 	(help-dialog "Mark Help"

@@ -1103,7 +1103,7 @@ struct s7_scheme {
              object_to_string_symbol, object_to_let_symbol, open_input_file_symbol, open_input_string_symbol, open_output_file_symbol, 
              open_output_string_symbol, openlet_symbol, outlet_symbol, owlet_symbol, 
              pair_filename_symbol, pair_line_number_symbol, peek_char_symbol, pi_symbol, port_filename_symbol, port_line_number_symbol,
-             procedure_documentation_symbol, procedure_setter_symbol, procedure_signature_symbol, procedure_source_symbol, provide_symbol,
+             procedure_source_symbol, provide_symbol,
              quotient_symbol, 
              random_state_symbol, random_state_to_list_symbol, random_symbol, rationalize_symbol, read_byte_symbol,
              read_char_symbol, read_line_symbol, read_string_symbol, read_symbol, real_part_symbol, remainder_symbol,
@@ -1120,7 +1120,10 @@ struct s7_scheme {
              values_symbol, varlet_symbol, vector_append_symbol, vector_dimensions_symbol, vector_fill_symbol, vector_ref_symbol,
              vector_set_symbol, vector_symbol, 
              with_input_from_file_symbol, with_input_from_string_symbol, with_output_to_file_symbol, with_output_to_string_symbol,
-             write_byte_symbol, write_char_symbol, write_string_symbol, write_symbol;
+             write_byte_symbol, write_char_symbol, write_string_symbol, write_symbol,
+             local_documentation_symbol, local_signature_symbol, local_setter_symbol, local_arity_symbol;
+
+  s7_pointer procedure_documentation_symbol, procedure_signature_symbol, procedure_setter_symbol; /* obsolete */
          
 #if (!WITH_PURE_S7)
   s7_pointer is_char_ready_symbol, char_ci_leq_symbol, char_ci_lt_symbol, char_ci_eq_symbol, char_ci_geq_symbol, char_ci_gt_symbol, 
@@ -4381,7 +4384,7 @@ static void init_gc_caches(s7_scheme *sc)
 
 static void add_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
 {
-  /* procedure-setters GC-protected. The c_function_setter field can't be used because the built-in functions
+  /* setters GC-protected. The c_function_setter field can't be used because the built-in functions
    *   are often removed from the heap and never thereafter marked.
    */
   uint32_t i;
@@ -6189,7 +6192,12 @@ static s7_pointer add_symbol_to_list(s7_scheme *sc, s7_pointer sym)
   return(sym);
 }
 
+#if DEBUGGING
+#define clear_symbol_list(Sc) {Sc->syms_tag++; if (Sc->syms_tag == 0) fprintf(stderr, "syms tag wrapped around\n");}
+#else
 #define clear_symbol_list(Sc) Sc->syms_tag++
+#endif
+
 #define symbol_is_in_list(Sc, Sym) (symbol_tag(Sym) == Sc->syms_tag)
 
 
@@ -38354,14 +38362,14 @@ void s7_define_typed_function_star(s7_scheme *sc, const char *name, s7_function 
 }
 
 
-/* -------------------------------- procedure-documentation -------------------------------- */
+/* -------------------------------- documentation -------------------------------- */
 static s7_pointer get_doc(s7_scheme *sc, s7_pointer x)
 {
-  check_closure_for(sc, x, sc->documentation_symbol);
+  check_closure_for(sc, x, sc->local_documentation_symbol);
   return(NULL);
 }
 
-const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
+const char *s7_documentation(s7_scheme *sc, s7_pointer x)
 {
   s7_pointer val;
   if (is_symbol(x))
@@ -38383,11 +38391,11 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
   return(NULL);
 }
 
-static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_documentation(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p;
-  #define H_procedure_documentation "(procedure-documentation func) returns func's documentation string"
-  #define Q_procedure_documentation s7_make_signature(sc, 2, sc->is_string_symbol, sc->is_procedure_symbol)
+  #define H_documentation "(documentation obj) returns obj's documentation string"
+  #define Q_documentation s7_make_signature(sc, 2, sc->is_string_symbol, sc->is_procedure_symbol)
 
   p = car(args);
   if (is_symbol(p))
@@ -38398,12 +38406,12 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
       p = s7_symbol_value(sc, p);
     }
 
-  check_method(sc, p, sc->procedure_documentation_symbol, list_1(sc, p));
+  check_two_methods(sc, p, sc->documentation_symbol, sc->procedure_documentation_symbol, list_1(sc, p));
   if ((!is_procedure(p)) &&
       (!is_any_macro(p)))
-    return(simple_wrong_type_argument_with_type(sc, sc->procedure_documentation_symbol, p, a_procedure_string));
+    return(simple_wrong_type_argument_with_type(sc, sc->documentation_symbol, p, a_procedure_string));
 
-  return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
+  return(s7_make_string(sc, s7_documentation(sc, p)));
 }
 
 
@@ -38422,7 +38430,7 @@ const char *s7_help(s7_scheme *sc, s7_pointer obj)
     }
 
   if (is_procedure_or_macro(obj))
-    return(s7_procedure_documentation(sc, obj));
+    return(s7_documentation(sc, obj));
 
   /* if is string, apropos? (can scan symbol table) */
   return(NULL);
@@ -38443,7 +38451,7 @@ static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------------------------------- procedure-signature -------------------------------- */
+/* -------------------------------- signature -------------------------------- */
 static void init_signatures(s7_scheme *sc)
 {
   sc->string_signature = s7_make_signature(sc, 3, sc->is_char_symbol, sc->is_string_symbol, sc->is_integer_symbol);
@@ -38458,11 +38466,11 @@ static void init_signatures(s7_scheme *sc)
   sc->iterator_signature = s7_make_signature(sc, 1, sc->T);
 }
 
-static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_signature(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p;
-  #define H_procedure_signature "(procedure-signature func) returns func's signature"
-  #define Q_procedure_signature s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_boolean_symbol), sc->is_procedure_symbol)
+  #define H_signature "(signature obj) returns obj's signature"
+  #define Q_signature s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_boolean_symbol), sc->is_procedure_symbol)
 
   p = car(args);
   if (is_symbol(p))
@@ -38481,7 +38489,7 @@ static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
     case T_MACRO:   case T_MACRO_STAR:
     case T_BACRO:   case T_BACRO_STAR:
     case T_CLOSURE: case T_CLOSURE_STAR:
-      check_closure_for(sc, p, sc->signature_symbol); /* this examines funclet */
+      check_closure_for(sc, p, sc->local_signature_symbol); /* this examines funclet */
       return(sc->F);
 
     case T_HASH_TABLE:   return(sc->hash_table_signature);
@@ -38493,11 +38501,11 @@ static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
     case T_STRING:       if (is_byte_vector(p))	return(sc->byte_vector_signature); return(sc->string_signature);
 
     case T_C_OBJECT: 
-      check_two_methods(sc, p, sc->procedure_signature_symbol, sc->signature_symbol, args);
+      check_two_methods(sc, p, sc->signature_symbol, sc->procedure_signature_symbol, args);
       return(sc->c_object_signature);
  
     case T_LET:
-      check_two_methods(sc, p, sc->procedure_signature_symbol, sc->signature_symbol, args);
+      check_two_methods(sc, p, sc->signature_symbol, sc->procedure_signature_symbol, args);
       return(sc->let_signature);
 
     default:
@@ -38506,12 +38514,12 @@ static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
-s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer func)
+s7_pointer s7_signature(s7_scheme *sc, s7_pointer func)
 {
-  return(g_procedure_signature(sc, set_plist_1(sc, func)));
+  return(g_signature(sc, set_plist_1(sc, func)));
 }
 
-#define signature(Sc, _P_) ((is_any_c_function(_P_)) ? ((s7_pointer)c_function_signature(_P_)) : s7_procedure_signature(Sc, _P_))
+#define signature(Sc, _P_) ((is_any_c_function(_P_)) ? ((s7_pointer)c_function_signature(_P_)) : s7_signature(Sc, _P_))
 
 
 /* -------------------------------- new types (c_objects) -------------------------------- */
@@ -38845,7 +38853,7 @@ static s7_pointer c_object_type_to_let(s7_scheme *sc, s7_pointer cobj)
 {
   return(s7_inlet(sc, s7_list(sc, 4,
 			      s7_make_symbol(sc, "name"), c_object_scheme_name(sc, cobj),
-			      s7_make_symbol(sc, "setter"), (c_object_set(sc, cobj) != fallback_set) ? sc->c_object_set_function : sc->F)));
+			      sc->setter_symbol, (c_object_set(sc, cobj) != fallback_set) ? sc->c_object_set_function : sc->F)));
 
   /* should we make new wrappers every time this is called? or save the let somewhere and reuse it? */
   /* (load "s7test-block.so" (sublet (curlet) (cons 'init_func 'block_init))) */
@@ -38945,7 +38953,7 @@ static s7_pointer c_set_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
 
 static s7_pointer g_dilambda(s7_scheme *sc, s7_pointer args)
 {
-  #define H_dilambda "(dilambda getter setter) sets getter's procedure-setter to be setter."
+  #define H_dilambda "(dilambda getter setter) sets getter's setter to be setter."
   #define Q_dilambda s7_make_signature(sc, 3, sc->is_procedure_symbol, sc->is_procedure_symbol, sc->is_procedure_symbol)
   s7_pointer getter, setter;
 
@@ -38962,7 +38970,7 @@ static s7_pointer g_dilambda(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
+s7_pointer s7_setter(s7_scheme *sc, s7_pointer obj)
 {
   if (is_c_function(obj))
     return(c_function_setter(obj));
@@ -38972,14 +38980,14 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer funclet_setter(s7_scheme *sc, s7_pointer fnc)
 {
-  check_closure_for(sc, fnc, sc->setter_symbol);
+  check_closure_for(sc, fnc, sc->local_setter_symbol);
   return(sc->F);
 }
 
-static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_setter(s7_scheme *sc, s7_pointer args)
 {
-  #define H_procedure_setter "(procedure-setter obj) returns the setter associated with obj, or #f"
-  #define Q_procedure_setter s7_make_signature(sc, 2, sc->T, sc->is_procedure_symbol)
+  #define H_setter "(setter obj) returns the setter associated with obj, or #f"
+  #define Q_setter s7_make_signature(sc, 2, sc->T, sc->is_procedure_symbol)
   s7_pointer p;
 
   p = car(args);
@@ -39014,13 +39022,13 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
       return(sc->F);
 
     case T_C_OBJECT: 
-      check_method(sc, p, sc->procedure_setter_symbol, args);
+      check_method(sc, p, sc->setter_symbol, args);
       if  (c_object_set(sc, p) != fallback_set)
-	return(sc->c_object_set_function);      /* for example ((procedure-setter obj) obj 0 1.0) if s7test block */
+	return(sc->c_object_set_function);      /* for example ((setter obj) obj 0 1.0) if s7test block */
       return(sc->F);
 
     case T_LET:
-      check_method(sc, p, sc->procedure_setter_symbol, args);
+      check_two_methods(sc, p, sc->setter_symbol, sc->procedure_setter_symbol, args);
       return(slot_value(global_slot(sc->let_set_symbol)));
       break;
 
@@ -39049,24 +39057,24 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     case T_FLOAT_VECTOR:
       return(slot_value(global_slot(sc->float_vector_set_symbol)));
     }
-  return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure or a reasonable facsimile thereof"));
+  return(s7_wrong_type_arg_error(sc, "setter", 0, p, "a procedure or a reasonable facsimile thereof"));
 }
 
-static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_set_setter(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p, setter;
 
   p = car(args);
   if (!is_any_procedure(p))
-    return(s7_wrong_type_arg_error(sc, "set! procedure-setter procedure", 1, p, "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "set! setter procedure", 1, p, "a procedure"));
 
   setter = cadr(args);
   if ((setter != sc->F) &&
       (!is_any_procedure(setter)))
-    return(s7_wrong_type_arg_error(sc, "set! procedure-setter setter", 2, setter, "a procedure or #f"));
+    return(s7_wrong_type_arg_error(sc, "set! setter setter", 2, setter, "a procedure or #f"));
 
   /* should we check that p != setter?
-   *   :(set! (procedure-setter <) <)
+   *   :(set! (setter <) <)
    *   <
    *   :(set! (< 3 2) 3)
    *   #f
@@ -39192,6 +39200,7 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
     case T_MACRO:
     case T_BACRO:
     case T_CLOSURE:
+      /* TODO: here and below check_closure_for(sc, sc->local_arity_symbol) */
       return(closure_arity_to_cons(sc, x, closure_args(x)));
 
     case T_MACRO_STAR:
@@ -42370,11 +42379,11 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 
 	sig = signature(sc, obj);
 	if (is_pair(sig))
-	  s7_varlet(sc, let, sc->signature_symbol, sig);
+	  s7_varlet(sc, let, sc->local_signature_symbol, sig);
 	
-	doc = s7_procedure_documentation(sc, obj);
+	doc = s7_documentation(sc, obj);
 	if (doc)
-	  s7_varlet(sc, let, sc->documentation_symbol, s7_make_string(sc, doc));
+	  s7_varlet(sc, let, sc->local_documentation_symbol, s7_make_string(sc, doc));
 	
 	if (is_let(closure_let(obj)))
 	  {
@@ -42390,7 +42399,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 	  }
 	
 	if (closure_setter(obj) != sc->F)
-	  s7_varlet(sc, let, s7_make_symbol(sc, "setter"), closure_setter(obj));
+	  s7_varlet(sc, let, sc->local_setter_symbol, closure_setter(obj));
 
 	s7_varlet(sc, let, s7_make_symbol(sc, "source"), 
 			    append_in_place(sc, list_2(sc, (is_closure_star(obj)) ? sc->lambda_star_symbol : sc->lambda_symbol, 
@@ -42415,14 +42424,14 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 
 	sig = signature(sc, obj);
 	if (is_pair(sig))
-	  s7_varlet(sc, let, sc->signature_symbol, sig);
+	  s7_varlet(sc, let, sc->local_signature_symbol, sig);
 	
-	doc = s7_procedure_documentation(sc, obj);
+	doc = s7_documentation(sc, obj);
 	if (doc)
-	  s7_varlet(sc, let, sc->documentation_symbol, s7_make_string(sc, doc));
+	  s7_varlet(sc, let, sc->local_documentation_symbol, s7_make_string(sc, doc));
 
 	if (c_function_setter(obj) != sc->F)
-	  s7_varlet(sc, let, s7_make_symbol(sc, "setter"), c_function_setter(obj));
+	  s7_varlet(sc, let, sc->local_setter_symbol, c_function_setter(obj));
 	
 	return(let);
       }
@@ -49985,7 +49994,7 @@ static s7_pointer opt_arg_type(s7_scheme *sc, s7_pointer argp)
 	  slot = find_symbol(sc, car(arg));
 	  if ((is_slot(slot)) &&
 	      (is_sequence(slot_value(slot))))
-	    return(s7_procedure_signature(sc, slot_value(slot)));
+	    return(s7_signature(sc, slot_value(slot)));
 	}
       return(sc->T);
     }
@@ -73768,7 +73777,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	case OP_SET_PAIR:
 	  {
-	    /* ([set!] (procedure-setter g) s) or ([set!] (str 0) #\a) */
+	    /* ([set!] (setter g) s) or ([set!] (str 0) #\a) */
 	    s7_pointer obj, arg, value;
 	    value = cadr(sc->code);
 	    if (is_symbol(value))
@@ -81451,7 +81460,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* some procedure-signature support functions */
+/* some signature support functions */
 
 static s7_pointer g_is_float(s7_scheme *sc, s7_pointer args)
 {
@@ -82246,10 +82255,7 @@ s7_scheme *s7_init(void)
   sc->when_unchecked_symbol =        assign_internal_syntax(sc, "when",        OP_WHEN_UNCHECKED);
   sc->unless_unchecked_symbol =      assign_internal_syntax(sc, "unless",      OP_UNLESS_UNCHECKED);
 
-  sc->documentation_symbol =    make_symbol(sc, "documentation");
-  sc->signature_symbol =        make_symbol(sc, "signature");
-  sc->setter_symbol =           make_symbol(sc, "setter");
-  sc->procedure_setter_symbol = make_symbol(sc, "procedure-setter");
+  sc->setter_symbol = make_symbol(sc, "setter");
 
 #if WITH_IMMUTABLE_UNQUOTE
   /* this code solves the various unquote redefinition troubles
@@ -82784,13 +82790,13 @@ s7_scheme *s7_init(void)
   sc->list_values_symbol =           unsafe_defun("list-values", list_values, 0, 0, true); /* see comment above */
   set_immutable(sc->list_values_symbol);
   
-  sc->procedure_documentation_symbol = defun("procedure-documentation", procedure_documentation, 1, 0, false);
-  sc->procedure_signature_symbol =   defun("procedure-signature", procedure_signature,	1, 0, false);
+  sc->documentation_symbol =         defun("documentation",     documentation,          1, 0, false);
+  sc->signature_symbol =             defun("signature",         signature,	        1, 0, false);
   sc->help_symbol =                  defun("help",		help,			1, 0, false);
   sc->procedure_source_symbol =      defun("procedure-source",  procedure_source,	1, 0, false);
   sc->funclet_symbol =               defun("funclet",		funclet,		1, 0, false);
   sc->dilambda_symbol =              defun("dilambda",          dilambda,               2, 0, false);
-  s7_typed_dilambda(sc, "procedure-setter", g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter, Q_procedure_setter, NULL);
+  s7_typed_dilambda(sc, "setter", g_setter, 1, 0, g_set_setter, 2, 0, H_setter, Q_setter, NULL);
 
   sc->arity_symbol =                 defun("arity",		arity,			1, 0, false);
   sc->is_aritable_symbol =           defun("aritable?",	        is_aritable,		2, 0, false);
@@ -83285,7 +83291,7 @@ s7_scheme *s7_init(void)
   s7_set_i_p_function(slot_value(global_slot(sc->denominator_symbol)), denominator_i);
   s7_set_i_p_function(slot_value(global_slot(sc->char_to_integer_symbol)), char_to_integer_i);
   s7_set_i_p_function(slot_value(global_slot(sc->hash_table_entries_symbol)), hash_table_entries_i);
-  s7_set_i_p_function(slot_value(global_slot(s7_make_symbol(sc, "tree-leaves"))), tree_leaves_i);
+  s7_set_i_p_function(slot_value(global_slot(sc->tree_leaves_symbol)), tree_leaves_i);
 
   s7_set_b_p_function(slot_value(global_slot(sc->is_boolean_symbol)), s7_is_boolean);
   s7_set_b_p_function(slot_value(global_slot(sc->is_byte_vector_symbol)), s7_is_byte_vector);
@@ -83348,8 +83354,8 @@ s7_scheme *s7_init(void)
   s7_set_b_p_function(slot_value(global_slot(sc->is_provided_symbol)), is_provided_b);
   s7_set_b_p_function(slot_value(global_slot(sc->is_defined_symbol)), is_defined_b_p);
   s7_set_b_pp_function(slot_value(global_slot(sc->is_defined_symbol)), is_defined_b_pp);
-  s7_set_b_pp_function(slot_value(global_slot(s7_make_symbol(sc, "tree-memq"))), tree_memq_b_pp);
-  s7_set_b_pp_function(slot_value(global_slot(s7_make_symbol(sc, "tree-set-memq"))), tree_set_memq_b_pp);
+  s7_set_b_pp_function(slot_value(global_slot(sc->tree_memq_symbol)), tree_memq_b_pp);
+  s7_set_b_pp_function(slot_value(global_slot(sc->tree_set_memq_symbol)), tree_set_memq_b_pp);
   s7_set_b_p_function(slot_value(global_slot(sc->is_immutable_symbol)), s7_is_immutable);
 
   s7_set_p_p_function(slot_value(global_slot(sc->is_pair_symbol)), is_pair_p_p);
@@ -83581,6 +83587,20 @@ s7_scheme *s7_init(void)
 	       s7_cons(sc, sc->let_ref_fallback_symbol, s7_make_function(sc, "s7-let-ref", g_s7_let_ref_fallback, 2, 0, false, "*s7* reader")),
 	       s7_cons(sc, sc->let_set_fallback_symbol, s7_make_function(sc, "s7-let-set", g_s7_let_set_fallback, 3, 0, false, "*s7* writer"))))));
 
+  /* obsolete */
+  s7_eval_c_string(sc, "(begin                                                    \n\
+                          (define procedure-setter           setter)              \n\
+                          (define procedure-signature        signature)           \n\
+                          (define procedure-documentation    documentation))");
+  sc->procedure_documentation_symbol = s7_make_symbol(sc, "procedure-documentation");
+  sc->procedure_signature_symbol = s7_make_symbol(sc, "procedure-signature");
+  sc->procedure_setter_symbol = s7_make_symbol(sc, "procedure-setter");
+
+  sc->local_documentation_symbol = s7_make_symbol(sc, "+documentation+");
+  sc->local_signature_symbol = s7_make_symbol(sc, "+signature+");
+  sc->local_setter_symbol = s7_make_symbol(sc, "+setter+");
+  sc->local_arity_symbol = s7_make_symbol(sc, "+arity+");
+
 #if (!DISABLE_DEPRECATED)
   s7_eval_c_string(sc, "(begin                                                    \n\
                           (define global-environment         rootlet)             \n\
@@ -83711,7 +83731,7 @@ int main(int argc, char **argv)
  *
  * c_object type table entries should also be s7_function, reported by object->let perhaps
  *    wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
- * signatures for c_object funcs? s7_procedure_set_signature? all c_object funcs are implicit in type table
+ * signatures for c_object funcs? s7_set_signature? all c_object funcs are implicit in type table
  *   c_function_signature(func) = signature (see c_object_set_function above)
  * maybe c-object-setter should be available as c-object-set! (currently #<c-object-setter>), c-object-ref?
  *
@@ -83720,14 +83740,16 @@ int main(int argc, char **argv)
  *   does this give who-calls?
  *   or change to new call, reporting changes etc
  *
- * new proc-sig cases could be used in opt (as in b_pp_direct)
+ * new proc-sig cases could be used elsewhere in opt (as in b_pp_direct)
  * *s7* should be a normal let
  * is_procedure uses need to take c_obj into account [and goto/cont] [check macro signature]
- *   and finally p*->* as with arity, maybe leaving only procedure-source
  *   does p-setter currently notice closure-setters? (let ((setter (lambda ...))) (lambda...))
  *   [p-sig closure checks for signature, but maybe not procedure-signature, p-setter does not check I think]
  *   [p-doc closure checks documentation, so ^ is consistent]
- * t705->s7test [dilambda now unneeded] + tester->s7.html
+ *   lint (or some such) check that signature has symbols not actual functions
+ *   need to rewrite variable info s7.html
+ *   +arity+?
+ * syms_tag may need 64-bits
  *
  * --------------------------------------------------------------
  *
@@ -83736,8 +83758,8 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1049
  * tref          |      |      | 2372 || 2125 | 1375  1109  1121
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1376
- * teq           |      |      | 6612 || 2777 | 2129  1921  1933
- * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2072
+ * teq           |      |      | 6612 || 2777 | 2129  1921  1929
+ * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2067
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426
  * lint          |      |      |      || 4041 | 3376  2726  2677
  * lg            |      |      |      || 211  | 161   134.9 133.0
@@ -83747,11 +83769,11 @@ int main(int argc, char **argv)
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  3964  3964
  * tsort         |      |      |      || 8584 | 4869  4012  4012
  * titer         |      |      |      || 5971 | 5224  4562  4537
- * bench         |      |      |      || 7012 | 6378  5106  5081
+ * bench         |      |      |      || 7012 | 6378  5106  5080
  * thash         |      |      | 50.7 || 8778 | 8488  7537  7531
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  11.9  11.8
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  17.8  17.8
- * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  39.4  38.7
+ * calls     359 |  275 | 54   | 34.7 || 43.7 | 42.5  39.4  38.6
  *                                    || 139  | 129   83.4  82.0
  * 
  * --------------------------------------------------------------

@@ -31,7 +31,7 @@
 (set! *clm-file-buffer-size* 65536)
 
 (define times->samples 
-  (let ((documentation "(times->samples beg dur) converts beg and (+ beg dur) to samples, returning both in a list"))
+  (let ((+documentation+ "(times->samples beg dur) converts beg and (+ beg dur) to samples, returning both in a list"))
     (lambda (beg dur) 
       (list (seconds->samples beg) (seconds->samples (+ beg dur))))))
 
@@ -56,7 +56,7 @@
     (if (string? (car body))
 	`(begin
 	   (define ,name
-	     (let ((documentation ,(car body)))
+	     (let ((+documentation+ ,(car body)))
 	       (lambda* ,targs
 		 (if *clm-notehook*
 		     (*clm-notehook* (symbol->string ',name) ,@utargs))
@@ -370,7 +370,7 @@
 ;;; -------- clm-load --------
 
 (define clm-load
-  (let ((documentation "(clm-load file . args) loads 'file' in the context of with-sound"))
+  (let ((+documentation+ "(clm-load file . args) loads 'file' in the context of with-sound"))
     (lambda (file . args)
       (apply with-sound-helper (lambda () (load file)) args))))
 
@@ -678,7 +678,7 @@
 
 (define wsdat-play ; for cm
   (dilambda
-   (let ((documentation "accessor for play field of init-with-sound struct"))
+   (let ((+documentation+ "accessor for play field of init-with-sound struct"))
      (lambda (w)
        (w 9)))
    (lambda (w val)
@@ -688,7 +688,7 @@
 ;;; -------- with-sound save state --------
 
 (define ws-save-state 
-  (let ((documentation "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"))
+  (let ((+documentation+ "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"))
     (lambda (hook)
       (let ((fd (open-output-file (hook 'name) "a")))
 	;; should the save-state file load this file if it hasn't been loaded? (what path?)
@@ -712,7 +712,7 @@
   (let ((main-pitch (/ 440.0 (expt 2.0 19/4))) ;(/ 57 12) ; a4 = 440Hz is pitch 57 in our numbering
 	(last-octave 0)                                   ; octave number can be omitted
 	(ratios (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0))
-	(documentation "(->frequency pitch pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
+	(+documentation+ "(->frequency pitch pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
 symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."))
     (lambda* (pitch pythagorean)          ; pitch can be pitch name or actual frequency
       (if (not (symbol? pitch))
@@ -742,7 +742,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;; -------- ->sample --------
 
 (define ->sample 
-  (let ((documentation "(->sample time-in-seconds) -> time-in-samples"))
+  (let ((+documentation+ "(->sample time-in-seconds) -> time-in-samples"))
     (lambda (beg)
       (round (* (if (pair? (sounds)) (srate) *clm-srate*) beg)))))
 

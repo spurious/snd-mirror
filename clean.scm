@@ -4,7 +4,7 @@
 (require snd-dsp.scm snd-generators.scm)
 
 (define goertzel-channel
-  (let ((documentation "(goertzel-channel freq beg dur snd (chn 0)) returns the amplitude of the 'freq' spectral component"))
+  (let ((+documentation+ "(goertzel-channel freq beg dur snd (chn 0)) returns the amplitude of the 'freq' spectral component"))
     (lambda* (freq (beg 0) dur snd chn)
       (let* ((rfreq (/ (* 2.0 pi freq) (srate snd)))
 	     (cs (* 2.0 (cos rfreq))))

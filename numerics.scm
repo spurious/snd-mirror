@@ -59,7 +59,7 @@
      (* (factorial m) (factorial (- n m)))))
 
 (define n-choose-k 
-  (let ((documentation "(n-choose-k n k) computes the binomial coefficient C(N,K)"))
+  (let ((+documentation+ "(n-choose-k n k) computes the binomial coefficient C(N,K)"))
     (lambda (n k)
       (let ((mn (min k (- n k))))
 	(if (< mn 0)

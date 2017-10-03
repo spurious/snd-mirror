@@ -28,7 +28,7 @@
 	(func (g_list_nth_data glist i)))))
   
   (define for-each-child 
-    (let ((documentation "(for-each-child w func) applies func to w and each of its children"))
+    (let ((+documentation+ "(for-each-child w func) applies func to w and each of its children"))
       (lambda (w func)
 	(func w)
 	(g-list-foreach (gtk_container_get_children (GTK_CONTAINER w))
@@ -37,7 +37,7 @@
   
   
   (define host-name ; this is the same as (define (machine-name) (caddr ((*libc* 'uname))))
-    (let ((documentation "(host-name) -> name of current machine"))
+    (let ((+documentation+ "(host-name) -> name of current machine"))
       (lambda ()
 	(let ((val (gdk_property_get (car (main-widgets))
 				     (gdk_atom_intern "WM_CLIENT_MACHINE" #f)
@@ -374,7 +374,7 @@
 					  #f)))))
   
   (define zync
-    (let ((documentation "(zync) ties each sound's y-zoom sliders together so that all change in paralle if one changes"))
+    (let ((+documentation+ "(zync) ties each sound's y-zoom sliders together so that all change in paralle if one changes"))
       (lambda ()
 	(hook-push after-open-hook add-dragger)
 	(for-each
@@ -384,7 +384,7 @@
 	 (sounds)))))
   
   (define unzync
-    (let ((documentation "(unzync) undoes a previous (zync) -- subsequently each sound's y-zoom sliders are independent"))
+    (let ((+documentation+ "(unzync) undoes a previous (zync) -- subsequently each sound's y-zoom sliders are independent"))
       (lambda ()
 	(hook-remove after-open-hook add-dragger)
 	(for-each
@@ -451,7 +451,7 @@
 ;;; (remove-main-menu 5) removes the Help menu
   
   (define remove-main-menu 
-    (let ((documentation "(remove-main-menu menu) removes the specified top-level menu: ((*gtk* 'remove-main-menu) 5) removes the Help menu"))
+    (let ((+documentation+ "(remove-main-menu menu) removes the specified top-level menu: ((*gtk* 'remove-main-menu) 5) removes the Help menu"))
       (lambda (menu)
 	(gtk_widget_hide ((menu-widgets) menu)))))
   

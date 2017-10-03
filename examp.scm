@@ -60,7 +60,7 @@
 ;;; this mainly involves keeping track of the current sound/channel
 
 (define selection-rms
-  (let ((documentation "(selection-rms) -> rms of selection data using samplers"))
+  (let ((+documentation+ "(selection-rms) -> rms of selection data using samplers"))
     (lambda ()
       (if (selection?)
 	  (let ((data (samples (selection-position) (selection-framples))))
@@ -69,7 +69,7 @@
 
 
 (define region-rms
-  (let ((documentation "(region-rms n) -> rms of region n's data (chan 0)"))
+  (let ((+documentation+ "(region-rms n) -> rms of region n's data (chan 0)"))
     (lambda (reg)
       (if (region? reg)
 	  (let ((data (region->float-vector reg 0 0)))
@@ -78,7 +78,7 @@
 
 
 (define window-samples
-  (let ((documentation "(window-samples snd chn) -> samples in snd channel chn in current graph window"))
+  (let ((+documentation+ "(window-samples snd chn) -> samples in snd channel chn in current graph window"))
     (lambda* (snd chn)
       (let ((wl (left-sample snd chn))
 	    (wr (right-sample snd chn)))
@@ -87,7 +87,7 @@
 
 (define display-energy 
   ;; in this version, the y-zoom-slider controls the graph amp
-  (let ((documentation "(display-energy hook) is a lisp-graph-hook function to display the time domain data as energy (squared)"))
+  (let ((+documentation+ "(display-energy hook) is a lisp-graph-hook function to display the time domain data as energy (squared)"))
     (lambda (hook)
       (let ((snd (hook 'snd))
 	    (chn (hook 'chn)))
@@ -106,7 +106,7 @@
 
 
 (define display-db 
-  (let ((documentation "(display-db hook) is a lisp-graph-hook function to display the time domain data in dB")
+  (let ((+documentation+ "(display-db hook) is a lisp-graph-hook function to display the time domain data in dB")
 	(dB (lambda (val)
 	      (if (< val .001)
 		  -60.0
@@ -132,7 +132,7 @@
 
 
 (define window-rms
-  (let ((documentation "(window-rms) -> rms of data in currently selected graph window"))
+  (let ((+documentation+ "(window-rms) -> rms of data in currently selected graph window"))
     (lambda ()
       (let* ((data (channel->float-vector (left-sample) (- (+ (right-sample) 1) (left-sample))))
 	     (len (length data)))
@@ -140,7 +140,7 @@
 
 
 (define fft-peak 
-  (let ((documentation "(fft-peak hook) returns the peak spectral magnitude.  It is intended for use with after-transform-hook."))
+  (let ((+documentation+ "(fft-peak hook) returns the peak spectral magnitude.  It is intended for use with after-transform-hook."))
     (lambda (hook)
       (let ((snd (hook 'snd))
 	    (chn (hook 'chn)))
@@ -157,7 +157,7 @@
 ;;; -------- 'info' from extsnd.html using format --------
 
 (define finfo 
-  (let ((documentation "(finfo file) -> description (as a string) of file"))
+  (let ((+documentation+ "(finfo file) -> description (as a string) of file"))
     (lambda (file)
       (format #f "~A: chans: ~D, srate: ~D, ~A, ~A, len: ~1,3F"
 	      file
@@ -173,7 +173,7 @@
 ;;; correlation of channels in a stereo sound
 
 (define display-correlation 
-  (let ((documentation "(display-correlation hook) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."))
+  (let ((+documentation+ "(display-correlation hook) returns the correlation of snd's 2 channels (intended for use with graph-hook).  y0 and y1 are ignored."))
     (lambda (hook)
       (let ((snd (hook 'snd)))
 	(if (not (and (= (channels snd) 2)
@@ -209,7 +209,7 @@
 ;;; also zoom spectrum based on y-axis zoom slider
 
 (define zoom-spectrum 
-  (let ((documentation "(zoom-spectrum hook) sets the transform size to correspond to the time-domain window size (use with graph-hook)"))
+  (let ((+documentation+ "(zoom-spectrum hook) sets the transform size to correspond to the time-domain window size (use with graph-hook)"))
     (lambda (hook)
       (let ((snd (hook 'snd))
 	    (chn (hook 'chn)))
@@ -228,7 +228,7 @@
 ;;; -------- superimpose spectra of sycn'd sounds
 
 (define superimpose-ffts 
-  (let ((documentation "(superimpose-ffts hook) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"))
+  (let ((+documentation+ "(superimpose-ffts hook) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"))
     (lambda (hook)
       (let ((maxsync (apply max (map sync (sounds))))
 	    (snd (hook 'snd))
@@ -267,7 +267,7 @@
 ;;;   an mpeg file to stdout.  There's also apparently a switch to write 'wave' output.
 
 (define mpg 
-  (let ((documentation "(mpg file tmpname) converts file from MPEG to raw 16-bit samples using mpg123"))
+  (let ((+documentation+ "(mpg file tmpname) converts file from MPEG to raw 16-bit samples using mpg123"))
     (lambda (mpgfile rawfile)
       (let* ((fd (open-input-file mpgfile "r"))
 	     (b0 (read-byte fd))
@@ -309,7 +309,7 @@
 ;;; -------- read and write OGG files
 
 (define read-ogg 
-  (let ((documentation "(read-ogg filename) tries to open an OGG file"))
+  (let ((+documentation+ "(read-ogg filename) tries to open an OGG file"))
     (lambda (filename)
       ;; check for "OggS" first word, if found, translate to something Snd can read
       ;; (open-sound (read-ogg "/home/bil/sf1/oboe.ogg"))
@@ -331,7 +331,7 @@
 |#
 
 (define write-ogg 
-  (let ((documentation "(write-ogg snd) writes 'snd' in OGG format"))
+  (let ((+documentation+ "(write-ogg snd) writes 'snd' in OGG format"))
     (lambda (snd)
       (if (or (> (car (edits snd)) 0)
 	      (not (= (header-type snd) mus-riff)))
@@ -345,7 +345,7 @@
 ;;; -------- read and write Speex files
 
 (define read-speex 
-  (let ((documentation "(read-speex filename) tries to open a SPEEX file"))
+  (let ((+documentation+ "(read-speex filename) tries to open a SPEEX file"))
     (lambda (filename)
       (let ((wavfile (string-append filename ".wav")))
 	(if (file-exists? wavfile) (delete-file wavfile))
@@ -353,7 +353,7 @@
 	wavfile))))
 
 (define write-speex 
-  (let ((documentation "(write-speex snd) writes 'snd' in Speex format"))
+  (let ((+documentation+ "(write-speex snd) writes 'snd' in Speex format"))
     (lambda (snd)
       ;; write snd data in Speex format
       (if (or (> (car (edits snd)) 0)
@@ -369,12 +369,12 @@
 ;;; -------- read and write FLAC files
 
 (define read-flac 
-  (let ((documentation "(read-flac filename) tries to read a FLAC file"))
+  (let ((+documentation+ "(read-flac filename) tries to read a FLAC file"))
     (lambda (filename)
       (system (format #f "flac -d ~A" filename)))))
 
 (define write-flac 
-  (let ((documentation "(write-flac snd) writes 'snd' in a FLAC file"))
+  (let ((+documentation+ "(write-flac snd) writes 'snd' in a FLAC file"))
     (lambda (snd)
       ;; write snd data in FLAC format
       (if (or (> (car (edits snd)) 0)
@@ -389,7 +389,7 @@
 ;;; -------- play AC3 via a52dec
 
 (define play-ac3 
-  (let ((documentation "(play-ac3 name) uses a52dec to play an AC3 sound"))
+  (let ((+documentation+ "(play-ac3 name) uses a52dec to play an AC3 sound"))
     (lambda (name)
       ;;   to turn an AC3 file into something Snd can edit, /usr/local/bin/a52dec test.ac3 -o wav > test.wav
       (system (format #f "a52dec ~A" name)))))
@@ -400,7 +400,7 @@
 ;;; these are used by Octave (WaveLab) -- each line has one integer, apparently a signed short.
 
 (define read-ascii 
-  (let ((documentation "(read-ascii in-filename (out-filename \"test.snd\") (out-type mus-next) (out-format mus-bshort) (out-srate 44100)) tries to \
+  (let ((+documentation+ "(read-ascii in-filename (out-filename \"test.snd\") (out-type mus-next) (out-format mus-bshort) (out-srate 44100)) tries to \
 read an ASCII sound file"))
     (lambda* (in-filename (out-filename "test.snd") (out-type mus-next) (out-format mus-bshort) (out-srate 44100))
       (let ((in-fd (open-input-file in-filename))
@@ -433,7 +433,7 @@ read an ASCII sound file"))
 ;;; this could be extended to set time-graph-style to graph-lines if many samples are displayed, etc
 
 (define auto-dot 
-  (let ((documentation "(auto-dot hook) sets the dot size depending on the number of samples being displayed (use with graph-hook)"))
+  (let ((+documentation+ "(auto-dot hook) sets the dot size depending on the number of samples being displayed (use with graph-hook)"))
     (lambda (hook)
       (let* ((snd (hook 'snd))
 	     (chn (hook 'chn))
@@ -455,7 +455,7 @@ read an ASCII sound file"))
 ;;; will move the window left edge to that mark.
 
 (define first-mark-in-window-at-left
-  (let ((documentation "(first-mark-in-window-at-left) moves the graph so that the leftmost visible mark is at the left edge"))
+  (let ((+documentation+ "(first-mark-in-window-at-left) moves the graph so that the leftmost visible mark is at the left edge"))
     (lambda ()
       (let* ((keysnd (or (selected-sound) (car (sounds))))
 	     (keychn (or (selected-channel keysnd) 0))
@@ -484,7 +484,7 @@ read an ASCII sound file"))
   (let ((data-red? #t)
 	(red (make-color 1 0 0))
 	(green (make-color 0 1 0))
-	(documentation "(flash-selected-data millisecs) causes the selected data to flash red and green"))
+	(+documentation+ "(flash-selected-data millisecs) causes the selected data to flash red and green"))
     (lambda (interval)
       (if (selected-sound)
 	  (begin
@@ -496,7 +496,7 @@ read an ASCII sound file"))
 ;;; --------  use loop info (if any) to set marks at loop points
 
 (define mark-loops
-  (let ((documentation "(mark-loops) places marks at loop points found in the selected sound's header"))
+  (let ((+documentation+ "(mark-loops) places marks at loop points found in the selected sound's header"))
     (lambda ()
       (let ((loops (or (sound-loop-info)
 		       (mus-sound-loop-info (file-name)))))
@@ -517,7 +517,7 @@ read an ASCII sound file"))
 ;;;
 
 (define all-chans
-  (let ((documentation "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have 
+  (let ((+documentation+ "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have 
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((#<sound 0> #<sound 1> #<sound 1>) (0 0 1))"))
     (lambda ()
       (let ((sndlist ())
@@ -531,7 +531,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	(list sndlist chnlist)))))
 
 (define do-all-chans 
-  (let ((documentation "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history 
+  (let ((+documentation+ "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history 
 indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"))
     (lambda* (func origin)
       (apply for-each (lambda (snd chn)
@@ -539,12 +539,12 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"))
 	     (all-chans)))))
 
 (define update-graphs
-  (let ((documentation "(update-graphs) updates (redraws) all graphs"))
+  (let ((+documentation+ "(update-graphs) updates (redraws) all graphs"))
     (lambda ()
       (apply for-each update-time-graph (all-chans)))))
 
 (define do-chans 
-  (let ((documentation "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"))
+  (let ((+documentation+ "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"))
     (lambda* (func origin)
       (let ((snc (sync)))
 	(if (> snc 0)
@@ -556,7 +556,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"))
 	    (snd-warning "sync not set"))))))
 
 (define do-sound-chans 
-  (let ((documentation "(do-sound-chans func edhist) applies func to all selected channels using edhist as the edit history indication"))
+  (let ((+documentation+ "(do-sound-chans func edhist) applies func to all selected channels using edhist as the edit history indication"))
     (lambda* (proc origin)
       (let ((snd (selected-sound)))
 	(if snd
@@ -566,7 +566,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"))
 	    (snd-warning "no selected sound"))))))
 
 (define every-sample? 
-  (let ((documentation "(every-sample func) -> #t if func is not #f for all samples in the current channel, 
+  (let ((+documentation+ "(every-sample func) -> #t if func is not #f for all samples in the current channel, 
 otherwise it moves the cursor to the first offending sample"))
     (lambda (proc)
       (let ((reader (make-sampler))
@@ -581,7 +581,7 @@ otherwise it moves the cursor to the first offending sample"))
 		   (quit #f))))))))))
 
 (define sort-samples 
-  (let ((documentation "(sort-samples bins) provides a histogram in 'bins' bins"))
+  (let ((+documentation+ "(sort-samples bins) provides a histogram in 'bins' bins"))
     (lambda (nbins)
       (let ((bins (make-vector nbins 0))
 	    (reader (make-sampler))
@@ -601,7 +601,7 @@ otherwise it moves the cursor to the first offending sample"))
 ;;; -------- mix mono sound into stereo sound panning according to env
 
 (define place-sound 
-  (let ((documentation "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
+  (let ((+documentation+ "(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
 it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
 a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."))
     (lambda (mono-snd stereo-snd pan-env)
@@ -631,7 +631,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 ;;;
 
 (define fft-edit 
-  (let ((documentation "(fft-edit low-Hz high-Hz snd chn) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, 
+  (let ((+documentation+ "(fft-edit low-Hz high-Hz snd chn) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, 
 then inverse ffts."))
     (lambda* (bottom top snd chn)
       (let ((sr (srate snd))
@@ -659,7 +659,7 @@ then inverse ffts."))
   
   
 (define fft-squelch 
-  (let ((documentation "(fft-squelch squelch snd chn) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"))
+  (let ((+documentation+ "(fft-squelch squelch snd chn) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"))
     (lambda* (squelch snd chn)
       (let* ((len (framples snd chn))
 	     (fsize (expt 2 (ceiling (log len 2)))))
@@ -690,7 +690,7 @@ then inverse ffts."))
 
 
 (define fft-cancel 
-  (let ((documentation "(fft-cancel lo-freq hi-freq snd chn) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"))
+  (let ((+documentation+ "(fft-cancel lo-freq hi-freq snd chn) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"))
     (lambda* (lo-freq hi-freq snd chn)
       (let* ((len (framples snd chn))
 	     (fsize (expt 2 (ceiling (log len 2)))))
@@ -711,7 +711,7 @@ then inverse ffts."))
 ;;; same idea but used to distinguish vowels (steady-state) from consonants
 
 (define ramp 
-  (let ((documentation "(ramp gen up) is a kind of CLM generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes"))
+  (let ((+documentation+ "(ramp gen up) is a kind of CLM generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes"))
     (lambda (gen up)
       ;; gen is list: ctr size
       ;;  the idea here is that we want to ramp in or out a portion of a sound based on some
@@ -730,7 +730,7 @@ then inverse ffts."))
 ;;; (let ((r (make-ramp))) (map-channel (lambda (y) (* y (ramp r (> (random 1.0) 0.5))))))
 
 (define squelch-vowels 
-  (let ((documentation "(squelch-vowels snd chn) suppresses portions of a sound that look like steady-state"))
+  (let ((+documentation+ "(squelch-vowels snd chn) suppresses portions of a sound that look like steady-state"))
     (lambda* (snd chn)
       (let ((fft-size 32))
 	(let ((rl (make-float-vector fft-size))
@@ -769,7 +769,7 @@ then inverse ffts."))
 
 
 (define fft-env-data 
-  (let ((documentation "(fft-env-data fft-env snd chn) applies fft-env as spectral env to current sound, returning float-vector of new data"))
+  (let ((+documentation+ "(fft-env-data fft-env snd chn) applies fft-env as spectral env to current sound, returning float-vector of new data"))
     (lambda* (fft-env snd chn)
       (let ((fsize (expt 2 (ceiling (log (framples snd chn) 2)))))
 	(let ((rdata (channel->float-vector 0 fsize snd chn))
@@ -787,13 +787,13 @@ then inverse ffts."))
 
 
 (define fft-env-edit 
-  (let ((documentation "(fft-env-edit fft-env snd chn) edits (filters) current chan using fft-env"))
+  (let ((+documentation+ "(fft-env-edit fft-env snd chn) edits (filters) current chan using fft-env"))
     (lambda* (fft-env snd chn)
       (float-vector->channel (fft-env-data fft-env snd chn) 0 (- (framples) 1) snd chn #f (format #f "fft-env-edit '~A" fft-env)))))
 
 
 (define fft-env-interp 
-  (let ((documentation "(fft-env-interp env1 env2 interp snd chn) interpolates between two fft-filtered versions (env1 and env2 are the 
+  (let ((+documentation+ "(fft-env-interp env1 env2 interp snd chn) interpolates between two fft-filtered versions (env1 and env2 are the 
 spectral envelopes) following interp (an env between 0 and 1)"))
     (lambda* (env1 env2 interp snd chn)
       (let ((data1 (fft-env-data env1 snd chn))
@@ -811,7 +811,7 @@ spectral envelopes) following interp (an env between 0 and 1)"))
 
 
 (define filter-fft 
-  (let ((documentation "(filter-fft flt normalize snd chn) gets the spectrum of all the data in the given channel, \
+  (let ((+documentation+ "(filter-fft flt normalize snd chn) gets the spectrum of all the data in the given channel, \
 applies the function 'flt' to it, then inverse ffts.  'flt' should take one argument, the \
 current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 y))) is like fft-squelch."))
     (lambda* (flt (normalize #t) snd chn)
@@ -872,7 +872,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 y))) is like 
 
 
 (define fft-smoother 
-  (let ((documentation "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
+  (let ((+documentation+ "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (float-vector->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"))
     (lambda* (cutoff start samps snd chn)
       (let ((fftpts (floor (expt 2 (ceiling (log (+ 1 samps) 2))))))
@@ -912,7 +912,7 @@ section: (float-vector->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"))
 ;;; -------- comb-filter
 
 (define comb-filter 
-  (let ((documentation "(comb-filter scaler size) returns a comb-filter ready for map-channel etc: (map-channel (comb-filter .8 32)).  If you're 
+  (let ((+documentation+ "(comb-filter scaler size) returns a comb-filter ready for map-channel etc: (map-channel (comb-filter .8 32)).  If you're 
 in a hurry use: (clm-channel (make-comb .8 32)) instead"))
     (lambda (scaler size)
       (let ((cmb (make-comb scaler size)))
@@ -923,7 +923,7 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"))
 ;;; by using filters at harmonically related sizes, we can get chords:
 
 (define comb-chord 
-  (let ((documentation "(comb-chord scaler size amp) returns a set of harmonically-related comb filters: (map-channel (comb-chord .95 100 .3))"))
+  (let ((+documentation+ "(comb-chord scaler size amp) returns a set of harmonically-related comb filters: (map-channel (comb-chord .95 100 .3))"))
     (lambda (scaler size amp)
       (let ((cs (make-comb-bank (vector (make-comb scaler (floor size))
 					(make-comb scaler (floor (* size .75)))
@@ -935,7 +935,7 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"))
 ;;; or change the comb length via an envelope:
 
 (define zcomb 
-  (letrec ((documentation "(zcomb scaler size pm) returns a comb filter whose length varies according to an 
+  (letrec ((+documentation+ "(zcomb scaler size pm) returns a comb filter whose length varies according to an 
 envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))")
 	   (max-envelope-1 
 	    (lambda (e mx)
@@ -950,7 +950,7 @@ envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))")
 
 
 (define notch-filter 
-  (let ((documentation "(notch-filter scaler size) returns a notch-filter: (map-channel (notch-filter .8 32))"))
+  (let ((+documentation+ "(notch-filter scaler size) returns a notch-filter: (map-channel (notch-filter .8 32))"))
     (lambda (scaler size)
       (let ((cmb (make-notch scaler size)))
 	(lambda (x) 
@@ -958,7 +958,7 @@ envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))")
 
 
 (define formant-filter 
-  (let ((documentation "(formant-filter radius frequency) returns a formant generator: (map-channel (formant-filter .99 2400)). Faster 
+  (let ((+documentation+ "(formant-filter radius frequency) returns a formant generator: (map-channel (formant-filter .99 2400)). Faster 
 is: (filter-sound (make-formant 2400 .99))"))
     (lambda (radius frequency)
       (let ((frm (make-formant frequency radius)))
@@ -969,7 +969,7 @@ is: (filter-sound (make-formant 2400 .99))"))
 ;;; to impose several formants, just add them in parallel:
 
 (define formants 
-  (let ((documentation "(formants r1 f1 r2 f2 r3 f3) returns 3 formant filters in parallel: (map-channel (formants .99 900 .98 1800 .99 2700))"))
+  (let ((+documentation+ "(formants r1 f1 r2 f2 r3 f3) returns 3 formant filters in parallel: (map-channel (formants .99 900 .98 1800 .99 2700))"))
     (lambda (r1 f1 r2 f2 r3 f3)
       (let ((fr1 (make-formant f1 r1))
 	    (fr2 (make-formant f2 r2))
@@ -981,7 +981,7 @@ is: (filter-sound (make-formant 2400 .99))"))
 
 
 (define moving-formant 
-  (let ((documentation "(moving-formant radius move) returns a time-varying (in frequency) formant filter: (map-channel (moving-formant .99 '(0 1200 1 2400)))"))
+  (let ((+documentation+ "(moving-formant radius move) returns a time-varying (in frequency) formant filter: (map-channel (moving-formant .99 '(0 1200 1 2400)))"))
     (lambda (radius move)
       (let ((frm (make-formant (cadr move) radius))
 	    (menv (make-env move :length (framples))))
@@ -992,7 +992,7 @@ is: (filter-sound (make-formant 2400 .99))"))
 
 
 (define osc-formants 
-  (let ((documentation "(osc-formants radius bases amounts freqs) set up any number of independently oscillating 
+  (let ((+documentation+ "(osc-formants radius bases amounts freqs) set up any number of independently oscillating 
 formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 1200.0) (float-vector 400.0 800.0 1200.0) (float-vector 4.0 2.0 3.0))"))
     (lambda (radius bases amounts freqs) ; changed to call map-channel itself, 21-Apr-05
       (let ((len (length bases)))
@@ -1040,7 +1040,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 ;;; -------- echo
 
 (define echo 
-  (let ((documentation "(echo scaler secs) returns an echo maker: (map-channel (echo .5 .5) 0 44100)"))
+  (let ((+documentation+ "(echo scaler secs) returns an echo maker: (map-channel (echo .5 .5) 0 44100)"))
     (lambda (scaler secs)
       (let ((del (make-delay (round (* secs (srate))))))
 	(lambda (inval)
@@ -1048,7 +1048,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 
 
 (define zecho 
-  (let ((documentation "(zecho scaler secs freq amp) returns a modulated echo maker: (map-channel (zecho .5 .75 6 10.0) 0 65000)"))
+  (let ((+documentation+ "(zecho scaler secs freq amp) returns a modulated echo maker: (map-channel (zecho .5 .75 6 10.0) 0 65000)"))
     (lambda (scaler secs frq amp)
       (let ((os (make-oscil frq))
 	    (del (let ((len (round (* secs (srate)))))
@@ -1061,7 +1061,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 
 
 (define flecho 
-  (let ((documentation "(flecho scaler secs) returns a low-pass filtered echo maker: (map-channel (flecho .5 .9) 0 75000)"))
+  (let ((+documentation+ "(flecho scaler secs) returns a low-pass filtered echo maker: (map-channel (flecho .5 .9) 0 75000)"))
     (lambda (scaler secs)
       (let ((flt (make-fir-filter :order 4 :xcoeffs #r(.125 .25 .25 .125)))
 	    (del (make-delay  (round (* secs (srate))))))
@@ -1076,7 +1076,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 ;;; CLM instrument is ring-modulate.ins
 
 (define ring-mod 
-  (let ((documentation "(ring-mod freq gliss-env) returns a time-varying ring-modulation filter: (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))"))
+  (let ((+documentation+ "(ring-mod freq gliss-env) returns a time-varying ring-modulation filter: (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))"))
     (lambda (freq gliss-env)
       (let ((os (make-oscil :frequency freq))
 	    (genv (make-env gliss-env :length (framples))))
@@ -1085,7 +1085,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 
 
 (define am 
-  (let ((documentation "(am freq)returns an amplitude-modulator: (map-channel (am 440))"))
+  (let ((+documentation+ "(am freq)returns an amplitude-modulator: (map-channel (am 440))"))
     (lambda (freq)
       (let ((os (make-oscil freq))) 
 	(lambda (inval) 
@@ -1095,7 +1095,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 ;;; this taken from sox (vibro.c)
 
 (define vibro 
-  (let ((documentation "(vibro speed depth) adds vibrato or tremolo"))
+  (let ((+documentation+ "(vibro speed depth) adds vibrato or tremolo"))
     (lambda (speed depth)
       (let ((sine (make-oscil speed))
 	    (scl (* 0.5 depth)))
@@ -1109,7 +1109,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 ;;; CLM instrument version is in clm.html
 
 (define hello-dentist 
-  (let ((documentation "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"))
+  (let ((+documentation+ "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"))
     (lambda* (frq amp snd chn)
       (let ((rn (make-rand-interp :frequency frq :amplitude amp))
 	    (len (framples))
@@ -1127,7 +1127,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 ;;; various "Forbidden Planet" sound effects:
 
 (define fp 
-  (let ((documentation "(fp sr osamp osfrq snd chn) varies the sampling rate via an oscil: (fp 1.0 .3 20)"))
+  (let ((+documentation+ "(fp sr osamp osfrq snd chn) varies the sampling rate via an oscil: (fp 1.0 .3 20)"))
     (lambda* (sr osamp osfrq snd chn)
       (let ((os (make-oscil osfrq))
 	    (s (make-src :srate sr :input (let ((sf (make-sampler 0 snd chn)))
@@ -1147,7 +1147,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 ;; (we're eye-balling the curve on p55 of Steiglitz's "a DSP Primer")
 
 (define compand
-  (let ((documentation "(compand) returns a compander: (map-channel (compand))"))
+  (let ((+documentation+ "(compand) returns a compander: (map-channel (compand))"))
     (lambda ()
       (lambda (inval)
 	(array-interp compand-table (+ 8.0 (* 8.0 inval)) 17)))))
@@ -1160,7 +1160,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 ;;; CLM version is in expsrc.ins
 
 (define expsrc 
-  (let ((documentation "(expsrc rate snd chn) uses sampling-rate conversion and granular synthesis 
+  (let ((+documentation+ "(expsrc rate snd chn) uses sampling-rate conversion and granular synthesis 
 to produce a sound at a new pitch but at the original tempo.  It returns a function for map-channel."))
     (lambda* (rate snd chn)
       (let ((sr (make-src :srate rate
@@ -1177,7 +1177,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 ;;; the overall expansion, then use that to decide the new length.
 
 (define expsnd 
-  (let ((documentation "(expsnd gr-env snd chn) uses the granulate generator to change tempo according to an envelope: (expsnd '(0 .5 2 2.0))"))
+  (let ((+documentation+ "(expsnd gr-env snd chn) uses the granulate generator to change tempo according to an envelope: (expsnd '(0 .5 2 2.0))"))
     (lambda* (gr-env snd chn)
       (let* ((dur (/ (* (/ (framples snd chn) (srate snd)) 
 			(integrate-envelope gr-env)) ; in env.scm
@@ -1200,7 +1200,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 ;;; CLM version is in clm.html
 
 (define cross-synthesis 
-  (let ((documentation "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound object) and the currently 
+  (let ((+documentation+ "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound object) and the currently 
 selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
     (lambda (cross-snd amp fftsize r)
       (let ((freq-inc (/ fftsize 2)))
@@ -1235,7 +1235,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
 
 (define voiced->unvoiced 
-  (let ((documentation "(voiced->unvoiced amp fftsize r tempo snd chn) turns a vocal sound into whispering: (voiced->unvoiced 1.0 256 2.0 2.0)"))
+  (let ((+documentation+ "(voiced->unvoiced amp fftsize r tempo snd chn) turns a vocal sound into whispering: (voiced->unvoiced 1.0 256 2.0 2.0)"))
     (lambda* (amp fftsize r tempo snd chn)
       (let ((freq-inc (/ fftsize 2))
 	    (len (framples snd chn)))
@@ -1285,7 +1285,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 ;;; very similar but use ncos (glottal pulse train?) instead of white noise
 
 (define pulse-voice 
-  (let ((documentation "(pulse-voice cosines (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses ncos to manipulate speech sounds"))
+  (let ((+documentation+ "(pulse-voice cosines (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses ncos to manipulate speech sounds"))
     (lambda* (cosines (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn)
       (let ((freq-inc (/ fftsize 2)))
 	(let ((spectr (make-float-vector freq-inc))
@@ -1335,7 +1335,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 ;;; -------- convolution example
 
 (define cnvtest 
-  (let ((documentation "(cnvtest snd0 snd1 amp) convolves snd0 and snd1, scaling by amp, returns new max amp: (cnvtest 0 1 .1)"))
+  (let ((+documentation+ "(cnvtest snd0 snd1 amp) convolves snd0 and snd1, scaling by amp, returns new max amp: (cnvtest 0 1 .1)"))
     (lambda (snd0 snd1 amp)
       (let* ((flt-len (framples snd0))
 	     (total-len (+ flt-len (framples snd1)))
@@ -1356,7 +1356,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 ;;; -------- locate-zero (Anders Vinjar)
 
 (define locate-zero 
-  (let ((documentation "(locate-zero limit) looks for successive samples that sum to less than 'limit', moving the cursor if successful"))
+  (let ((+documentation+ "(locate-zero limit) looks for successive samples that sum to less than 'limit', moving the cursor if successful"))
     (lambda (limit)
       (let* ((start (cursor))
 	     (sf (make-sampler start)))
@@ -1375,7 +1375,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 ;;;   interpolating between samples if necessary, the corresponding "generator" is sound-interp
 
 (define make-sound-interp 
-  (let ((documentation "(make-sound-interp start snd chn) -> an interpolating reader for snd's channel chn"))
+  (let ((+documentation+ "(make-sound-interp start snd chn) -> an interpolating reader for snd's channel chn"))
     (lambda* (start snd chn)
       (let* ((data (channel->float-vector start #f snd chn))
 	     (size (length data)))
@@ -1383,7 +1383,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 	  (array-interp data loc size))))))
 
 (define sound-interp 
-  (let ((documentation "(sound-interp func loc) -> sample at loc (interpolated if necessary) from func created by make-sound-interp"))
+  (let ((+documentation+ "(sound-interp func loc) -> sample at loc (interpolated if necessary) from func created by make-sound-interp"))
     (lambda (func loc) ;make it look like a clm generator
       (func loc))))
 
@@ -1422,7 +1422,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 ;;   envelope to sound sample positions.
 
 (define env-sound-interp 
-  (let ((documentation "(env-sound-interp env (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"))
+  (let ((+documentation+ "(env-sound-interp env (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"))
     (lambda* (envelope (time-scale 1.0) snd chn)
       ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-channel
       
@@ -1447,7 +1447,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 
 (define granulated-sound-interp 
   
-  (let ((documentation "(granulated-sound-interp envelope (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn) reads \
+  (let ((+documentation+ "(granulated-sound-interp envelope (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn) reads \
 the given channel following 'envelope' (as in env-sound-interp), using grains to create the re-tempo'd read"))
     (lambda* (envelope (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn)
       
@@ -1504,7 +1504,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 ;;; -------- filtered-env 
 
 (define filtered-env 
-  (let ((documentation "(filtered-env env snd chn) is a time-varying one-pole filter: when env is at 1.0, no filtering, 
+  (let ((+documentation+ "(filtered-env env snd chn) is a time-varying one-pole filter: when env is at 1.0, no filtering, 
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"))
     (lambda* (e snd chn)
       (let ((flt (make-one-pole 1.0 0.0)))
@@ -1552,7 +1552,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 ;;; -------- remove-clicks 
 
 (define find-click 
-  (let ((documentation "(find-click loc) finds the next click starting at 'loc'"))
+  (let ((+documentation+ "(find-click loc) finds the next click starting at 'loc'"))
     (lambda (loc)
       (let ((reader (make-sampler loc))
 	    (mmax (make-moving-max 10))
@@ -1575,7 +1575,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 		 (return (- ctr 1))))))))))
 
 (define remove-clicks
-  (let ((documentation "(remove-clicks) tries to find and smooth-over clicks"))
+  (let ((+documentation+ "(remove-clicks) tries to find and smooth-over clicks"))
     (lambda ()
       ;; this is very conservative -- the click detection limits above could be set much tighter in many cases
       (let remove-click ((loc 0))
@@ -1589,7 +1589,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 ;;; -------- searching examples (zero+, next-peak)
 
 (define search-for-click
-  (let ((documentation "(search-for-click) looks for the next click (use with C-s)"))
+  (let ((+documentation+ "(search-for-click) looks for the next click (use with C-s)"))
     (lambda ()
       (let ((samp0 0.0)
 	    (samp1 0.0)
@@ -1607,7 +1607,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 
 (define zero+
-  (let ((documentation "(zero+) finds the next positive-going zero crossing (if searching forward) (for use with C-s)"))
+  (let ((+documentation+ "(zero+) finds the next positive-going zero crossing (if searching forward) (for use with C-s)"))
     (lambda ()
       (let ((lastn 0.0))
 	(lambda (n)
@@ -1618,7 +1618,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 
 (define next-peak
-  (let ((documentation "(next-peak) finds the next max or min point in the time-domain waveform (for use with C-s)"))
+  (let ((+documentation+ "(next-peak) finds the next max or min point in the time-domain waveform (for use with C-s)"))
     (lambda ()
       (let ((last0 #f)
 	    (last1 #f))
@@ -1632,7 +1632,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 
 (define find-pitch 
-  (let ((documentation "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) 
+  (let ((+documentation+ "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) 
 In most cases, this will be slightly offset from the true beginning of the note")
 
 	(interpolated-peak-offset 
@@ -1684,7 +1684,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
 
 (define add-notes 
-  (let ((documentation "(add-notes notes snd chn) adds (mixes) 'notes' which is a list of lists of the form: file (offset 0.0) (amp 1.0) 
+  (let ((+documentation+ "(add-notes notes snd chn) adds (mixes) 'notes' which is a list of lists of the form: file (offset 0.0) (amp 1.0) 
 starting at the cursor in the currently selected channel: (add-notes '((\"oboe.snd\") (\"pistol.snd\" 1.0 2.0)))"))
     (lambda* (notes snd chn)
       (let ((start (cursor snd chn)))
@@ -1707,7 +1707,7 @@ starting at the cursor in the currently selected channel: (add-notes '((\"oboe.s
 
 
 (define region-play-list 
-  (let ((documentation "(region-play-list data): 'data' is list of lists (list (list reg time)...), time in secs, setting up 
+  (let ((+documentation+ "(region-play-list data): 'data' is list of lists (list (list reg time)...), time in secs, setting up 
 a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (list reg2 1.0) (list reg0 1.0)))"))
     (lambda (data)
       (for-each
@@ -1720,7 +1720,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 
 (define region-play-sequence 
-  (let ((documentation "(region-play-sequence data): 'data' is list of regions which will be played one after the other: (region-play-sequence (list reg0 reg2 reg1))"))
+  (let ((+documentation+ "(region-play-sequence data): 'data' is list of regions which will be played one after the other: (region-play-sequence (list reg0 reg2 reg1))"))
     (lambda (data)
       (let ((time 0.0))
 	(region-play-list
@@ -1735,7 +1735,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 ;;; -------- explode-sf2
 
 (define explode-sf2
-  (let ((documentation "(explode-sf2) turns the currently selected soundfont file into a bunch of files of the form sample-name.aif"))
+  (let ((+documentation+ "(explode-sf2) turns the currently selected soundfont file into a bunch of files of the form sample-name.aif"))
     (lambda ()
       (let sf2it ((lst (soundfont-info)))
 	(if (pair? lst)
@@ -1836,7 +1836,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 
 (define click-middle-button-to-open-next-file-in-directory
-  (let ((documentation "(click-middle-button-to-open-next-file-in-directory) adds open-next-file-in-directory to the mouse-click-hook"))
+  (let ((+documentation+ "(click-middle-button-to-open-next-file-in-directory) adds open-next-file-in-directory to the mouse-click-hook"))
     (lambda ()
       (hook-push mouse-click-hook
 		 (lambda (hook)
@@ -1847,7 +1847,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 ;;; -------- chain-dsps
 
 (define chain-dsps 
-  (let ((documentation "(chain-dsps beg dur :rest dsps) sets up a generator patch from its arguments"))
+  (let ((+documentation+ "(chain-dsps beg dur :rest dsps) sets up a generator patch from its arguments"))
     (lambda* (beg dur :rest dsps)
       
       ;; assume the dsps are already made, 
@@ -1914,7 +1914,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 (define scramble-channels
   
-  (letrec ((documentation "scramble-channels can arbitrarily re-order a sound's channels. The new channel order is \
+  (letrec ((+documentation+ "scramble-channels can arbitrarily re-order a sound's channels. The new channel order is \
 passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, and 1 in 3, (scramble-channels 3 2 0 1)")
       
 	   (scramble-channels-1
@@ -2015,7 +2015,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 ;; -------- reorder blocks within channel
 
 (define reverse-by-blocks 
-  (let ((documentation "(reverse-by-blocks block-len snd chn): divide sound into block-len blocks, recombine blocks in reverse order"))
+  (let ((+documentation+ "(reverse-by-blocks block-len snd chn): divide sound into block-len blocks, recombine blocks in reverse order"))
     (lambda* (block-len snd chn)
       (let* ((len (framples snd chn))
 	     (num-blocks (floor (/ len (srate snd) block-len))))
@@ -2042,7 +2042,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 
 
 (define reverse-within-blocks 
-  (let ((documentation "(reverse-within-blocks block-len snd chn): divide sound into blocks, recombine in order, but each block internally reversed"))
+  (let ((+documentation+ "(reverse-within-blocks block-len snd chn): divide sound into blocks, recombine in order, but each block internally reversed"))
     (lambda* (block-len snd chn)
       (let* ((len (framples snd chn))
 	     (num-blocks (floor (/ len (srate snd) block-len))))
@@ -2063,7 +2063,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 
 #|
 (define channel-clipped? 
-  (let ((documentation "(channel-clipped? snd chn) returns the sample number if it finds clipping"))
+  (let ((+documentation+ "(channel-clipped? snd chn) returns the sample number if it finds clipping"))
     (lambda* (snd chn)
       (let ((last-y 0.0)
 	    (len (framples snd chn))
@@ -2081,7 +2081,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 ;;; not pretty but faster:
 
 (define channel-clipped? 
-  (let ((documentation "(channel-clipped? snd chn) returns the sample number if it finds clipping"))
+  (let ((+documentation+ "(channel-clipped? snd chn) returns the sample number if it finds clipping"))
     (lambda* (snd chn)
       (do ((pos (scan-channel (lambda (y) (>= (abs y) 0.9999)) 0 #f snd chn) 
 		(scan-channel (lambda (y) (>= (abs y) 0.9999)) (+ pos 1) #f snd chn)))
@@ -2093,7 +2093,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 ;;; -------- sync-everything
 
 (define sync-everything
-  (let ((documentation "(sync-everything) sets the sync fields of all currently open sounds to the same, unique value"))
+  (let ((+documentation+ "(sync-everything) sets the sync fields of all currently open sounds to the same, unique value"))
     (lambda ()
       (let ((new-sync (+ 1 (sync-max))))
 	(for-each

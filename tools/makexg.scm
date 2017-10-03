@@ -3813,7 +3813,7 @@
 (hoy "      (!s7_is_symbol(arg))) ~%")
 (hoy "    return(s7_make_symbol(sc, \"integer?\")); ~%")
 (hoy "  func = s7_car(form); ~%")
-(hoy "  doc_string = s7_procedure_documentation(sc, func); ~%")
+(hoy "  doc_string = s7_documentation(sc, func); ~%")
 (hoy "  p = strchr(doc_string, (int)'('); ~%")
 (hoy "  if (p) ~%")
 (hoy "    { ~%")

@@ -216,7 +216,7 @@
 	 (delete-file new-file-name))))
 
 (define dismiss-all-dialogs
-  (let ((documentation "(dismiss-all-dialogs) hides all dialogs"))
+  (let ((+documentation+ "(dismiss-all-dialogs) hides all dialogs"))
     (lambda ()
       (if (or (provided? 'xm)
 	      (provided? 'xg))
@@ -242,14 +242,14 @@
 
 (define safe-color (make-color 1 0 0))
 (define make-color-with-catch 
-  (let ((documentation "make-color but catch 'no-such-color"))
+  (let ((+documentation+ "make-color but catch 'no-such-color"))
     (lambda (c1 c2 c3)
       (catch 'no-such-color
 	(lambda () (make-color c1 c2 c3))
 	(lambda args safe-color)))))
 
 (define safe-display-edits 
-  (let ((documentation "display-edits but catch all errors"))
+  (let ((+documentation+ "display-edits but catch all errors"))
     (lambda* (snd chn edpos)
       (catch #t
 	(lambda () (display-edits snd chn edpos))
@@ -9326,7 +9326,7 @@ EDITS: 2
 
 
 (define scissor 
-  (let ((documentation "(scissor beg) is the scissor-tailed flycatcher"))
+  (let ((+documentation+ "(scissor beg) is the scissor-tailed flycatcher"))
     (lambda (begin-time) ; test 23 also
       (bigbird begin-time 0.05 1800 1800 .2 
 	       '(0 0  40 1  60 1  100 0)
@@ -9371,7 +9371,7 @@ EDITS: 2
   
   ;; ----------------
   (define make-papoulis-window 
-    (let ((documentation "(make-papoulis-window size) returns a papoulis window os the given size"))
+    (let ((+documentation+ "(make-papoulis-window size) returns a papoulis window os the given size"))
       (lambda (n)
 	(let ((v (make-float-vector n))
 	      (n2 (/ n 2)))
@@ -9386,7 +9386,7 @@ EDITS: 2
       
   ;; ----------------
   (define make-dpss-window 
-    (let ((documentation "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"))
+    (let ((+documentation+ "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"))
       ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
       ;; output checked using Julius Smith's dpssw.m, although my "w" is different
       (lambda (n w)
@@ -10431,7 +10431,7 @@ EDITS: 2
   
   ;; ----------------
   (define fltit
-    (let ((documentation "(fltit) returns a time-varying filter: (map-channel (fltit))"))
+    (let ((+documentation+ "(fltit) returns a time-varying filter: (map-channel (fltit))"))
       (lambda ()
 	(let ((flt (make-fir-filter 8 #r(.1 .2 .3 .4 .4 .3 .2 .1))))
 	  (do ((xcof (mus-xcoeffs flt)) ; maybe a copy?
@@ -25406,7 +25406,7 @@ EDITS: 2
 (define sfile 0) ; used globally by save-state stuff (... is this a bug?)
 
 (define safe-make-selection 
-  (let ((documentation "make-region with error checks"))
+  (let ((+documentation+ "make-region with error checks"))
     (lambda (snd) ; used in test_15 also
       (let ((len (framples snd))
 	    (beg 1000)
@@ -31385,7 +31385,7 @@ EDITS: 1
 					  snd chn lisp-graph cr)
 			     (free-cairo cr)))))))
 
-    (let ((-> (let ((documentation "draw an arrow pointing (from the left) at the point (x0 y0)"))
+    (let ((-> (let ((+documentation+ "draw an arrow pointing (from the left) at the point (x0 y0)"))
 		(lambda (x0 y0 size snd chn cr)
 		  (let ((points (make-vector 8)))
 		    
@@ -32487,7 +32487,7 @@ EDITS: 1
 							 0.0 -0.500 0.0 0.500 0.0 -0.500 0.0 0.500 0.0 -0.500)))
 	      (snd-display "fft-env-data: ~A" vals)))
 	(let ((hilbert-transform-via-fft
-	       (let ((documentation "same as FIR version but use FFT and change phases by hand"))
+	       (let ((+documentation+ "same as FIR version but use FFT and change phases by hand"))
 		 (lambda* (snd chn)
 		   (let* ((size (framples snd chn))
 			  (len (expt 2 (ceiling (log size 2.0)))))
@@ -35186,7 +35186,7 @@ EDITS: 1
 	      comments))))
 	
 	(display-samps-in-red 
-	 (let ((documentation "display samples 1000 to 2000 in red whenever they're in the current view"))
+	 (let ((+documentation+ "display samples 1000 to 2000 in red whenever they're in the current view"))
 	   (lambda (snd chn)
 	     (catch #t
 	       (lambda ()
@@ -40622,7 +40622,7 @@ EDITS: 1
   (let ((snd (find-sound (with-sound (:clipped #f)
 			   (let ((gen (make-nrcos 100 :n 15 :r 0.5))
 				 (indr (make-env '(0 -1 1 1) :length 40000 :scaler 0.9999)))
-			     (let ((set-nrcos-scaler (procedure-setter (gen 'mus-scaler))))
+			     (let ((set-nrcos-scaler (setter (gen 'mus-scaler))))
 			       (do ((i 0 (+ i 1)))
 				   ((= i base-length))
 				 (set-nrcos-scaler gen (env indr))
@@ -41079,7 +41079,7 @@ EDITS: 1
 		(let ((gen1 (make-safe-rxycos 1000 1 0.99))
 		      (gen2 (make-safe-rxycos 1000 1 0.99))
 		      (frqf (make-env '(0 0 1 1) :length 10000 :scaler (hz->radians 1000))))
-		  (let ((set-freq (procedure-setter (gen2 'mus-frequency))))
+		  (let ((set-freq (setter (gen2 'mus-frequency))))
 		    (do ((i 0 (+ i 1)))
 			((= i base-length))
 		      (let ((fm (env frqf)))
@@ -41093,7 +41093,7 @@ EDITS: 1
 		(let ((gen1 (make-safe-rxycos 1000 .1 0.99))
 		      (gen2 (make-safe-rxycos 1000 .1 0.99))
 		      (frqf (make-env '(0 0 1 1) :length 10000 :scaler (hz->radians 1000))))
-		  (let ((set-freq (procedure-setter (gen2 'mus-frequency))))
+		  (let ((set-freq (setter (gen2 'mus-frequency))))
 		    (set! base-r (gen1 'r))
 		    (do ((i 0 (+ i 1)))
 			((= i base-length))
@@ -41442,7 +41442,7 @@ EDITS: 1
     (with-let (sublet *motif*)
 	
       (define x->snd-color 
-	(let ((documentation "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"))
+	(let ((+documentation+ "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"))
 	  (lambda (color-name)
 	    (let* ((col (XColor))
 		   (dpy (XtDisplay (cadr (main-widgets))))
@@ -45068,9 +45068,9 @@ EDITS: 1
 	(set-arity-ok 
 	 (lambda (func args)
 	   (let ((arit (if (dilambda? func)
-			   (arity (procedure-setter func))
-			   (and (procedure? (procedure-setter func))
-				(arity (procedure-setter func))))))
+			   (arity (setter func))
+			   (and (procedure? (setter func))
+				(arity (setter func))))))
 	     (and (pair? arit)
 		  (<= (car arit) args (cdr arit)))))))
     
@@ -46329,7 +46329,7 @@ EDITS: 1
 			      n
 			      (lambda args (car args)))))
 		   (if (eq? err 'wrong-number-of-args)
-		       (snd-display "procs0: ~A ~A" err (procedure-documentation n)))))
+		       (snd-display "procs0: ~A ~A" err (documentation n)))))
 	       procs0)
 	      (dismiss-all-dialogs)
 	      (for-each close-sound (sounds))
@@ -46358,7 +46358,7 @@ EDITS: 1
 			(lambda () (n arg))
 			(lambda args 
 			  (if (eq? (car args) 'wrong-number-of-args)
-			      (snd-display "procs1 wna: ~A ~A ~A" arg args (procedure-documentation n))))))
+			      (snd-display "procs1 wna: ~A ~A ~A" arg args (documentation n))))))
 		    procs1))
 		 main-args)
 		(for-each close-sound (sounds))
@@ -46374,7 +46374,7 @@ EDITS: 1
 			   (lambda () (n arg1 arg2))
 			   (lambda args 
 			     (if (eq? (car args) 'wrong-number-of-args)
-				 (snd-display "procs2: ~A ~A ~A ~A" arg1 arg2 args (procedure-documentation n))))))
+				 (snd-display "procs2: ~A ~A ~A ~A" arg1 arg2 args (documentation n))))))
 		       procs2))
 		    main-args))
 		 main-args)
@@ -46389,7 +46389,7 @@ EDITS: 1
 			(lambda () (set! (n) arg))
 			(lambda args 
 			  (if (eq? (car args) 'wrong-number-of-args)
-			      (snd-display "set-procs0: ~A" (procedure-documentation n))))))
+			      (snd-display "set-procs0: ~A" (documentation n))))))
 		    set-procs0))
 		 main-args)
 		(for-each close-sound (sounds))
@@ -46405,7 +46405,7 @@ EDITS: 1
 			   (lambda () (set! (n arg1) arg2))
 			   (lambda args 
 			     (if (eq? (car args) 'wrong-number-of-args)
-				 (snd-display "set-procs1: ~A" (procedure-documentation n))))))
+				 (snd-display "set-procs1: ~A" (documentation n))))))
 		       set-procs1))
 		    main-args))
 		 main-args)
@@ -46425,7 +46425,7 @@ EDITS: 1
 			      (lambda () (set! (n arg1 arg2) arg3))
 			      (lambda args 
 				(if (eq? (car args) 'wrong-number-of-args)
-				    (snd-display "set-procs2: ~A" (procedure-documentation n))))))
+				    (snd-display "set-procs2: ~A" (documentation n))))))
 			  set-procs2))
 		       less-args))
 		    less-args))
@@ -46733,7 +46733,7 @@ EDITS: 1
 	(if (defined? sym)
 	    (let ((val (symbol->value sym)))
 	      (if (and (procedure? val)
-		       (string=? "" (procedure-documentation val)))
+		       (string=? "" (documentation val)))
 		  (snd-display "~A " sym)))))
    st))
 |#

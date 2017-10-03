@@ -1780,8 +1780,8 @@ static Xen g_mus_describe(Xen gen)
   Xen_check_type(Xen_is_double(val), val, 2, S_set Caller, "a float");   \
   if (gn) {CLM_case(gn->gen, Xen_real_to_C_double(val)); return(val);}	\
   func = s7_method(s7, gen, s7_make_symbol(s7, Caller));		\
-  if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))	\
-    return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val))); \
+  if ((func != Xen_undefined) && (s7_setter(s7, func)))	\
+    return(s7_apply_function(s7, s7_setter(s7, func), s7_list(s7, 2, gen, val))); \
   Xen_check_type(false, gen, 1, S_set Caller, "a generator");  \
   return(val);
 
@@ -1802,8 +1802,8 @@ static Xen g_mus_describe(Xen gen)
   Xen_check_type(Xen_is_integer(val), val, 2, Caller, "an integer"); \
   if (gn) {CLM_case(gn->gen, Xen_llong_to_C_llong(val)); return(val);}	\
   func = s7_method(s7, gen, s7_make_symbol(s7, Caller));		\
-  if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))	\
-    return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val))); \
+  if ((func != Xen_undefined) && (s7_setter(s7, func)))	\
+    return(s7_apply_function(s7, s7_setter(s7, func), s7_list(s7, 2, gen, val))); \
   Xen_check_type(false, gen, 1, Caller, "a generator");  \
   return(val);
 
@@ -2105,8 +2105,8 @@ static Xen g_mus_set_data(Xen gen, Xen val)
   {
     s7_pointer func; 
     func = s7_method(s7, gen, s7_make_symbol(s7, "mus-data"));
-    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val)));
+    if ((func != Xen_undefined) && (s7_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_setter(s7, func), s7_list(s7, 2, gen, val)));
   }
 #endif
 
@@ -2236,8 +2236,8 @@ static Xen g_mus_set_xcoeff(Xen gen, Xen index, Xen val)
   {
     s7_pointer func; 
     func = s7_method(s7, gen, s7_make_symbol(s7, "mus-xcoeff"));
-    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 3, gen, index, val)));
+    if ((func != Xen_undefined) && (s7_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_setter(s7, func), s7_list(s7, 3, gen, index, val)));
   }
 #endif
   Xen_check_type(false, gen, 1, S_set S_mus_xcoeff, "a generator");
@@ -2291,8 +2291,8 @@ static Xen g_mus_set_ycoeff(Xen gen, Xen index, Xen val)
   {
     s7_pointer func; 
     func = s7_method(s7, gen, s7_make_symbol(s7, "mus-ycoeff"));
-    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 3, gen, index, val)));
+    if ((func != Xen_undefined) && (s7_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_setter(s7, func), s7_list(s7, 3, gen, index, val)));
   }
 #endif
   Xen_check_type(false, gen, 1, S_set S_mus_ycoeff, "a generator");
@@ -2393,8 +2393,8 @@ static Xen g_mus_set_length(Xen gen, Xen val)
   {
     s7_pointer func; 
     func = s7_method(s7, gen, s7_make_symbol(s7, "mus-length"));
-    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, val)));
+    if ((func != Xen_undefined) && (s7_setter(s7, func)))		      
+      return(s7_apply_function(s7, s7_setter(s7, func), s7_list(s7, 2, gen, val)));
   }
 #endif
   Xen_check_type(false, gen, 1, S_set S_mus_length, "a generator");

@@ -26,7 +26,7 @@
 ;;; -------- swap selection chans
 
 (define swap-selection-channels
-  (let ((documentation "(swap-selection-channels) swaps the currently selected data's channels")
+  (let ((+documentation+ "(swap-selection-channels) swaps the currently selected data's channels")
 	(find-selection-sound 
 	 (lambda (not-this)
 	   (let ((scs (all-chans)))
@@ -59,7 +59,7 @@
 ;;; -------- replace-with-selection
 
 (define replace-with-selection
-  (let ((documentation "(replace-with-selection) replaces the samples from the cursor with the current selection"))
+  (let ((+documentation+ "(replace-with-selection) replaces the samples from the cursor with the current selection"))
     (lambda ()
       (let ((beg (cursor))
 	    (len (selection-framples)))
@@ -73,7 +73,7 @@
 ;;; returns a list of lists of (snd chn): channels in current selection
 
 (define selection-members
-  (let ((documentation "(selection-members) -> list of lists of (snd chn) indicating the channels participating in the current selection."))
+  (let ((+documentation+ "(selection-members) -> list of lists of (snd chn) indicating the channels participating in the current selection."))
     (lambda ()
       (let ((sndlist ()))
 	(if (selection?)
@@ -91,7 +91,7 @@
 ;;; the regularized form of this would use dur not end
 
 (define make-selection 
-  (let ((documentation "(make-selection beg end snd chn) makes a selection like make-region but without creating a region.
+  (let ((+documentation+ "(make-selection beg end snd chn) makes a selection like make-region but without creating a region.
 make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
 to end of channel, beg defaults to 0, snd defaults to the currently selected sound.")
 
@@ -127,7 +127,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 
 (define with-temporary-selection 
   
-  (let ((documentation "(with-temporary-selection thunk beg dur snd chn) saves the current selection placement, makes a new selection \
+  (let ((+documentation+ "(with-temporary-selection thunk beg dur snd chn) saves the current selection placement, makes a new selection \
 of the data from sample beg to beg + dur in the given channel.  It then calls thunk, and
 restores the previous selection (if any).  It returns whatever 'thunk' returned."))
     (lambda (thunk beg dur snd chn)
@@ -151,7 +151,7 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 ;;; -------- filter-selection-and-smooth
 
 (define filter-selection-and-smooth 
-  (let ((documentation "(filter-selection-and-smooth ramp-dur flt order) applies 'flt' (via filter-sound) to \
+  (let ((+documentation+ "(filter-selection-and-smooth ramp-dur flt order) applies 'flt' (via filter-sound) to \
 the selection, the smooths the edges with a ramp whose duration is 'ramp-dur' (in seconds)"))
     (lambda* (ramp-dur flt order)
       (let ((temp-file (snd-tempnam)))

@@ -3572,7 +3572,7 @@ and its value is returned."
       {
 	if (Xen_is_procedure(sym))
 	  {
-	    str = (char *)s7_procedure_documentation(s7, sym);
+	    str = (char *)s7_documentation(s7, sym);
 
 	    if (((!str) || 
 		 (mus_strlen(str) == 0)) &&

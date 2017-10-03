@@ -206,7 +206,7 @@ indented and on a sort of brownish background.
   <li><a href="#math">math functions</a>
   <li><a href="#define*">define*, named let*</a>
   <li><a href="#macros">define-macro</a>
-  <li><a href="#pws">procedure-setter</a>
+  <li><a href="#pws">setter</a>
   <li><a href="#generalizedset">generic functions, generalized set!</a>
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
   <li><a href="#hashtables">hash tables</a>
@@ -215,7 +215,7 @@ indented and on a sort of brownish background.
   <li><a href="#callwithexit1">call-with-exit</a>
   <li><a href="#format1">format</a>
   <li><a href="#hooks">hooks</a>
-  <li><a href="#procedureinfo">procedure info</a>
+  <li><a href="#variableinfo">variable info</a>
   <li><a href="#evalstring">eval</a>
   <li><a href="#IO">IO and other OS functions</a>
   <li><a href="#errors">errors</a>
@@ -966,7 +966,7 @@ giving the new symbol name's prefix.  gensym? returns #t if its argument is a sy
 <p>A macro is a first-class citizen of s7.  You can
 pass it as a function argument, apply it to a list, return it from a function,
 call it recursively, 
-and assign it to a variable.  You can even set its procedure-setter!
+and assign it to a variable.  You can even set its setter!
 </p>
 
 <pre class="indented">
@@ -992,7 +992,7 @@ and assign it to a variable.  You can even set its procedure-setter!
 <em class="gray">ref</em>
 &gt; (define-macro (set v i x) `(vector-set! ,v ,i ,x))
 <em class="gray">set</em>
-&gt; (set! (procedure-setter ref) set)
+&gt; (set! (setter ref) set)
 <em class="gray">set</em>
 &gt; (let ((v (vector 1 2 3))) (set! (ref v 0) 32) v)
 <em class="gray">#(32 2 3)</em>
@@ -1008,13 +1008,13 @@ and assign it to a variable.  You can even set its procedure-setter!
             ((and (symbol? (car form))
                   (macro? (symbol-&gt;value (car form))))
              (expand (apply macroexpand (list form))))
-            ((and (eq? (car form) 'set!)  ; look for (set! (mac ...) ...) and use mac's procedure-setter
+            ((and (eq? (car form) 'set!)  ; look for (set! (mac ...) ...) and use mac's setter
                   (pair? (cdr form))
                   (pair? (cadr form))
                   (macro? (symbol-&gt;value (caadr form))))
              (expand
               (apply (eval
-                 (procedure-source (procedure-setter (symbol-&gt;value (caadr form)))))
+                 (procedure-source (setter (symbol-&gt;value (caadr form)))))
                 (append (cdadr form) (cddr form)))))
             (else (cons (expand (car form)) (expand (cdr form))))))))
 </pre>
@@ -1376,7 +1376,7 @@ wrap it in a with-let that re-establishes that environment.
 &gt; (let ((tmp (cons 1 2))) (swap (car tmp) (cdr tmp)) tmp)
 <em class="gray">(2 . 1)</em>
 
-(set! (procedure-setter swap) (define-macro (set-swap a b c) `(set! ,b ,c)))
+(set! (setter swap) (define-macro (set-swap a b c) `(set! ,b ,c)))
 
 &gt; (let ((a 1) (b 2) (c 3) (d 4)) (swap a (swap b (swap c d))) (list a b c d))
 <em class="gray">(2 3 4 1)</em>
@@ -1489,10 +1489,10 @@ to be evaluated in its definition environment:
 
 
 
-<div class="header" id="pws"><h4>procedure-setter</h4></div>
+<div class="header" id="pws"><h4>setter</h4></div>
 
 <pre class="indented">
-(<em class=def>procedure-setter</em> proc)
+(<em class=def>setter</em> proc)
 (<em class=def id="dilambda">dilambda</em> proc setter)
 </pre>
 
@@ -1503,13 +1503,13 @@ value passed to set!:
 </p>
 
 <pre class="indented">
-&gt; (procedure-setter cadr)
+&gt; (setter cadr)
 <em class="gray">#f</em>
-&gt; (set! (procedure-setter cadr) 
+&gt; (set! (setter cadr) 
         (lambda (lst val) 
           (set! (car (cdr lst)) val)))
 <em class="gray">#&lt;lambda (lst val)&gt;</em>
-&gt; (procedure-source (procedure-setter cadr))
+&gt; (procedure-source (setter cadr))
 <em class="gray">(lambda (lst val) (set! (car (cdr lst)) val))</em>
 &gt; (let ((lst (list 1 2 3))) 
     (set! (cadr lst) 4) 
@@ -1520,7 +1520,7 @@ value passed to set!:
 <p>In some cases, the setter needs to be a macro:
 </p>
 <pre class="indented">
-&gt; (set! (procedure-setter logbit?)
+&gt; (set! (setter logbit?)
           (define-macro (m var index on) ; here we want to set "var", so we need a macro
 	    `(if ,on
 	         (set! ,var (logior ,var (ash 1 ,index)))
@@ -1934,7 +1934,7 @@ value in the closure's environment:
            ((#&lt;eof&gt;) ((set! iter (make-iterator obj))))
            (else)))))))
 </pre>
-<p>The 'iterator? variable is similar to the 'documentation variable used by procedure-documentation.
+<p>The 'iterator? variable is similar to the '+documentation+ variable used by documentation.
 It gives make-iterator some hope of catching inadvertent bogus function arguments that would
 otherwise cause an infinite loop. 
 </p>
@@ -4021,42 +4021,41 @@ result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_intege
 
 
 
-<div class="header" id="procedureinfo"><h4>procedure info</h4></div>
+<div class="header" id="variableinfo"><h4>variable info</h4></div>
 
 
 <pre class="indented">
-(<em class=def id="proceduresource">procedure-source</em> proc)
-(<em class=def id="proceduredocumentation">procedure-documentation</em> proc)
-(<em class=def id="proceduresignature">procedure-signature</em> proc)
-(<em class=def id="proceduresetter">procedure-setter</em> proc)
-(funclet proc)
-
+(<em class=def id="documentation">documentation</em> obj)          ; old name: (procedure-documentation obj)
+(<em class=def id="signature">signature</em> obj)              ; old: (procedure-signature obj)
+(<em class=def id="setter">setter</em> obj)                 ; old: (procedure-setter obj)
 (<em class=def id="arity">arity</em> obj)
 (<em class=def id="aritablep">aritable?</em> obj num-args)
+(funclet proc)
+(<em class=def id="proceduresource">procedure-source</em> proc)
 </pre>
 
 <p>
-procedure-setter returns or sets the set function associated with a procedure (set-car! with car, for example).
+<b>setter</b> returns or sets the set function associated with a procedure (set-car! with car, for example).
 funclet returns
-a procedure's environment.  
-procedure-source returns the procedure source (a list). 
+a procedure's environment.
 </p>
 
-<pre class="indented">
-(define (procedure-arglist f) (cadr (procedure-source f)))
-</pre>
+<p>
+<b>procedure-source</b> returns the procedure source (a list). 
+<code>(define (procedure-arglist f) (cadr (procedure-source f)))</code>
+</p>
 
 <p>
-procedure-documentation returns the documentation string associated with a procedure.  This used to be 
-the initial string in the function's body (as in CL), but now it is the value of the 'documentation variable, if any,
+<b>documentation</b> returns the documentation string associated with a procedure.  This used to be 
+the initial string in the function's body (as in CL), but now it is the value of the '+documentation+ variable, if any,
 in the procedure's local environment.  That is, <code>(define (f a) "doc string" a)</code> is now
-<code>(define f (let ((documentation "doc string")) (lambda (a) a)))</code>.  This change gets the 
+<code>(define f (let ((+documentation+ "doc string")) (lambda (a) a)))</code>.  This change gets the 
 string out of the body (where it can slow down evaluation of the function to no purpose), and
 makes it possible to extend the function information arbitrarily. 
 </p>
 
 <p>
-arity takes any object and returns either #f if it is not applicable,
+<b>arity</b> takes any object and returns either #f if it is not applicable,
 or a cons containing the minimum and maximum number of arguments acceptable.  If the maximum reported
 is a really big number, that means any number of arguments is ok.
 aritable? takes two arguments, an object and an integer, and returns #t if the object can be
@@ -4064,9 +4063,9 @@ applied to that many arguments.
 </p>
 
 <pre class="indented">
-&gt; (define add-2 (let ((documentation "add-2 adds its 2 args")) (lambda* (a (b 32)) (+ a b))))
+&gt; (define add-2 (let ((+documentation+ "add-2 adds its 2 args")) (lambda* (a (b 32)) (+ a b))))
 <em class="gray">add-2</em>
-&gt; (procedure-documentation add-2)
+&gt; (documentation add-2)
 <em class="gray">"add-2 adds its 2 args"</em>
 &gt; (procedure-source add-2)
 <em class="gray">(lambda* (a (b 32)) (+ a b))</em>
@@ -4075,15 +4074,15 @@ applied to that many arguments.
 </pre>
 
 <p>
-procedure-signature is a list describing the argument types and returned value type
+<b>signature</b> is a list describing the argument types and returned value type
 of the function.  The first entry in the list is the return type, and the rest are
 argument types.  #t means any type is possible, and 'values means the function returns multiple values.
 </p>
 
 <pre class="indented">
-&gt; (procedure-signature round)
+&gt; (signature round)
 <em class="gray">(integer? real?)</em> ; round takes a real argument, returns an integer
-&gt; (procedure-signature vector-ref)
+&gt; (signature vector-ref)
 <em class="gray">(#t vector? . #1=(integer? . #1#))</em> ; trailing args are all integers (indices)
 </pre>
 
@@ -4091,25 +4090,25 @@ argument types.  #t means any type is possible, and 'values means the function r
 </p>
 
 <pre class="indented">
-&gt; (procedure-signature char-position)
+&gt; (signature char-position)
 <em class="gray">((boolean? integer?) (char? string?) string? integer?)</em>
 </pre>
 
 <p>which says that the first argument to char-position can be a string or a character,
 and the return type can be either boolean or an integer.
-If the function is defined in scheme, its signature is the value of the 'signature variable
+If the function is defined in scheme, its signature is the value of the '+signature+ variable
 in its closure:
 </p>
 
 <pre class="indented">
-&gt; (define f1 (let ((documentation "helpful info") 
-                   (signature '(boolean? real?))) 
+&gt; (define f1 (let ((+documentation+ "helpful info") 
+                   (+signature+ '(boolean? real?))) 
                 (lambda (x) 
                   (positive? x))))
 <em class="gray">f1</em>
-&gt; (procedure-documentation f1)
+&gt; (documentation f1)
 <em class="gray">"helpful info"</em>
-&gt; (procedure-signature f1)
+&gt; (signature f1)
 <em class="gray">(boolean? real?)</em>
 </pre>
 
@@ -4117,22 +4116,22 @@ in its closure:
 </p>
 
 <pre class="indented">
-&gt; (define f1 (let ((procedure-documentation (lambda (f) "helpful info"))
-                    (procedure-signature (lambda (f) '(boolean? real?))))
+&gt; (define f1 (let ((documentation (lambda (f) "helpful info"))
+                    (signature (lambda (f) '(boolean? real?))))
                 (<em class=red>openlet</em>  ; openlet alerts s7 that f1 has methods
                   (lambda (x) 
                     (positive? x)))))
-&gt; (procedure-documentation f1)
+&gt; (documentation f1)
 <em class="gray">"helpful info"</em>
-&gt; (procedure-signature f1)
+&gt; (signature f1)
 <em class="gray">(boolean? real?)</em>
 </pre>
 
-<p>procedure-signature could also be used to implement CL's 'the:
+<p>signature could also be used to implement CL's 'the:
 </p>
 <pre class="indented">
 (define-macro (the value-type form)
-  `((let ((signature (list ,value-type)))
+  `((let ((+signature+ (list ,value-type)))
       (lambda ()
 	,form))))
 
@@ -4167,6 +4166,31 @@ in its closure:
 
 &gt; (auto-test)
 <em class="gray">oops: (myadd 2 3) -&gt; -1</em>
+</pre>
+
+<p>Even the setter can be set this way:
+</p>
+<pre class="indented">
+(define flocals
+  (let ((x 1))
+    (let ((+setter+ (lambda (val) (set! x val)))
+	  (+documentation+ (immutable! "this is helpful info"))
+	  (+signature+ '(#t procedure?)))
+      (lambda ()
+	x))))
+
+&gt; (flocals)
+<em class="gray">1</em>
+&gt; (setter flocals)
+<em class="gray">#&lt;lambda (val)&gt;</em>
+&gt; (set! (flocals) 32)
+<em class="gray">32</em>
+&gt; (flocals)
+<em class="gray">32</em>
+&gt; (signature flocals)
+<em class="gray">(#t procedure?)</em>
+&gt; (documentation flocals)
+<em class="gray">"this is helpful info"</em>
 </pre>
 
 <blockquote>
@@ -5538,7 +5562,7 @@ Here we scan the symbol table looking for any function that doesn't have documen
      (if (<em class=red>defined?</em> sym)
          (let ((val (<em class=red>symbol-&gt;value</em> sym)))
            (if (and (procedure? val)
-                    (string=? "" (procedure-documentation val)))
+                    (string=? "" (documentation val)))
                (format *stderr* "~S " sym)))))
   (<em class=red>symbol-table</em>))
 </pre>

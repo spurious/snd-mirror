@@ -1001,7 +1001,7 @@ int main(int argc, char **argv)
   if (s7_integer(p1) != 2)
     {fprintf(stderr, "%d: %s is not 2?\n", __LINE__, s1 = TO_STR(p1)); free(s1);}
 
-  s7_apply_function(sc, s7_procedure_setter(sc, s7_name_to_value(sc, "dax-data")), s7_cons(sc, p, s7_cons(sc, TO_S7_INT(32), s7_nil(sc))));
+  s7_apply_function(sc, s7_setter(sc, s7_name_to_value(sc, "dax-data")), s7_cons(sc, p, s7_cons(sc, TO_S7_INT(32), s7_nil(sc))));
   p1 = s7_apply_function(sc, s7_name_to_value(sc, "dax-data"), s7_cons(sc, p, s7_nil(sc)));
   if (!s7_is_integer(p1))
     {fprintf(stderr, "%d: %s is not an integer?\n", __LINE__, s1 = TO_STR(p1)); free(s1);}
@@ -1432,9 +1432,9 @@ int main(int argc, char **argv)
 
   {
     const char *s3;
-    s3 = s7_procedure_documentation(sc, p1);
+    s3 = s7_documentation(sc, p1);
     if (strcmp(s3, "(abs x) returns the absolute value of the real number x") != 0)
-      {fprintf(stderr, "%d: (procedure-documentation abs) = %s?\n", __LINE__, s3);}
+      {fprintf(stderr, "%d: (documentation abs) = %s?\n", __LINE__, s3);}
 
     s3 = s7_help(sc, p1);
     if (strcmp(s3, "(abs x) returns the absolute value of the real number x") != 0)

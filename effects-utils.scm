@@ -4,7 +4,7 @@
 (with-let *motif*
   
   (define raise-dialog 
-    (let ((documentation "(raise-dialog w) tries to put 'w' on top of any widgets that are obscuring it"))
+    (let ((+documentation+ "(raise-dialog w) tries to put 'w' on top of any widgets that are obscuring it"))
       (lambda (w)
 	(if (and (Widget? w) 
 		 (XtIsManaged w))
@@ -14,12 +14,12 @@
 		  (XtPopup parent XtGrabNone)))))))
   
   (define activate-dialog 
-    (let ((documentation "(activate-dialog dialog) makes 'dialog' active and brings it to the top of the currently displayed widgets"))
+    (let ((+documentation+ "(activate-dialog dialog) makes 'dialog' active and brings it to the top of the currently displayed widgets"))
       (lambda (dialog)
 	((if (not (XtIsManaged dialog)) XtManageChild raise-dialog) dialog))))
   
   (define for-each-child 
-    (let ((documentation "(for-each-child w func) applies 'func' to 'w' and to its descendents"))
+    (let ((+documentation+ "(for-each-child w func) applies 'func' to 'w' and to its descendents"))
       (lambda (w func)
 	(func w)
 	(if (XtIsComposite w)
@@ -31,13 +31,13 @@
   (define use-combo-box-for-fft-size #f) ; cross-synthesis fft size: radio-buttons or combo-box choice
   
   (define current-screen
-    (let ((documentation "(current-screen) returns the current X screen number of the current display"))
+    (let ((+documentation+ "(current-screen) returns the current X screen number of the current display"))
       (lambda ()
 	(DefaultScreenOfDisplay 
 	  (XtDisplay (cadr (main-widgets)))))))
   
   (define all-chans ; for later use in new-effects.scm?
-    (let ((documentation "(all-chans) returns a list of all current sound objects and channel numbers"))
+    (let ((+documentation+ "(all-chans) returns a list of all current sound objects and channel numbers"))
       (lambda ()
 	(let ((sndlist ())
 	      (chnlist ()))
@@ -50,12 +50,12 @@
 	  (list sndlist chnlist)))))
   
   (define update-label 
-    (let ((documentation "(update-label effects) evaluates the elements of the list 'effects'"))
+    (let ((+documentation+ "(update-label effects) evaluates the elements of the list 'effects'"))
       (lambda (effects)
 	(for-each (lambda (effect) (effect)) effects))))
   
   (define effect-target-ok 
-    (let ((documentation "(effect-target-ok target) returns #t if the current effect's chosen target is ready"))
+    (let ((+documentation+ "(effect-target-ok target) returns #t if the current effect's chosen target is ready"))
       (lambda (target)
 	(case target 
 	  ((sound) (pair? (sounds)))
@@ -64,7 +64,7 @@
 			       (>= (length (marks (selected-sound) (selected-channel))) 2)))))))
   
   (define make-effect-dialog 
-    (let ((documentation "(make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback) makes a standard effects dialog"))
+    (let ((+documentation+ "(make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback) makes a standard effects dialog"))
       (lambda* (label ok-callback help-callback reset-callback target-ok-callback)
 	;; make a standard dialog
 	(let* ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
@@ -121,7 +121,7 @@
   
 ;;; replacement for change-menu-label
   (define change-label 
-    (let ((documentation "(change-label widget new-label) changes the label of 'widget' to be 'new-label'"))
+    (let ((+documentation+ "(change-label widget new-label) changes the label of 'widget' to be 'new-label'"))
       (lambda (widget new-label)
 	(let ((str (XmStringCreateLocalized new-label)))
 	  (XtSetValues widget (list XmNlabelString str))
@@ -133,7 +133,7 @@
   (define log-scale-ticks 500) ; sets precision (to some extent) of slider 
   
   (define scale-log->linear 
-    (let ((documentation "(scale-log->linear lo val hi) given user-relative low..val..hi returns val as scale-relative (0..log-scale-ticks)"))
+    (let ((+documentation+ "(scale-log->linear lo val hi) given user-relative low..val..hi returns val as scale-relative (0..log-scale-ticks)"))
       (lambda (lo val hi)
 	(let ((log-lo (log (max lo 1.0) 2))
 	      (log-hi (log hi 2))
@@ -141,7 +141,7 @@
 	  (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo))))))))
   
   (define scale-linear->log 
-    (let ((documentation "(scale-linear->log lo val hi) given user-relative lo..hi and scale-relative val, returns the user-relative val"))
+    (let ((+documentation+ "(scale-linear->log lo val hi) given user-relative lo..hi and scale-relative val, returns the user-relative val"))
       (lambda (lo val hi)
 	;; since log-scale widget assumes 0..log-scale-ticks, val can be used as ratio (log-wise) between lo and hi
 	(let ((log-lo (log (max lo 1.0) 2))
@@ -149,12 +149,12 @@
 	  (expt 2.0 (+ log-lo (* (/ val log-scale-ticks) (- log-hi log-lo))))))))
   
   (define scale-log-label 
-    (let ((documentation "(scale-log-label lo val hi) makes a log scale label"))
+    (let ((+documentation+ "(scale-log-label lo val hi) makes a log scale label"))
       (lambda (lo val hi)
 	(format #f "~,2F" (scale-linear->log lo val hi)))))
   
   (define create-log-scale-widget 
-    (let ((documentation "(create-log-scale-widget parent title low initial high) returns a log scale widget"))
+    (let ((+documentation+ "(create-log-scale-widget parent title low initial high) returns a log scale widget"))
       (lambda (parent title low initial high)
 	(let ((label (XtCreateManagedWidget (format #f "~,2F" initial) xmLabelWidgetClass parent
 					    (list XmNbackground          *basic-color*)))
@@ -184,22 +184,22 @@
   (define semi-range 24) ; 2 octaves either way
   
   (define semi-scale-label 
-    (let ((documentation "(semi-scale-label val) makes a semitone label"))
+    (let ((+documentation+ "(semi-scale-label val) makes a semitone label"))
       (lambda (val)
 	(format #f "semitones: ~D" (- val semi-range)))))
   
   (define semitones->ratio 
-    (let ((documentation "(semitones->ratio val) takes a semitone number 'val' and returns the corresponding float ratio"))
+    (let ((+documentation+ "(semitones->ratio val) takes a semitone number 'val' and returns the corresponding float ratio"))
       (lambda (val)
 	(expt 2.0 (/ val 12.0)))))
   
   (define ratio->semitones 
-    (let ((documentation "(ratio->semitones ratio) takes a float ratio and returns the corresponding number of semitones"))
+    (let ((+documentation+ "(ratio->semitones ratio) takes a float ratio and returns the corresponding number of semitones"))
       (lambda (ratio)
 	(round (* 12 (log ratio 2))))))
   
   (define create-semi-scale-widget 
-    (let ((documentation "(create-semi-scale-widget parent title initial) returns a semitone scale widget"))
+    (let ((+documentation+ "(create-semi-scale-widget parent title initial) returns a semitone scale widget"))
       (lambda (parent title initial)
 	(let ((label (XtCreateManagedWidget (format #f "semitones: ~D" (ratio->semitones initial)) xmLabelWidgetClass parent
 					    (list XmNbackground          *basic-color*)))
@@ -221,7 +221,7 @@
 	  scale))))
   
   (define add-sliders 
-    (let ((documentation "(add-sliders dialog sliders) takes 'sliders', a list of lists, each inner list being (title low initial high callback scale ['log]) \
+    (let ((+documentation+ "(add-sliders dialog sliders) takes 'sliders', a list of lists, each inner list being (title low initial high callback scale ['log]) \
 and returns a list of widgets (for reset callbacks)"))
       (lambda* (dialog sliders)
 	(let ((mainform (let ((mainfrm (XtCreateManagedWidget "formd" xmFormWidgetClass dialog

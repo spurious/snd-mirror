@@ -8,7 +8,7 @@
 
 ;;; ----------------
 (define empty? 
-  (let ((documentation "(empty? obj) returns #t if obj is an empty sequence"))
+  (let ((+documentation+ "(empty? obj) returns #t if obj is an empty sequence"))
     (lambda (obj) 
       (and (not (pair? obj))
 	   (if (hash-table? obj)
@@ -17,10 +17,10 @@
 
 (define applicable? arity)
 
-;(define sequence? length) -- now built-in for procedure-signatures
+;(define sequence? length) -- now built-in for signatures
 
 (define indexable? 
-  (let ((documentation "(indexable? obj) returns #t if obj can be applied to an index: (obj 0)"))
+  (let ((+documentation+ "(indexable? obj) returns #t if obj can be applied to an index: (obj 0)"))
     (lambda (obj)
       (and (sequence? obj)
 	   (applicable? obj)))))
@@ -108,7 +108,7 @@
 
 
 (define iota 
-  (let ((documentation "(iota n (start 0) (incr 1)) returns a list counting from start for n:\n\
+  (let ((+documentation+ "(iota n (start 0) (incr 1)) returns a list counting from start for n:\n\
     (iota 3) -> '(0 1 2)"))
     (lambda* (n (start 0) (incr 1))
       (if (or (not (integer? n))
@@ -128,28 +128,28 @@
        result)))
 
 (define make-circular-list 
-  (let ((documentation "(make-circular-list n init) returns a circular list with n entries initialized to init:\n\
+  (let ((+documentation+ "(make-circular-list n init) returns a circular list with n entries initialized to init:\n\
     (make-circular-list 3 #f) -> #1=(#f #f #f . #1#)"))
     (lambda* (n init)
       (let ((lst (make-list n init)))
 	(set-cdr! (list-tail lst (- n 1)) lst)))))
 
 (define circular-list 
-  (let ((documentation "(circular-list . objs) returns a circular list with objs:\n\
+  (let ((+documentation+ "(circular-list . objs) returns a circular list with objs:\n\
     (circular-list 1 2) -> #1=(1 2 . #1#)"))
     (lambda objs
       (let ((lst (copy objs)))
 	(set-cdr! (list-tail lst (- (length lst) 1)) lst)))))
 
 (define circular-list? 
-  (let ((documentation "(circular-list? obj) returns #t if obj is a circular list"))
+  (let ((+documentation+ "(circular-list? obj) returns #t if obj is a circular list"))
     (lambda (obj)
       (catch #t
 	(lambda () (infinite? (length obj)))
 	(lambda args #f)))))
 
 (define linearize 
-  (let ((documentation " (linearize lst) turns a circular list into normal list:\n\
+  (let ((+documentation+ " (linearize lst) turns a circular list into normal list:\n\
     (linearize (circular-list 1 2)) -> '(1 2)"))
     (lambda (lst) 
       (let lin-1 ((lst lst)
@@ -160,13 +160,13 @@
             (lin-1 (cdr lst) (cons (car lst) result) (cons lst sofar)))))))
 
 (define cyclic? 
-  (let ((documentation "(cyclic obj) returns #t if the sequence obj contains any cycles"))
+  (let ((+documentation+ "(cyclic obj) returns #t if the sequence obj contains any cycles"))
     (lambda (obj)
       (pair? (cyclic-sequences obj)))))
 
 
 (define copy-tree 
-  (let ((documentation "(copy-tree lst) returns a full copy of lst"))
+  (let ((+documentation+ "(copy-tree lst) returns a full copy of lst"))
     (lambda (lis)
       (if (pair? lis)
 	  (cons (copy-tree (car lis))
@@ -174,7 +174,7 @@
 	  lis))))
 
 (define tree-member 
-  (let ((documentation "(tree-member sym tree) returns #t if sym is found anywhere in tree:\n\
+  (let ((+documentation+ "(tree-member sym tree) returns #t if sym is found anywhere in tree:\n\
     (tree-member 'a '(1 (2 a))) -> #t"))
     (lambda (sym tree)
       (and (pair? tree)
@@ -184,7 +184,7 @@
 	       (tree-member sym (cdr tree)))))))
 
 (define adjoin 
-  (let ((documentation "(adjoin obj lst) adds obj to lst if it is not already in lst, returning the new list"))
+  (let ((+documentation+ "(adjoin obj lst) adds obj to lst if it is not already in lst, returning the new list"))
     (lambda (obj lst)
       (if (member obj lst) lst (cons obj lst)))))
 
@@ -215,11 +215,11 @@
 		((and (symbol? (car form))
 		      (macro? (symbol->value (car form))))
 		 (expand (apply macroexpand (list form))))
-		((and (eq? (car form) 'set!)    ; look for (set! (mac ...) ...) and use mac's procedure-setter
+		((and (eq? (car form) 'set!)    ; look for (set! (mac ...) ...) and use mac's setter
 		      (pair? (cdr form))
 		      (pair? (cadr form))
 		      (macro? (symbol->value (caadr form))))
-		 (expand (apply (eval (procedure-source (procedure-setter (symbol->value (caadr form)))))
+		 (expand (apply (eval (procedure-source (setter (symbol->value (caadr form)))))
 				(append (cdadr form) (cddr form)))))
 		(else (cons (expand (car form)) 
 			    (expand (cdr form))))))))
@@ -404,7 +404,7 @@
 
 ;;; ---------------- 
 (define hash-table->alist 
-  (let ((documentation "(hash-table->alist table) returns the contents of table as an association list:\n\
+  (let ((+documentation+ "(hash-table->alist table) returns the contents of table as an association list:\n\
     (hash-table->alist (hash-table '(a . 1))) -> '((a . 1))"))
     (lambda (table)
       (if (hash-table? table)
@@ -412,7 +412,7 @@
 	  (error 'wrong-type-arg "hash-table->alist argument, ~A, is not a hash-table" table)))))
 
 (define merge-hash-tables 
-  (let ((documentation "(merge-hash-tables . tables) returns a new hash-table with the contents of all the tables"))
+  (let ((+documentation+ "(merge-hash-tables . tables) returns a new hash-table with the contents of all the tables"))
     (lambda tables
       (apply hash-table 
 	     (apply append 
@@ -442,7 +442,7 @@
 
 ;;; ----------------
 (define find-if 
-  (let ((documentation "(find-if func sequence) applies func to each member of sequence.\n\
+  (let ((+documentation+ "(find-if func sequence) applies func to each member of sequence.\n\
 If func approves of one, find-if returns that member of the sequence"))
     (lambda (f sequence)
       (call-with-exit
@@ -454,13 +454,13 @@ If func approves of one, find-if returns that member of the sequence"))
 	 #f)))))
 
 (define member? 
-  (let ((documentation "(member? obj sequence) returns #t if obj is an element of sequence"))
+  (let ((+documentation+ "(member? obj sequence) returns #t if obj is an element of sequence"))
     (lambda (obj sequence)
       (find-if (lambda (x) (equal? x obj)) sequence))))
 
 
 (define index-if 
-  (let ((documentation "(index-if func sequence) applies func to each member of sequence.\n\
+  (let ((+documentation+ "(index-if func sequence) applies func to each member of sequence.\n\
 If func approves of one, index-if returns the index that gives that element's position.\n\
     (index-if (lambda (x) (= x 32)) #(0 1 32 4)) -> 2\n\
     (index-if (lambda (x) (= (cdr x) 32)) (hash-table '(a . 1) '(b . 32))) -> 'b"))
@@ -480,7 +480,7 @@ If func approves of one, index-if returns the index that gives that element's po
 	 #f)))))
 
 (define count-if 
-  (let ((documentation "(count-if func sequence) applies func to each member of sequence, returning the number of times func approves."))
+  (let ((+documentation+ "(count-if func sequence) applies func to each member of sequence, returning the number of times func approves."))
     (lambda (f sequence)
       (let ((count 0))
 	(for-each (lambda (arg)
@@ -490,7 +490,7 @@ If func approves of one, index-if returns the index that gives that element's po
 	count))))
 
 (define every? 
-  (let ((documentation "(every? func sequence) returns #t if func approves of every member of sequence"))
+  (let ((+documentation+ "(every? func sequence) returns #t if func approves of every member of sequence"))
     (lambda (f sequence)
       (call-with-exit
        (lambda (return) 
@@ -498,7 +498,7 @@ If func approves of one, index-if returns the index that gives that element's po
 	 #t)))))
 
 (define any? 
-  (let ((documentation "(any? func sequence) returns #t if func approves of any member of sequence"))
+  (let ((+documentation+ "(any? func sequence) returns #t if func approves of any member of sequence"))
     (lambda (f sequence)
       (call-with-exit
        (lambda (return) 
@@ -506,7 +506,7 @@ If func approves of one, index-if returns the index that gives that element's po
 	 #f)))))
 
 (define collect-if 
-  (let ((documentation "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
+  (let ((+documentation+ "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
     (collect-if list integer? #(1.4 2/3 1 1+i 2)) -> '(1 2)"))
     (lambda (type f sequence)
       (apply type (map (lambda (arg) (if (f arg) arg (values))) sequence)))))
@@ -517,19 +517,19 @@ If func approves of one, index-if returns the index that gives that element's po
 ;;; to return (f arg) rather than arg, (apply type (map f sequence))
 
 (define remove-if 
-  (let ((documentation "(remove-if type f sequence) returns via type the elements of sequence that do not satisfy func:\n\
+  (let ((+documentation+ "(remove-if type f sequence) returns via type the elements of sequence that do not satisfy func:\n\
     (remove-if list integer? #(1.4 2/3 1 1+i 2)) -> '(1.4 2/3 1+1i)"))
     (lambda (type f sequence)
       (collect-if type (lambda (obj) (not (f obj))) sequence))))
 
 (define nonce 
-  (let ((documentation "(nonce type sequence) returns via type the elements of sequence that occur only once"))
+  (let ((+documentation+ "(nonce type sequence) returns via type the elements of sequence that occur only once"))
     (lambda (type sequence) 
       (collect-if type (lambda (obj) (= (count-if (lambda (x) (equal? x obj)) sequence) 1)) sequence))))
 
 
 (define full-find-if 
-  (let ((documentation "(full-find-if func sequence) searches sequence, and recursively any sequences it contains, for an element that satisfies func"))
+  (let ((+documentation+ "(full-find-if func sequence) searches sequence, and recursively any sequences it contains, for an element that satisfies func"))
     (lambda (f sequence)
       (if (and (procedure? f)
 	       (aritable? f 1))
@@ -548,14 +548,14 @@ If func approves of one, index-if returns the index that gives that element's po
 	  (error 'wrong-type-arg "full-find-if first argument, ~A, is not a procedure of one argument" f)))))
 
 (define full-count-if 
-  (let ((documentation "(full-count-if func sequence) searches sequence, and recursively any sequences it contains, returning the number of elements that satisfy func"))
+  (let ((+documentation+ "(full-count-if func sequence) searches sequence, and recursively any sequences it contains, returning the number of elements that satisfy func"))
     (lambda (f sequence)
       (let ((count 0))
 	(full-find-if (lambda (x) (if (f x) (set! count (+ count 1))) #f) sequence)
 	count))))
 
 (define full-index-if 
-  (let ((documentation "(full-index-if func sequence) searches sequence, and recursively any sequences it contains, returning the indices of the first element that satisfies func:\n\
+  (let ((+documentation+ "(full-index-if func sequence) searches sequence, and recursively any sequences it contains, returning the indices of the first element that satisfies func:\n\
     (full-index-if (lambda (x) (and (integer? x) (= x 3))) '(1 (2 3))) -> '(1 1)"))
     (lambda (f sequence)
       (call-with-exit
@@ -650,7 +650,7 @@ If func approves of one, index-if returns the index that gives that element's po
 
 
 (define safe-find-if 
-  (let ((documentation "(safe-find-if func sequence) searches sequence, and recursively any sequences it contains, for an element that satisfies func.\
+  (let ((+documentation+ "(safe-find-if func sequence) searches sequence, and recursively any sequences it contains, for an element that satisfies func.\
 Unlike full-find-if, safe-find-if can handle any circularity in the sequences."))
     (lambda (f sequence)
       (let ((iter (make-complete-iterator sequence)))
@@ -677,7 +677,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 ;;; ----------------
 (define sequences->list 
-  (let ((documentation "(sequences->list . sequences) returns a list of elements of all the sequences:\n\
+  (let ((+documentation+ "(sequences->list . sequences) returns a list of elements of all the sequences:\n\
     (sequences->list \"hi\" #(0 1) (hash-table '(a . 2))) -> '(#\\h #\\i 0 1 (a . 2))"))
     (lambda sequences
       (apply append 
@@ -686,13 +686,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		  sequences)))))
 
 (define concatenate 
-  (let ((documentation "(concatenate type . sequences) concatenates sequences returning an object of type:\n\
+  (let ((+documentation+ "(concatenate type . sequences) concatenates sequences returning an object of type:\n\
     (concatenate vector '(1 2) #(3 4)) -> #(1 2 3 4)"))
     (lambda (type . sequences)
       (apply type (apply sequences->list sequences)))))
 
 (define intersection 
-  (let ((documentation "(intersection type . sequences) returns via type the intersection of the sequences:\n\
+  (let ((+documentation+ "(intersection type . sequences) returns via type the intersection of the sequences:\n\
     (intersection vector '(1 2 3) #(2 3 4)) -> #(2 3)"))
     (lambda (type . sequences)
       (if (every? sequence? sequences)
@@ -708,7 +708,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  (error 'wrong-type-arg "intersection arguments should be sequences: ~A" sequences)))))
   
 (define union 
-  (let ((documentation "(union type . sequences) returns via type the union of the sequences:\n\
+  (let ((+documentation+ "(union type . sequences) returns via type the union of the sequences:\n\
     (union vector '(1 2 3) #(2 3 4)) -> #(1 2 3 4)"))
     (lambda (type . sequences)
       (apply type (let ((lst ()))
@@ -719,7 +719,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		    (reverse lst))))))
 
 (define asymmetric-difference 
-  (let ((documentation "(asymmetric-difference type . sequences) returns the elements in the rest of the sequences that are not in the first:\n\
+  (let ((+documentation+ "(asymmetric-difference type . sequences) returns the elements in the rest of the sequences that are not in the first:\n\
     (asymmetric-difference vector '(1 2 3) #(2 3 4) '(1 5)) -> #(4 5)"))
     (lambda (type . sequences) ; complement, elements in B's not in A
       (if (not (and (pair? sequences)
@@ -730,7 +730,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		      (apply union list (cdr sequences)))))))
 
 (define cl-set-difference 
-  (let ((documentation "(cl-set-difference type .sequences) returns the elements in the first sequence that are not in the rest of the sequences:\n\
+  (let ((+documentation+ "(cl-set-difference type .sequences) returns the elements in the first sequence that are not in the rest of the sequences:\n\
     (cl-set-difference vector '(1 2 3) #(2 3 4) '(1 5)) -> #()"))
     (lambda (type . sequences)     ; CL: elements in A not in B's
       (if (not (and (pair? sequences)
@@ -742,7 +742,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			(car sequences)))))))
 
 (define symmetric-difference 
-  (let ((documentation "(symmetric-difference type .sequences) returns the elements that are in an odd number of the sequences:\n\
+  (let ((+documentation+ "(symmetric-difference type .sequences) returns the elements that are in an odd number of the sequences:\n\
     (symmetric-difference vector '(1 2 3) #(2 3 4) '(5)) -> #(1 4 5)"))
     (lambda (type . sequences)  ; xor, elements in an odd number of sequences (logxor A B...)
       (let ((all (apply sequences->list sequences)))
@@ -753,7 +753,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		    (apply union list sequences))))))
 
 (define power-set 
-  (let ((documentation "(power-set type . sequences) returns the power set of the union of the elements in the sequences."))
+  (let ((+documentation+ "(power-set type . sequences) returns the power set of the union of the elements in the sequences."))
     (lambda (type . sequences) ; ignoring repeats
       (apply type
 	     (let pset ((set (apply union list sequences)))
@@ -790,12 +790,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			    (memq obj (list quote if when unless begin set! let let* letrec letrec* cond and or case do
 					    lambda lambda* define define* define-macro define-macro* define-bacro define-bacro*
 					    define-constant with-baffle macroexpand with-let)))))
-	(documentation "(->predicate obj) returns the type predicate function for obj: (->predicate 31) -> integer?"))
+	(+documentation+ "(->predicate obj) returns the type predicate function for obj: (->predicate 31) -> integer?"))
     (lambda (obj)
       (find-if (lambda (pred) (pred obj)) predicates))))
 
 (define add-predicate 
-  (let ((documentation "(add-predicate p) adds p (a boolean function of one argument) to the list of predicates used by ->predicate"))
+  (let ((+documentation+ "(add-predicate p) adds p (a boolean function of one argument) to the list of predicates used by ->predicate"))
     (lambda (p)
       (if (and (procedure? p)
 	       (aritable? p 1))
@@ -804,7 +804,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  (error 'wrong-type-arg "add-predicate argument, ~A, is not a procedure of one argument" p)))))
 
 (define typeq? 
-  (let ((documentation "(typeq? . objs) returns #t if all objs have the same type (as determined by ->predicate)"))
+  (let ((+documentation+ "(typeq? . objs) returns #t if all objs have the same type (as determined by ->predicate)"))
     (lambda objs
       (or (null? objs)
 	  (every? (->predicate (car objs)) (cdr objs))))))
@@ -828,7 +828,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 ;;; ----------------
 (define 2^n? 
-  (let ((documentation "(2^n? x) returns #t if x is a power of 2"))
+  (let ((+documentation+ "(2^n? x) returns #t if x is a power of 2"))
     (lambda (x)
       (and (integer> x)
 	   (not (zero? x)) 
@@ -1071,7 +1071,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 ;;; ----------------
 (define for-each-subset 
-  (let ((documentation "(for-each-subset func args) forms each subset of args, then applies func to the subsets that fit its arity"))
+  (let ((+documentation+ "(for-each-subset func args) forms each subset of args, then applies func to the subsets that fit its arity"))
     (lambda (func args)
       (let subset ((source args)
                    (dest ())
@@ -1084,7 +1084,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
               (subset (cdr source) dest len)))))))
 
 (define for-each-permutation 
-  (let ((documentation "(for-each-permutation func vals) applies func to every permutation of vals:\n\
+  (let ((+documentation+ "(for-each-permutation func vals) applies func to every permutation of vals:\n\
     (for-each-permutation (lambda args (format () \"~{~A~^ ~}~%\" args)) '(1 2 3))"))
     (lambda (func vals)
       (define (pinner cur nvals len)
@@ -1113,7 +1113,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define (1+ x) (+ x 1))
 
 (define n-choose-k 
-  (let ((documentation "(n-choose-k n k) returns the binomial coefficient C(N,K)"))
+  (let ((+documentation+ "(n-choose-k n k) returns the binomial coefficient C(N,K)"))
     (lambda (n k)
       (if (not (integer? n))
 	  (error 'wrong-type-arg "n-choose-k 'n argument, ~A, should be an integer" n)
@@ -1134,14 +1134,14 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; ----------------
 
 (define continuable-error
-  (let ((documentation "(continuable-error . args) is (apply error args) wrapped in a continuation named 'continue."))
+  (let ((+documentation+ "(continuable-error . args) is (apply error args) wrapped in a continuation named 'continue."))
     (lambda args
       (call/cc 
        (lambda (continue)
 	 (apply error args))))))
 
 (define continue-from-error ; maybe arg for value to pass back
-  (let ((documentation "(continue-from-error) tries to continue from the point of the earlier continuable-error"))
+  (let ((+documentation+ "(continue-from-error) tries to continue from the point of the earlier continuable-error"))
     (lambda ()
       (if (continuation? ((owlet) 'continue))
 	  (((owlet) 'continue))))))
@@ -1725,7 +1725,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	       (format ap-port "~A: ~A~%" 
 		       (car binding) 
 		       (if (procedure? (cdr binding))
-			   (procedure-documentation (cdr binding))
+			   (documentation (cdr binding))
 			   (cdr binding)))))
 	 ap-env))))
 
@@ -2161,7 +2161,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; (sandbox '(let ((x 1)) (+ x 2))) -> 3
 
 (define sandbox 
-  (let ((documentation "(sandbox code) evaluates code in an environment where nothing outside that code can be affected by its evaluation.")
+  (let ((+documentation+ "(sandbox code) evaluates code in an environment where nothing outside that code can be affected by its evaluation.")
 	(built-ins 
 	 (let ((ht (make-hash-table))) ; bad guys removed
 	   (for-each
@@ -2201,8 +2201,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	      byte-vector make-byte-vector hash-table hash-table* make-hash-table hash-table-ref 
 	      hash-table-set! hash-table-entries cyclic-sequences call/cc call-with-current-continuation 
 	      call-with-exit apply for-each map dynamic-wind values type-of
-	      catch throw error procedure-documentation procedure-signature help procedure-source
-	      procedure-setter arity aritable? not eq? eqv? equal? morally-equal? s7-version
+	      catch throw error documentation signature help procedure-source
+	      setter arity aritable? not eq? eqv? equal? morally-equal? s7-version
 	      dilambda make-hook hook-functions stacktrace tree-leaves tree-memq object->let
 	      pi most-positive-fixnum most-negative-fixnum nan.0 inf.0 -nan.0 -inf.0
 	      *stderr* *stdout* *stdin*

@@ -6,12 +6,12 @@
 (define auto-saving #f)
 
 (define cancel-auto-save
-  (let ((documentation "(cancel-auto-save) turns off the auto-save mechanism"))
+  (let ((+documentation+ "(cancel-auto-save) turns off the auto-save mechanism"))
     (lambda ()
       (set! auto-saving #f))))
 
 (define auto-save
-  (let ((documentation "(auto-save) starts watching files, automatically saving backup copies as edits accumulate")
+  (let ((+documentation+ "(auto-save) starts watching files, automatically saving backup copies as edits accumulate")
 
 	(auto-save-temp-name 
 	 (lambda (snd)

@@ -32,7 +32,7 @@
 (define marks-menu (add-to-main-menu "Marks" (lambda ()
 					       (update-label marks-list))))
 (define find-two-marks
-  (let ((documentation "(find-two-marks) looks for the marks for the marks-menu functions to use"))
+  (let ((+documentation+ "(find-two-marks) looks for the marks for the marks-menu functions to use"))
     (lambda ()
       (let ((ms (marks (selected-sound) (selected-channel))))
 	(if (> (length ms) 1)
@@ -49,7 +49,7 @@
 (define play-between-marks-menu-label #f)
 
 (define cp-play-between-marks
-  (let ((documentation "(cp-play-between-marks) plays between 2 marks (marks-menu)"))
+  (let ((+documentation+ "(cp-play-between-marks) plays between 2 marks (marks-menu)"))
     (lambda ()
       (play-between-marks (integer->mark play-between-marks-m1) (integer->mark play-between-marks-m2)))))
 
@@ -337,7 +337,7 @@
 ;;; -------- trim from and back (goes by first or last mark)
 
 (define trim-front
-  (let ((documentation "trim-front finds the first mark in each of the syncd channels and removes all samples before it")
+  (let ((+documentation+ "trim-front finds the first mark in each of the syncd channels and removes all samples before it")
 	(trim-front-one-channel 
 	 (lambda (snd chn)
 	   (if (null? (marks snd chn))
@@ -356,7 +356,7 @@
 (add-to-menu marks-menu "Trim before mark" trim-front)
 
 (define trim-back
-  (let ((documentation "trim-back finds the last mark in each of the syncd channels and removes all samples after it")
+  (let ((+documentation+ "trim-back finds the last mark in each of the syncd channels and removes all samples after it")
 	(trim-back-one-channel 
 	 (lambda (snd chn)
 	   (if (null? (marks snd chn))
@@ -380,7 +380,7 @@
 ;;; -------- crop (trims front and back)
 
 (define crop
-  (let ((documentation "crop finds the first and last marks in each of the syncd channels and removes all samples outside them")
+  (let ((+documentation+ "crop finds the first and last marks in each of the syncd channels and removes all samples outside them")
 	(crop-one-channel 
 	 (lambda (snd chn)
 	   (if (< (length (marks snd chn)) 2)
@@ -416,7 +416,7 @@
 (define fit-to-mark-menu-label #f)
 
 (define cp-fit-to-marks
-  (let ((documentation "(cp-fit-to-marks) fits the selection between two marks (marks-menu)"))
+  (let ((+documentation+ "(cp-fit-to-marks) fits the selection between two marks (marks-menu)"))
     (lambda ()
       ((if (selection?) fit-selection-between-marks define-selection-via-marks)
        (integer->mark fit-to-mark-one) 
@@ -491,7 +491,7 @@ between two marks,using the granulate generator to fix up the selection duration
 (define define-by-mark-menu-label #f)
 
 (define define-selection-via-marks 
-  (let ((documentation "(define-selection-via-marks m1 m2) defines the selection via marks (marks-menu)"))
+  (let ((+documentation+ "(define-selection-via-marks m1 m2) defines the selection via marks (marks-menu)"))
     (lambda (m1 m2)
       (let ((m1sc (mark-home m1))
 	    (m2sc (mark-home m2)))
@@ -575,17 +575,17 @@ between two marks,using the granulate generator to fix up the selection duration
 (define mark-sync-number 0)
 
 (define start-sync 
-  (let ((documentation "(start-sync) starts mark syncing (marks-menu)"))
+  (let ((+documentation+ "(start-sync) starts mark syncing (marks-menu)"))
     (lambda ()
       (set! mark-sync-number (+ (mark-sync-max) 1)))))
 
 (define stop-sync 
-  (let ((documentation "(stop-sync) stops mark-syncing (marks-menu)"))
+  (let ((+documentation+ "(stop-sync) stops mark-syncing (marks-menu)"))
     (lambda ()
       (set! mark-sync-number 0))))
 
 (define click-to-sync 
-  (let ((documentation "(click-to-sync id) sets a mark's sync field when it is clicked (marks-menu)"))
+  (let ((+documentation+ "(click-to-sync id) sets a mark's sync field when it is clicked (marks-menu)"))
     (lambda (id)
       (set! (sync id) mark-sync-number)
       #f)))
@@ -598,7 +598,7 @@ between two marks,using the granulate generator to fix up the selection duration
 (define no-m-sync-label "Mark sync (Off)")
 
 (define msync!
-  (let ((documentation "(msync!) starts mark syncing (marks-menu)"))
+  (let ((+documentation+ "(msync!) starts mark syncing (marks-menu)"))
     (lambda ()
       (set! m-sync #t)
       (if mark-sync-menu-label (change-label mark-sync-menu-label m-sync-label))
@@ -606,7 +606,7 @@ between two marks,using the granulate generator to fix up the selection duration
       (mark-sync-color "yellow"))))
 
 (define unmsync!
-  (let ((documentation "(unmsync!) stops mark syncing (marks-menu)"))
+  (let ((+documentation+ "(unmsync!) stops mark syncing (marks-menu)"))
     (lambda ()
       (set! m-sync #f)
       (if mark-sync-menu-label (change-label mark-sync-menu-label no-m-sync-label))
@@ -919,7 +919,7 @@ between two marks,using the granulate generator to fix up the selection duration
 ;;; -------- Explode all marks to separate files
 
 (define mark-explode
-  (let ((documentation "(mark-explode) produces separate files as delineated by successive marks (marks-menu)"))
+  (let ((+documentation+ "(mark-explode) produces separate files as delineated by successive marks (marks-menu)"))
     (lambda ()
       (let ((start 0))
 	(for-each

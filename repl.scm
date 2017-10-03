@@ -238,20 +238,20 @@
 			 (set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook))))
 		
 		  (let ((new-load 
-			 (let ((documentation "this is the repl's load replacement; its default is to use the repl's top-level-let.")
-			       (signature '(values string? let?)))
+			 (let ((+documentation+ "this is the repl's load replacement; its default is to use the repl's top-level-let.")
+			       (+signature+ '(values string? let?)))
 			   (lambda* (file (e (*repl* 'top-level-let)))
 			     (dynamic-wind repl-hooks (lambda () (load file e)) original-hooks))))
 			
 			(new-eval 
-			 (let ((documentation "this is the repl's eval replacement; its default is to use the repl's top-level-let.")
-			       (signature '(values list? let?)))
+			 (let ((+documentation+ "this is the repl's eval replacement; its default is to use the repl's top-level-let.")
+			       (+signature+ '(values list? let?)))
 			   (lambda* (form (e (*repl* 'top-level-let)))
 			     (dynamic-wind repl-hooks (lambda () (eval form e)) original-hooks))))
 			
 			(new-eval-string 
-			 (let ((documentation "this is the repl's eval-string replacement; its default is to use the repl's top-level-let.")
-			       (signature '(values string? let?)))
+			 (let ((+documentation+ "this is the repl's eval-string replacement; its default is to use the repl's top-level-let.")
+			       (+signature+ '(values string? let?)))
 			   (lambda* (str (e (*repl* 'top-level-let)))
 			     (dynamic-wind repl-hooks (lambda () (eval-string str e)) original-hooks)))))
 		    
@@ -1089,7 +1089,7 @@
 		  (#_exit))
 		
 		(varlet (*repl* 'top-level-let) 
-		  :exit (let ((documentation "(exit) resets the repl tty and exits the repl"))
+		  :exit (let ((+documentation+ "(exit) resets the repl tty and exits the repl"))
 			  (lambda ()
 			    (newline *stderr*)
 			    (tty-reset))))
@@ -1429,7 +1429,7 @@
 					    "~C[38;5;208m~A~C[0m: ~S~%"))                              ; orange for less likely choices
 				    #\escape (caar b) #\escape
 				    (if (procedure? (cdar b))
-					(let ((doc (procedure-documentation (cdar b)))) ; returns "" if no doc
+					(let ((doc (documentation (cdar b)))) ; returns "" if no doc
 					  (if (positive? (length doc))
 					      doc
 					      'procedure))

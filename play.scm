@@ -42,7 +42,7 @@
 
 
 (define play-sound 
-  (let ((documentation "(play-sound func) plays the currently selected sound, calling func on each data buffer, if func exists (mono only)"))
+  (let ((+documentation+ "(play-sound func) plays the currently selected sound, calling func on each data buffer, if func exists (mono only)"))
     (lambda* (func)
       (if (pair? (sounds))
 	  (let* ((filechans (chans))
@@ -69,7 +69,7 @@
 ;;; -------- play sound n times -- (play-often 3) for example.
 
 (define play-often 
-  (let ((documentation "(play-often n) plays the selected sound 'n' times (interruptible via C-g)"))
+  (let ((+documentation+ "(play-often n) plays the selected sound 'n' times (interruptible via C-g)"))
     (lambda (n) 
       (letrec ((play-once (let ((plays (- n 1)))
 			    (lambda (reason)
@@ -86,7 +86,7 @@
 ;;; -------- play sound until c-g
 
 (define play-until-c-g
-  (let ((documentation "(play-until-c-g) plays the selected sound until you interrupt it via C-g")
+  (let ((+documentation+ "(play-until-c-g) plays the selected sound until you interrupt it via C-g")
 	(play-once (lambda (reason)
 		     (if (= reason 0)
 			 (play (selected-sound) :start 0 :stop play-once)))))
@@ -97,7 +97,7 @@
 ;;; -------- play region over and over until C-g typed
 
 (define play-region-forever 
-  (let ((documentation "(play-region-forever reg) plays region 'reg' until you interrupt it via C-g"))
+  (let ((+documentation+ "(play-region-forever reg) plays region 'reg' until you interrupt it via C-g"))
     (lambda (reg1)
       (let ((reg (if (integer? reg1) (integer->region reg1) reg1)))
 	(define (play-region-again reason)
@@ -112,7 +112,7 @@
 ;;; -------- play while looping continuously between two movable marks
 
 (define loop-between-marks 
-  (let ((documentation "(loop-between-marks mark1 mark2 buffersize) plays while looping between two marks.  \
+  (let ((+documentation+ "(loop-between-marks mark1 mark2 buffersize) plays while looping between two marks.  \
 x typed in the graph, or C-g in the listener exits the loop."))
     (lambda (m1 m2 bufsize)
       (let* ((pos1 (mark-sample m1))
@@ -146,7 +146,7 @@ x typed in the graph, or C-g in the listener exits the loop."))
 ;;; -------- hold DAC open and play sounds via keyboard
 
 (define start-dac 
-  (let ((documentation "(start-dac (srate 44100) (chans 1)) starts the DAC running continuously in the background"))
+  (let ((+documentation+ "(start-dac (srate 44100) (chans 1)) starts the DAC running continuously in the background"))
     (lambda* ((sr 44100) (chans 1))
       (play #f :srate sr :channels chans))))
 
@@ -157,7 +157,7 @@ x typed in the graph, or C-g in the listener exits the loop."))
 ;; play-with-amps -- play channels with individually settable amps
 
 (define play-with-amps
-  (let ((documentation "(play-with-amps snd :rest amps) plays snd with each channel scaled by the corresponding 
+  (let ((+documentation+ "(play-with-amps snd :rest amps) plays snd with each channel scaled by the corresponding 
 amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitude"))
     (lambda (sound . amps)
       (do ((chans (channels sound))
@@ -172,7 +172,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 ;;; play-sine and play-sines
 
 (define play-sine 
-  (let ((documentation "(play-sine freq amp) plays a 1 second sinewave at freq and amp"))
+  (let ((+documentation+ "(play-sine freq amp) plays a 1 second sinewave at freq and amp"))
     (lambda (freq amp)
       (let ((len 44100)
 	    (osc (make-oscil freq)))
@@ -182,7 +182,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 
 
 (define play-sines 
-  (let ((documentation "(play-sines freqs-and-amps) produces a tone given its spectrum: (play-sines '((440 .4) (660 .3)))"))
+  (let ((+documentation+ "(play-sines freqs-and-amps) produces a tone given its spectrum: (play-sines '((440 .4) (660 .3)))"))
     (lambda (freqs-and-amps)
       (let ((num-oscs (length freqs-and-amps)))
 	(let ((len 44100)

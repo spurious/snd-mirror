@@ -2998,7 +2998,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
                  (format ap-port \"~%~A: ~A\"   \
 		         (car binding)   \
 		         (if (procedure? (cdr binding))  \
-		             (procedure-documentation (cdr binding))  \
+		             (documentation (cdr binding))  \
 		             (cdr binding))))))  \
          ap-env) \
          #f))");

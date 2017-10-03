@@ -11,7 +11,7 @@
   (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
   
   (define plausible-mark-samples
-    (let ((documentation "(plausible-mark-samples) finds two marks in the current channel in or nearest to current window"))
+    (let ((+documentation+ "(plausible-mark-samples) finds two marks in the current channel in or nearest to current window"))
       (lambda ()
 	(let* ((snd (selected-sound))
 	       (chn (selected-channel))
@@ -1712,7 +1712,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 ;;;
   
   (define effects-cnv 
-    (let ((documentation "(effects-cnv snd0-1 amp snd chn) is used by the effects dialog to tie into edit-list->function"))
+    (let ((+documentation+ "(effects-cnv snd0-1 amp snd chn) is used by the effects dialog to tie into edit-list->function"))
       (lambda* (snd0-1 amp snd chn)
 	(let* ((snd0 (if (sound? snd0-1) snd0-1 (car (sounds))))
 	       (flt-len (framples snd0))
@@ -1731,7 +1731,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
   
   
   (define effects-jc-reverb 
-    (let ((documentation "(effects-jc-reverb volume beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
+    (let ((+documentation+ "(effects-jc-reverb volume beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
       (lambda* (volume beg dur snd chn)
 	(let ((allpass1 (make-all-pass -0.700 0.700 1051))
 	      (allpass2 (make-all-pass -0.700 0.700  337))
@@ -1985,7 +1985,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 ;;;
   
   (define effects-hello-dentist 
-    (let ((documentation "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"))
+    (let ((+documentation+ "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"))
       (lambda* (frq amp beg dur snd chn)
 	(let ((rn (make-rand-interp :frequency frq :amplitude amp))
 	      (len (or dur (- (framples snd chn) beg)))
@@ -2013,7 +2013,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
   
   
   (define effects-position-sound 
-    (let ((documentation "(effects-position-sound mono-snd pos-1 snd chn) is used by the effects dialog to tie into edit-list->function"))
+    (let ((+documentation+ "(effects-position-sound mono-snd pos-1 snd chn) is used by the effects dialog to tie into edit-list->function"))
       (lambda* (mono-snd pos snd chn)
 	(let ((len (framples mono-snd))
 	      (reader1 (make-sampler 0 mono-snd)))
@@ -2032,7 +2032,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 
   
   (define effects-cross-synthesis 
-    (let ((documentation "(effects-cross-synthesis cross-snd amp fftsize r) is used by the effects dialog to tie into edit-list->function"))
+    (let ((+documentation+ "(effects-cross-synthesis cross-snd amp fftsize r) is used by the effects dialog to tie into edit-list->function"))
       (lambda (cross-snd amp fftsize r)
 	;; cross-snd is the index of the other sound (as opposed to the map-channel sound)
 	(let ((freq-inc (/ fftsize 2)))

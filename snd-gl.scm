@@ -7,7 +7,7 @@
 ;;; ---------------- gl-info ----------------
 (define gl-info
   ;; taken loosely from glxvisuals.c
-  (let ((documentation "(gl-info) prints out GL-related info")
+  (let ((+documentation+ "(gl-info) prints out GL-related info")
 	(class-of (lambda (n)
 		    (and (number? n)
 			 (copy (cond ((= n (*motif* 'StaticGray)) "static-gray")

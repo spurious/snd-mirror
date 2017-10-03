@@ -17,7 +17,7 @@
 ;;; using lists and vectors internally for complex intermediates
 
 (define vector-add! 
-  (let ((documentation "(vector-add! p1 p2) adds (elementwise) the vectors p1 and p2"))
+  (let ((+documentation+ "(vector-add! p1 p2) adds (elementwise) the vectors p1 and p2"))
     (lambda (p1 p2)
       (do ((len (min (length p1) (length p2)))
 	   (i 0 (+ i 1)))
@@ -26,7 +26,7 @@
       p1)))
 
 (define vector-scale! 
-  (let ((documentation "(vector-scale! p1 scl) scales each element of the vector p1 by scl"))
+  (let ((+documentation+ "(vector-scale! p1 scl) scales each element of the vector p1 by scl"))
     (lambda (p1 scl)
       (do ((len (length p1))
 	   (i 0 (+ i 1)))
@@ -35,7 +35,7 @@
       p1)))
 
 (define poly-as-vector-eval 
-  (let ((documentation "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"))
+  (let ((+documentation+ "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"))
     (lambda (v x)
       (let* ((top (- (length v) 1))
 	     (sum (v top)))
@@ -45,7 +45,7 @@
 
 
 (define poly-as-vector-reduce 
-  (let ((documentation "(poly-as-vector-reduce p1) removes trailing (high-degree) zeros from the vector p1"))
+  (let ((+documentation+ "(poly-as-vector-reduce p1) removes trailing (high-degree) zeros from the vector p1"))
     (lambda (p1)
       ;; always return at least a 0 coeff (rather than return #f=0 polynomial)
       (let ((new-len (do ((i (- (length p1) 1) (- i 1)))
@@ -57,7 +57,7 @@
 	    (copy p1 (make-vector new-len)))))))
 
 (define poly-reduce 
-  (let ((documentation "(poly-reduce p1) removes trailing (high-degree) zeros from the float-vector p1"))
+  (let ((+documentation+ "(poly-reduce p1) removes trailing (high-degree) zeros from the float-vector p1"))
     (lambda (p1)
       (if (= (p1 (- (length p1) 1)) 0.0)
 	  (vector->float-vector (poly-as-vector-reduce (float-vector->vector p1)))
@@ -69,7 +69,7 @@
 
 
 (define poly-as-vector+ 
-  (let ((documentation "(poly-as-vector+ p1 p2) adds vectors p1 and p2"))
+  (let ((+documentation+ "(poly-as-vector+ p1 p2) adds vectors p1 and p2"))
     (lambda (p1 p2)
       (if (vector? p1)
 	  (if (vector? p2)
@@ -84,7 +84,7 @@
 	    v)))))
 
 (define poly+ 
-  (let ((documentation "(poly+ p1 p2)  adds vectors or float-vectors p1 and p2"))
+  (let ((+documentation+ "(poly+ p1 p2)  adds vectors or float-vectors p1 and p2"))
     (lambda (p1 p2) 
       (vector->float-vector 
        (poly-as-vector+ 
@@ -97,7 +97,7 @@
 
 
 (define poly-as-vector* 
-  (let ((documentation "(poly-as-vector* p1 p2) multiplies (as polynomials) the vectors p1 and p2"))
+  (let ((+documentation+ "(poly-as-vector* p1 p2) multiplies (as polynomials) the vectors p1 and p2"))
     (lambda (p1 p2)
       (if (not (vector? p1))
 	  (vector-scale! (copy p2) p1)
@@ -113,7 +113,7 @@
 		    (set! (m (+ i j)) (+ (m (+ i j)) (* (p1 i) (p2 j))))))))))))
 
 (define poly* 
-  (let ((documentation "(poly* p1 p2) multiplies the polynomials (float-vectors or vectors) p1 and p2"))
+  (let ((+documentation+ "(poly* p1 p2) multiplies the polynomials (float-vectors or vectors) p1 and p2"))
     (lambda (p1 p2)
       (vector->float-vector 
        (poly-as-vector* 
@@ -128,7 +128,7 @@
 
 
 (define poly-as-vector/ 
-  (let ((documentation "(poly-as-vector/ p1 p2) divides the polynomial p1 by p2 (both vectors)"))
+  (let ((+documentation+ "(poly-as-vector/ p1 p2) divides the polynomial p1 by p2 (both vectors)"))
     (lambda (p1 p2)
       (if (not (vector? p1))
 	  (list (vector 0) p2)
@@ -159,7 +159,7 @@
 			  (list q r)))))))))))
 
 (define poly/ 
-  (let ((documentation "(poly/ p1 p2) divides p1 by p2, both polynomials either float-vectors or vectors"))
+  (let ((+documentation+ "(poly/ p1 p2) divides p1 by p2, both polynomials either float-vectors or vectors"))
     (lambda (p1 p2)
       (map vector->float-vector (poly-as-vector/ (if (float-vector? p1) (float-vector->vector p1) p1) 
 						 (if (float-vector? p2) (float-vector->vector p2) p2))))))
@@ -173,7 +173,7 @@
 
 
 (define poly-as-vector-derivative 
-  (let ((documentation "(poly-as-vector-derivative p1) returns the derivative or polynomial p1 (as a vector)"))
+  (let ((+documentation+ "(poly-as-vector-derivative p1) returns the derivative or polynomial p1 (as a vector)"))
     (lambda (p1)
       (let ((len (- (length p1) 1)))
 	(do ((v (make-vector len))
@@ -183,7 +183,7 @@
 	  (set! (v i) (* j (p1 j))))))))
 
 (define poly-derivative 
-  (let ((documentation "(poly-derivative p1) returns the derivative of p1, either a float-vector or vector"))
+  (let ((+documentation+ "(poly-derivative p1) returns the derivative of p1, either a float-vector or vector"))
     (lambda (p1) 
       (vector->float-vector 
        (poly-as-vector-derivative 
@@ -257,7 +257,7 @@
 	(determinant mat))))
 
 (define poly-resultant 
-  (let ((documentation "(poly-resultant p1 p2) returns the resultant of polynomials p1 and p2 (float-vectors or vectors)"))
+  (let ((+documentation+ "(poly-resultant p1 p2) returns the resultant of polynomials p1 and p2 (float-vectors or vectors)"))
     (lambda (p1 p2) 
       (poly-as-vector-resultant 
        (if (float-vector? p1) (float-vector->vector p1) p1)
@@ -265,12 +265,12 @@
 
 
 (define poly-as-vector-discriminant 
-  (let ((documentation "(poly-as-vector-discriminant p1) returns the discriminant of polynomial p1 (a vector)"))
+  (let ((+documentation+ "(poly-as-vector-discriminant p1) returns the discriminant of polynomial p1 (a vector)"))
     (lambda (p1)
       (poly-as-vector-resultant p1 (poly-as-vector-derivative p1)))))
 
 (define poly-discriminant 
-  (let ((documentation "(poly-discriminant p1) returns the discriminant of polynomial p1 (either a float-vector or a vector)"))
+  (let ((+documentation+ "(poly-discriminant p1) returns the discriminant of polynomial p1 (either a float-vector or a vector)"))
     (lambda (p1)
       (poly-as-vector-discriminant 
        (if (float-vector? p1) (float-vector->vector p1) p1)))))
@@ -294,7 +294,7 @@
 (define poly-roots-epsilon 1.0e-7)
 
 (define simplify-complex 
-  (let ((documentation "(simplify-complex a) sets to 0.0 real or imaginary parts of 'a' that are less than poly-roots-epsilon"))
+  (let ((+documentation+ "(simplify-complex a) sets to 0.0 real or imaginary parts of 'a' that are less than poly-roots-epsilon"))
     (lambda (a)
       (if (< (abs (imag-part a)) poly-roots-epsilon)
 	  (if (< (abs (real-part a)) poly-roots-epsilon)
@@ -306,7 +306,7 @@
 
 
 (define poly-gcd 
-  (let ((documentation "(poly-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both float-vectors)"))
+  (let ((+documentation+ "(poly-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both float-vectors)"))
     (lambda (p1 p2)
       (if (< (length p1) (length p2))
 	  (float-vector 0.0)
@@ -318,7 +318,7 @@
 		(apply poly-gcd qr)))))))
 
 (define poly-as-vector-gcd 
-  (let ((documentation "(poly-as-vector-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both vectors)"))
+  (let ((+documentation+ "(poly-as-vector-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both vectors)"))
     (lambda (p1 p2)
       (if (< (length p1) (length p2))
 	  (vector 0)
@@ -550,7 +550,7 @@
 
   
 (define poly-roots 
-  (let ((documentation "(poly-roots p1) returns the roots of polynomial p1"))
+  (let ((+documentation+ "(poly-roots p1) returns the roots of polynomial p1"))
     (lambda (p1) 
       (let* ((v1 (float-vector->vector (poly-reduce p1)))
 	     (roots (poly-as-vector-roots v1)))

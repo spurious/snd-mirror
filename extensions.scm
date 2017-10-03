@@ -16,14 +16,14 @@
 (provide 'snd-extensions.scm)
 
 (define remove-if 
-  (let ((documentation "(remove-if func lst) removes any element from 'lst' that 'func' likes"))
+  (let ((+documentation+ "(remove-if func lst) removes any element from 'lst' that 'func' likes"))
     (lambda (pred lst)
       (map (lambda (x) (if (pred x) (values) x)) lst))))
 
 
 (if (not (defined? 'all-chans))
     (define all-chans
-      (let ((documentation "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have
+      (let ((+documentation+ "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((#<sound 0> #<sound 1> #<sound 1>) (0 0 1))"))
 	(lambda ()
 	  (let ((sndlist ())
@@ -39,7 +39,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define channel-sync
   (dilambda
-   (let ((documentation "(channel-sync snd chn) returns the sync property of that channel (it is not actually used anywhere)"))
+   (let ((+documentation+ "(channel-sync snd chn) returns the sync property of that channel (it is not actually used anywhere)"))
      (lambda (snd chn) 
        (channel-property 'sync snd chn)))
    (lambda (snd chn val) 
@@ -50,7 +50,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- mix with result at original peak amp
 
 (define normalized-mix 
-  (let ((documentation "(normalized-mix filename beg in-chan snd chn) is like mix but the mix result has same peak amp as unmixed snd/chn (returns scaler)"))
+  (let ((+documentation+ "(normalized-mix filename beg in-chan snd chn) is like mix but the mix result has same peak amp as unmixed snd/chn (returns scaler)"))
     (lambda* (filename beg in-chan snd chn)
       (let ((original-maxamp (maxamp snd chn)))
 	(mix filename beg in-chan snd chn)
@@ -66,7 +66,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;;-------- mix with envelope on mixed-in file
 
 (define enveloped-mix 
-  (let ((documentation "(enveloped-mix filename beg e) mixes filename starting at beg with amplitude envelope e. (enveloped-mix \"pistol.snd\" 0 '(0 0 1 1 2 0))"))
+  (let ((+documentation+ "(enveloped-mix filename beg e) mixes filename starting at beg with amplitude envelope e. (enveloped-mix \"pistol.snd\" 0 '(0 0 1 1 2 0))"))
     (lambda (filename beg e)
       (let* ((len (framples filename))
 	     (amp-env (make-env e :length len))
@@ -84,13 +84,13 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;;   (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 10.0) (snd-print n))))
 
 (define map-sound-files 
-  (let ((documentation "(map-sound-files func dir) applies func to each sound file in dir"))
+  (let ((+documentation+ "(map-sound-files func dir) applies func to each sound file in dir"))
     (lambda* (func dir)
       (map func (sound-files-in-directory (or dir "."))))))
 
 
 (define for-each-sound-file 
-  (let ((documentation "(for-each-sound-file func dir) applies func to each sound file in dir"))
+  (let ((+documentation+ "(for-each-sound-file func dir) applies func to each sound file in dir"))
     (lambda* (func dir)
       (for-each func (sound-files-in-directory (or dir "."))))))
 
@@ -107,7 +107,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 
 (define match-sound-files 
-  (let ((documentation "(match-sound-files func dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"))
+  (let ((+documentation+ "(match-sound-files func dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"))
     (lambda* (func dir)
       (let ((matches ()))
 	(for-each-sound-file (lambda (file) 
@@ -120,7 +120,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;; -------- mix-channel, insert-channel, c-channel
 
 (define mix-channel 
-  (let ((documentation "(mix-channel file beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound object, or \
+  (let ((+documentation+ "(mix-channel file beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound object, or \
 a list (file-name-or-sound-object [beg [channel]])."))
 
     (lambda* (input-data (beg 0) dur snd (chn 0) edpos with-tag)
@@ -183,7 +183,7 @@ a list (file-name-or-sound-object [beg [channel]])."))
 
 
 (define insert-channel 
-  (let ((documentation "(insert-channel file beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"))
+  (let ((+documentation+ "(insert-channel file beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"))
     (lambda* (file-data beg dur snd chn edpos)
       (let ((file-name (if (string? file-data) file-data (car file-data)))
 	    (file-beg (if (or (string? file-data) 
@@ -210,7 +210,7 @@ a list (file-name-or-sound-object [beg [channel]])."))
 ;;; -------- redo-channel, undo-channel
 
 (define redo-channel 
-  (let ((documentation "(redo-channel (edits 1) snd chn) is the regularized version of redo"))
+  (let ((+documentation+ "(redo-channel (edits 1) snd chn) is the regularized version of redo"))
     (lambda* ((edits 1) snd chn)
       (if (and snd (not (= (sync snd) 0)) chn)
 	  (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
@@ -218,7 +218,7 @@ a list (file-name-or-sound-object [beg [channel]])."))
 
 
 (define undo-channel 
-  (let ((documentation "(undo-channel (edits 1) snd chn) is the regularized version of undo"))
+  (let ((+documentation+ "(undo-channel (edits 1) snd chn) is the regularized version of undo"))
     (lambda* ((edits 1) snd chn)
       (if (and snd (not (= (sync snd) 0)) chn)
 	  (set! (edit-position snd chn) (max 0 (- (edit-position snd chn) edits)))
@@ -228,7 +228,7 @@ a list (file-name-or-sound-object [beg [channel]])."))
 ;;; -------- any-env-channel
 
 (define any-env-channel 
-  (let ((documentation "(any-env-channel e func (beg 0) dur snd chn edpos origin) takes breakpoints in 'e', \
+  (let ((+documentation+ "(any-env-channel e func (beg 0) dur snd chn edpos origin) takes breakpoints in 'e', \
 connects them with 'func', and applies the result as an amplitude envelope to the given channel"))
     (lambda* (e func (beg 0) dur snd chn edpos origin)
       ;; handled as a sequence of funcs and scales
@@ -263,7 +263,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- sine-ramp sine-env-channel 
 
 (define sine-ramp 
-  (let ((documentation "(sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"))
+  (let ((+documentation+ "(sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"))
     (lambda* (rmp0 rmp1 (beg 0) dur snd chn edpos)
       (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
 	(let ((data (samples beg len snd chn edpos))
@@ -281,7 +281,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 (define sine-env-channel 
-  (let ((documentation "(sine-env-channel e (beg 0) dur snd chn edpos) connects e's dots with sinusoids"))
+  (let ((+documentation+ "(sine-env-channel e (beg 0) dur snd chn edpos) connects e's dots with sinusoids"))
     (lambda* (e (beg 0) dur snd chn edpos)
       (any-env-channel e sine-ramp beg dur snd chn edpos (format #f "sine-env-channel '~A ~A ~A" e beg dur)))))
 
@@ -294,7 +294,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- blackman4-ramp, blackman4-env-channel
 
 (define blackman4-ramp 
-  (let ((documentation "(blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"))
+  (let ((+documentation+ "(blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"))
     (lambda* (rmp0 rmp1 (beg 0) dur snd chn edpos)
       ;; float-vector: angle incr off scl
       (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
@@ -312,7 +312,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 (define blackman4-env-channel 
-  (let ((documentation "(blackman4-env-channel e (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'e'"))
+  (let ((+documentation+ "(blackman4-env-channel e (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'e'"))
     (lambda* (e (beg 0) dur snd chn edpos)
       (any-env-channel e blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" e beg dur)))))
 
@@ -321,7 +321,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- ramp-squared, env-squared-channel
 
 (define ramp-squared 
-  (let ((documentation "(ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"))
+  (let ((+documentation+ "(ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"))
     (lambda* (rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos)
       ;; float-vector: start incr off scl
       (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
@@ -347,7 +347,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 (define env-squared-channel 
-  (let ((documentation "(env-squared-channel e (symmetric #t) (beg 0) dur snd chn edpos) connects e's dots with x^2 curves"))
+  (let ((+documentation+ "(env-squared-channel e (symmetric #t) (beg 0) dur snd chn edpos) connects e's dots with x^2 curves"))
     (lambda* (e (symmetric #t) (beg 0) dur snd chn edpos)
       (any-env-channel e 
 		       (lambda (r0 r1 b d s c e)
@@ -361,7 +361,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- ramp-expt, env-expt-channel
 
 (define ramp-expt 
-  (let ((documentation "(ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"))
+  (let ((+documentation+ "(ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"))
     (lambda* (rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos)
       ;; float-vector: start incr off scl exponent
       ;; a^x = exp(x * log(a))
@@ -388,7 +388,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 (define env-expt-channel 
-  (let ((documentation "(env-expt-channel e exponent (symmetric #t) (beg 0) dur snd chn edpos) connects e's dots with x^exponent curves"))
+  (let ((+documentation+ "(env-expt-channel e exponent (symmetric #t) (beg 0) dur snd chn edpos) connects e's dots with x^exponent curves"))
     (lambda* (e exponent (symmetric #t) (beg 0) dur snd chn edpos)
       (if (= exponent 1.0)
 	  (env-channel e beg dur snd chn edpos)
@@ -402,7 +402,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- offset-channel 
 
 (define offset-channel 
-  (let ((documentation "(offset-channel amount (beg 0) dur snd chn edpos) adds amount to each sample"))
+  (let ((+documentation+ "(offset-channel amount (beg 0) dur snd chn edpos) adds amount to each sample"))
     (lambda* (dc (beg 0) dur snd chn edpos)
       (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
 	(float-vector->channel (float-vector-offset! (samples beg len snd chn edpos) dc)
@@ -410,7 +410,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 (define offset-sound 
-  (let ((documentation "(offset-sound off beg dur snd) adds 'off' to every sample in 'snd'"))
+  (let ((+documentation+ "(offset-sound off beg dur snd) adds 'off' to every sample in 'snd'"))
     (lambda* (off (beg 0) dur snd)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (sound? index)
@@ -424,7 +424,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- pad-sound
 
 (define pad-sound 
-  (let ((documentation "(pad-sound beg dur snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"))
+  (let ((+documentation+ "(pad-sound beg dur snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"))
     (lambda* (beg dur snd) 
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (sound? index)
@@ -438,7 +438,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- dither-channel
 
 (define dither-channel 
-  (let ((documentation "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"))
+  (let ((+documentation+ "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"))
     (lambda* ((amount .00006) (beg 0) dur snd chn edpos)
       (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
 	(do ((dither (* .5 amount))
@@ -450,7 +450,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  (float-vector-set! data i (+ (float-vector-ref data i) (mus-random dither) (mus-random dither))))))))
 
 (define dither-sound 
-  (let ((documentation "(dither-sound (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"))
+  (let ((+documentation+ "(dither-sound (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"))
     (lambda* ((amount .00006) (beg 0) dur snd)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (sound? index)
@@ -464,7 +464,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- contrast-channel
 
 (define contrast-channel 
-  (let ((documentation "(contrast-channel index (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"))
+  (let ((+documentation+ "(contrast-channel index (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"))
     (lambda* (index (beg 0) dur snd chn edpos)
       (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
 	(do ((data (samples beg len snd chn edpos))
@@ -475,7 +475,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  (float-vector-set! data i (contrast-enhancement (float-vector-ref data i) index))))))) ; (sin (+ (* 0.5 pi y) (* index (sin (* 2.0 pi y))))))))
 
 (define contrast-sound 
-  (let ((documentation "(contrast-sound index beg dur snd) applies contrast-enhancement to every channel of 'snd'"))
+  (let ((+documentation+ "(contrast-sound index beg dur snd) applies contrast-enhancement to every channel of 'snd'"))
     (lambda* (index (beg 0) dur snd)
       (let ((ind (or snd (selected-sound) (car (sounds)))))
 	(if (sound? ind)
@@ -489,7 +489,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- scale-sound
 
 (define scale-sound 
-  (let ((documentation "(scale-sound scl beg dur snd) multiplies every sample in 'snd' by 'scl'"))
+  (let ((+documentation+ "(scale-sound scl beg dur snd) multiplies every sample in 'snd' by 'scl'"))
     (lambda* (scl (beg 0) dur snd)
       ;; the slow way:
       ;; (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
@@ -505,7 +505,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- normalize-sound
 
 (define normalize-sound 
-  (let ((documentation "(normalize-sound amp beg dur snd) scales 'snd' to peak amplitude 'amp'"))
+  (let ((+documentation+ "(normalize-sound amp beg dur snd) scales 'snd' to peak amplitude 'amp'"))
     (lambda* (amp (beg 0) dur snd)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (sound? index)
@@ -521,7 +521,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- channels-equal
 
 (define channels=? 
-  (let ((documentation "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"))
+  (let ((+documentation+ "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"))
     (lambda* (snd1 (chn1 0) snd2 (chn2 0) (allowable-difference 0.0))
       (or (and (equal? snd1 snd2)
 	       (= chn1 chn2))
@@ -542,7 +542,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 (define channels-equal? 
-  (let ((documentation "(channels-equal? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff)"))
+  (let ((+documentation+ "(channels-equal? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff)"))
     (lambda* (snd1 chn1 snd2 chn2 (allowable-difference 0.0))
       (and (= (framples snd1 chn1) (framples snd2 chn2))
 	   (channels=? snd1 chn1 snd2 chn2 allowable-difference)))))
@@ -551,7 +551,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- mono->stereo, mono-files->stereo
 
 (define mono->stereo 
-  (let ((documentation "(mono->stereo new-name snd1 chn1 snd2 chn2) takes the two channels and combines them into a stereo sound 'new-name'"))
+  (let ((+documentation+ "(mono->stereo new-name snd1 chn1 snd2 chn2) takes the two channels and combines them into a stereo sound 'new-name'"))
     (lambda (new-name snd1 chn1 snd2 chn2)
       ;; (mono->stereo "test.snd" 0 0 1 0)
       (let ((old-ed1 (edit-position snd1 chn1))
@@ -565,7 +565,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 (define mono-files->stereo 
-  (let ((documentation "(mono-files->stereo new-name file1 file2) combines two mono files into the stereo file 'new-name'"))
+  (let ((+documentation+ "(mono-files->stereo new-name file1 file2) combines two mono files into the stereo file 'new-name'"))
     (lambda (new-name chan1-name chan2-name)
       ;; (mono-files->stereo "test.snd" "oboe.snd" "pistol.snd")
       (let* ((ind1 (open-sound chan1-name))
@@ -577,7 +577,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 (define stereo->mono 
-  (let ((documentation "(stereo->mono stereo-sound new-chan1 new-chan2) splits a stereo sound into two mono sounds named 'new-chan1' and 'new-chan2'"))
+  (let ((+documentation+ "(stereo->mono stereo-sound new-chan1 new-chan2) splits a stereo sound into two mono sounds named 'new-chan1' and 'new-chan2'"))
     (lambda (orig-snd chan1-name chan2-name)
       ;; (stereo->mono 0 "hi1.snd" "hi2.snd")
       (let ((old-ed0 (edit-position orig-snd 0))

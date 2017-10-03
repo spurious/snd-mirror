@@ -147,7 +147,7 @@
 		  auto-constants))))))))
 
 (define safe-fill!
-  (let ((signature '(#t sequence? #t)))
+  (let ((+signature+ '(#t sequence? #t)))
     (lambda (obj arg)
       (if (not (let? obj))
 	  (fill! obj arg)))))
@@ -193,7 +193,7 @@
 		  (strname (symbol->string sym)))
 	      (if (not (memv (strname 0) '(#\{ #\[ #\()))
 		  (begin
-		    ;(if (not (procedure-signature f)) (format *stderr* "~A~%" sym))
+		    ;(if (not (signature f)) (format *stderr* "~A~%" sym))
 		    (if (< top bottom)
 			(format *stderr* ";~A (bottom: ~A, top: ~A)...~%" sym bottom top))
 					;(format *stderr* ";~A...~%" sym)
@@ -202,7 +202,7 @@
 			(let ((sig (cond ((eq? sym 'append)
 					  (let ((lst (list 'list?)))
 					    (set-cdr! lst lst)))
-					 ((procedure-signature f) => copy))))
+					 ((signature f) => copy))))
 			  (map-values sig)
 			  (autotest f () 0 top (if (pair? sig) (cdr sig) ())))))))))))
 

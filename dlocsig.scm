@@ -107,7 +107,7 @@
 |#
 
 (define x-norm 
-  (let ((documentation "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"))
+  (let ((+documentation+ "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"))
     (lambda (e xmax)
       (let x-norm-1 ((e e)
                      (scl (/ xmax (e (- (length e) 2))))
@@ -124,22 +124,22 @@
 (define dlocsig-one-turn 360)
 
 (define one-turn-is 
-  (let ((documentation "(one-turn-is unit) sets dlocsig's angle unit (degrees=360, the default or radians=2*pi)"))
+  (let ((+documentation+ "(one-turn-is unit) sets dlocsig's angle unit (degrees=360, the default or radians=2*pi)"))
     (lambda (unit)
       (set! dlocsig-one-turn unit))))
 
 (define angles-in-degree
-  (let ((documentation "(angles-in-degree) sets dlocsig's unit to degrees (the default)"))
+  (let ((+documentation+ "(angles-in-degree) sets dlocsig's unit to degrees (the default)"))
     (lambda ()
       (one-turn-is 360))))
 
 (define angles-in-radians
-  (let ((documentation "(angles-in-radians) sets dlocsig's unit to radians (default is degrees)"))
+  (let ((+documentation+ "(angles-in-radians) sets dlocsig's unit to radians (default is degrees)"))
     (lambda ()
       (one-turn-is (* 2 pi)))))
 
 (define angles-in-turns
-  (let ((documentation "(angles-in-turns) sets dlocsig's angle unit to turns"))
+  (let ((+documentation+ "(angles-in-turns) sets dlocsig's angle unit to turns"))
     (lambda ()
       (one-turn-is 1))))
 
@@ -147,12 +147,12 @@
 (define dlocsig-speed-of-sound 344)
 
 (define distances-in-meters
-  (let ((documentation "(distances-in-meters) sets dlocsig's distances in meters (the default)"))
+  (let ((+documentation+ "(distances-in-meters) sets dlocsig's distances in meters (the default)"))
     (lambda ()
       (set! dlocsig-speed-of-sound 344))))
 
 (define distances-in-feet
-  (let ((documentation "(distances-in-feet) sets dlocsig's distances in feet (default is meters)"))
+  (let ((+documentation+ "(distances-in-feet) sets dlocsig's distances in feet (default is meters)"))
     (lambda ()
       (set! dlocsig-speed-of-sound 1128))))
 
@@ -193,17 +193,17 @@
 ;;;            content should be output channel number, zero based
 
 (define cis 
-  (let ((documentation "(cis a) returns e^(ia)"))
+  (let ((+documentation+ "(cis a) returns e^(ia)"))
     (lambda (a)
       (exp (* 0.0+1.0i a)))))
 
 (define third 
-  (let ((documentation "(third lst) returns the 3rd element of 'lst'"))
+  (let ((+documentation+ "(third lst) returns the 3rd element of 'lst'"))
     (lambda (a) 
       (and (>= (length a) 3) (a 2)))))
 
 (define fourth 
-  (let ((documentation "(fourth lst) returns the 4th element of 'lst'"))
+  (let ((+documentation+ "(fourth lst) returns the 4th element of 'lst'"))
     (lambda (a) 
       (and (>= (length a) 4) (a 3)))))
 
@@ -492,7 +492,7 @@
 ;;; Set a particular speaker configuration
 
 (define set-speaker-configuration 
-  (let ((documentation "(set-speaker-configuration config (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"))
+  (let ((+documentation+ "(set-speaker-configuration config (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"))
     (lambda* (config (configs dlocsig-speaker-configs))
       (let ((lst ((if (< (speaker-config-dimension config) 3) car cadr) configs))
 	    (num (speaker-config-number config)))
@@ -502,7 +502,7 @@
 ;;; Get the speaker configuration for a given number of output channels
 
 (define get-speaker-configuration 
-  (let ((documentation "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"))
+  (let ((+documentation+ "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"))
     (lambda* (channels (3d dlocsig-3d) (configs dlocsig-speaker-configs))
       (let ((config (((if 3d cadr car) configs) channels)))
 	(if (null? config)
@@ -653,7 +653,7 @@
 ;;; Return the best possible set of coordinates
 
 (define list?? 
-  (let ((documentation "list?? returns a if it is a list"))
+  (let ((+documentation+ "list?? returns a if it is a list"))
     (lambda (a) 
       (and (pair? a) a))))
 
@@ -831,7 +831,7 @@
 ;;; Parse a set of 2d or 3d points into the separate coordinates
 
 (define parse-cartesian-coordinates 
-  (let ((documentation "(parse-cartesian-coordinates points 3d) parses a set of 2d or 3d points into the separate coordinates"))
+  (let ((+documentation+ "(parse-cartesian-coordinates points 3d) parses a set of 2d or 3d points into the separate coordinates"))
     (lambda (points 3d)
       (if (pair? (car points))
 	  ;; decode a list of lists into x:y:z:v components
@@ -886,7 +886,7 @@
 ;;; Parse a set of 2d or 3d polar points into the separate coordinates
 
 (define parse-polar-coordinates 
-  (let ((documentation "(parse-polar-coordinates points 3d) parses a polar path"))
+  (let ((+documentation+ "(parse-polar-coordinates points 3d) parses a polar path"))
     (lambda (points 3d)
       (let ((x ())
 	    (y ()))
@@ -982,7 +982,7 @@
 ;;; Pythagoras
 
 (define distance 
-  (let ((documentation "(distance x y z) returns the euclidean distance of (x y z) from the origin"))
+  (let ((+documentation+ "(distance x y z) returns the euclidean distance of (x y z) from the origin"))
     (lambda (x y z)
       (sqrt (+ (* x x) (* y y) (* z z))))))
 
@@ -1887,7 +1887,7 @@
 ;;; Rotate a path
 
 (define rotate-path 
-  (let ((documentation "rotate-path is a dlocsig function that rotates a dlocsig path"))
+  (let ((+documentation+ "rotate-path is a dlocsig function that rotates a dlocsig path"))
     (lambda* (path rotation rotation-center (rotation-axis '(0.0 0.0 1.0)))
       (transform-path path 
 		      :rotation rotation 
@@ -1918,7 +1918,7 @@
 ;;; Change the times of the rendered envelope so that the velocity is constant
 
 (define constant-velocity 
-  (let ((documentation "constant-velocity is a dlocsig function that changes the times of the rendered envelope so that the velocity is constant"))
+  (let ((+documentation+ "constant-velocity is a dlocsig function that changes the times of the rendered envelope so that the velocity is constant"))
     (lambda (path)
       (if (not (path-rx path))
 	  (render-path path))

@@ -32,7 +32,7 @@
 
 (define nssb 
 
-  (let ((documentation "(make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator,
+  (let ((+documentation+ "(make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator,
 similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio."))
 
     (lambda* (gen (fm 0.0))
@@ -127,7 +127,7 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 
 (define nxysin 
 
-  (let ((documentation "(make-nxysin frequency (ratio 1.0) (n 1)) creates an nxysin 
+  (let ((+documentation+ "(make-nxysin frequency (ratio 1.0) (n 1)) creates an nxysin 
 generator. (nxysin gen (fm 0.0)) returns n sines from frequency spaced by frequency * ratio."))
 
     (lambda* (gen (fm 0.0))
@@ -202,7 +202,7 @@ generator. (nxysin gen (fm 0.0)) returns n sines from frequency spaced by freque
 
 (define nxycos 
 
-  (let ((documentation "(make-nxycos frequency (ratio 1.0) (n 1)) creates an nxycos generator. (nxycos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-nxycos frequency (ratio 1.0) (n 1)) creates an nxycos generator. (nxycos gen (fm 0.0)) 
 returns n cosines from frequency spaced by frequency * ratio."))
 
     (lambda* (gen (fm 0.0))  
@@ -238,7 +238,7 @@ returns n cosines from frequency spaced by frequency * ratio."))
 
 (define nxy1cos 
 
-  (let ((documentation "(make-nxy1cos frequency (ratio 1.0) (n 1)) creates an nxy1cos 
+  (let ((+documentation+ "(make-nxy1cos frequency (ratio 1.0) (n 1)) creates an nxy1cos 
 generator. (nxy1cos gen (fm 0.0)) returns 2n cosines from frequency spaced by frequency * ratio with every other cosine multiplied by -1."))
   
     (lambda* (gen (fm 0.0))
@@ -284,7 +284,7 @@ generator. (nxy1cos gen (fm 0.0)) returns 2n cosines from frequency spaced by fr
 
 (define nxy1sin 
 
-  (let ((documentation "(make-nxy1sin frequency (ratio 1.0) (n 1)) creates an nxy1sin generator.  (nxy1sin gen (fm 0.0)) 
+  (let ((+documentation+ "(make-nxy1sin frequency (ratio 1.0) (n 1)) creates an nxy1sin generator.  (nxy1sin gen (fm 0.0)) 
 returns n sines from frequency spaced by frequency * ratio with every other sine multiplied by -1."))
   
     (lambda* (gen (fm 0.0))
@@ -347,7 +347,7 @@ returns n sines from frequency spaced by frequency * ratio with every other sine
 
 (define noddsin 
 
-  (let ((documentation "(make-noddsin frequency (n 1)) creates an noddsin generator. (noddsin gen (fm 0.0)) 
+  (let ((+documentation+ "(make-noddsin frequency (n 1)) creates an noddsin generator. (noddsin gen (fm 0.0)) 
 returns n odd-numbered sines spaced by frequency."))
   
     (lambda* (gen (fm 0.0))
@@ -384,7 +384,7 @@ returns n odd-numbered sines spaced by frequency."))
 
 (define noddcos 
   
-  (let ((documentation "(make-noddcos frequency (n 1)) creates an noddcos generator.  (noddcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-noddcos frequency (n 1)) creates an noddcos generator.  (noddcos gen (fm 0.0)) 
 returns n odd-numbered cosines spaced by frequency."))
   
     (lambda* (gen (fm 0.0))
@@ -420,7 +420,7 @@ returns n odd-numbered cosines spaced by frequency."))
 
 (define noddssb 
 
-  (let ((documentation "(make-noddssb frequency (ratio 1.0) (n 1)) creates an noddssb generator. (noddssb gen (fm 0.0))
+  (let ((+documentation+ "(make-noddssb frequency (ratio 1.0) (n 1)) creates an noddssb generator. (noddssb gen (fm 0.0))
 returns n sinusoids from frequency spaced by 2 * ratio * frequency."))
     
     (lambda* (gen (fm 0.0))
@@ -470,7 +470,7 @@ returns n sinusoids from frequency spaced by 2 * ratio * frequency."))
 
 (define ncos2 
 
-  (let ((documentation "(make-ncos2 frequency (n 1)) creates an ncos2 (Fejer kernel) generator.  (ncos2 gen (fm 0.0)) 
+  (let ((+documentation+ "(make-ncos2 frequency (n 1)) creates an ncos2 (Fejer kernel) generator.  (ncos2 gen (fm 0.0)) 
 returns n sinusoids spaced by frequency scaled by (n-k)/(n+1)"))
     
     ;; from "Trigonometric Series" Zygmund p88 with changes suggested by Katznelson "Introduction to Harmonic Analysis" p12, and
@@ -507,7 +507,7 @@ returns n sinusoids spaced by frequency scaled by (n-k)/(n+1)"))
 
 (define ncos4 
 
-  (let ((documentation "(make-ncos4 frequency (n 1)) creates an ncos4 (Jackson kernel) generator. (ncos4 gen (fm 0.0)) 
+  (let ((+documentation+ "(make-ncos4 frequency (n 1)) creates an ncos4 (Jackson kernel) generator. (ncos4 gen (fm 0.0)) 
 returns n sinusoids spaced by frequency scaled by ((n-k)/(n+1))^2"))
   
     (lambda* (gen (fm 0.0))
@@ -530,7 +530,7 @@ returns n sinusoids spaced by frequency scaled by ((n-k)/(n+1))^2"))
 
 (define npcos 
   
-  (let ((documentation "(make-npcos frequency (n 1)) creates an npcos (Poussin kernel) generator. (npcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-npcos frequency (n 1)) creates an npcos (Poussin kernel) generator. (npcos gen (fm 0.0)) 
 returns n*2+1 sinusoids spaced by frequency with amplitudes in a sort of tent shape."))
   
     (lambda* (gen (fm 0.0))
@@ -570,7 +570,7 @@ returns n*2+1 sinusoids spaced by frequency with amplitudes in a sort of tent sh
 
 (define ncos5 
   
-  (let ((documentation "(make-ncos5 frequency (n 1)) creates an ncos5 generator.  (ncos5 gen (fm 0.0)) 
+  (let ((+documentation+ "(make-ncos5 frequency (n 1)) creates an ncos5 generator.  (ncos5 gen (fm 0.0)) 
 returns n cosines spaced by frequency. All are equal amplitude except the first and last at half amp."))
     
     ;; from "Chebyshev Polynomials", Mason and Handscomb, p87
@@ -628,7 +628,7 @@ returns n cosines spaced by frequency. All are equal amplitude except the first 
 
 (define nsin5 
 
-  (let ((documentation "(make-nsin5 frequency (n 1)) creates an nsin5 generator. (nsin5 gen (fm 0.0)) 
+  (let ((+documentation+ "(make-nsin5 frequency (n 1)) creates an nsin5 generator. (nsin5 gen (fm 0.0)) 
 returns n sines spaced by frequency. All are equal amplitude except last at half amp."))
     
     ;; from "Chebyshev Polynomials", Mason and Handscomb, p100
@@ -801,7 +801,7 @@ returns n sines spaced by frequency. All are equal amplitude except last at half
 
 (define nrcos 
 
-  (let ((documentation "(make-nrcos frequency (n 1) (r 0.5)) creates an nrcos generator. (nrcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-nrcos frequency (n 1) (r 0.5)) creates an nrcos generator. (nrcos gen (fm 0.0)) 
 returns n cosines spaced by frequency with amplitudes scaled by r^k."))
   
     (lambda* (gen (fm 0.0))
@@ -910,7 +910,7 @@ returns n cosines spaced by frequency with amplitudes scaled by r^k."))
 
 (define nrssb 
 
-  (let ((documentation "(make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator. (nrssb gen (fm 0.0)) 
+  (let ((+documentation+ "(make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator. (nrssb gen (fm 0.0)) 
 returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^k."))
   
     (lambda* (gen (fm 0.0))
@@ -936,7 +936,7 @@ returns n sinusoids from frequency spaced by frequency * ratio with amplitudes s
 
 (define nrssb-interp 
 
-  (let ((documentation "(make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator for use with 
+  (let ((+documentation+ "(make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator for use with 
 nrssb-interp. (nrssb-interp gen fm interp) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes 
 scaled by r^k. The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."))
 
@@ -1068,7 +1068,7 @@ scaled by r^k. The 'interp' argument determines whether the sidebands are above 
 
 (define nkssb 
 
-  (let ((documentation "(make-nkssb frequency (ratio 1.0) (n 1)) creates an nkssb generator. (nkssb gen (fm 0.0))
+  (let ((+documentation+ "(make-nkssb frequency (ratio 1.0) (n 1)) creates an nkssb generator. (nkssb gen (fm 0.0))
 returns n sinusoids from frequency spaced by frequency * ratio with amplitude k."))
   
     (lambda* (gen (fm 0.0))
@@ -1095,7 +1095,7 @@ returns n sinusoids from frequency spaced by frequency * ratio with amplitude k.
 
 (define nkssb-interp 
 
-  (let ((documentation "  (make-nkssb-interp frequency (ratio 1.0) (n 1)) creates an nkssb generator for 
+  (let ((+documentation+ "  (make-nkssb-interp frequency (ratio 1.0) (n 1)) creates an nkssb generator for 
 nkssb-interp. (nkssb-interp gen fm interp) returns n sinusoids from frequency spaced by frequency * ratio 
 with amplitude k. The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."))
   
@@ -1255,7 +1255,7 @@ with amplitude k. The 'interp' argument determines whether the sidebands are abo
 
 (define nsincos 
 
-  (let ((documentation "(make-nsincos frequency (n 1)) creates an nsincos generator.  (nsincos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-nsincos frequency (n 1)) creates an nsincos generator.  (nsincos gen (fm 0.0)) 
 returns n cosines spaced by frequency with amplitude sin(k*pi/(n+1))/sin(pi/(n+1))"))
 
     (lambda* (gen (fm 0.0))
@@ -1320,7 +1320,7 @@ returns n cosines spaced by frequency with amplitude sin(k*pi/(n+1))/sin(pi/(n+1
 
 (define npos1cos 
 
-  (let ((documentation "(make-npos1cos frequency (n 1)) creates an npos1cos generator. (npos1cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-npos1cos frequency (n 1)) creates an npos1cos generator. (npos1cos gen (fm 0.0)) 
 returns n cosines spaced by frequency."))
   
     (lambda* (gen (fm 0.0))
@@ -1353,7 +1353,7 @@ returns n cosines spaced by frequency."))
 
 (define npos3cos 
 
-  (let ((documentation "(make-npos3cos frequency (n 1)) creates an npos3cos generator. (npos3cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-npos3cos frequency (n 1)) creates an npos3cos generator. (npos3cos gen (fm 0.0)) 
 returns n cosines spaced by frequency."))
   
     (lambda* (gen (fm 0.0))
@@ -1426,7 +1426,7 @@ returns n cosines spaced by frequency."))
 
 (define rcos 
   
-  (let ((documentation "(make-rcos frequency (r 0.5)) creates an rcos generator. (rcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rcos frequency (r 0.5)) creates an rcos generator. (rcos gen (fm 0.0)) 
 returns many cosines spaced by frequency with amplitude r^k."))
   
     ;; from Andrews, Askey, Roy "Special Functions" 5.1.16, p243. r^k cos sum
@@ -1494,7 +1494,7 @@ returns many cosines spaced by frequency with amplitude r^k."))
 	    (clangf (make-env '(0 0 .1 1 .2 .1 .3 0) :scaler (* amp .5) :duration .1))
 	    (rf (make-env '(0 1 1 0) :scaler (* 0.5 r) :duration dur))
 	    (crf (make-env '(0 1 1 0) :scaler r :duration .1)))
-	(let ((set-clang-scaler (procedure-setter (clang 'mus-scaler))))
+	(let ((set-clang-scaler (setter (clang 'mus-scaler))))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
 	    (set-clang-scaler clang (env crf))  ;(set! (mus-scaler clang) (env crf))
@@ -1534,7 +1534,7 @@ returns many cosines spaced by frequency with amplitude r^k."))
 
 (define rssb 
 
-  (let ((documentation "(make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator. (rssb gen (fm 0.0))
+  (let ((+documentation+ "(make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator. (rssb gen (fm 0.0))
  returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."))
   
     (lambda* (gen (fm 0.0))
@@ -1555,7 +1555,7 @@ returns many cosines spaced by frequency with amplitude r^k."))
 
 (define rssb-interp 
 
-  (let ((documentation "(make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator for 
+  (let ((+documentation+ "(make-rssb frequency (ratio 1.0) (r 0.5)) creates an rssb generator for 
 rssb-interp. (rssb-interp gen fm interp) returns many cosines from frequency spaced by frequency * ratio 
 with amplitude r^k. The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."))
   
@@ -1729,7 +1729,7 @@ with amplitude r^k. The 'interp' argument determines whether the sidebands are a
 
 (define rxysin 
 
-  (let ((documentation "(make-rxysin frequency (ratio 1.0) (r 0.5)) creates an rxysin generator (similar to rssb). (rxysin gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rxysin frequency (ratio 1.0) (r 0.5)) creates an rxysin generator (similar to rssb). (rxysin gen (fm 0.0)) 
 returns many sines from frequency spaced by frequency * ratio with amplitude r^k."))
   
     (lambda* (gen (fm 0.0))
@@ -1776,7 +1776,7 @@ returns many sines from frequency spaced by frequency * ratio with amplitude r^k
 
 (define rxycos 
 
-  (let ((documentation "(make-rxycos frequency (ratio 1.0) (r 0.5)) creates an rxycos generator.  (rxycos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rxycos frequency (ratio 1.0) (r 0.5)) creates an rxycos generator.  (rxycos gen (fm 0.0)) 
 returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."))
   
     (lambda* (gen (fm 0.0))
@@ -1844,7 +1844,7 @@ returns many cosines from frequency spaced by frequency * ratio with amplitude r
 
 (define safe-rxycos 
 
-  (let ((documentation "(make-safe-rxycos frequency (ratio 1.0) (r 0.5)) creates a safe-rxycos generator.  (safe-rxycos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-safe-rxycos frequency (ratio 1.0) (r 0.5)) creates a safe-rxycos generator.  (safe-rxycos gen (fm 0.0)) 
 returns many cosines from frequency spaced by frequency * ratio with amplitude r^k where 'r' is restricted to a safe value."))
   
     (lambda* (gen (fm 0.0))
@@ -1909,7 +1909,7 @@ returns many cosines from frequency spaced by frequency * ratio with amplitude r
 
 (define ercos 
 
-  (let ((documentation "(make-ercos frequency (r 0.5)) creates an ercos generator (a special case of rcos). (ercos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-ercos frequency (r 0.5)) creates an ercos generator (a special case of rcos). (ercos gen (fm 0.0)) 
 returns many cosines from frequency with amplitude e^(-kr)."))
   
     (lambda* (gen (fm 0.0))
@@ -1980,7 +1980,7 @@ returns many cosines from frequency with amplitude e^(-kr)."))
 
 (define erssb 
 
-  (let ((documentation "(make-erssb frequency (ratio 1.0) (r 0.5)) creates an erssb generator (a special case of rssb).  (erssb gen (fm 0.0)) 
+  (let ((+documentation+ "(make-erssb frequency (ratio 1.0) (r 0.5)) creates an erssb generator (a special case of rssb).  (erssb gen (fm 0.0)) 
 returns many sinusoids from frequency spaced by frequency * ratio with amplitude e^(-kr)."))
   
     (lambda* (gen (fm 0.0))
@@ -2030,7 +2030,7 @@ returns many sinusoids from frequency spaced by frequency * ratio with amplitude
 
 (define r2sin 
 
-  (let ((documentation "(make-r2sin frequency (r 0.5)) creates an r2sin generator. (r2sin gen (fm 0.0)) 
+  (let ((+documentation+ "(make-r2sin frequency (r 0.5)) creates an r2sin generator. (r2sin gen (fm 0.0)) 
 returns many even-numbered sines from frequency with amplitude r^(2k)/(2k)!."))
   
     (lambda* (gen (fm 0.0))
@@ -2063,7 +2063,7 @@ returns many even-numbered sines from frequency with amplitude r^(2k)/(2k)!."))
 
 (define r2cos 
 
-  (let ((documentation "(make-r2cos frequency (r 0.5)) creates an r2cos generator. (r2cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-r2cos frequency (r 0.5)) creates an r2cos generator. (r2cos gen (fm 0.0)) 
 returns many even-numbered cosines from frequency with amplitude r^(2k)/(2k)!."))
   
     (lambda* (gen (fm 0.0))
@@ -2092,7 +2092,7 @@ returns many even-numbered cosines from frequency with amplitude r^(2k)/(2k)!.")
 
 (define r2ssb 
 
-  (let ((documentation "(make-r2ssb frequency (ratio 1.0) (r 0.5)) creates an r2ssb generator. (r2ssb gen (fm 0.0)) 
+  (let ((+documentation+ "(make-r2ssb frequency (ratio 1.0) (r 0.5)) creates an r2ssb generator. (r2ssb gen (fm 0.0)) 
 returns many even-numbered sinusoids from frequency spaced by frequency * ratio, if that makes any sense, with amplitude r^(2k)/(2k)!."))
   
     (lambda* (gen (fm 0.0))
@@ -2161,7 +2161,7 @@ returns many even-numbered sinusoids from frequency spaced by frequency * ratio,
 
 (define eoddcos 
 
-  (let ((documentation "(make-eoddcos frequency (r 0.5)) creates an eoddcos generator.  (eoddcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-eoddcos frequency (r 0.5)) creates an eoddcos generator.  (eoddcos gen (fm 0.0)) 
 returns many cosines from spaced by frequency with amplitude e^(-r)."))
   
     (lambda* (gen (fm 0.0))
@@ -2211,7 +2211,7 @@ returns many cosines from spaced by frequency with amplitude e^(-r)."))
 
 (define koddcos 
 
-  (let ((documentation "(make-koddcos frequency) creates a koddcos generator. (koddcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-koddcos frequency) creates a koddcos generator. (koddcos gen (fm 0.0)) 
 returns many cosines from spaced by frequency with amplitude too messy to write down, and the output looks wrong anyway."))
   
     (lambda* (gen (fm 0.0))
@@ -2269,7 +2269,7 @@ returns many cosines from spaced by frequency with amplitude too messy to write 
 
 (define rkcos 
 
-  (let ((documentation "(make-rkcos frequency (r 0.5)) creates an rkcos generator.  (rkcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rkcos frequency (r 0.5)) creates an rkcos generator.  (rkcos gen (fm 0.0)) 
 returns many cosines from spaced by frequency with amplitude (r^k)/k."))
   
     (lambda* (gen (fm 0.0))
@@ -2304,7 +2304,7 @@ returns many cosines from spaced by frequency with amplitude (r^k)/k."))
 
 (define rksin 
 
-  (let ((documentation "(make-rksin frequency (r 0.5)) creates an rksin generator. (rksin gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rksin frequency (r 0.5)) creates an rksin generator. (rksin gen (fm 0.0)) 
 returns many sines from spaced by frequency with amplitude (r^k)/k."))
   
     (lambda* (gen (fm 0.0))
@@ -2342,7 +2342,7 @@ returns many sines from spaced by frequency with amplitude (r^k)/k."))
 
 (define rkssb 
 
-  (let ((documentation "(make-rkssb frequency (ratio 1.0) (r 0.5)) creates an rkssb generator. (rkssb gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rkssb frequency (ratio 1.0) (r 0.5)) creates an rkssb generator. (rkssb gen (fm 0.0)) 
 returns many sinusoids from frequency from spaced by frequency * ratio with amplitude (r^k)/k."))
   
     (lambda* (gen (fm 0.0))
@@ -2396,7 +2396,7 @@ returns many sinusoids from frequency from spaced by frequency * ratio with ampl
 
 (define rk!cos 
 
-  (let ((documentation "(make-rk!cos frequency (r 0.5)) creates an rk!cos generator. (rk!cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rk!cos frequency (r 0.5)) creates an rk!cos generator. (rk!cos gen (fm 0.0)) 
 returns many cosines spaced by frequency with amplitude (r^k)/k!."))
   
     (lambda* (gen (fm 0.0))
@@ -2493,7 +2493,7 @@ returns many cosines spaced by frequency with amplitude (r^k)/k!."))
 
 (define rk!ssb 
 
-  (let ((documentation "(make-rk!ssb frequency (ratio 1.0) (r 0.5)) creates an rk!ssb generator. (rk!ssb gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rk!ssb frequency (ratio 1.0) (r 0.5)) creates an rk!ssb generator. (rk!ssb gen (fm 0.0)) 
 returns many sinusoids from frequency spaced by frequency * ratio with amplitude (r^k)/k!."))
   
     (lambda* (gen (fm 0.0))
@@ -2563,7 +2563,7 @@ returns many sinusoids from frequency spaced by frequency * ratio with amplitude
 
 (define rxyk!sin 
   
-  (let ((documentation "(make-rxyk!sin frequency (ratio 1.0) (r 0.5)) creates an rxyk!sin generator. (rxyk!sin gen (fm 0.0))
+  (let ((+documentation+ "(make-rxyk!sin frequency (ratio 1.0) (r 0.5)) creates an rxyk!sin generator. (rxyk!sin gen (fm 0.0))
 returns many sines from frequency spaced by frequency * ratio with amplitude r^k/k!."))
   
     (lambda* (gen (fm 0.0))
@@ -2595,7 +2595,7 @@ returns many sines from frequency spaced by frequency * ratio with amplitude r^k
 
 (define rxyk!cos 
 
-  (let ((documentation "(make-rxyk!cos frequency (ratio 1.0) (r 0.5)) creates an rxyk!cos generator. (rxyk!cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rxyk!cos frequency (ratio 1.0) (r 0.5)) creates an rxyk!cos generator. (rxyk!cos gen (fm 0.0)) 
 returns many cosines from frequency spaced by frequency * ratio with amplitude r^k/k!."))
   
     (lambda* (gen (fm 0.0))
@@ -2682,7 +2682,7 @@ returns many cosines from frequency spaced by frequency * ratio with amplitude r
 
 (define r2k!cos 
   
-  (let ((documentation "(make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator. (r2k!cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-2rk!cos frequency (r 0.5) (k 0.0)) creates an r2k!cos generator. (r2k!cos gen (fm 0.0)) 
 returns many cosines spaced by frequency with amplitude too messy to write down."))
 
     (lambda* (gen (fm 0.0))
@@ -2794,7 +2794,7 @@ returns many cosines spaced by frequency with amplitude too messy to write down.
 
 (define k2sin 
 
-  (let ((documentation "(make-k2sin frequency) creates a k2sin generator. (k2sin gen (fm 0.0)) 
+  (let ((+documentation+ "(make-k2sin frequency) creates a k2sin generator. (k2sin gen (fm 0.0)) 
 returns many sines spaced by frequency with amplitude 1/(2^k)."))
   
     (lambda* (gen (fm 0.0))
@@ -2823,7 +2823,7 @@ returns many sines spaced by frequency with amplitude 1/(2^k)."))
 
 (define k2cos 
 
-  (let ((documentation "(make-k2cos frequency) creates a k2cos generator. (k2cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-k2cos frequency) creates a k2cos generator. (k2cos gen (fm 0.0)) 
 returns many cosines spaced by frequency with amplitude 1/(2^k)."))
   
     (lambda* (gen (fm 0.0))
@@ -2851,7 +2851,7 @@ returns many cosines spaced by frequency with amplitude 1/(2^k)."))
 
 (define k2ssb 
 
-  (let ((documentation "(make-k2ssb frequency (ratio 1.0)) creates a k2ssb generator. (k2ssb gen (fm 0.0)) 
+  (let ((+documentation+ "(make-k2ssb frequency (ratio 1.0)) creates a k2ssb generator. (k2ssb gen (fm 0.0)) 
 returns many sinusoids from frequency spaced by frequency * ratio with amplitude 1/(2^k)."))
   
     (lambda* (gen (fm 0.0))
@@ -2895,7 +2895,7 @@ returns many sinusoids from frequency spaced by frequency * ratio with amplitude
 
 (define dblsum 
 
-  (let ((documentation "(make-dblsum frequency (r 0.5)) creates a dblsum generator. (dblsum gen (fm 0.0)) 
+  (let ((+documentation+ "(make-dblsum frequency (r 0.5)) creates a dblsum generator. (dblsum gen (fm 0.0)) 
 returns many sines from frequency spaced by frequency * (2k -1) with amplitude r^k (this is buggy)."))
   
     (lambda* (gen (fm 0.0))
@@ -2946,7 +2946,7 @@ returns many sines from frequency spaced by frequency * (2k -1) with amplitude r
 
 (define rkoddssb 
 
-  (let ((documentation "(make-rkoddssb frequency (ratio 1.0) (r 0.5)) creates an rkoddssb generator. (rkoddssb gen (fm 0.0)) 
+  (let ((+documentation+ "(make-rkoddssb frequency (ratio 1.0) (r 0.5)) creates an rkoddssb generator. (rkoddssb gen (fm 0.0)) 
 returns many sinusoids from frequency spaced by frequency * 2 * ratio with amplitude (r^(2k-1))/(2k-1)."))
   
     (lambda* (gen (fm 0.0))
@@ -3020,7 +3020,7 @@ returns many sinusoids from frequency spaced by frequency * 2 * ratio with ampli
 
 (define krksin 
 
-  (let ((documentation "(make-krksin frequency (r 0.5)) creates a krksin generator. (krksin gen (fm 0.0)) 
+  (let ((+documentation+ "(make-krksin frequency (r 0.5)) creates a krksin generator. (krksin gen (fm 0.0)) 
 returns many sines spaced by frequency with amplitude kr^k."))
   
     (lambda* (gen (fm 0.0))
@@ -3107,7 +3107,7 @@ returns many sines spaced by frequency with amplitude kr^k."))
 
 (define abssin 
 
-  (let ((documentation "(make-abssin frequency) creates an abssin generator. (abssin gen (fm 0.0)) returns (abs oscil)."))
+  (let ((+documentation+ "(make-abssin frequency) creates an abssin generator. (abssin gen (fm 0.0)) returns (abs oscil)."))
   
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
@@ -3160,7 +3160,7 @@ returns many sines spaced by frequency with amplitude kr^k."))
 
 (define abcos 
 
-  (let ((documentation "(make-abcos frequency (a 0.5) (b 0.25)) creates an abcos generator. (abcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-abcos frequency (a 0.5) (b 0.25)) creates an abcos generator. (abcos gen (fm 0.0)) 
 returns many cosines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."))
   
     (lambda* (gen (fm 0.0))
@@ -3190,7 +3190,7 @@ returns many cosines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k
 
 (define absin 
 
-  (let ((documentation "(make-absin frequency (a 0.5) (b 0.25)) creates an absin generator. (absin gen (fm 0.0)) 
+  (let ((+documentation+ "(make-absin frequency (a 0.5) (b 0.25)) creates an absin generator. (absin gen (fm 0.0)) 
 returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."))
   
     (lambda* (gen (fm 0.0))
@@ -3230,7 +3230,7 @@ returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
 
 (define r2k2cos 
 
-  (let ((documentation "(make-r2k2cos frequency (r 1.0)) creates an r2k2cos generator. (r2k2cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-r2k2cos frequency (r 1.0)) creates an r2k2cos generator. (r2k2cos gen (fm 0.0)) 
 returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
   
     (lambda* (gen (fm 0.0))
@@ -3275,7 +3275,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 
 
 (define blsaw 
-  (let ((documentation "(make-blsaw frequency (n 1) (r 0.5)) creates a blsaw generator. (blsaw gen (fm 0.0)) returns a band-limited sawtooth wave."))
+  (let ((+documentation+ "(make-blsaw frequency (n 1) (r 0.5)) creates a blsaw generator. (blsaw gen (fm 0.0)) returns a band-limited sawtooth wave."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -3315,7 +3315,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 
 
 (define asyfm-J 
-  (let ((documentation "(asyfm-J gen fm) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"))
+  (let ((+documentation+ "(asyfm-J gen fm) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -3368,7 +3368,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 |#
 
 (define asyfm-I 
-  (let ((documentation "(asyfm-I gen fm) is the I0 case of the asymmetric-fm generator"))
+  (let ((+documentation+ "(asyfm-I gen fm) is the I0 case of the asymmetric-fm generator"))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -3409,7 +3409,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 
 
 (define bess 
-  (let ((documentation "(make-bess frequency (n 0)) creates a bessel function (Jn) generator. (bess gen (fm 0.0)) returns Jn."))
+  (let ((+documentation+ "(make-bess frequency (n 0)) creates a bessel function (Jn) generator. (bess gen (fm 0.0)) returns Jn."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -3469,7 +3469,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 
 (define jjcos 
 
-  (let ((documentation "(make-jjcos frequency (r 0.5) (a 1.0) (k 1)) creates a jjcos generator. (jjcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-jjcos frequency (r 0.5) (a 1.0) (k 1)) creates a jjcos generator. (jjcos gen (fm 0.0)) 
 returns a sum of cosines scaled by a product of Bessel functions."))
   
     (lambda* (gen (fm 0.0))
@@ -3595,7 +3595,7 @@ which again matches
 
 (define j0evencos 
 
-  (let ((documentation "(make-j0evencos frequency (index 1.0)) creates a j0evencos generator. (j0evencos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-j0evencos frequency (index 1.0)) creates a j0evencos generator. (j0evencos gen (fm 0.0)) 
 returns a sum of cosines scaled Jk^2(index/2)."))
   
     (lambda* (gen (fm 0.0))
@@ -3721,7 +3721,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define j2cos 
 
-  (let ((documentation "(make-j2cos frequency (r 0.5) (n 1)) creates a j2cos generator. (j2cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-j2cos frequency (r 0.5) (n 1)) creates a j2cos generator. (j2cos gen (fm 0.0)) 
 returns a sum of cosines scaled in a very complicated way."))
   
     (lambda* (gen (fm 0.0))
@@ -3764,7 +3764,7 @@ returns a sum of cosines scaled in a very complicated way."))
 
 (define jpcos 
 
-  (let ((documentation "(make-jpcos frequency (r 0.5) (a 0.0) (k 1)) creates a jpcos generator. (jpcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-jpcos frequency (r 0.5) (a 0.0) (k 1)) creates a jpcos generator. (jpcos gen (fm 0.0)) 
 returns a sum of cosines scaled in a very complicated way."))
   
     (lambda* (gen (fm 0.0))
@@ -3842,7 +3842,7 @@ returns a sum of cosines scaled in a very complicated way."))
 
 (define jncos 
 
-  (let ((documentation "(make-jncos frequency (r 0.5) (a 1.0) (n 0)) creates a jncos generator. (jncos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-jncos frequency (r 0.5) (a 1.0) (n 0)) creates a jncos generator. (jncos gen (fm 0.0)) 
 returns a sum of cosines scaled in a very complicated way."))
   
     (lambda* (gen (fm 0.0))
@@ -3875,7 +3875,7 @@ returns a sum of cosines scaled in a very complicated way."))
 
 (define j0j1cos 
 
-  (let ((documentation "(make-j0j1cos frequency (index 1.0)) creates a j0j1cos generator. (j0j1cos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-j0j1cos frequency (index 1.0)) creates a j0j1cos generator. (j0j1cos gen (fm 0.0)) 
 returns a sum of cosines scaled in a very complicated way."))
   
     (lambda* (gen (fm 0.0))
@@ -3969,7 +3969,7 @@ returns a sum of cosines scaled in a very complicated way."))
 
 (define jycos 
 
-  (let ((documentation "(make-jycos frequency (r 1.0) (a 0.5)) creates a jycos generator. (jycos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-jycos frequency (r 1.0) (a 0.5)) creates a jycos generator. (jycos gen (fm 0.0)) 
 returns a sum of cosines scaled by Yn(r)*Jn(r)."))
   
     (lambda* (gen (fm 0.0))
@@ -4023,7 +4023,7 @@ returns a sum of cosines scaled by Yn(r)*Jn(r)."))
 
 (define jcos 
 
-  (let ((documentation "(make-jcos frequency (n 0) (r 1.0) (a 0.5)) creates a jcos generator. (jcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-jcos frequency (n 0) (r 1.0) (a 0.5)) creates a jcos generator. (jcos gen (fm 0.0)) 
 returns a sum of cosines scaled in some complex manner."))
   
     (lambda* (gen (fm 0.0))
@@ -4054,7 +4054,7 @@ returns a sum of cosines scaled in some complex manner."))
 
 
 (define sin2n 
-  (let ((documentation "(make-sin2n frequency (n 0) (r 1.0)) creates a sin2n generator. (sin2n gen (fm 0.0)) returns (r*sin)^(2n)"))
+  (let ((+documentation+ "(make-sin2n frequency (n 0) (r 1.0)) creates a sin2n generator. (sin2n gen (fm 0.0)) returns (r*sin)^(2n)"))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -4134,7 +4134,7 @@ returns a sum of cosines scaled in some complex manner."))
 
 (define blackman 
 
-  (let ((documentation "(make-blackman frequency (n 4)) creates a blackman generator. (blackman gen (fm 0.0)) 
+  (let ((+documentation+ "(make-blackman frequency (n 4)) creates a blackman generator. (blackman gen (fm 0.0)) 
 returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10)"))
   
     (lambda* (gen (fm 0.0))
@@ -4192,7 +4192,7 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
 
 
 (define fmssb 
-  (let ((documentation "(make-fmssb frequency (ratio 1.0) (index 1.0)) creates an fmssb generator. (fmssb gen (fm 0.0)) returns single-sideband FM."))
+  (let ((+documentation+ "(make-fmssb frequency (ratio 1.0) (index 1.0)) creates an fmssb generator. (fmssb gen (fm 0.0)) returns single-sideband FM."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -4414,7 +4414,7 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
 
 
 (define k3sin 
-  (let ((documentation "(make-k3sin frequency) creates a k3sin generator. (k3sin gen (fm 0.0)) returns a sum of sines scaled by k^3."))
+  (let ((+documentation+ "(make-k3sin frequency) creates a k3sin generator. (k3sin gen (fm 0.0)) returns a sum of sines scaled by k^3."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -4463,7 +4463,7 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
 
 
 (define izcos 
-  (let ((documentation "(make-izcos frequency (r 1.0)) creates an izcos generator. (izcos gen (fm 0.0)) returns a sum of sines scaled by In(r)."))
+  (let ((+documentation+ "(make-izcos frequency (r 1.0)) creates an izcos generator. (izcos gen (fm 0.0)) returns a sum of sines scaled by In(r)."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -4591,7 +4591,7 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
 
 (define adjustable-square-wave 
 
-  (let ((documentation "(make-adjustable-square-wave frequency (duty-factor 0.5) (amplitude 1.0)) 
+  (let ((+documentation+ "(make-adjustable-square-wave frequency (duty-factor 0.5) (amplitude 1.0)) 
 creates an adjustable-square-wave generator. (adjustable-square-wave gen (fm 0.0)) returns a square-wave 
 where the duty-factor sets the ratio of pulse duration to pulse period."))
   
@@ -4648,7 +4648,7 @@ where the duty-factor sets the ratio of pulse duration to pulse period."))
 
 (define adjustable-triangle-wave 
 
-  (let ((documentation "(make-adjustable-triangle-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an 
+  (let ((+documentation+ "(make-adjustable-triangle-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates an 
 adjustable-triangle-wave generator. (adjustable-triangle-wave gen (fm 0.0)) returns a triangle-wave where the 
 duty-factor sets the ratio of pulse duration to pulse period."))
   
@@ -4705,7 +4705,7 @@ duty-factor sets the ratio of pulse duration to pulse period."))
 
 (define adjustable-sawtooth-wave 
 
-  (let ((documentation "(make-adjustable-sawtooth-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates 
+  (let ((+documentation+ "(make-adjustable-sawtooth-wave frequency (duty-factor 0.5) (amplitude 1.0)) creates 
 an adjustable-sawtooth-wave generator.  (adjustable-sawtooth-wave gen (fm 0.0)) returns a sawtooth-wave where 
 the duty-factor sets the ratio of pulse duration to pulse period."))
 
@@ -4769,7 +4769,7 @@ the duty-factor sets the ratio of pulse duration to pulse period."))
 
 (define adjustable-oscil 
 
-  (let ((documentation "(make-adjustable-oscil frequency (duty-factor 0.5)) creates an adjustable-oscil 
+  (let ((+documentation+ "(make-adjustable-oscil frequency (duty-factor 0.5)) creates an adjustable-oscil 
 generator. (adjustable-oscil gen (fm 0.0)) returns a sinusoid where the duty-factor sets the ratio of pulse duration to pulse period."))
   
     (lambda* (g (fm 0.0))
@@ -4836,7 +4836,7 @@ generator. (adjustable-oscil gen (fm 0.0)) returns a sinusoid where the duty-fac
 
 (define round-interp 
 
-  (let ((documentation "(make-round-interp frequency (n 1) (amplitude 1.0)) creates a round-interp 
+  (let ((+documentation+ "(make-round-interp frequency (n 1) (amplitude 1.0)) creates a round-interp 
 generator. (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass filtered by a moving-average generator of length n."))
   
     (lambda* (gen (fm 0.0))
@@ -4920,7 +4920,7 @@ generator. (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass f
 
 (define nchoosekcos 
 
-  (let ((documentation "(make-nchoosekcos frequency (ratio 1.0) (n 1)) creates an nchoosekcos generator. (nchoosekcos gen (fm 0.0)) 
+  (let ((+documentation+ "(make-nchoosekcos frequency (ratio 1.0) (n 1)) creates an nchoosekcos generator. (nchoosekcos gen (fm 0.0)) 
 returns a sum of cosines scaled by the binomial coeffcients."))
 
     (lambda* (gen (fm 0.0))
@@ -4987,7 +4987,7 @@ returns a sum of cosines scaled by the binomial coeffcients."))
 
 
 (define sinc-train 
-  (let ((documentation "(make-sinc-train frequency (n 1)) creates a sinc-train generator with n components. (sinc-train gen (fm 0.0)) returns a sinc-train"))
+  (let ((+documentation+ "(make-sinc-train frequency (n 1)) creates a sinc-train generator with n components. (sinc-train gen (fm 0.0)) returns a sinc-train"))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
@@ -5033,7 +5033,7 @@ returns a sum of cosines scaled by the binomial coeffcients."))
 
 (define pink-noise 
   
-  (let ((documentation "(make-pink-noise (n 1)) creates a pink-noise generator with n octaves of rand (12 is recommended). (pink-noise gen) 
+  (let ((+documentation+ "(make-pink-noise (n 1)) creates a pink-noise generator with n octaves of rand (12 is recommended). (pink-noise gen) 
 returns the next random value in the 1/f stream produced by gen."))
 
     (lambda (gen)
@@ -5101,7 +5101,7 @@ returns the next random value in the 1/f stream produced by gen."))
 
 (define brown-noise 
 
-  (let ((documentation "(make-brown-noise frequency (amplitude 1.0)) returns a generator that produces 
+  (let ((+documentation+ "(make-brown-noise frequency (amplitude 1.0)) returns a generator that produces 
 brownian noise. (brown-noise gen (fm 0.0)) returns the next brownian noise sample."))
   
     (lambda* (gen (fm 0.0))
@@ -5157,7 +5157,7 @@ brownian noise. (brown-noise gen (fm 0.0)) returns the next brownian noise sampl
 
 (define green-noise 
 
-  (let ((documentation "(make-green-noise frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new 
+  (let ((+documentation+ "(make-green-noise frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new 
 green-noise (bounded brownian noise) generator. (green-noise gen (fm 0.0)) returns the next sample in a 
 sequence of bounded brownian noise samples."))
   
@@ -5220,7 +5220,7 @@ sequence of bounded brownian noise samples."))
 
 (define green-noise-interp 
 
-  (let ((documentation "(make-green-noise-interp frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new 
+  (let ((+documentation+ "(make-green-noise-interp frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new 
 interpolating green noise (bounded brownian noise) generator. (green-noise-interp gen (fm 0.0)) returns the next 
 sample in a sequence of interpolated bounded brownian noise samples."))
   
@@ -5313,7 +5313,7 @@ sample in a sequence of interpolated bounded brownian noise samples."))
 
 (define moving-sum 
   
-  (let ((documentation "(make-moving-sum (n 128)) returns a moving-sum generator. (moving-sum gen input) 
+  (let ((+documentation+ "(make-moving-sum (n 128)) returns a moving-sum generator. (moving-sum gen input) 
 returns the sum of the absolute values in a moving window over the last n inputs."))
   
     (lambda (gen y)
@@ -5380,7 +5380,7 @@ returns the sum of the absolute values in a moving window over the last n inputs
 
 (define moving-rms 
 
-  (let ((documentation "(make-moving-rms (n 128) returns a moving-rms generator. (moving-rms gen input) returns 
+  (let ((+documentation+ "(make-moving-rms (n 128) returns a moving-rms generator. (moving-rms gen input) returns 
 the rms of the values in a window over the last n inputs."))
 
     (lambda (gen y)
@@ -5411,7 +5411,7 @@ the rms of the values in a window over the last n inputs."))
 #|
 (define moving-length 
 
-  (let ((documentation "(make-moving-length (n 128) returns a moving-length generator. (moving-length gen input) 
+  (let ((+documentation+ "(make-moving-length (n 128) returns a moving-length generator. (moving-length gen input) 
 returns the length of the values in a window over the last few inputs."))
 
     (lambda (gen y)
@@ -5467,7 +5467,7 @@ returns the length of the values in a window over the last few inputs."))
 
 (define weighted-moving-average 
   
-  (let ((documentation "(make-weighted-moving-average (n 128)) returns a weighted-moving-average 
+  (let ((+documentation+ "(make-weighted-moving-average (n 128)) returns a weighted-moving-average 
 generator. (weighted-moving-average gen y) returns the sum of the last n inputs weighted by 1/n"))
   
     (lambda (gen y)
@@ -5497,7 +5497,7 @@ generator. (weighted-moving-average gen y) returns the sum of the last n inputs 
 
 (define exponentially-weighted-moving-average 
   
-  (let ((documentation "(make-exponentially-weighted-moving-average (n 128) returns an 
+  (let ((+documentation+ "(make-exponentially-weighted-moving-average (n 128) returns an 
 exponentially-weighted-moving-average generator. (exponentially-weighted-moving-average gen y) 
 returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 
@@ -6041,7 +6041,7 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 
 (define tanhsin 
   
-  (let ((documentation "(make-tanhsin (frequency 0.0) (r 1.0) (initial-phase 0.0) returns a tanhsin 
+  (let ((+documentation+ "(make-tanhsin (frequency 0.0) (r 1.0) (initial-phase 0.0) returns a tanhsin 
 generator. (tanhsin gen (fm 0.0)) produces tanh(r*sin) which approaches a square wave as r increases."))
 
     (lambda* (gen (fm 0.0))
@@ -6084,7 +6084,7 @@ generator. (tanhsin gen (fm 0.0)) produces tanh(r*sin) which approaches a square
 
 (define moving-fft 
 
-  (let ((documentation "(make-moving-fft reader (size 512) (hop 128)) returns a moving-fft generator. (moving-fft gen) 
+  (let ((+documentation+ "(make-moving-fft reader (size 512) (hop 128)) returns a moving-fft generator. (moving-fft gen) 
 produces an FFT (polar form) of 'size' samples every 'hop' samples, taking input from the readin generator 'reader'.  
 The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the current input data as mus-data."))
   
@@ -6373,7 +6373,7 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
 
 (define moving-autocorrelation 
 
-  (let ((documentation "(make-moving-autocorrelation reader (size 512) (hop 128)) returns a moving-autocorrelation 
+  (let ((+documentation+ "(make-moving-autocorrelation reader (size 512) (hop 128)) returns a moving-autocorrelation 
 generator. (moving-autocorrelation gen) produces the autocorrelation of 'size' samples every 'hop' samples, taking 
 input from the readin generator 'reader'.  The output data is available via mus-data."))
   
@@ -6509,7 +6509,7 @@ input from the readin generator 'reader'.  The output data is available via mus-
   (frequency 0.0) (angle 0.0) fm)
 
 (define circler 
-  (let ((documentation "(make-circler (frequency 0.0) returns a circler generator. (circler gen (fm 0.0)) produces a waveform made up of half circles"))
+  (let ((+documentation+ "(make-circler (frequency 0.0) returns a circler generator. (circler gen (fm 0.0)) produces a waveform made up of half circles"))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen

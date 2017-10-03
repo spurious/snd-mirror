@@ -85,7 +85,7 @@
 
 (define maxfilter 
 
-  (let ((documentation "(maxfilter file beg (att 1.0) (numf 1) (freqfactor 1.0)
+  (let ((+documentation+ "(maxfilter file beg (att 1.0) (numf 1) (freqfactor 1.0)
     (amplitude 1.0) (amp-env '(0 1 100 1))
     (degree (random 90.0)) (distance 1.0) (reverb-amount 0.2))
 

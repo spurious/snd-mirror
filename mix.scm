@@ -14,7 +14,7 @@
 (provide 'snd-mix.scm)
 
 (define tree-for-each 
-  (let ((documentation "(tree-for-each func tree) applies func to every leaf of 'tree'"))
+  (let ((+documentation+ "(tree-for-each func tree) applies func to every leaf of 'tree'"))
     (lambda (func tree)
       (cond ((null? tree) ())
 	    ((not (pair? tree)) (func tree))
@@ -22,7 +22,7 @@
 		  (tree-for-each func (cdr tree)))))))
 
 (define tree-for-each-reversed 
-  (let ((documentation "(tree-for-each-reversed func tree) applies func to every leaf of 'tree' moving in reverse through all the lists"))
+  (let ((+documentation+ "(tree-for-each-reversed func tree) applies func to every leaf of 'tree' moving in reverse through all the lists"))
     (lambda (func tree)
       (for-each func
 		(reverse
@@ -33,13 +33,13 @@
 			 (else (cons (car lst) (flatten (cdr lst)))))))))))
 
 (define mix-sound 
-  (let ((documentation "(mix-sound file start) mixes file (all chans) at start in the currently selected sound."))
+  (let ((+documentation+ "(mix-sound file start) mixes file (all chans) at start in the currently selected sound."))
     (lambda (file start)
       (mix file start #t))))
 
 
 (define silence-all-mixes
-  (let ((documentation "(silence-all-mixes) sets all mix amps to 0"))
+  (let ((+documentation+ "(silence-all-mixes) sets all mix amps to 0"))
     (lambda ()
       (as-one-edit
        (lambda ()
@@ -50,7 +50,7 @@
 
 
 (define find-mix 
-  (let ((documentation "(find-mix sample snd chn) returns the mix at the given sample, or #f"))
+  (let ((+documentation+ "(find-mix sample snd chn) returns the mix at the given sample, or #f"))
     (lambda* (samp snd chn)
       (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
 	(call-with-exit
@@ -87,7 +87,7 @@
       #t)))
 
 (define snap-mix-to-beat
-  (let ((documentation "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  (hook-remove mix-release-hook snap-mix-1) to cancel."))
+  (let ((+documentation+ "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  (hook-remove mix-release-hook snap-mix-1) to cancel."))
     (lambda ()
       (hook-push mix-release-hook (lambda (hook) (set! (hook 'result) (snap-mix-1 (hook 'id) (hook 'samples))))))))
 
@@ -110,7 +110,7 @@
     #t))
 
 (define snap-syncd-mixes-to-beat
-  (let ((documentation "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute). \
+  (let ((+documentation+ "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute). \
 All mixes sync'd to it are also moved the same number of samples. (hook-remove mix-release-hook snap-syncd-mixes-1) to cancel."))
     (lambda ()
       (hook-push mix-release-hook (lambda (hook) (set! (hook 'result) (snap-syncd-mixes-1 (hook 'id) (hook 'samples))))))))
@@ -141,7 +141,7 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 ;;; ---------- mix-click-info
 
 (define mix-click-info 
-  (let ((documentation "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"))
+  (let ((+documentation+ "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"))
     (lambda (n)
       (help-dialog "Mix Help"
 		   (format #f "Mix ~A (sync: ~A):~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
@@ -170,7 +170,7 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 ;;; -------- mix-name->id
 
 (define mix-name->id 
-  (let ((documentation "(mix-name->id name) returns the mix associated with 'name'"))
+  (let ((+documentation+ "(mix-name->id name) returns the mix associated with 'name'"))
     (lambda (name)
       (call-with-exit
        (lambda (return)
@@ -190,7 +190,7 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 ;;; ---------------- backwards compatibilty
 
 (define delete-mix 
-  (let ((documentation "(delete-mix mix) sets the mix's amp to 0.0"))
+  (let ((+documentation+ "(delete-mix mix) sets the mix's amp to 0.0"))
     (lambda (id) 
       (set! (mix-amp id) 0.0))))
 
@@ -202,7 +202,7 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 ;;;   (scale-mixes (syncd-mixes 2) 2.0) scales all mixes whose mix-sync field is 2 by 2.0.
 
 (define scale-mixes 
-  (let ((documentation "(scale-mixes mix-list scl) scales the amplitude of each mix in 'mix-list' by 'scl'"))
+  (let ((+documentation+ "(scale-mixes mix-list scl) scales the amplitude of each mix in 'mix-list' by 'scl'"))
     (lambda (mix-list scl)
       (as-one-edit
        (lambda ()
@@ -213,13 +213,13 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 
 
 (define silence-mixes 
-  (let ((documentation "(silence-mixes mix-list) sets the amplitude of each mix in 'mix-list' to 0.0"))
+  (let ((+documentation+ "(silence-mixes mix-list) sets the amplitude of each mix in 'mix-list' to 0.0"))
     (lambda (mix-list)
       (scale-mixes mix-list 0.0))))
 
 
 (define move-mixes 
-  (let ((documentation "(move-mixes mix-list samps) moves each mix in 'mix-list' by 'samps' samples"))
+  (let ((+documentation+ "(move-mixes mix-list samps) moves each mix in 'mix-list' by 'samps' samples"))
     (lambda (mix-list samps)
       (as-one-edit
        (lambda ()
@@ -230,7 +230,7 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 
 
 (define src-mixes 
-  (let ((documentation "(src-mixes mix-list sr) multiplies the speed (resampling ratio) of each mix in 'mix-list' by 'sr'"))
+  (let ((+documentation+ "(src-mixes mix-list sr) multiplies the speed (resampling ratio) of each mix in 'mix-list' by 'sr'"))
     (lambda (mix-list sr)
       (if (not (= sr 0.0))
 	  (as-one-edit
@@ -242,14 +242,14 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 
 
 (define transpose-mixes 
-  (let ((documentation "(transpose-mixes mix-list semitones) transposes each mix in mix-list by semitones"))
+  (let ((+documentation+ "(transpose-mixes mix-list semitones) transposes each mix in mix-list by semitones"))
     (lambda (mix-list semitones)
       (if (not (= semitones 0))
 	  (src-mixes mix-list (expt 2.0 (/ semitones 12.0)))))))
 
 
 (define color-mixes 
-  (let ((documentation "(color-mixes mix-list color) sets the tag and waveform color of each mix in 'mix-list' to 'color'"))
+  (let ((+documentation+ "(color-mixes mix-list color) sets the tag and waveform color of each mix in 'mix-list' to 'color'"))
     (lambda (mix-list col)
       (for-each
        (lambda (m)
@@ -258,7 +258,7 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 
 
 (define set-mixes-tag-y 
-  (let ((documentation "(set-mixes-tag-y mix-list new-y) sets the mix tag vertical position of each mix in 'mix-list' to 'new-y'.  The \
+  (let ((+documentation+ "(set-mixes-tag-y mix-list new-y) sets the mix tag vertical position of each mix in 'mix-list' to 'new-y'.  The \
 position is measured from the top of the graph, so higher tag-y values position the tag lower in the graph. For \
 example, if you know the frequency of the mix sound, you can reflect that in the tag height with: \n\n\
 \n\
@@ -272,7 +272,7 @@ example, if you know the frequency of the mix sound, you can reflect that in the
 
 
 (define mixes-maxamp 
-  (let ((documentation "(mixes-maxamp mix-list) returns the maximum amplitude of the data in the mixes in 'mix-list'"))
+  (let ((+documentation+ "(mixes-maxamp mix-list) returns the maximum amplitude of the data in the mixes in 'mix-list'"))
     (lambda (mix-list)
       (let ((mx 0.0))
 	(for-each
@@ -283,7 +283,7 @@ example, if you know the frequency of the mix sound, you can reflect that in the
 
 
 (define scale-tempo 
-  (let ((documentation "(scale-tempo mix-list scl) changes the rate at which the mixes in 'mix-list' occur to reflect \
+  (let ((+documentation+ "(scale-tempo mix-list scl) changes the rate at which the mixes in 'mix-list' occur to reflect \
 the tempo scaler 'scl'.  If 'scl' is 2.0, for example, the mixes are re-positioned so that they \
 happen twice as slowly (the data is not resampled -- each mix is untouched except that its begin time \
 may change)"))
@@ -310,7 +310,7 @@ may change)"))
 
 
 (define mixes-length 
-  (let ((documentation "(mixes-length mix-list) returns the number of samples between the start of the earliest mix and the \
+  (let ((+documentation+ "(mixes-length mix-list) returns the number of samples between the start of the earliest mix and the \
 last end of the mixes in 'mix-list'"))
     (lambda (mix-list)
       (- (+ (apply max (map (lambda (m) 
@@ -321,7 +321,7 @@ last end of the mixes in 'mix-list'"))
 
 
 (define env-mixes 
-  (let ((documentation "(env-mixes mix-list amp-env) applies 'amp-env' as a global amplitude envelope to the mixes in 'mix-list'"))
+  (let ((+documentation+ "(env-mixes mix-list amp-env) applies 'amp-env' as a global amplitude envelope to the mixes in 'mix-list'"))
     (lambda (mix-list overall-amp-env)
       (let* ((mix-begs (map mix-position mix-list))
 	     (mix-ends (map (lambda (m) (+ (mix-position m) (framples m))) mix-list))
@@ -345,7 +345,7 @@ last end of the mixes in 'mix-list'"))
 
 (define sync-all-mixes 
   ;; a replacement for set-all-tracks in snd-8
-  (let ((documentation "(sync-all-mixes (new-sync 1)) sets the mix-sync field of every active mix to new-sync"))
+  (let ((+documentation+ "(sync-all-mixes (new-sync 1)) sets the mix-sync field of every active mix to new-sync"))
     (lambda* ((new-sync 1))
       (for-each
        (lambda (snd-m)
@@ -360,7 +360,7 @@ last end of the mixes in 'mix-list'"))
 
 
 (define syncd-mixes 
-  (let ((documentation "(syncd-mixes val) returns a list (possibly null) of all mixes whose mix-sync field is set to 'val'"))
+  (let ((+documentation+ "(syncd-mixes val) returns a list (possibly null) of all mixes whose mix-sync field is set to 'val'"))
     (lambda (val)
       (if (<= val 0)
 	  ()
@@ -380,7 +380,7 @@ last end of the mixes in 'mix-list'"))
 
 
 (define play-mixes 
-  (let ((documentation "(play-mixes mix-list) plays the mixes in 'mix-list'"))
+  (let ((+documentation+ "(play-mixes mix-list) plays the mixes in 'mix-list'"))
     (lambda (mix-list)
       (let* ((sorted-mixes (sort! (copy mix-list) (lambda (a b) (< (mix-position a) (mix-position b)))))
 	     (now (mix-position (car sorted-mixes))))
@@ -401,7 +401,7 @@ last end of the mixes in 'mix-list'"))
 
 (define pan-mix 
   
-  (letrec ((documentation "(pan-mix file start pan-env snd (auto-delete #f)) mixes 'file' into the sound 'snd'
+  (letrec ((+documentation+ "(pan-mix file start pan-env snd (auto-delete #f)) mixes 'file' into the sound 'snd'
 starting at 'start' (in samples) using 'pan-env' to decide how to split the sound between the output channels (0: all chan 0, 1: all chan 1).
 So, (pan-mix \"oboe.snd\" 0 '(0 0 1 1)) goes from all chan 0 to all chan 1.
 'auto-delete' determines whether the in-coming file should be treated as a temporary file and deleted when the mix
@@ -497,7 +497,7 @@ panning operation.")
   
   
 (define pan-mix-selection 
-  (let ((documentation "(pan-mix-selection start pan-env snd) mixes the current selection  into the sound 'snd'
+  (let ((+documentation+ "(pan-mix-selection start pan-env snd) mixes the current selection  into the sound 'snd'
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."))
     (lambda* (beg pan snd)
       (if (not (selection?))
@@ -506,7 +506,7 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
 
 
 (define pan-mix-region 
-  (let ((documentation "(pan-mix-region reg start pan-env snd) mixes the given region into the sound 'snd' 
+  (let ((+documentation+ "(pan-mix-region reg start pan-env snd) mixes the given region into the sound 'snd' 
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."))
     (lambda* (reg beg pan snd)
       (if (not (region? reg))
@@ -515,7 +515,7 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
 
 
 (define pan-mix-float-vector 
-  (let ((documentation "(pan-mix-float-vector v start pan-env snd) mixes the float-vector data into the sound 'snd' 
+  (let ((+documentation+ "(pan-mix-float-vector v start pan-env snd) mixes the float-vector data into the sound 'snd' 
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."))
     (lambda* (v beg pan snd)
       (let ((temp-file (snd-tempnam)))
@@ -527,7 +527,7 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
 ;;; -------- delay-channel-mixes
 
 (define delay-channel-mixes 
-  (let ((documentation "(delay-channel-mixes beg dur snd chn) adds dur (which can be negative) to the \
+  (let ((+documentation+ "(delay-channel-mixes beg dur snd chn) adds dur (which can be negative) to the \
 begin time of each mix that starts after beg in the given channel"))
     (lambda* (beg dur snd chn)
       (for-each
@@ -543,7 +543,7 @@ begin time of each mix that starts after beg in the given channel"))
 ;;; -------- check-mix-tags
 
 (define check-mix-tags 
-  (let ((documentation "(check-mix-tags snd chn) tries to move mix tags around to avoid collisions"))
+  (let ((+documentation+ "(check-mix-tags snd chn) tries to move mix tags around to avoid collisions"))
     (lambda* (snd chn)
       (if (not snd)
 	  (for-each check-mix-tags (sounds))

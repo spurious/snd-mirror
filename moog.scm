@@ -74,7 +74,7 @@
 (defgenerator moog freq Q s y fc gain sig)
 
 (define make-moog-filter 
-  (let ((documentation "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
+  (let ((+documentation+ "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
 'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"))
     (lambda (frequency Q)
       (let ((frq (envelope-interp (/ frequency (* *clm-srate* 0.5)) moog-freqtable)))
@@ -88,7 +88,7 @@
 
 (define moog-frequency
   (dilambda
-   (let ((documentation "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"))
+   (let ((+documentation+ "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"))
      (lambda (gen)
        (gen 'freq)))
    (lambda (gen frq)
@@ -99,7 +99,7 @@
 
 
 (define moog-filter 
-  (let ((documentation "(moog-filter m sig) is the generator associated with make-moog-filter"))
+  (let ((+documentation+ "(moog-filter m sig) is the generator associated with make-moog-filter"))
     (lambda (m sig)
       (let-set! m 'sig sig)
       (with-let m
@@ -123,7 +123,7 @@
 (defgenerator moog freq Q s0 s1 s2 s3 y fc gain sig)
 
 (define make-moog-filter 
-  (let ((documentation "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
+  (let ((+documentation+ "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
 'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"))
     (lambda (frequency Q)
       (let ((frq (envelope-interp (/ frequency (* *clm-srate* 0.5)) moog-freqtable)))
@@ -136,7 +136,7 @@
 
 (define moog-frequency
   (dilambda
-   (let ((documentation "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"))
+   (let ((+documentation+ "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"))
      (lambda (gen)
        (gen 'freq)))
    (lambda (gen frq)
@@ -147,7 +147,7 @@
 
 
 (define moog-filter 
-  (let ((documentation "(moog-filter m sig) is the generator associated with make-moog-filter"))
+  (let ((+documentation+ "(moog-filter m sig) is the generator associated with make-moog-filter"))
     (lambda (m sig)
 					;  see below for the "saturate" option
       (let-set! m 'sig sig)
@@ -174,7 +174,7 @@
 	  A)))))
 
 (define moog-filter-saturated 
-  (let ((documentation "(moog-filter-saturated m sig) is the generator associated with make-moog-filter with internal saturation"))
+  (let ((+documentation+ "(moog-filter-saturated m sig) is the generator associated with make-moog-filter with internal saturation"))
     (lambda (m sig)
       (let-set! m 'sig sig)
       (with-let m

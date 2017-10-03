@@ -10,7 +10,7 @@
 ;;; -------- selection -> new file
 
 (define selection->new
-  (let ((documentation "(selection-<new) saves the selection in a new file, then opens that file"))
+  (let ((+documentation+ "(selection-<new) saves the selection in a new file, then opens that file"))
     (lambda ()
       (and (selection?)
 	   (let ((new-file-name (snd-tempnam)))
@@ -23,7 +23,7 @@
 ;;; -------- cut selection -> new file
 
 (define cut-selection->new
-  (let ((documentation "(cut-selection->new) saves the selection, deletes it, then opens the saved file"))
+  (let ((+documentation+ "(cut-selection->new) saves the selection, deletes it, then opens the saved file"))
     (lambda ()
       (and (selection?)
 	   (let ((new-file-name (snd-tempnam)))
@@ -37,7 +37,7 @@
 ;;; -------- append selection
 
 (define append-selection
-  (let ((documentation "(append-selection) appends the current selection"))
+  (let ((+documentation+ "(append-selection) appends the current selection"))
     (lambda ()
       (if (selection?)
 	  (insert-selection (framples))))))
@@ -67,7 +67,7 @@
 ;;; -------- trim front and back (goes by first or last mark)
 
 (define trim-front
-  (let ((documentation "(trim-front) finds the first mark in each of the syncd channels and removes all samples before it")
+  (let ((+documentation+ "(trim-front) finds the first mark in each of the syncd channels and removes all samples before it")
 	(trim-front-one-channel 
 	 (lambda (snd chn)
 	   (if (null? (marks snd chn))
@@ -88,7 +88,7 @@
 (add-to-menu edit-menu "Trim front" trim-front)
 
 (define trim-back
-  (let ((documentation "(trim-back) finds the last mark in each of the syncd channels and removes all samples after it")
+  (let ((+documentation+ "(trim-back) finds the last mark in each of the syncd channels and removes all samples after it")
 	(trim-back-one-channel 
 	 (lambda (snd chn)
 	   (if (null? (marks snd chn))
@@ -125,7 +125,7 @@
        "crop-one-channel")))
 
 (define crop
-  (let ((documentation "(crop) finds the first and last marks in each of the syncd channels and removes all samples outside them"))
+  (let ((+documentation+ "(crop) finds the first and last marks in each of the syncd channels and removes all samples outside them"))
     (lambda ()
       (let ((snc (sync)))
 	(if (> snc 0)

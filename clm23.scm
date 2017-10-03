@@ -2006,7 +2006,7 @@
   freq phase (ratio 1.0) (r 1.0) (index 1.0) input r1 r2 r3)
 
 (define dsp-asyfm-J 
-  (let ((documentation "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"))
+  (let ((+documentation+ "(dsp-asyfm-J gen input) is the same as the CLM asymmetric-fm generator, set r != 1.0 to get the asymmetric spectra"))
     (lambda (gen input)
       (let-set! gen 'input input)
       (with-let gen
@@ -2017,7 +2017,7 @@
 	  result)))))
 
 (define dsp-asyfm-I 
-  (let ((documentation "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"))
+  (let ((+documentation+ "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"))
     (lambda (gen input)
       (let-set! gen 'input input)
       (with-let gen

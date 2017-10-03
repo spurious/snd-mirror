@@ -24,7 +24,7 @@
 ;;; -------- window-envelope (a kinda brute-force translation from the CL version in env.lisp)
 
 (define window-envelope 
-  (let ((documentation "(window-envelope beg end e) -> portion of e lying between x axis values beg and 
+  (let ((+documentation+ "(window-envelope beg end e) -> portion of e lying between x axis values beg and 
 end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"))
     (lambda (beg end e)
       (let ((nenv ())
@@ -56,7 +56,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"))
 ;;; -------- map-envelopes like map-across-envelopes in env.lisp
 
 (define map-envelopes 
-  (let ((documentation "(map-envelopes func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope"))
+  (let ((+documentation+ "(map-envelopes func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope"))
     (lambda (op e1 e2)
       (let* ((xs ())
 	     (at0 (lambda (e)
@@ -92,13 +92,13 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"))
 ;;; -------- multiply-envelopes, add-envelopes
 
 (define multiply-envelopes 
-  (let ((documentation "(multiply-envelopes env1 env2) multiplies break-points of env1 and env2 returning a new 
+  (let ((+documentation+ "(multiply-envelopes env1 env2) multiplies break-points of env1 and env2 returning a new 
 envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0.5)"))
     (lambda (e1 e2)
       (map-envelopes * e1 e2))))
 
 (define add-envelopes 
-  (let ((documentation "(add-envelopes env1 env2) adds break-points of env1 and env2 returning a new envelope"))
+  (let ((+documentation+ "(add-envelopes env1 env2) adds break-points of env1 and env2 returning a new envelope"))
     (lambda (e1 e2)
       (map-envelopes + e1 e2))))
 
@@ -106,7 +106,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 ;;; -------- max-envelope
 
 (define max-envelope 
-  (let ((documentation "(max-envelope env) -> max y value in env"))
+  (let ((+documentation+ "(max-envelope env) -> max y value in env"))
     (lambda (env1)
       (let max-envelope-1 ((e (cddr env1))
                            (mx (cadr env1)))
@@ -117,7 +117,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 ;;; -------- min-envelope
 
 (define min-envelope 
-  (let ((documentation "(min-envelope env) -> min y value in env"))
+  (let ((+documentation+ "(min-envelope env) -> min y value in env"))
     (lambda (env1)
       (let min-envelope-1 ((e (cddr env1))
                            (mx (cadr env1)))
@@ -128,7 +128,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 ;;; -------- integrate-envelope
 
 (define integrate-envelope 
-  (let ((documentation "(integrate-envelope env) -> area under env"))
+  (let ((+documentation+ "(integrate-envelope env) -> area under env"))
     (lambda (env1)
       (let integrate-envelope-1 ((e env1)
                                  (sum 0.0000))
@@ -139,7 +139,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 ;;; -------- envelope-last-x
 
 (define envelope-last-x 
-  (let ((documentation "(envelope-last-x env) -> max x axis break point position"))
+  (let ((+documentation+ "(envelope-last-x env) -> max x axis break point position"))
     (lambda (e)
       (do ((e e (cddr e))) 
 	  ((null? (cddr e))
@@ -149,7 +149,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 (define stretch-envelope 
   
-  (let ((documentation "(stretch-envelope env old-attack new-attack old-decay new-decay) takes 'env' and 
+  (let ((+documentation+ "(stretch-envelope env old-attack new-attack old-decay new-decay) takes 'env' and 
 returns a new envelope based on it but with the attack and optionally decay portions stretched 
 or squeezed; 'old-attack' is the original x axis attack end point, 'new-attack' is where that 
 section should end in the new envelope.  Similarly for 'old-decay' and 'new-decay'.  This mimics 
@@ -213,7 +213,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 ;;; -------- scale-envelope
 
 (define scale-envelope 
-  (let ((documentation "(scale-envelope env scaler (offset 0)) scales y axis values by 'scaler' and optionally adds 'offset'"))
+  (let ((+documentation+ "(scale-envelope env scaler (offset 0)) scales y axis values by 'scaler' and optionally adds 'offset'"))
     (lambda* (e scl (offset 0))
       (if (null? e)
 	  ()
@@ -223,7 +223,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 ;;; -------- reverse-envelope
 
 (define reverse-envelope 
-  (let ((documentation "(reverse-envelope env) reverses the breakpoints in 'env'"))
+  (let ((+documentation+ "(reverse-envelope env) reverses the breakpoints in 'env'"))
     (lambda (e)
       (let ((len (length e)))
 	(if (or (not (integer? len))
@@ -242,7 +242,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 ;;; -------- concatenate-envelopes
 
 (define concatenate-envelopes 
-  (letrec ((documentation "(concatenate-envelopes :rest envs) concatenates its arguments into a new envelope")
+  (letrec ((+documentation+ "(concatenate-envelopes :rest envs) concatenates its arguments into a new envelope")
 	   (cat-1 (lambda (e newe xoff x0)
 		    (if (null? e)
 			newe
@@ -269,7 +269,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 
 
 (define repeat-envelope 
-  (let ((documentation "(repeat-envelope env repeats (reflected #f) (normalized #f)) repeats 'env' 'repeats' 
+  (let ((+documentation+ "(repeat-envelope env repeats (reflected #f) (normalized #f)) repeats 'env' 'repeats' 
 times.  (repeat-envelope '(0 0 100 1) 2) -> (0 0 100 1 101 0 201 1). 
 If the final y value is different from the first y value, a quick ramp is 
 inserted between repeats. 'normalized' causes the new envelope's x axis 
@@ -382,7 +382,7 @@ repetition to be in reverse."))
 ;;; here's a simpler version that takes the breakpoint list, rather than the power-env structure:
 
 (define powenv-channel 
-  (let ((documentation "(powenv-channel envelope (beg 0) dur snd chn edpos) returns an envelope with a separate base for \
+  (let ((+documentation+ "(powenv-channel envelope (beg 0) dur snd chn edpos) returns an envelope with a separate base for \
 each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
     (lambda* (envelope (beg 0) dur snd chn edpos)
       (let ((len (length envelope))
@@ -422,7 +422,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 ;;; xgrid is how fine a solution to sample our new envelope with.
 
 (define envelope-exp 
-  (let ((documentation "(envelope-exp e (power 1.0) (xgrid 100)) approximates an exponential curve connecting the breakpoints"))
+  (let ((+documentation+ "(envelope-exp e (power 1.0) (xgrid 100)) approximates an exponential curve connecting the breakpoints"))
     (lambda* (e (power 1.0) (xgrid 100))
       (let ((mn (min-envelope e)))
 	(let ((largest-diff (* 1.0 (- (max-envelope e) mn)))
@@ -445,7 +445,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 ;;; rms-envelope
 
 (define rms-envelope 
-  (let ((documentation "(rms-envelope file (beg 0.0) (dur #f) (rfreq 30.0) (db #f)) returns an envelope of RMS values in 'file'"))
+  (let ((+documentation+ "(rms-envelope file (beg 0.0) (dur #f) (rfreq 30.0) (db #f)) returns an envelope of RMS values in 'file'"))
     (lambda* (file (beg 0.0) dur (rfreq 30.0) db)
       ;; based on rmsenv.ins by Bret Battey
       (let* ((fsr (srate file))

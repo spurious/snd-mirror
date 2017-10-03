@@ -1800,7 +1800,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 ;;; VARIOUS AND MISCELLANEOUS
   
   (define effects-hello-dentist 
-    (let ((documentation "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"))
+    (let ((+documentation+ "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"))
       (lambda* (frq amp beg dur snd chn)
 	(let ((rn (make-rand-interp :frequency frq :amplitude amp))
 	      (len (or dur (- (framples snd chn) beg)))

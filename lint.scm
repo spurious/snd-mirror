@@ -25,7 +25,7 @@
 ;;;   else is evaluated in cond
 ;;;   => is evaluated in both cond and case, so both are better left alone (see s7test.scm for examples)
 ;;;     at the top-level, r7rs deems it an error to change their value
-;;;   also '__func__, 'signature and 'documentation as local vars could cause confusion
+;;;   also '__func__, '+signature+ and '+documentation+ as local vars could cause confusion
 
 (define *report-built-in-functions-used-as-variables* #f) ; string and length are the most common cases
 (define *report-forward-functions* #f)                    ; functions used before being defined
@@ -120,8 +120,8 @@
 	      make-rectangular make-shared-vector make-string make-vector map max member memq memv min modulo morally-equal?
 	      nan? negative? not null? number->string number? numerator
 	      object->string odd? openlet? or outlet output-port? owlet
-	      pair-line-number pair-filename pair? port-closed? port-filename port-line-number positive? procedure-documentation
-	      procedure-setter procedure-signature procedure-source procedure? proper-list? provided?
+	      pair-line-number pair-filename pair? port-closed? port-filename port-line-number positive? documentation
+	      setter signature procedure-source procedure? proper-list? provided?
 	      quasiquote quote quotient
 	      random-state random-state->list random-state? rational? rationalize real-part real? remainder reverse rootlet round
 	      sequence? sin sinh square sqrt stacktrace string string->list string->number string->symbol string->keyword string-append 
@@ -178,8 +178,8 @@
 			         byte-vector make-byte-vector hash-table hash-table* make-hash-table hash-table-ref 
 			         hash-table-set! hash-table-entries cyclic-sequences call/cc call-with-current-continuation 
 			         call-with-exit load autoload eval eval-string apply for-each map dynamic-wind values 
-			         catch throw error procedure-documentation procedure-signature help procedure-source funclet 
-			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
+			         catch throw error documentation signature help procedure-source funclet 
+			         setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
 			         exit dilambda make-hook hook-functions stacktrace tree-leaves tree-memq object->let
 				 getenv directory? file-exists? type-of immutable! immutable?
 				 list-values apply-values unquote))
@@ -570,8 +570,8 @@
     (define applicable? arity)
     
     (denote lint-every? 
-      (let ((documentation "(lint-every? func sequence) returns #t if func approves of every member of the list sequence")
-	    (signature '(boolean? procedure? list?)))
+      (let ((+documentation+ "(lint-every? func sequence) returns #t if func approves of every member of the list sequence")
+	    (+signature+ '(boolean? procedure? list?)))
 	(lambda (f sequence)
 	  (do ((arg sequence (cdr arg)))
 	      ((not (and (pair? arg)
@@ -579,8 +579,8 @@
 	       (null? arg))))))
 
     (denote lint-any? 
-      (let ((documentation "(lint-any? func sequence) returns #t if func approves of any member of the list sequence")
-	    (signature '(boolean? procedure? list?)))
+      (let ((+documentation+ "(lint-any? func sequence) returns #t if func approves of any member of the list sequence")
+	    (+signature+ '(boolean? procedure? list?)))
 	(lambda (f sequence)
 	  (do ((arg sequence (cdr arg)))
 	      ((or (not (pair? arg))
@@ -588,9 +588,9 @@
 	       (pair? arg))))))
     
     (denote lint-find-if 
-      (let ((documentation "(lint-find-if func lst) applies func to each member of the list lst.\n\
+      (let ((+documentation+ "(lint-find-if func lst) applies func to each member of the list lst.\n\
               If func approves of one, find-if returns that member of the sequence")
-	    (signature '(#t procedure? list?)))
+	    (+signature+ '(#t procedure? list?)))
 	(lambda (f lst)
 	  (do ((p lst (cdr p)))
 	      ((or (not (pair? p))
@@ -616,7 +616,7 @@
     
     ;; -------- trees --------
     (define copy-tree 
-      (let ((documentation "(copy-tree lst) returns a full copy of lst"))
+      (let ((+documentation+ "(copy-tree lst) returns a full copy of lst"))
 	(lambda (lis)
 	  (if (pair? lis)
 	      (cons (copy-tree (car lis))
@@ -896,7 +896,7 @@
 				     nan? negative? not null? number->string number? numerator
 				     object->string odd? openlet? or output-port?
 				     pair? port-closed? positive? 
-				     procedure-setter procedure-signature procedure? proper-list? provided?
+				     setter signature procedure? proper-list? provided?
 				     quote quotient
 				     random-state? rational? rationalize real-part real? remainder reverse round
 				     sequence? sin sinh square sqrt string->number string->symbol 
@@ -922,7 +922,7 @@
 	     (if fd
 		 (and (symbol? (var-ftype fd))
 		      (var-signature fd))
-		 (procedure-signature fnc)))))
+		 (signature fnc)))))
     
     (define (arg-arity fnc env)
       (and (symbol? fnc)
@@ -2052,7 +2052,7 @@
 				  (and (not (null? f))
 				       (side-effect-with-vars? f env vars)))
 			   (cdr form))
-		     (let ((sig (procedure-signature (car form))))       ; sig has func arg and it is not known safe
+		     (let ((sig (signature (car form))))       ; sig has func arg and it is not known safe
 		       (and (pair? sig)
 			    (memq 'procedure? (cdr sig))
 			    (call-with-exit
@@ -2380,7 +2380,7 @@
 			    ((or (null? p)
 				 (eq? (car p) arg1))
 			     i)))
-		   (arg-type (let ((sig (and (positive? pos)   ; procedure-signature for arg2
+		   (arg-type (let ((sig (and (positive? pos)   ; signature for arg2
 					     (arg-signature (car arg2) env))))
 			       (if (zero? pos)                 ; its type indication for arg1's position
 				   'procedure? ; or sequence? -- how to distinguish? use 'applicable?
@@ -2560,7 +2560,7 @@
 			((or (null? p)
 			     (equal? (car p) (cadr arg1)))
 			 (if (null? p) -1 i))))
-	       (arg-type (let ((sig (and (positive? pos)       ; procedure-signature for arg2
+	       (arg-type (let ((sig (and (positive? pos)       ; signature for arg2
 					 (arg-signature (car arg2) env))))
 			   (if (zero? pos)                     ; its type indication for arg1's position
 			       'procedure?                     ; or sequence? -- how to distinguish? use 'applicable?
@@ -6443,7 +6443,7 @@
 					   (case func ((eq?) 'memq) ((eqv?) 'memv) (else 'member))
 					   (case func ((eq?) 'assq) ((eqv?) 'assv) (else 'assoc)))))
 			       (lint-format "perhaps ~A" caller (lists->string form (list op (cadr form) (caddr form)))))
-			     (let ((sig (procedure-signature (symbol->value func)))) ; arg-signature here is too cranky
+			     (let ((sig (signature (symbol->value func)))) ; arg-signature here is too cranky
 			       (if (and (pair? sig)
 					(not (eq? 'boolean? (car sig)))
 					(not (and (pair? (car sig))
@@ -7258,7 +7258,7 @@
 	    (check-boolean-affinity caller form env)
 	    (if (and (pair? (cdr form))     ; (pair? (member x y)) -> (member x y)
 		     (pair? (cadr form))
-		     (memq (caadr form) '(memq memv member assq assv assoc procedure-signature)))
+		     (memq (caadr form) '(memq memv member assq assv assoc signature)))
 		(lint-format "~A returns either #f or a pair, so ~A" caller (caadr form)
 			     (lists->string form (cadr form))))) 
 	  (for-each (lambda (f)
@@ -8706,7 +8706,7 @@
 		  (if (memq func '(= eq? eqv? equal? string=? char=? string-ci=? char-ci=?))
 		      (lint-format "sort! with ~A may hang: ~A" caller func (truncated-list->string form))
 		      (if (symbol? func)
-			  (let ((sig (procedure-signature (symbol->value func (rootlet)))))
+			  (let ((sig (signature (symbol->value func (rootlet)))))
 			    (if (and (pair? sig)
 				     (not (eq? 'boolean? (car sig)))
 				     (not (and (pair? (car sig))
@@ -10832,7 +10832,7 @@
 					   min-arity
 					   (if (> min-arity 1) "s" "") 
 					   (truncated-list->string form))
-			      (if (and (not (procedure-setter head-value))
+			      (if (and (not (setter head-value))
 				       (> (- args (keywords (cdr form) 0)) max-arity))
 				  (lint-format "~A has too many arguments: ~A" caller head (truncated-list->string form))))
 			  
@@ -10902,7 +10902,7 @@
 					(lint-format "this looks odd: ~A" caller (truncated-list->string form))))
 				  
 				  ;; now try to check arg types 
-				  (let ((arg-data (cond ((procedure-signature head-value) => cdr) (else #f))))
+				  (let ((arg-data (cond ((signature head-value) => cdr) (else #f))))
 				    (if (pair? arg-data)
 					(check-args caller head data form arg-data env max-arity))
 				    ))))))))))))))
@@ -11298,7 +11298,7 @@
 				     vname (truncated-list->string (var-initial-value local-var)) (var-definer local-var))))
 		  
 		  ;; not ref'd or set
-		  (if (not (memq vname '(documentation signature iterator? define-animal)))
+		  (if (not (memq vname '(+documentation+ +signature+ iterator? define-animal)))
 		      (let ((val (truncated-list->string
 				  (if (pair? (var-history local-var)) 
 				      (car (var-history local-var))
@@ -13227,10 +13227,10 @@
 	 vars)))
 
     (define (report-doc-string definer function-name args body)
-      (lint-format "old-style doc string: ~S, in s7 use 'documentation:~%~NC~A" function-name
+      (lint-format "old-style doc string: ~S, in s7 use '+documentation+:~%~NC~A" function-name
 		   (car body) (+ lint-left-margin 4) #\space
 		   (lint-pp `(define ,function-name
-			       (let ((documentation ,(car body)))
+			       (let ((+documentation+ ,(car body)))
 				 (,(case definer 
 				     ((define) 'lambda)
 				     ((define*) 'lambda*)
@@ -13464,7 +13464,7 @@
 			       (if (zero? (var-ref arg-var))
 				   (if (positive? (var-set arg-var))
 				       (set! set (cons (var-name arg-var) set))
-				       (if (not (memq (var-name arg-var) '(documentation signature iterator?)))
+				       (if (not (memq (var-name arg-var) '(+documentation+ +signature+ iterator?)))
 					   (set! unused (cons (var-name arg-var) unused))))))
 			     args-as-vars)
 			    (when (or (pair? set)
@@ -14641,7 +14641,7 @@
 			  (when (symbol? (car settee))
 			    (let ((f (symbol->value (car settee) *e*)))
 			      (when (dilambda? f)
-				(let ((sig (procedure-signature (procedure-setter f)))
+				(let ((sig (signature (setter f)))
 				      (settee-len (length settee)))
 				  (when (and (pair? sig)
 					     (positive? settee-len)
@@ -16006,7 +16006,7 @@
 				(if (not (aritable? val 1)) ; here values might be in test expr
 				    ;; (cond (x => expt))
 				    (lint-format "=> target (~A) may be unhappy: ~A" caller f clause))
-				(let ((sig (procedure-signature val)))
+				(let ((sig (signature val)))
 				  (if (len>1? sig)
 				      (let ((from-type (->lint-type ((if (or (memq syn '(cond do-result)) 
 									     (not (pair? (car clause))))
@@ -20830,7 +20830,7 @@
 		   (lint-format "perhaps ~A" caller 
 				(lists->string form 
 					       (if doc-string
-						   (list 'let (list (list 'documentation doc-string))
+						   (list 'let (list (list '+documentation+ doc-string))
 							 (cons 'lambda (car body)))
 						   (cons 'lambda (car body))))))
 		  ((2) 
@@ -20877,7 +20877,7 @@
 			   (lint-format "perhaps ~A" caller
 					(lists->string form
 						       (if doc-string
-							   `(let ((documentation ,doc-string))
+							   `(let ((+documentation+ ,doc-string))
 							      (lambda* ,new-arglist ,@new-body))
 							   (cons 'lambda* (cons new-arglist new-body)))))))))))))
 	    env)
@@ -22142,8 +22142,8 @@
     ;;; --------------------------------------------------------------------------------'
     ;;; lint itself
     ;;;
-    (let ((documentation "(lint file port) looks for infelicities in file's scheme code")
-	  (signature (list #t string? output-port? boolean?))
+    (let ((+documentation+ "(lint file port) looks for infelicities in file's scheme code")
+	  (+signature+ (list #t string? output-port? boolean?))
 	  (readers 
 	   (list (cons #\e (lambda (str)
 			     (unless (string=? str "e")

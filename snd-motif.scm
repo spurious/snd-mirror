@@ -43,34 +43,34 @@
 	  (else (find-if pred (cdr lst)))))
   
   (define load-font 
-    (let ((documentation "(load-font name) loads the font 'name', returning the font id"))
+    (let ((+documentation+ "(load-font name) loads the font 'name', returning the font id"))
       (lambda (name)
 	(let ((fs (XLoadQueryFont (XtDisplay (cadr (main-widgets))) name)))
 	  (and fs (XFontStruct? fs) (.fid fs))))))
   
   (define current-screen
-    (let ((documentation "(current-screen) returns the current X screen number of the current display"))
+    (let ((+documentation+ "(current-screen) returns the current X screen number of the current display"))
       (lambda ()
 	(DefaultScreenOfDisplay 
 	  (XtDisplay (cadr (main-widgets)))))))
   
   (define white-pixel
-    (let ((documentation "(white-pixel) returns a white pixel"))
+    (let ((+documentation+ "(white-pixel) returns a white pixel"))
       (lambda ()
 	(WhitePixelOfScreen (current-screen)))))
   
   (define black-pixel
-    (let ((documentation "(black-pixel) returns a black pixel"))
+    (let ((+documentation+ "(black-pixel) returns a black pixel"))
       (lambda ()
 	(BlackPixelOfScreen (current-screen)))))
   
   (define screen-depth
-    (let ((documentation "(screen-depth) returns the current screen depth"))
+    (let ((+documentation+ "(screen-depth) returns the current screen depth"))
       (lambda ()
 	(DefaultDepthOfScreen (current-screen)))))
   
   (define xm-clean-string 
-    (let ((documentation "(xm-clean-string str) changes slash to underbar in the filename 'str' (for the peak env file)"))
+    (let ((+documentation+ "(xm-clean-string str) changes slash to underbar in the filename 'str' (for the peak env file)"))
       (lambda (str)
 	;; full file name should be unique, so I think we need only fix it up to look like a flat name
 	(let ((len (length str)))
@@ -84,7 +84,7 @@
 ;;; -------- apply func to every widget belonging to w (and w) --------
   
   (define for-each-child 
-    (let ((documentation "(for-each-child w func) applies func to w and its descendents"))
+    (let ((+documentation+ "(for-each-child w func) applies func to w and its descendents"))
       (lambda (w func)
 	(func w)
 	(if (XtIsComposite w)
@@ -94,7 +94,7 @@
 	     (cadr (XtGetValues w (list XmNchildren 0) 1)))))))
   
   (define find-child 
-    (let ((documentation "(find-child widget name) returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'"))
+    (let ((+documentation+ "(find-child widget name) returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'"))
       (lambda (widget name)
 	;; unfortunately, if the widget's name has been set for some non-English locale, this
 	;;   won't work -- we need to add gettext support (see snd.c for an example)
@@ -108,7 +108,7 @@
 	   (throw 'no-such-widget (list "find-child" name)))))))
   
   (define display-widget-tree 
-    (let ((documentation "(display-widget-tree widget) displays the hierarchy of widgets beneath 'widget'"))
+    (let ((+documentation+ "(display-widget-tree widget) displays the hierarchy of widgets beneath 'widget'"))
       (lambda (widget)
 	(let display-widget ((w widget)
 			     (spaces ""))
@@ -123,7 +123,7 @@
 			  (cadr (XtGetValues w (list XmNchildren 0) 1)))))))))
 
   (define set-main-color-of-widget 
-    (let ((documentation "(set-main-color-of-widget w) sets the background color of widget 'w'"))
+    (let ((+documentation+ "(set-main-color-of-widget w) sets the background color of widget 'w'"))
       (lambda (w)
 	(for-each-child 
 	 w
@@ -132,7 +132,7 @@
 	       (XmChangeColor n (if (XmIsScrollBar n) *position-color* *basic-color*))))))))
   
   (define host-name
-    (let ((documentation "(host-name) -> name of current machine"))
+    (let ((+documentation+ "(host-name) -> name of current machine"))
       (lambda ()
 	(let ((host (let ((dpy (XtDisplay (cadr (main-widgets))))
 			  (win (XtWindow (cadr (main-widgets)))))
@@ -221,7 +221,7 @@
 ;;; change File:Open (or File:Mix) so that clicking "ok" does not "unmanage" the dialog
   
   (define keep-file-dialog-open-upon-ok
-    (let ((documentation "(keep-file-dialog-open-upon-ok) changes the File:Open menu so that clicking 'ok' does not close the dialog"))
+    (let ((+documentation+ "(keep-file-dialog-open-upon-ok) changes the File:Open menu so that clicking 'ok' does not close the dialog"))
       (lambda ()
 	(let ((dialog (open-file-dialog #f)))
 	  (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
@@ -248,7 +248,7 @@
 ;;; (zync) to start and (unzync) to stop
   
   (define remove-dragger 
-    (let ((documentation "(remove-dragger snd) undoes an earlier add-dragger which syncs together all the y-zoom sliders"))
+    (let ((+documentation+ "(remove-dragger snd) undoes an earlier add-dragger which syncs together all the y-zoom sliders"))
       (lambda (snd)
 	(let ((calls (sound-property 'dragger snd)))
 	  (if calls
@@ -260,7 +260,7 @@
 	(set! (sound-property 'dragger snd) #f))))
   
   (define add-dragger 
-    (let ((documentation "(add-dragger snd) syncs together y-zoom sliders"))
+    (let ((+documentation+ "(add-dragger snd) syncs together y-zoom sliders"))
       (lambda (hook)
 	(let ((snd (hook 'snd)))
 	  (set! (sound-property 'save-state-ignore snd)
@@ -289,7 +289,7 @@
 		    (set! calls (cons new-callback calls)))))))))
   
   (define zync
-    (let ((documentation "(zync) ties each sound's y-zoom sliders together so that all change in parallel if one changes"))
+    (let ((+documentation+ "(zync) ties each sound's y-zoom sliders together so that all change in parallel if one changes"))
       (lambda ()
 	(hook-push after-open-hook add-dragger)
 	(for-each
@@ -299,7 +299,7 @@
 	 (sounds)))))
   
   (define unzync
-    (let ((documentation "(unzync) undoes a previous (zync) -- subsequently each sound's y-zoom sliders are independent"))
+    (let ((+documentation+ "(unzync) undoes a previous (zync) -- subsequently each sound's y-zoom sliders are independent"))
       (lambda ()
 	(hook-remove after-open-hook add-dragger)
 	(for-each
@@ -313,7 +313,7 @@
 ;;; -------- add our own pane to the channel section --------
   
   (define add-channel-pane 
-    (let ((documentation "(add-channel-pane snd chn name type (args ())) adds a pane to the channel section"))
+    (let ((+documentation+ "(add-channel-pane snd chn name type (args ())) adds a pane to the channel section"))
       (lambda* (snd chn name type (args ()))
 	(XtCreateManagedWidget name type (XtParent (XtParent ((channel-widgets snd chn) 7))) args))))
   
@@ -321,7 +321,7 @@
 ;;; -------- add our own pane to the sound section (underneath the controls in this case) --------
   
   (define add-sound-pane 
-    (let ((documentation "(add-sound-pane snd name type (args ())) adds a pane to the sound section (underneath the control panel)"))
+    (let ((+documentation+ "(add-sound-pane snd name type (args ())) adds a pane to the sound section (underneath the control panel)"))
       (lambda* (snd name type (args ()))
 	(XtCreateManagedWidget name type (car (sound-widgets snd)) args))))
   
@@ -329,7 +329,7 @@
 ;;; -------- add our own pane to the overall Snd window (underneath the listener in this case) --------
   
   (define add-main-pane 
-    (let ((documentation "(add-main-pane name type (args ())) adds a pane to Snd (underneath the listener)"))
+    (let ((+documentation+ "(add-main-pane name type (args ())) adds a pane to Snd (underneath the listener)"))
       (lambda* (name type (args ()))
 	(XtCreateManagedWidget name type (or ((main-widgets) 5) ((main-widgets) 3)) args))))
   
@@ -337,7 +337,7 @@
 ;;; -------- add a widget at the top of the listener
   
   (define add-listener-pane 
-    (let ((documentation "(add-listener-pane name type args) adds a widget at the top of the listener"))
+    (let ((+documentation+ "(add-listener-pane name type args) adds a widget at the top of the listener"))
       (lambda (name type args)
 	(let* ((listener-scroll (XtParent (find-child (cadr (main-widgets)) "lisp-listener")))
 	       (listener-form (XtParent listener-scroll)))
@@ -362,7 +362,7 @@
 					;			XmNforeground *data-color*))
   
   (define remove-menu-bar-menu 
-    (let ((documentation "(remove-menu-bar-menu which) removes a top-level menu; 'which' can be 0: top-level-menu-bar, 1: file-menu, \
+    (let ((+documentation+ "(remove-menu-bar-menu which) removes a top-level menu; 'which' can be 0: top-level-menu-bar, 1: file-menu, \
 2: edit-menu, 3: view-menu, 4: options-menu, 5: help-menu, 6: default popup menu"))
       (lambda (which)
 	(XtUnmanageChild ((menu-widgets) which)))))
@@ -401,7 +401,7 @@
 ;;; -------- disable control panel --------
   
   (define disable-control-panel 
-    (let ((documentation "(disable-control-panel snd) disables the control panel for the sound 'snd'"))
+    (let ((+documentation+ "(disable-control-panel snd) disables the control panel for the sound 'snd'"))
       (lambda (snd)
 	(let ((swc (caddr (sound-widgets snd))))
 	  (for-each-child swc 
@@ -420,7 +420,7 @@
 ;;; -------- bring possibly-obscured dialog to top
   
   (define raise-dialog 
-    (let ((documentation "(raise-dialog w) tries to bring 'w' to the top of the widget heirarchy"))
+    (let ((+documentation+ "(raise-dialog w) tries to bring 'w' to the top of the widget heirarchy"))
       (lambda (w)
 	(if (and (Widget? w) 
 		 (XtIsManaged w))
@@ -437,7 +437,7 @@
   (define fmv-dialog #f)
   
   (define create-fmv-dialog
-    (let ((documentation "(create-fmv-dialog) makes a dialog that runs the fm-violin instrument with various controls"))
+    (let ((+documentation+ "(create-fmv-dialog) makes a dialog that runs the fm-violin instrument with various controls"))
       (lambda ()
 	(if (not (Widget? fmv-dialog))
 	    (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
@@ -632,7 +632,7 @@
 		      "-------X----------"))
   
   (define make-pixmap 
-    (let ((documentation "(make-pixmap w strs) creates a pixmap using the X/Xpm string-based pixmap description"))
+    (let ((+documentation+ "(make-pixmap w strs) creates a pixmap using the X/Xpm string-based pixmap description"))
       (lambda (widget strs) ; strs is list of strings as in arrow-strs above
 	(and (defined? 'XpmAttributes)
 	     (let ((attr (XpmAttributes))
@@ -674,7 +674,7 @@
 		       #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
   
   (define bitmap->pixmap 
-    (let ((documentation "(bitmap->pixmap widget bits width height) takes an X-style bitmap and turns it into a pixmap"))
+    (let ((+documentation+ "(bitmap->pixmap widget bits width height) takes an X-style bitmap and turns it into a pixmap"))
       (lambda (widget bits width height)
 	(XCreateBitmapFromData (XtDisplay widget) (XtWindow widget) bits width height))))
   
@@ -970,7 +970,7 @@
       ))
   
   (define close-scanned-synthesis-pane
-    (let ((documentation "(close-scanned-synthesis-pane) closes the Scanned Sythesis sound pane"))
+    (let ((+documentation+ "(close-scanned-synthesis-pane) closes the Scanned Sythesis sound pane"))
       (lambda ()
 	(for-each-child 
 	 (cadr (main-widgets))  ; this is Snd's outermost shell
@@ -1279,7 +1279,7 @@
   
   
   (define thumbnail-graph 
-    (let ((documentation "(thumbnail-graph dpy wn gc pts width height) makes a little graph of the data"))
+    (let ((+documentation+ "(thumbnail-graph dpy wn gc pts width height) makes a little graph of the data"))
       (lambda (dpy wn gc pts width height)
 	(let ((top-margin 2)
 	      (bottom-margin 6))
@@ -1400,7 +1400,7 @@
 	    container)))))
   
   (define show-sounds-in-directory 
-    (let ((documentation "(show-sounds-in-directory (dir \".\")) calls make-sound-box with the given directory"))
+    (let ((+documentation+ "(show-sounds-in-directory (dir \".\")) calls make-sound-box with the given directory"))
       (lambda* ((dir "."))
 	(make-sound-box
 	 "sounds"
@@ -1446,7 +1446,7 @@
 		  (round-down (- seconds (* minutes 60)))
 		  (round-down (- len (* (round-down seconds) smpte-frames-per-second))))))
       
-      (let ((documentation "(draw-smpte-label snd chn) draws a SMPTE time stamp in a box on a graph"))    
+      (let ((+documentation+ "(draw-smpte-label snd chn) draws a SMPTE time stamp in a box on a graph"))    
 	(lambda (hook)
 	  (let ((snd (hook 'snd))
 		(chn (hook 'chn)))
@@ -1473,7 +1473,7 @@
 		    (draw-string smpte (+ x 4) (+ y 4) snd chn)))))))))
   
   (define show-smpte-label
-    (let ((documentation "(show-smpte-label on-or-off) turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample"))
+    (let ((+documentation+ "(show-smpte-label on-or-off) turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample"))
       (lambda arg
 	(if (or (null? arg)
 		(car arg))
@@ -1486,7 +1486,7 @@
 	      (update-time-graph #t #t))))))
   
   (define smpte-is-on ; for prefs dialog
-    (let ((documentation "(smpte-is-on) is #t if we are drawing SMPTE time stamps"))
+    (let ((+documentation+ "(smpte-is-on) is #t if we are drawing SMPTE time stamps"))
       (lambda ()
 	(member draw-smpte-label (hook-functions after-graph-hook)))))
 |#
@@ -1494,7 +1494,7 @@
   
   (define red-pixel
     (let ((pix #f)
-	  (documentation "(red-pixel) returns a red pixel"))
+	  (+documentation+ "(red-pixel) returns a red pixel"))
       (lambda ()
 	(if (not pix)
 	    (let* ((dpy (XtDisplay (cadr (main-widgets))))
@@ -1509,7 +1509,7 @@
 ;;; -------- with-level-meters, make-level-meter, display-level
   
   (define make-level-meter 
-    (let ((documentation "(make-level-meter parent width height args (resizable #t)) makes a VU level meter"))
+    (let ((+documentation+ "(make-level-meter parent width height args (resizable #t)) makes a VU level meter"))
       (lambda* (parent width height args (resizable #t))
 	(let* ((frame (XtCreateManagedWidget "meter-frame" xmFrameWidgetClass parent
 					     (append (list XmNshadowType       XmSHADOW_ETCHED_IN
@@ -1549,7 +1549,7 @@
 	  context))))
   
   (define display-level 
-    (let ((documentation "(display-level meter-data) displays a VU level meter"))
+    (let ((+documentation+ "(display-level meter-data) displays a VU level meter"))
       (lambda (meter-data)
 	(let* ((meter (car meter-data))
 	       (level (meter-data 1))
@@ -1625,7 +1625,7 @@
 			  (XSetForeground dpy gc (black-pixel))))))))))))
   
   (define with-level-meters 
-    (let ((documentation "(with-level-meters n) adds 'n' level meters to a pane at the top of the Snd window"))
+    (let ((+documentation+ "(with-level-meters n) adds 'n' level meters to a pane at the top of the Snd window"))
       (lambda (n)
 	(let* ((parent ((main-widgets) 3))
 	       (height 70)
@@ -1682,7 +1682,7 @@
 ;;;   (this is a Motif 1.2 style drop -- I've had trouble getting the new style to work at all)
   
   (define make-channel-drop-site
-    (let ((documentation "(make-channel-drop-site snd) adds a drop site pane to the current channel"))
+    (let ((+documentation+ "(make-channel-drop-site snd) adds a drop site pane to the current channel"))
       (lambda args
 	(let ((widget (let ((snd (if (pair? args) (car args) (selected-sound))))
 			(add-channel-pane snd (selected-channel snd)
@@ -1721,7 +1721,7 @@
 ;;; drop arg is 3-arg func: filename snd chn
   
   (define set-channel-drop 
-    (let ((documentation "(set-channel-drop drop snd chn) changes a drop callback function; 'drop' is function of 3 args (filename snd chn)"))
+    (let ((+documentation+ "(set-channel-drop drop snd chn) changes a drop callback function; 'drop' is function of 3 args (filename snd chn)"))
       (lambda (drop snd chn)
 	(XmDropSiteUpdate
 	 (car (channel-widgets snd chn))
@@ -1754,7 +1754,7 @@
   (define showing-disk-space #f) ; for prefs dialog
   
   (define show-disk-space
-    (let ((documentation "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook: (set! (hook-functions after-open-hook) (list (*motif* 'show-disk-space)))")
+    (let ((+documentation+ "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook: (set! (hook-functions after-open-hook) (list (*motif* 'show-disk-space)))")
 	  (labelled-snds ())
 
 	  (kmg (lambda (num)
@@ -1810,7 +1810,7 @@
 ;;; the max scrollbar value can change (it's now 10000), so ideally this code should notice it
   
   (define add-amp-controls
-    (let ((documentation "(add-amp-controls) adds amplitude sliders to the control panel for each channel in multi-channel sounds")
+    (let ((+documentation+ "(add-amp-controls) adds amplitude sliders to the control panel for each channel in multi-channel sounds")
 	  (label-name (lambda (chan) (if (= chan 0) (copy "amp-label") (format #f "amp-label-~D" chan))))
 	  (number-name (lambda (chan) (if (= chan 0) (copy "amp-number") (format #f "amp-number-~D" chan))))
 	  (scroller-name (lambda (chan) (if (= chan 0) (copy "amp") (format #f "amp-~D" chan)))))
@@ -1988,7 +1988,7 @@
 ;;; (remove-main-menu 5) removes the Help menu
   
   (define remove-main-menu 
-    (let ((documentation "(remove-main-menu menu) removes the specified top-level menu: (remove-main-menu 5) removes the Help menu"))
+    (let ((+documentation+ "(remove-main-menu menu) removes the specified top-level menu: (remove-main-menu 5) removes the Help menu"))
       (lambda (menu)
 	(let* ((cascade ((menu-widgets) menu))
 	       (top (cadr (XtGetValues cascade (list XmNsubMenuId 0)))))
@@ -1999,7 +1999,7 @@
 ;;; -------- add delete and rename options to the file menu
   
   (define add-delete-option
-    (let ((documentation "(add-delete-option) adds a delete (file) option to the File menu"))
+    (let ((+documentation+ "(add-delete-option) adds a delete (file) option to the File menu"))
       (lambda ()
 	(add-to-menu 0 "Delete" ; add Delete option to File menu
 		     (lambda ()
@@ -2011,7 +2011,7 @@
 		     8)))) ; place after File:New
   
   (define add-rename-option
-    (let ((documentation "(add-rename-option) adds a rename (file) option to the File menu"))
+    (let ((+documentation+ "(add-rename-option) adds a rename (file) option to the File menu"))
       (lambda ()
 	(let ((rename-dialog #f)
 	      (rename-text #f))
@@ -2098,7 +2098,7 @@
   
   
   (define change-label 
-    (let ((documentation "(change-label widget new-label) changes widget's label to new-label"))
+    (let ((+documentation+ "(change-label widget new-label) changes widget's label to new-label"))
       (lambda (widget new-label)
 	(let ((str (XmStringCreateLocalized new-label)))
 	  (XtSetValues widget (list XmNlabelString str))
@@ -2119,7 +2119,7 @@
 ;;; (mark-sync-color "blue")
   
   (define mark-sync-color 
-    (let ((documentation "(mark-sync-color new-color) sets the color for sync'd marks")
+    (let ((+documentation+ "(mark-sync-color new-color) sets the color for sync'd marks")
 	  (get-color (lambda (color-name)
 		       (let* ((col (XColor))
 			      (dpy (XtDisplay (cadr (main-widgets))))
@@ -2162,7 +2162,7 @@
   (define tooltip-label #f)
   
   (define add-tooltip 
-    (let ((documentation "(add-tooltip widget tip) adds the tooltip 'tip' to the widget"))
+    (let ((+documentation+ "(add-tooltip widget tip) adds the tooltip 'tip' to the widget"))
       (lambda (widget tip)
 	(let ((tool-proc #f)
 	      (quit-proc #f)
@@ -2227,7 +2227,7 @@
 			       (stop-tooltip)))))))
   
   (define menu-option 
-    (let ((documentation "(menu-option name) finds the widget associated with a given menu item name"))
+    (let ((+documentation+ "(menu-option name) finds the widget associated with a given menu item name"))
       (lambda (name)
 	(call-with-exit
 	 (lambda (return)
@@ -2253,7 +2253,7 @@
 	   (throw 'no-such-menu (list "menu-option" name)))))))
   
   (define show-all-atoms
-    (let ((documentation "(show-all-atoms) displays all current X atom names"))
+    (let ((+documentation+ "(show-all-atoms) displays all current X atom names"))
       (lambda ()
 	(let ((i 1)
 	      (dpy (XtDisplay (cadr (main-widgets))))
@@ -2363,7 +2363,7 @@
 ;;; -------- add a function to be called when the window manager sends us a "save yourself" or "take focus" message
   
   (define upon-save-yourself 
-    (let ((documentation "(upon-save-yourself thunk) causes 'thunk' to be called if a 'save yourself' message is received"))
+    (let ((+documentation+ "(upon-save-yourself thunk) causes 'thunk' to be called if a 'save yourself' message is received"))
       (lambda (thunk)
 	(XmAddWMProtocolCallback 
 	 (cadr (main-widgets))
@@ -2375,7 +2375,7 @@
 ;;; similarly for "take focus"
   
   (define upon-take-focus 
-    (let ((documentation "(upon-take-focus thunk) causes 'thunk' to be called if a 'take focus' message is received"))
+    (let ((+documentation+ "(upon-take-focus thunk) causes 'thunk' to be called if a 'take focus' message is received"))
       (lambda (thunk)
 	(XmAddWMProtocolCallback 
 	 (cadr (main-widgets))
@@ -2388,7 +2388,7 @@
 ;;; -------- add text widget to notebook "status" area --------
   
   (define add-text-to-status-area
-    (let ((documentation "(add-text-to-status-area) adds a text widget to the notebook status area"))
+    (let ((+documentation+ "(add-text-to-status-area) adds a text widget to the notebook status area"))
       (lambda ()
 	;; it might be a better use of this space to put dlp's icon row in it
 	(let ((notebook ((main-widgets) 3)))
@@ -2411,7 +2411,7 @@
   (define variables-pages ())
   
   (define make-variables-dialog
-    (let ((documentation "(make-variables-dialog) makes a variable-display dialog"))
+    (let ((+documentation+ "(make-variables-dialog) makes a variable-display dialog"))
       (lambda ()
 	(let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	      (titlestr (XmStringCreate "Variables" XmFONTLIST_DEFAULT_TAG)))
@@ -2450,7 +2450,7 @@
 	  variables-dialog))))
   
   (define make-variable-display 
-    (let ((documentation "(make-variable-display page-name variable-name (type 'text) (range (list 0.0 1.0))) makes a variable \
+    (let ((+documentation+ "(make-variable-display page-name variable-name (type 'text) (range (list 0.0 1.0))) makes a variable \
 display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
       (lambda* (page-name variable-name (type 'text) (range (list 0.0 1.0)))
 	(if (not (Widget? variables-dialog)) (make-variables-dialog))
@@ -2516,7 +2516,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 	      (else #f)))))))
   
   (define variable-display 
-    (let ((documentation "(variable-display var widget) displays the value of 'var' in 'widget'"))
+    (let ((+documentation+ "(variable-display var widget) displays the value of 'var' in 'widget'"))
       (lambda (var widget)
 	(if (Widget? widget)
 	    (if (XmIsTextField widget)
@@ -2546,7 +2546,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 	var)))
   
   (define variable-display-reset 
-    (let ((documentation "(variable-display-reset widget) restarts the variable graphs -- this is intended for the start (or perhaps end) of a note"))
+    (let ((+documentation+ "(variable-display-reset widget) restarts the variable graphs -- this is intended for the start (or perhaps end) of a note"))
       (lambda (widget)
 	(if (and (pair? widget)
 		 (number? (car widget)))
@@ -2631,7 +2631,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
   
 #|
   (define set-root-window-color 
-    (let ((documentation "(set-root-window-color color) sets the color of the overall X background"))
+    (let ((+documentation+ "(set-root-window-color color) sets the color of the overall X background"))
       (lambda (color)
 	(let* ((dpy (XtDisplay (cadr (main-widgets))))
 	       (root-window (DefaultRootWindow dpy)))
@@ -2647,7 +2647,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 ;;; get open file list across top of window (like Xemacs): use -notebook, then:
 ;;; this is now the default
   (define notebook-with-top-tabs
-    (let ((documentation "(notebook-with-top-tabs) posts the list of open sounds across the top of the Snd window (like the Emacs buffer list)"))
+    (let ((+documentation+ "(notebook-with-top-tabs) posts the list of open sounds across the top of the Snd window (like the Emacs buffer list)"))
       (lambda ()
 	(XtVaSetValues ((main-widgets) 3)
 		       (list XmNorientation XmVERTICAL
@@ -2663,7 +2663,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
   (define ssb-dialog #f)
   
   (define create-ssb-dialog
-    (let ((documentation "(create-ssb-dialog) creates a dialog for testing the ssb-am stuff"))
+    (let ((+documentation+ "(create-ssb-dialog) creates a dialog for testing the ssb-am stuff"))
       (lambda ()
 	(if (not (Widget? ssb-dialog))
 	    (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
@@ -2836,7 +2836,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
   (define audit-dialog #f)
   
   (define create-audit-dialog
-    (let ((documentation "(create-audit-dialog) creates a slightly dangerous hearing test dialog (don't push the amps way up if you can't hear anything)"))
+    (let ((+documentation+ "(create-audit-dialog) creates a slightly dangerous hearing test dialog (don't push the amps way up if you can't hear anything)"))
       (lambda ()
 	(if (not (Widget? audit-dialog))
 	    (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
