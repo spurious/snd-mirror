@@ -82910,6 +82910,11 @@ s7_scheme *s7_init(void)
   s7_provide(sc, "s7-" S7_VERSION);
   s7_provide(sc, "ratio");
 
+  sc->local_documentation_symbol = s7_make_symbol(sc, "+documentation+");
+  sc->local_signature_symbol =     s7_make_symbol(sc, "+signature+");
+  sc->local_setter_symbol =        s7_make_symbol(sc, "+setter+");
+  sc->local_arity_symbol =         s7_make_symbol(sc, "+arity+");
+
 #if WITH_PURE_S7
   s7_provide(sc, "pure-s7");
 #endif
@@ -83522,8 +83527,8 @@ s7_scheme *s7_init(void)
                               (values))))"); /* this is not redundant */
 
   s7_eval_c_string(sc, "(define make-hook                                                                     \n\
-                          (let ((signature '(procedure?))                                                     \n\
-                                (documentation \"(make-hook . pars) returns a new hook (a function) that passes the parameters to its function list.\")) \n\
+                          (let ((+signature+ '(procedure?))                                                   \n\
+                                (+documentation+ \"(make-hook . pars) returns a new hook (a function) that passes the parameters to its function list.\")) \n\
                             (lambda hook-args                                                                 \n\
                               (let ((body ()))                                                                \n\
                                 (apply lambda* hook-args                                                      \n\
@@ -83535,8 +83540,8 @@ s7_scheme *s7_init(void)
                                   ())))))");
 
   s7_eval_c_string(sc, "(define hook-functions                                                                \n\
-                          (let ((signature '(list? procedure?))                                               \n\
-                                (documentation \"(hook-functions hook) gets or sets the list of functions associated with the hook\")) \n\
+                          (let ((+signature+ '(list? procedure?))                                             \n\
+                                (+documentation+ \"(hook-functions hook) gets or sets the list of functions associated with the hook\")) \n\
                             (dilambda                                                                         \n\
                               (lambda (hook)                                                                  \n\
                                 ((funclet hook) 'body))                                                       \n\
@@ -83596,11 +83601,6 @@ s7_scheme *s7_init(void)
   sc->procedure_signature_symbol = s7_make_symbol(sc, "procedure-signature");
   sc->procedure_setter_symbol = s7_make_symbol(sc, "procedure-setter");
 
-  sc->local_documentation_symbol = s7_make_symbol(sc, "+documentation+");
-  sc->local_signature_symbol = s7_make_symbol(sc, "+signature+");
-  sc->local_setter_symbol = s7_make_symbol(sc, "+setter+");
-  sc->local_arity_symbol = s7_make_symbol(sc, "+arity+");
-
 #if (!DISABLE_DEPRECATED)
   s7_eval_c_string(sc, "(begin                                                    \n\
                           (define global-environment         rootlet)             \n\
@@ -83621,7 +83621,7 @@ s7_scheme *s7_init(void)
 #endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
-  /* 64 bit machine: size: 56 [size 80 if gmp, 136 if debugging], op: 425, opt: 442 */
+  /* 64 bit machine: size: 56 [size 80 if gmp, 136 if debugging], op: 411, opt: 446 */
 
   if (sizeof(void *) > sizeof(s7_int))
     fprintf(stderr, "s7_int is too small: it has %d bytes, but void* has %d\n", (int)sizeof(s7_int), (int)sizeof(void *));
@@ -83743,12 +83743,8 @@ int main(int argc, char **argv)
  * new proc-sig cases could be used elsewhere in opt (as in b_pp_direct)
  * *s7* should be a normal let
  * is_procedure uses need to take c_obj into account [and goto/cont] [check macro signature]
- *   does p-setter currently notice closure-setters? (let ((setter (lambda ...))) (lambda...))
- *   [p-sig closure checks for signature, but maybe not procedure-signature, p-setter does not check I think]
- *   [p-doc closure checks documentation, so ^ is consistent]
  *   lint (or some such) check that signature has symbols not actual functions
- *   need to rewrite variable info s7.html
- *   +arity+?
+ *   +arity+? (let ((+arity+ '(0 . 16))) (lambda args ...)) -- limits args to 16 entries??
  * syms_tag may need 64-bits
  *
  * --------------------------------------------------------------

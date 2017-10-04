@@ -916,9 +916,9 @@
 
     
     ;; -------- func info --------
-    (define (arg-signature fnc env)
+    (define (arg-signature fnc e)
       (and (symbol? fnc)
-	   (let ((fd (var-member fnc env)))
+	   (let ((fd (var-member fnc e)))
 	     (if fd
 		 (and (symbol? (var-ftype fd))
 		      (var-signature fd))
@@ -11462,10 +11462,10 @@
 				((unless) (if (pair? (cdddr call)) (cons 'begin (cddr call)) (caddr call)))))))))
 				       
 	;; -------- arg-mismatch
-	(define (arg-mismatch caller vname vtype func call env)
+	(define (arg-mismatch caller vname vtype func call e)
 	  (let ((p (memq vname (cdr call))))                    
 	    (when (pair? p)
-	      (let ((sig (arg-signature func env))
+	      (let ((sig (arg-signature func e))
 		    (pos (- (length call) (length p))))
 		(when (and (pair? sig)
 			   (< pos (length sig)))

@@ -4244,7 +4244,7 @@ current spectrum value.
 
 <pre class="indented">
 (define brfft
-  (let ((documentation "(brfft lofrq hifrq) removes all frequencies between lofrq and hifrq: (brfft 1000.0 2000.0)"))
+  (let ((+documentation+ "(brfft lofrq hifrq) removes all frequencies between lofrq and hifrq: (brfft 1000.0 2000.0)"))
     (lambda (lofrq hifrq)
       (let* ((fsize (let ((len (<a class=quiet href="extsnd.html#framples">framples</a>)))
                       (expt 2 (ceiling (log len 2)))))

@@ -2298,7 +2298,7 @@ See examp.scm for many examples.  If you want to add your own graphics to the di
 
 <pre class="indented">
 (hook-push <em class=red>graph-hook</em>
-  (let ((documentation "set the dot size depending on the number of samples being displayed"))
+  (let ((+documentation+ "set the dot size depending on the number of samples being displayed"))
     (lambda (hook)
       (let* ((snd (hook 'snd))
              (chn (hook 'chn))
@@ -6027,7 +6027,7 @@ The Edit:Mix selection menu choice is (mix-selection (cursor)).
 
 <pre class="indented">
 (define brksnd
-  (let ((documentation "(brksnd dur base) divides the current sound into dur-sized pieces, 
+  (let ((+documentation+ "(brksnd dur base) divides the current sound into dur-sized pieces, 
 saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"))
     (lambda (dur base)
       (let ((hop (floor (* (<a class=quiet href="#srate">srate</a>) dur)))
@@ -7927,7 +7927,7 @@ Used with set!, it is equivalent to <a class=quiet href="#scaleto">scale-to</a>.
 
 <pre class="indented">
 (define maxamp-all
-  (let ((documentation "(maxamp-all) returns the current maxamp of all currently open sounds"))
+  (let ((+documentation+ "(maxamp-all) returns the current maxamp of all currently open sounds"))
     (lambda ()
       (apply max (map (lambda (snd) (apply max (<em class=red>maxamp</em> snd #t))) (<a class=quiet href="#sounds">sounds</a>))))))
 </pre>
@@ -8050,7 +8050,7 @@ giving the correct values in the call to open-raw-sound.
 
 <pre class="indented">
 (define mpg
-  (let ((documentation "(<a class=quiet href="sndscm.html#mpg">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"))
+  (let ((+documentation+ "(<a class=quiet href="sndscm.html#mpg">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"))
     (lambda (mpgfile rawfile chans)
       (system (<a class=quiet>format</a> #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
       (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (<a class=quiet>little-endian?</a>) <a class=quiet href="#sampletype">mus-lshort</a> <a class=quiet href="#sampletype">mus-bshort</a>)))))
@@ -8276,7 +8276,7 @@ function option to time the playing of each mix in a sequence of mixes.  Another
 
 <pre class="indented">
 (define play-sine 
-  (let ((documentation "(play-sine freq amp) plays a 1 second sinewave at freq and amp"))
+  (let ((+documentation+ "(play-sine freq amp) plays a 1 second sinewave at freq and amp"))
     (lambda (freq amp)
       (let ((len 22050)
             (osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> freq)))
@@ -11986,7 +11986,7 @@ starts the help dialog with help related to the selection if "h" is typed in the
 
 <pre class="indented">
 (<a class=quiet href="#bindkey">bind-key</a> #\h 0 
-  (let ((documentation "start help dialog based on listener selected text"))
+  (let ((+documentation+ "start help dialog based on listener selected text"))
     (lambda ()
       (let ((subject (<em class=red>listener-selection</em>)))
         (if (string? subject)

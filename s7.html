@@ -4026,51 +4026,67 @@ result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_intege
 
 <pre class="indented">
 (<em class=def id="documentation">documentation</em> obj)          ; old name: (procedure-documentation obj)
-(<em class=def id="signature">signature</em> obj)              ; old: (procedure-signature obj)
-(<em class=def id="setter">setter</em> obj)                 ; old: (procedure-setter obj)
-(<em class=def id="arity">arity</em> obj)
+(<em class=def id="signature">signature</em> obj)              ; old:      (procedure-signature obj)
+(<em class=def id="setter">setter</em> obj)                 ; old:      (procedure-setter obj)
+(<em class=def id="arity">arity</em> obj)                  ; very old: (procedure-arity obj)
 (<em class=def id="aritablep">aritable?</em> obj num-args)
 (funclet proc)
 (<em class=def id="proceduresource">procedure-source</em> proc)
 </pre>
 
 <p>
-<b>setter</b> returns or sets the set function associated with a procedure (set-car! with car, for example).
-funclet returns
+<b>funclet</b> returns
 a procedure's environment.
+</p>
+<pre class="indented">
+&gt; (funclet (let ((b 32)) (lambda (a) (+ a b))))
+<em class="gray">(inlet 'b 32)</em>
+&gt; (funclet abs)
+<em class="gray">(rootlet)</em>
+</pre>
+
+<p>
+<b>setter</b> returns or sets the set function associated with a procedure (set-car! with car, for example).
 </p>
 
 <p>
-<b>procedure-source</b> returns the procedure source (a list). 
-<code>(define (procedure-arglist f) (cadr (procedure-source f)))</code>
+<b>procedure-source</b> returns the procedure source (a list):
 </p>
+<pre class="indented">
+(define (procedure-arglist f) (cadr (procedure-source f)))
+</pre>
 
 <p>
 <b>documentation</b> returns the documentation string associated with a procedure.  This used to be 
 the initial string in the function's body (as in CL), but now it is the value of the '+documentation+ variable, if any,
-in the procedure's local environment.  That is, <code>(define (f a) "doc string" a)</code> is now
-<code>(define f (let ((+documentation+ "doc string")) (lambda (a) a)))</code>.  This change gets the 
-string out of the body (where it can slow down evaluation of the function to no purpose), and
-makes it possible to extend the function information arbitrarily. 
+in the procedure's local environment:
 </p>
+<pre class="indented">
+(define func 
+  (let ((+documentation+ "helpful info"))
+     (lambda (a) a)))
+
+&gt; (documentation func)
+<em class="gray">"helpful info"</em>
+</pre>
 
 <p>
 <b>arity</b> takes any object and returns either #f if it is not applicable,
 or a cons containing the minimum and maximum number of arguments acceptable.  If the maximum reported
 is a really big number, that means any number of arguments is ok.
-aritable? takes two arguments, an object and an integer, and returns #t if the object can be
+<b>aritable?</b> takes two arguments, an object and an integer, and returns #t if the object can be
 applied to that many arguments. 
 </p>
 
 <pre class="indented">
-&gt; (define add-2 (let ((+documentation+ "add-2 adds its 2 args")) (lambda* (a (b 32)) (+ a b))))
+&gt; (define* (add-2 a (b 32)) (+ a b))
 <em class="gray">add-2</em>
-&gt; (documentation add-2)
-<em class="gray">"add-2 adds its 2 args"</em>
 &gt; (procedure-source add-2)
 <em class="gray">(lambda* (a (b 32)) (+ a b))</em>
 &gt; (arity add-2)
 <em class="gray">(0 . 2)</em>
+&gt; (aritable? add-2 1)
+<em class="gray">#t</em>
 </pre>
 
 <p>
@@ -4081,7 +4097,7 @@ argument types.  #t means any type is possible, and 'values means the function r
 
 <pre class="indented">
 &gt; (signature round)
-<em class="gray">(integer? real?)</em> ; round takes a real argument, returns an integer
+<em class="gray">(integer? real?)</em>                   ; round takes a real argument, returns an integer
 &gt; (signature vector-ref)
 <em class="gray">(#t vector? . #1=(integer? . #1#))</em> ; trailing args are all integers (indices)
 </pre>
@@ -4102,7 +4118,7 @@ in its closure:
 
 <pre class="indented">
 &gt; (define f1 (let ((+documentation+ "helpful info") 
-                   (+signature+ '(boolean? real?))) 
+                   (+signature+ '(boolean? real?)))
                 (lambda (x) 
                   (positive? x))))
 <em class="gray">f1</em>
@@ -4117,7 +4133,7 @@ in its closure:
 
 <pre class="indented">
 &gt; (define f1 (let ((documentation (lambda (f) "helpful info"))
-                    (signature (lambda (f) '(boolean? real?))))
+                   (signature (lambda (f) '(boolean? real?))))
                 (<em class=red>openlet</em>  ; openlet alerts s7 that f1 has methods
                   (lambda (x) 
                     (positive? x)))))
@@ -4173,9 +4189,7 @@ in its closure:
 <pre class="indented">
 (define flocals
   (let ((x 1))
-    (let ((+setter+ (lambda (val) (set! x val)))
-	  (+documentation+ (immutable! "this is helpful info"))
-	  (+signature+ '(#t procedure?)))
+    (let ((+setter+ (lambda (val) (set! x val))))
       (lambda ()
 	x))))
 
@@ -4187,10 +4201,6 @@ in its closure:
 <em class="gray">32</em>
 &gt; (flocals)
 <em class="gray">32</em>
-&gt; (signature flocals)
-<em class="gray">(#t procedure?)</em>
-&gt; (documentation flocals)
-<em class="gray">"this is helpful info"</em>
 </pre>
 
 <blockquote>

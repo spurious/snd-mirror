@@ -881,7 +881,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 	  else 
 	    {
 	      beg = 0;
-	      if (i < sp->nchans)
+	      if (i < (int)(sp->nchans))
 		ncp = sp->chans[i];
 	      else break;
 	    }
