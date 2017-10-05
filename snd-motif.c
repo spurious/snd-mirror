@@ -790,7 +790,7 @@ static void ensure_scrolled_window_row_visible(widget_t list, int row, int num_r
     {
       if (row >= (num_rows - 1))
 	new_value = maximum;
-      else new_value = (int)((row + 0.5) * ((float)(maximum - minimum) / (float)(num_rows - 1)));
+      else new_value = (int)((row + 0.5) * ((double)(maximum - minimum) / (double)(num_rows - 1)));
     }
   XmScrollBarSetValues(scrollbar, new_value, size, increment, page_increment, true);
 }
@@ -4221,8 +4221,8 @@ void reflect_mix_change(int mix_id)
 	      beg = mix_position_from_id(mix_dialog_id);
 	      len = mix_length_from_id(mix_dialog_id);
 	      snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
-			   (float)((double)beg / (float)snd_srate(cp->sound)),
-			   (float)((double)(beg + len) / (float)snd_srate(cp->sound)),
+			   ((double)beg / (double)snd_srate(cp->sound)),
+			   ((double)(beg + len) / (double)snd_srate(cp->sound)),
 			   (mix_is_active(mix_dialog_id)) ? "" : " (locked)");
 	      XmTextSetString(w_beg, lab);
 	      
@@ -7819,7 +7819,7 @@ static void make_region_labels(file_info *hdr)
   set_label(reg_srtxt, str);
   snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
   set_label(reg_chntxt, str);
-  snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
+  snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", ((double)(hdr->samples) / (double)(hdr->chans * hdr->srate)));
   set_label(reg_lentxt, str);
   snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
   set_label(reg_maxtxt, str);
@@ -9682,7 +9682,7 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
 	       mus_sound_chans(filename),
 	       (mus_sound_chans(filename) > 1) ? "s" : "",
 	       mus_sound_srate(filename),
-	       mus_sound_duration(filename));
+	       (double)mus_sound_duration(filename));
   label = XmStringCreateLocalized(buf);
   XtVaSetValues(info1, 
 		XmNlabelString, label, 
@@ -17606,7 +17606,7 @@ typedef struct prefs_info {
   void (*arrow_down_func)(struct prefs_info *prf);
   void (*text_func)(struct prefs_info *prf);
   void (*list_func)(struct prefs_info *prf, char *value);
-  void (*color_func)(struct prefs_info *prf, float r, float g, float b);
+  void (*color_func)(struct prefs_info *prf, double r, double g, double b);
   void (*reflect_func)(struct prefs_info *prf);
   void (*save_func)(struct prefs_info *prf, FILE *fd);
   const char *(*help_func)(struct prefs_info *prf);
@@ -18701,7 +18701,7 @@ static color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b)
 }
 
 
-static void pixel_to_rgb(Pixel pix, float *r, float *g, float *b)
+static void pixel_to_rgb(Pixel pix, double *r, double *g, double *b)
 {
   XColor tmp_color;
   Display *dpy;
@@ -18787,10 +18787,10 @@ static void prefs_r_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r;
+  double r;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
-  r = (float)string_to_mus_float_t(str, 0.0, "red amount");
+  r = (double)string_to_mus_float_t(str, 0.0, "red amount");
   redirect_errors_to(NULL, NULL);
 
   XmScrollBarSetValue(prf->rscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));
@@ -18804,10 +18804,10 @@ static void prefs_g_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r;
+  double r;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
-  r = (float)string_to_mus_float_t(str, 0.0, "green amount");
+  r = (double)string_to_mus_float_t(str, 0.0, "green amount");
   redirect_errors_to(NULL, NULL);
 
   XmScrollBarSetValue(prf->gscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));
@@ -18821,10 +18821,10 @@ static void prefs_b_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r;
+  double r;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
-  r = (float)string_to_mus_float_t(str, 0.0, "blue amount");
+  r = (double)string_to_mus_float_t(str, 0.0, "blue amount");
   redirect_errors_to(NULL, NULL);
 
   XmScrollBarSetValue(prf->bscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));
@@ -18845,14 +18845,14 @@ static void prefs_call_color_func_callback(Widget w, XtPointer context, XtPointe
       XmScrollBarGetValue(prf->gscl, &ig);
       XmScrollBarGetValue(prf->bscl, &ib);
 
-      (*(prf->color_func))(prf, (float)ir / COLOR_MAXF, (float)ig / COLOR_MAXF, (float)ib / COLOR_MAXF);
+      (*(prf->color_func))(prf, (double)ir / COLOR_MAXF, (double)ig / COLOR_MAXF, (double)ib / COLOR_MAXF);
     }
 }
 
 
 static void scale_set_color(prefs_info *prf, color_t pixel)
 {
-  float r = 0.0, g = 0.0, b = 0.0;
+  double r = 0.0, g = 0.0, b = 0.0;
   pixel_to_rgb(pixel, &r, &g, &b);
   float_to_textfield(prf->rtxt, r);
   XmScrollBarSetValue(prf->rscl, (int)(COLOR_MAX * r));
@@ -18869,14 +18869,14 @@ static Pixel red, green, blue;
 static prefs_info *prefs_color_selector_row(const char *label, const char *varname, 
 					    Pixel current_pixel,
 					    Widget box, Widget top_widget,
-					    void (*color_func)(prefs_info *prf, float r, float g, float b))
+					    void (*color_func)(prefs_info *prf, double r, double g, double b))
 {
   Arg args[20];
   int n;
   prefs_info *prf = NULL;
   Widget sep, sep1, frame;
   XtCallbackList n1;
-  float r = 0.0, g = 0.0, b = 0.0;
+  double r = 0.0, g = 0.0, b = 0.0;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -25806,7 +25806,7 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
   sp = ss->sounds[snd];
   if (snd_ok(sp))
     {
-      float seconds;
+      mus_float_t seconds;
       chan_info *cp;
       switch (dtype)
 	{
@@ -25815,7 +25815,7 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
 	  cp = sp->chans[chn];
 	  if ((sp->nchans > 1) && (sp->channel_style == CHANNELS_COMBINED))
 	    cp = which_channel(sp, y);    
-	  seconds = (float)(ungrf_x(cp->axis, x));
+	  seconds = ungrf_x(cp->axis, x);
 	  if (seconds < 0.0) seconds = 0.0;
 	  if (sp->nchans > 1)
 	    status_report(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
@@ -26605,7 +26605,6 @@ static Xen g_set_graph_cursor(Xen curs)
   else Xen_out_of_range_error(S_set S_graph_cursor, 1, curs, "invalid cursor");
   return(curs);
 }
-
 
 
 #include <X11/xpm.h>
@@ -27847,7 +27846,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 			    {
 			      /* this pane has multiple chans and its size has changed enough to matter */
 			      Dimension total_inner = 0, diff;
-			      float ratio;
+			      double ratio;
 			      
 			      for (k = 0; k < (int)sp->nchans; k++)
 				total_inner += inner_sizes[outer_ctr][k];
@@ -27856,7 +27855,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 			      for (k = 0; k < (int)sp->nchans; k++)
 				XtUnmanageChild(channel_main_pane(sp->chans[k]));
 			      
-			      ratio = (float)(cur_outer_size - diff) / (float)(outer_sizes[outer_ctr] - diff);
+			      ratio = (double)(cur_outer_size - diff) / (double)(outer_sizes[outer_ctr] - diff);
 			      if (ratio > 0.0)
 				{
 				  for (k = 0; k < (int)sp->nchans; k++)

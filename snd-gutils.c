@@ -947,7 +947,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
     {
       if (row >= (num_rows - 1))
 	new_value = maximum;
-      else new_value = ((row + 0.5) * ((maximum - minimum) / (float)(num_rows - 1)));
+      else new_value = ((row + 0.5) * ((maximum - minimum) / (double)(num_rows - 1)));
     }
   if (new_value != ADJUSTMENT_VALUE(v))
     ADJUSTMENT_SET_VALUE(v, new_value);

@@ -141,7 +141,7 @@ static int read_midi_sample_dump(const char *oldname, const char *newname, char 
   STARTUP(oldname, newname, TRANS_BUF_SIZE, unsigned char);
   totalin = read(fd, buf, TRANS_BUF_SIZE);
   bits = buf[6];
-  srate = (int)(1.0e9 / (float)((buf[7] + (buf[8] << 7) + (buf[9] << 14))));
+  srate = (int)(1.0e9 / (double)((buf[7] + (buf[8] << 7) + (buf[9] << 14))));
   samples = (buf[10] + (buf[11] << 7) + (buf[12] << 14));
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
   mus_bint_to_char((unsigned char *)(hdr + 20), chans);
@@ -397,7 +397,7 @@ static int read_mus10(const char *oldname, const char *newname, char *hdr)
   ssize_t totalin;
   bool happy;
   int osp;
-  float fsrate, fraction;
+  double fsrate, fraction;
   int srateH, srateL, sign, exponent, chans, mode;
   STARTUP(oldname, newname, PDP_BUF_SIZE, unsigned char);
   totalin = read(fd, buf, PDP_BUF_SIZE);      

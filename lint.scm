@@ -430,7 +430,7 @@
     (denote var-ref     (dilambda (lambda (v) (let-ref (cdr v) 'ref))     (lambda (v x) (let-set! (cdr v) 'ref x))))
     (denote var-set     (dilambda (lambda (v) (let-ref (cdr v) 'set))     (lambda (v x) (let-set! (cdr v) 'set x))))
     (denote var-history (dilambda (lambda (v) (let-ref (cdr v) 'history)) (lambda (v x) (let-set! (cdr v) 'history x))))
-    (denote var-ftype   (dilambda (lambda (v) (let-ref (cdr v) 'ftype))   (lambda (v x) (if (defined? 'ftype (cdr v)) (let-set! (cdr v) 'ftype x)))))
+    (denote var-ftype   (dilambda (lambda (v) (let-ref (cdr v) 'ftype))   (lambda (v x) (if (defined? 'ftype (cdr v) #t) (let-set! (cdr v) 'ftype x)))))
     (denote var-retcons (dilambda (lambda (v) (let-ref (cdr v) 'retcons)) (lambda (v x) (let-set! (cdr v) 'retcons x))))
     (denote var-arglist (dilambda (lambda (v) (let-ref (cdr v) 'arglist)) (lambda (v x) (let-set! (cdr v) 'arglist x))))
     (denote var-definer (dilambda (lambda (v) (let-ref (cdr v) 'definer)) (lambda (v x) (let-set! (cdr v) 'definer x))))
@@ -466,12 +466,12 @@
     
     (denote var-signature 
       (dilambda (lambda (v) 
-		  (case (let-ref (cdr v) 'signature)
-		    ((()) (let-set! (cdr v) 'signature (get-signature v)))
+		  (case (let-ref (cdr v) 'sig)
+		    ((()) (let-set! (cdr v) 'sig (get-signature v)))
 		    (else)))
 		(lambda (v x)
-		  (if (defined? 'signature (cdr v))
-		      (let-set! (cdr v) 'signature x))))) ; perhaps fallback on varlet here and in var-ftype above?
+		  (if (defined? 'sig (cdr v) #t)
+		      (let-set! (cdr v) 'sig x))))) ; perhaps fallback on varlet here and in var-ftype above?
     
     (denote (make-lint-var name initial-value definer)
       (let ((old (or (hash-table-ref other-identifiers name) ())))
@@ -1739,7 +1739,7 @@
 				  'arit ar
 				  'arglist arglist
 				  'history hist
-				  'signature ()
+				  'sig ()
 				  'side-effect ()
 				  'ftype ftype
 				  'initial-value initial-value
@@ -11298,7 +11298,7 @@
 				     vname (truncated-list->string (var-initial-value local-var)) (var-definer local-var))))
 		  
 		  ;; not ref'd or set
-		  (if (not (memq vname '(+documentation+ +signature+ iterator? define-animal)))
+		  (if (not (memq vname '(+documentation+ +signature+ +setter+ iterator? define-animal)))
 		      (let ((val (truncated-list->string
 				  (if (pair? (var-history local-var)) 
 				      (car (var-history local-var))
@@ -13181,8 +13181,8 @@
       ;; look for outer let with var value constant, not set in func body --
       ;;   suggest moving it to closure, modulo endless quibbles of course.
       ;;   ignore nested lets because there we assume locality is more important.
-      ;; we get here if (eq? form lint-function-body and (symbol? lint-function-name) 
-      ;;   and not named-let (can this happen?) and only this expr in body)
+      ;; we get here if (eq? form lint-function-body) and (symbol? lint-function-name) 
+      ;;   and not named-let (can this happen?) and only this expr in body
       ;; currently called only in let-walker, but might make sense in let*-walker and letrec-walker.
       ;;   in letrec-walker it got only 1 hit.
       
@@ -13464,7 +13464,7 @@
 			       (if (zero? (var-ref arg-var))
 				   (if (positive? (var-set arg-var))
 				       (set! set (cons (var-name arg-var) set))
-				       (if (not (memq (var-name arg-var) '(+documentation+ +signature+ iterator?)))
+				       (if (not (memq (var-name arg-var) '(+documentation+ +signature+ +setter+ iterator?)))
 					   (set! unused (cons (var-name arg-var) unused))))))
 			     args-as-vars)
 			    (when (or (pair? set)
@@ -19522,7 +19522,7 @@
 							     ,new-form)
 							  `(let* ,(copy (cadr form) (make-list (- (length (cadr form)) 1)))
 							     ,new-form))))))))))
-	  
+
 	  ;; -------- let-walker --------
 	  (define (let-walker caller form env)
 	    (if (or (< (length form) 3)             ; (let ((a 1) (set! a 2)))
@@ -19553,11 +19553,13 @@
 			      (lint-format "perhaps ~A" caller (lists->string form (car body))))
 			  
 			  (set! vars (walk-let-vars caller form varlist vars env))
-			  
+
 			  (when (and (pair? body)
 				     (pair? vars)
 				     (func-definer? (car body)))
 			    (let-local-funcs->closure caller form body (map var-name vars)))
+			  ;; here we could check '+signature+ and others, but it is tricky to tell that
+			  ;;   var-initial-value is messed up
 			  
 			  (let ((suggest made-suggestion))
 			    (unless named-let
@@ -20146,48 +20148,48 @@
 				  (lint-every? pair? varlist)))
 			(lint-format "let* is messed up: ~A" caller (truncated-list->string form))
 			(begin
-		    (when (and (pair? body)
-			       (pair? varlist)
-			       (func-definer? (car body)))
-		      (let*-local-funcs->closure caller form body 
-						 (if named-let
-						     (cons (cadr form) (map car varlist))
-						     (map car varlist))))
-		    
-		    (let ((es (walk-letx-body caller form body 
-					      (walk-let*-vars caller form vars env)
-					      env)))
-		      (set! vars (car es))
-		      (set! env (cdr es)))
-		    
-		    (when (and (not named-let)
-			       (pair? body)
-			       (proper-pair? varlist))
-		      (when (pair? vars)
-			(let*->let+let caller form vars env))
-		      (let*+let*->let* caller form)
-		      (let*->let+do caller form env)
-		      ;; (define...) as first in body rarely happens in rewritable contexts
-		      
-		      (unless (unsafe-definer? body)
-			(remove-unneeded-let*-vars caller form env))
-		      (combine-let*-vars caller form vars env)
-		      
-		      (let ((last-var (last-ref varlist)))
-			(combine-let*-last-var caller form last-var env)
-			(if (and (null? (cdr body))
-				 (len>1? (car body))
-				 (len=2? last-var))
-			    (let->case-else caller form (car last-var) (cadr last-var) body)))
-		      ;; last var -> if/cond in car(body) as in let only happens a few times (leaving aside stuff caught above)
-		      
-		      (when (and (> (length body) 3)
-				 (> (length vars) 1)
-				 (not (tree-set-car-member '(define define* define-macro define-macro* 
-							     define-bacro define-bacro* define-constant define-expansion)
-							   body)))
-			(reduce-let*-scope caller form vars))))))))
-
+			  (when (and (pair? body)
+				     (pair? varlist)
+				     (func-definer? (car body)))
+			    (let*-local-funcs->closure caller form body 
+						       (if named-let
+							   (cons (cadr form) (map car varlist))
+							   (map car varlist))))
+			  
+			  (let ((es (walk-letx-body caller form body 
+						    (walk-let*-vars caller form vars env)
+						    env)))
+			    (set! vars (car es))
+			    (set! env (cdr es)))
+			  
+			  (when (and (not named-let)
+				     (pair? body)
+				     (proper-pair? varlist))
+			    (when (pair? vars)
+			      (let*->let+let caller form vars env))
+			    (let*+let*->let* caller form)
+			    (let*->let+do caller form env)
+			    ;; (define...) as first in body rarely happens in rewritable contexts
+			    
+			    (unless (unsafe-definer? body)
+			      (remove-unneeded-let*-vars caller form env))
+			    (combine-let*-vars caller form vars env)
+			    
+			    (let ((last-var (last-ref varlist)))
+			      (combine-let*-last-var caller form last-var env)
+			      (if (and (null? (cdr body))
+				       (len>1? (car body))
+				       (len=2? last-var))
+				  (let->case-else caller form (car last-var) (cadr last-var) body)))
+			    ;; last var -> if/cond in car(body) as in let only happens a few times (leaving aside stuff caught above)
+			    
+			    (when (and (> (length body) 3)
+				       (> (length vars) 1)
+				       (not (tree-set-car-member '(define define* define-macro define-macro* 
+								    define-bacro define-bacro* define-constant define-expansion)
+								 body)))
+			      (reduce-let*-scope caller form vars))))))))
+	    
 	    env)
 	  (hash-walker 'let* let*-walker)		
 

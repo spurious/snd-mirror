@@ -2692,7 +2692,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 
   /* samples */
   snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (%" PRId64 " samples, %" PRId64 " bytes total)",
-	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
+	       ((double)(hdr->samples) / (double)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));
   reason_str = mus_strcat(reason_str, tmp_str, &len);
@@ -2705,7 +2705,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 	{
 	  snprintf(tmp_str, LABEL_BUFFER_SIZE,
 		       ", swapped length: %.3f / sample-size-in-bytes)",
-		       (float)((double)nsamp / (float)(better_chans * better_srate)));
+		       ((double)nsamp / (double)(better_chans * better_srate)));
 	  reason_str = mus_strcat(reason_str, tmp_str, &len);
 	}
       else reason_str = mus_strcat(reason_str, ")", &len);

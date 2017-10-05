@@ -908,7 +908,7 @@ void mix_info_to_file(FILE *fd, chan_info *cp)
             fprintf(fd, "\n          (set! (mix-tag-y (m %d)) %d)", n, md->tag_y);
           if (md->color != ss->mix_color)
             {
-              float r, g, b;
+              double r, g, b;
 #if USE_MOTIF
               XColor tmp_color;
               Display *dpy;
@@ -2293,7 +2293,7 @@ static void stop_watch_mix_proc(void)
 }
 
 
-static float watch_mix_x_incr = 1.0;
+static double watch_mix_x_incr = 1.0;
 
 #if (!USE_NO_GUI)
 static TIMEOUT_TYPE watch_mix(TIMEOUT_ARGS)

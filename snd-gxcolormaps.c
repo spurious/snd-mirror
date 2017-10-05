@@ -7,7 +7,7 @@ typedef struct {
   Xen lambda;
   int gc_loc;
   mus_float_t **(*make_rgb)(int size, Xen func);
-  void (*get_rgb)(float x, rgb_t *r, rgb_t *g, rgb_t *b);
+  void (*get_rgb)(double x, rgb_t *r, rgb_t *g, rgb_t *b);
 } cmap;
 
 static cmap **cmaps = NULL;
@@ -98,7 +98,7 @@ void get_current_color(int index, int n, rgb_t *r, rgb_t *g, rgb_t *b)
       cmap *c;
       c = cmaps[index];
       if (c->get_rgb)
-	(c->get_rgb)((float)n / (float)color_map_size(ss), r, g, b);
+	(c->get_rgb)((double)n / (double)color_map_size(ss), r, g, b);
       else
 	{
 	  if (color_map_size(ss) != c->size)
@@ -180,7 +180,7 @@ static cmap *new_cmap(const char *name, int size, mus_float_t **rgb)
 
 static cmap *make_builtin_cmap(int size, const char *name, 
 			       mus_float_t **(*make_rgb)(int size, Xen ignored),
-			       void (*get_rgb)(float x, rgb_t *r, rgb_t *g, rgb_t *b))
+			       void (*get_rgb)(double x, rgb_t *r, rgb_t *g, rgb_t *b))
 {
   mus_float_t **rgb = NULL;
   cmap *c = NULL;
@@ -328,7 +328,7 @@ static mus_float_t **make_black_and_white_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void black_and_white_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+static void black_and_white_rgb(double n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = 0.0;
   (*g) = 0.0;
@@ -360,7 +360,7 @@ static mus_float_t **make_gray_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void gray_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+static void gray_rgb(double n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = n;
   (*g) = n;
@@ -390,7 +390,7 @@ static mus_float_t **make_autumn_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void autumn_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+static void autumn_rgb(double n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = 1.0;
   (*g) = n;
@@ -420,7 +420,7 @@ static mus_float_t **make_spring_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void spring_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+static void spring_rgb(double n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = 1.0;
   (*g) = n;
@@ -450,7 +450,7 @@ static mus_float_t **make_winter_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void winter_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+static void winter_rgb(double n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = 0.0;
   (*g) = n;
@@ -480,7 +480,7 @@ static mus_float_t **make_summer_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void summer_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+static void summer_rgb(double n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = n;
   (*g) = 0.5 + (0.5 * n);
@@ -510,7 +510,7 @@ static mus_float_t **make_cool_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void cool_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
+static void cool_rgb(double n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = n;
   (*g) = 1.0 - n;
@@ -540,7 +540,7 @@ static mus_float_t **make_copper_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void copper_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+static void copper_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = (x < 0.8) ? (1.25 * x) : 1.0;
   (*g) = 0.8 * x;
@@ -570,7 +570,7 @@ static mus_float_t **make_flag_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void flag_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+static void flag_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   int k;
   k = ((int)(x * color_map_size(ss))) % 4;
@@ -605,7 +605,7 @@ static mus_float_t **make_prism_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void prism_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+static void prism_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   int k;
   mus_float_t rs[6] = {1.0, 1.0, 1.0, 0.0, 0.0, 0.6667};
@@ -644,7 +644,7 @@ static mus_float_t **make_bone_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void bone_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+static void bone_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = (x < .75) ? (x * .875) : ((x * 11.0 / 8.0) - .375);
   (*g) = (x < .375) ? (x * .875) : ((x < .75) ? ((x * 29.0 / 24.0) - .125) : ((x * .875) + .125));
@@ -678,7 +678,7 @@ static mus_float_t **make_hot_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void hot_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+static void hot_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = (x < .375) ? (x * 8.0 / 3.0) : 1.0;
   (*g) = (x < .375) ? 0.0 : ((x < .75) ? ((x * 8.0 / 3.0) - 1.0) : 1.0);
@@ -712,7 +712,7 @@ static mus_float_t **make_jet_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void jet_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+static void jet_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = (x < .375) ? 0.0 : ((x < .625) ? ((x * 4.0) - 1.5) : ((x < .875) ? 1.0 : ((x * -4.0) + 4.5)));
   (*g) = (x < .125) ? 0.0 : ((x < .375) ? ((x * 4.0) - 0.5) : ((x < .625) ? 1.0 : ((x < .875) ? ((x * -4.0) + 3.5) : 0.0)));
@@ -746,7 +746,7 @@ static mus_float_t **make_pink_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void pink_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+static void pink_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = (x < .375) ? (x * 14.0 / 9.0) : ((x * 2.0 / 3.0) + 1.0 / 3.0);
   (*g) = (x < .375) ? (x * 2.0 / 3.0) : ((x < .75) ? ((x * 14.0 / 9.0) - 1.0 / 3.0) : ((x * 2.0 / 3.0) + 1.0 / 3.0));
@@ -780,7 +780,7 @@ static mus_float_t **make_rainbow_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-static void rainbow_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+static void rainbow_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   (*r) = (x < .4) ? 1.0 : ((x < .6) ? ((x * -5.0) + 3.0) : ((x < .8) ? 0.0 : ((x * 10.0 / 3.0) - 8.0 / 3.0)));
   (*g) = (x < .4) ? (x * 2.5) : ((x < .6) ? 1.0 : ((x < .8) ? ((x * -5.0) + 4.0) : 0.0));
@@ -837,7 +837,7 @@ static mus_float_t **make_phases_colormap(int size, Xen ignored)
 
 
 #if USE_GTK
-void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
+void phases_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   x *= (2.0 * M_PI); /* match code above */
 

@@ -991,8 +991,8 @@ void reflect_mix_change(int mix_id)
 	      beg = mix_position_from_id(mix_dialog_id);
 	      len = mix_length_from_id(mix_dialog_id);
 	      snprintf(lab, LABEL_BUFFER_SIZE, "%.3f : %.3f%s",
-			   (float)((double)beg / (float)snd_srate(cp->sound)),
-			   (float)((double)(beg + len) / (float)snd_srate(cp->sound)),
+			   ((double)beg / (double)snd_srate(cp->sound)),
+			   ((double)(beg + len) / (double)snd_srate(cp->sound)),
 			   (mix_is_active(mix_dialog_id)) ? "" : " (locked)");
 	      gtk_entry_set_text(GTK_ENTRY(w_beg), lab);
 

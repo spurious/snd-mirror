@@ -548,7 +548,7 @@ static void clear_show_listener(prefs_info *prf)
 
 static color_t saved_basic_color;
 static void save_basic_color(prefs_info *prf, FILE *ignore) {saved_basic_color = ss->basic_color;}
-static void basic_color_func(prefs_info *prf, float r, float g, float b) {set_basic_color(rgb_to_color(r, g, b));}
+static void basic_color_func(prefs_info *prf, double r, double g, double b) {set_basic_color(rgb_to_color(r, g, b));}
 
 
 static void revert_basic_color(prefs_info *prf) 
@@ -570,7 +570,7 @@ static void clear_basic_color(prefs_info *prf)
 
 static color_t saved_highlight_color;
 static void save_highlight_color(prefs_info *prf, FILE *ignore) {saved_highlight_color = ss->highlight_color;}
-static void highlight_color_func(prefs_info *prf, float r, float g, float b) {set_highlight_color(rgb_to_color(r, g, b));}
+static void highlight_color_func(prefs_info *prf, double r, double g, double b) {set_highlight_color(rgb_to_color(r, g, b));}
 
 
 static void revert_highlight_color(prefs_info *prf) 
@@ -592,7 +592,7 @@ static void clear_highlight_color(prefs_info *prf)
 
 static color_t saved_position_color;
 static void save_position_color(prefs_info *prf, FILE *ignore) {saved_position_color = ss->position_color;}
-static void position_color_func(prefs_info *prf, float r, float g, float b) {set_position_color(rgb_to_color(r, g, b));}
+static void position_color_func(prefs_info *prf, double r, double g, double b) {set_position_color(rgb_to_color(r, g, b));}
 
 
 static void revert_position_color(prefs_info *prf) 
@@ -614,7 +614,7 @@ static void clear_position_color(prefs_info *prf)
 
 static color_t saved_zoom_color;
 static void save_zoom_color(prefs_info *prf, FILE *ignore) {saved_zoom_color = ss->zoom_color;}
-static void zoom_color_func(prefs_info *prf, float r, float g, float b) {set_zoom_color(rgb_to_color(r, g, b));}
+static void zoom_color_func(prefs_info *prf, double r, double g, double b) {set_zoom_color(rgb_to_color(r, g, b));}
 
 
 static void revert_zoom_color(prefs_info *prf) 
@@ -637,7 +637,7 @@ static void clear_zoom_color(prefs_info *prf)
 static color_t saved_cursor_color;
 static void save_cursor_color(prefs_info *prf, FILE *ignore) {saved_cursor_color = ss->cursor_color;}
 
-static void cursor_color_func(prefs_info *prf, float r, float g, float b)
+static void cursor_color_func(prefs_info *prf, double r, double g, double b)
 {
   color_cursor(rgb_to_color(r, g, b));
   for_each_chan(update_graph);
@@ -663,7 +663,7 @@ static void clear_cursor_color(prefs_info *prf)
 
 static color_t saved_data_color;
 static void save_data_color(prefs_info *prf, FILE *ignore) {saved_data_color = ss->data_color;}
-static void data_color_func(prefs_info *prf, float r, float g, float b) {set_data_color(rgb_to_color(r, g, b));}
+static void data_color_func(prefs_info *prf, double r, double g, double b) {set_data_color(rgb_to_color(r, g, b));}
 
 
 static void revert_data_color(prefs_info *prf) 
@@ -685,7 +685,7 @@ static void clear_data_color(prefs_info *prf)
 
 static color_t saved_graph_color;
 static void save_graph_color(prefs_info *prf, FILE *ignore) {saved_graph_color = ss->graph_color;}
-static void graph_color_func(prefs_info *prf, float r, float g, float b) {set_graph_color(rgb_to_color(r, g, b));}
+static void graph_color_func(prefs_info *prf, double r, double g, double b) {set_graph_color(rgb_to_color(r, g, b));}
 
 
 static void revert_graph_color(prefs_info *prf) 
@@ -707,7 +707,7 @@ static void clear_graph_color(prefs_info *prf)
 
 static color_t saved_selected_data_color;
 static void save_selected_data_color(prefs_info *prf, FILE *ignore) {saved_selected_data_color = ss->selected_data_color;}
-static void selected_data_color_func(prefs_info *prf, float r, float g, float b) {set_selected_data_color(rgb_to_color(r, g, b));}
+static void selected_data_color_func(prefs_info *prf, double r, double g, double b) {set_selected_data_color(rgb_to_color(r, g, b));}
 
 
 static void revert_selected_data_color(prefs_info *prf) 
@@ -729,7 +729,7 @@ static void clear_selected_data_color(prefs_info *prf)
 
 static color_t saved_selected_graph_color;
 static void save_selected_graph_color(prefs_info *prf, FILE *ignore) {saved_selected_graph_color = ss->selected_graph_color;}
-static void selected_graph_color_func(prefs_info *prf, float r, float g, float b) {set_selected_graph_color(rgb_to_color(r, g, b));}
+static void selected_graph_color_func(prefs_info *prf, double r, double g, double b) {set_selected_graph_color(rgb_to_color(r, g, b));}
 
 
 static void revert_selected_graph_color(prefs_info *prf) 
@@ -758,7 +758,7 @@ static void set_selection_color(color_t color)
 
 static color_t saved_selection_color;
 static void save_selection_color(prefs_info *prf, FILE *ignore) {saved_selection_color = ss->selection_color;}
-static void selection_color_func(prefs_info *prf, float r, float g, float b) {set_selection_color(rgb_to_color(r, g, b));}
+static void selection_color_func(prefs_info *prf, double r, double g, double b) {set_selection_color(rgb_to_color(r, g, b));}
 
 
 static void revert_selection_color(prefs_info *prf) 
@@ -780,7 +780,7 @@ static void clear_selection_color(prefs_info *prf)
 
 static color_t saved_mark_color;
 static void save_mark_color(prefs_info *prf, FILE *ignore) {saved_mark_color = ss->mark_color;}
-static void mark_color_func(prefs_info *prf, float r, float g, float b) {color_marks(rgb_to_color(r, g, b));}
+static void mark_color_func(prefs_info *prf, double r, double g, double b) {color_marks(rgb_to_color(r, g, b));}
 
 
 static void revert_mark_color(prefs_info *prf) 
@@ -802,7 +802,7 @@ static void clear_mark_color(prefs_info *prf)
 
 static color_t saved_mix_color;
 static void save_mix_color(prefs_info *prf, FILE *ignore) {saved_mix_color = ss->mix_color;}
-static void mix_color_func(prefs_info *prf, float r, float g, float b) {color_mixes(rgb_to_color(r, g, b));}
+static void mix_color_func(prefs_info *prf, double r, double g, double b) {color_mixes(rgb_to_color(r, g, b));}
 
 
 static void revert_mix_color(prefs_info *prf) 
@@ -824,7 +824,7 @@ static void clear_mix_color(prefs_info *prf)
 
 static color_t saved_listener_color;
 static void save_listener_color(prefs_info *prf, FILE *ignore) {saved_listener_color = ss->listener_color;}
-static void listener_color_func(prefs_info *prf, float r, float g, float b) {color_listener(rgb_to_color(r, g, b));}
+static void listener_color_func(prefs_info *prf, double r, double g, double b) {color_listener(rgb_to_color(r, g, b));}
 
 
 static void revert_listener_color(prefs_info *prf) 
@@ -846,7 +846,7 @@ static void clear_listener_color(prefs_info *prf)
 
 static color_t saved_listener_text_color;
 static void save_listener_text_color(prefs_info *prf, FILE *ignore) {saved_listener_text_color = ss->listener_text_color;}
-static void listener_text_color_func(prefs_info *prf, float r, float g, float b) {color_listener_text(rgb_to_color(r, g, b));}
+static void listener_text_color_func(prefs_info *prf, double r, double g, double b) {color_listener_text(rgb_to_color(r, g, b));}
 
 
 static void revert_listener_text_color(prefs_info *prf) 
@@ -1715,10 +1715,10 @@ static void min_dB_text(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      float value;
+      double value;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
-      value = (float)string_to_mus_float_t(str, -100000.0, "min dB");
+      value = (double)string_to_mus_float_t(str, -100000.0, "min dB");
       redirect_errors_to(NULL, NULL);
 
       if ((!(prf->got_error)) && (value < 0.0))
@@ -1751,10 +1751,10 @@ static void fft_window_beta_text_callback(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      float value;
+      double value;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
-      value = (float)string_to_mus_float_t(str, 0.0, "fft beta");
+      value = (double)string_to_mus_float_t(str, 0.0, "fft beta");
       redirect_errors_to(NULL, NULL);
 
       if ((!(prf->got_error)) && (value <= prf->scale_max))
@@ -1789,10 +1789,10 @@ static void grid_density_text_callback(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      float value;
+      double value;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
-      value = (float)string_to_mus_float_t(str, 0.0, "grid density");
+      value = (double)string_to_mus_float_t(str, 0.0, "grid density");
       redirect_errors_to(NULL, NULL);
 
       if ((!(prf->got_error)) && (value <= prf->scale_max))
@@ -2484,10 +2484,10 @@ static void cursor_location_text(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      float interval;
+      double interval;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
-      interval = (float)string_to_mus_float_t(str, 0.0, "cursor offset");
+      interval = (double)string_to_mus_float_t(str, 0.0, "cursor offset");
       redirect_errors_to(NULL, NULL);
 
       if (!(prf->got_error))
@@ -2631,7 +2631,7 @@ static speed_style_t rts_speed_control_style = DEFAULT_SPEED_CONTROL_STYLE;
 static int rts_speed_control_tones = DEFAULT_SPEED_CONTROL_TONES;
 
 #define MIN_SPEED_CONTROL_SEMITONES 1
-static const char *speed_control_styles[NUM_SPEED_CONTROL_STYLES] = {"float ", "ratio ", "semitones:"};
+static const char *speed_control_styles[NUM_SPEED_CONTROL_STYLES] = {"double ", "ratio ", "semitones:"};
 
 static void show_speed_control_semitones(prefs_info *prf)
 {
@@ -2726,7 +2726,7 @@ static const char *output_header_type_choices[NUM_OUTPUT_HEADER_TYPE_CHOICES] = 
 static mus_header_t output_header_types[NUM_OUTPUT_HEADER_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF, MUS_CAFF};
 
 #define NUM_OUTPUT_SAMPLE_TYPE_CHOICES 4
-static const char *output_sample_type_choices[NUM_OUTPUT_SAMPLE_TYPE_CHOICES] = {"short ", "int ", "float ", "double"};
+static const char *output_sample_type_choices[NUM_OUTPUT_SAMPLE_TYPE_CHOICES] = {"short ", "int ", "double ", "double"};
 static mus_sample_t output_sample_types[NUM_OUTPUT_SAMPLE_TYPE_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
 
 
@@ -3893,11 +3893,11 @@ static void initial_bounds_toggle(prefs_info *prf)
 
 static void initial_bounds_text(prefs_info *prf)
 {
-  float beg = 0.0, dur = 0.1;
+  double beg = 0.0, dur = 0.1;
   char *str;
 
   str = GET_TEXT(prf->text);
-  sscanf(str, "%f : %f", &beg, &dur);
+  sscanf(str, "%lf : %lf", &beg, &dur);
   set_initial_beg(beg);
   set_initial_dur(dur);
   free_TEXT(str);

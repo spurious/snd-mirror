@@ -524,7 +524,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 	      if (i > 1) fprintf(fp, ", ");
 	      fprintf(fp, " %.3f at %.3f ",
 		      sf->maxamps[i],
-		      (sf->srate > 0) ? (float)((double)(sf->maxtimes[i]) / (double)(sf->srate)) : (float)(sf->maxtimes[i]));
+		      (sf->srate > 0) ? ((double)(sf->maxtimes[i]) / (double)(sf->srate)) : (double)(sf->maxtimes[i]));
 	    }
 	}
     }
@@ -821,7 +821,7 @@ float mus_sound_duration(const char *arg)
   if (sf) 
     {
       if ((sf->chans > 0) && (sf->srate > 0))
-	val = (float)((double)(sf->samples) / ((float)(sf->chans) * (float)(sf->srate)));
+	val = ((double)(sf->samples) / ((double)(sf->chans) * (double)(sf->srate)));
       else val = 0.0;
     }
   return(val);

@@ -1121,7 +1121,7 @@ struct s7_scheme {
              vector_set_symbol, vector_symbol, 
              with_input_from_file_symbol, with_input_from_string_symbol, with_output_to_file_symbol, with_output_to_string_symbol,
              write_byte_symbol, write_char_symbol, write_string_symbol, write_symbol,
-             local_documentation_symbol, local_signature_symbol, local_setter_symbol, local_arity_symbol;
+             local_documentation_symbol, local_signature_symbol, local_setter_symbol;
 
   s7_pointer procedure_documentation_symbol, procedure_signature_symbol, procedure_setter_symbol; /* obsolete */
          
@@ -1642,7 +1642,7 @@ static s7_scheme *cur_sc = NULL;
 #define is_applicable(P)              (t_applicable_p[type(P)])
 /* this misses #() which actually is not applicable to anything, probably "" also, and inapplicable c-objects like random-state */
 #define is_procedure(p)               ((t_procedure_p[type(p)]) || ((is_c_object(p)) && (is_safe_procedure(p))))
-
+#define is_t_procedure(p)             (t_procedure_p[type(p)])
 
 /* the layout of these bits does matter in several cases -- don't shadow SYNTACTIC_PAIR and OPTIMIZED_PAIR */
 #define TYPE_BITS                     8
@@ -6766,7 +6766,7 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
       sym = slot_symbol(inits[i]);
       if (!is_immutable(sym))
 	{
-	  if (is_procedure(x))
+	  if (is_t_procedure(x))
 	    {
 	      if (((!is_global(sym)) &&                  /* it might be shadowed locally */
 		   (s7_symbol_local_value(sc, sym, sc->envir) != slot_value(global_slot(sym)))) ||
@@ -9330,7 +9330,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 
   s7_pointer p;
   p = car(args);                             /* this is the procedure passed to call/cc */
-  if (!is_procedure(p))                      /* this includes continuations */
+  if (!is_t_procedure(p))                    /* this includes continuations */
     {
       check_two_methods(sc, p, sc->call_cc_symbol, sc->call_with_current_continuation_symbol, args);
       return(simple_wrong_type_argument_with_type(sc, sc->call_cc_symbol, p, a_procedure_string));
@@ -9360,7 +9360,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   /* (call-with-exit (lambda (return) ...)) */
 
   p = car(args);
-  if (!is_procedure(p))                           /* this includes continuations */
+  if (!is_t_procedure(p))                  /* this includes continuations */
     method_or_bust_with_type_one_arg(sc, p, sc->call_with_exit_symbol, args, a_procedure_string);
 
   x = make_goto(sc);
@@ -39223,7 +39223,7 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
       return(s7_cons(sc, small_int(1), small_int(1)));
 
     case T_C_OBJECT:
-      if (is_procedure(x))
+      if (is_safe_procedure(x))
 	return(s7_cons(sc, small_int(0), max_arity));
       return(sc->F);
 
@@ -39329,7 +39329,7 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int32_t args)
 
     case T_C_OBJECT:
       /* check_method(sc, x, sc->is_aritable_symbol, list_2(sc, x, s7_make_integer(sc, args))); -- see below */
-      return(is_procedure(x)); /* i.e. is_applicable */
+      return(is_safe_procedure(x));
 
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
@@ -42373,7 +42373,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 	const char* doc;
 	uint32_t gc_loc;
 	let = s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj,
-				   sc->type_symbol, (is_procedure(obj)) ? sc->is_procedure_symbol : sc->is_macro_symbol,
+				   sc->type_symbol, (is_t_procedure(obj)) ? sc->is_procedure_symbol : sc->is_macro_symbol,
 				   s7_make_symbol(sc, "arity"), s7_arity(sc, obj)));
 	gc_loc = s7_gc_protect(sc, let);
 
@@ -42419,7 +42419,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 	s7_pointer let, sig;
 	const char* doc;
 	let = s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj,
-				   sc->type_symbol, (is_procedure(obj)) ? sc->is_procedure_symbol : sc->is_macro_symbol,
+				   sc->type_symbol, (is_t_procedure(obj)) ? sc->is_procedure_symbol : sc->is_macro_symbol,
 				   s7_make_symbol(sc, "arity"), s7_arity(sc, obj)));
 
 	sig = signature(sc, obj);
@@ -61097,7 +61097,7 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int32_t hop, s7
 	      return(optimize_syntax(sc, expr, func, hop, e));  /* e can be extended via set-cdr! here */
 	    }
 	  /* we miss implicit indexing here because at this time, the data are not set */
-	  if ((is_procedure(func)) ||
+	  if ((is_t_procedure(func)) ||
 	      /* (is_c_function(func)) || */
 	      (is_safe_procedure(func))) /* built-in applicable objects like vectors */
 	    {
@@ -64938,7 +64938,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
     case T_C_FUNCTION:
     case T_C_FUNCTION_STAR:
       /* perhaps it has a setter */
-      if (is_procedure(c_function_setter(cx)))
+      if (is_t_procedure(c_function_setter(cx)))
 	{
 	  /* here the setter can be anything, so we need to check the needs_copied_args bit 
 	   *    (set! ((dilambda / (let ((x 3)) (lambda (y) (+ x y))))) 3)!
@@ -65028,7 +65028,7 @@ static int32_t set_pair_ex(s7_scheme *sc)
       {
 	s7_pointer setter;
 	setter = closure_setter(cx);
-	if (is_procedure(setter))          /* appears to be caar_code */
+	if (is_t_procedure(setter))          /* appears to be caar_code */
 	  {
 	    /* (set! (o g) ...), here cx = o, sc->code = ((o g) ...) */
 	    push_op_stack(sc, setter);
@@ -82913,7 +82913,6 @@ s7_scheme *s7_init(void)
   sc->local_documentation_symbol = s7_make_symbol(sc, "+documentation+");
   sc->local_signature_symbol =     s7_make_symbol(sc, "+signature+");
   sc->local_setter_symbol =        s7_make_symbol(sc, "+setter+");
-  sc->local_arity_symbol =         s7_make_symbol(sc, "+arity+");
 
 #if WITH_PURE_S7
   s7_provide(sc, "pure-s7");
@@ -83742,10 +83741,10 @@ int main(int argc, char **argv)
  *
  * new proc-sig cases could be used elsewhere in opt (as in b_pp_direct)
  * *s7* should be a normal let
- * is_procedure uses need to take c_obj into account [and goto/cont] [check macro signature]
- *   lint (or some such) check that signature has symbols not actual functions
- *   +arity+? (let ((+arity+ '(0 . 16))) (lambda args ...)) -- limits args to 16 entries??
+ * +arity+? (let ((+arity+ '(0 . 16))) (lambda args ...)) -- limits args to 16 entries??
  * syms_tag may need 64-bits
+ * the symbol lookup of a signature entry should be global first I think else env->pair? etc
+ *   also let-set! is a bit of a trap -- it can change a global value!
  *
  * --------------------------------------------------------------
  *

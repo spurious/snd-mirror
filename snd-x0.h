@@ -69,7 +69,7 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, ACTIVATABLE_BUT_NOT_FOCUSED} text_cr
 #define rgb_t unsigned short
 #define RGB_MAX 65535
 #define float_to_rgb(Val) (rgb_t)(RGB_MAX * (Val))
-#define rgb_to_float(Val) (float)((float)(Val) / (float)RGB_MAX)
+#define rgb_to_float(Val) ((double)(Val) / (double)RGB_MAX)
 
 
 typedef struct {

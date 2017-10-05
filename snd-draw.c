@@ -521,7 +521,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   by = 3 * (y[2] - y[1]) - cy;
   ax = x[3] - (x[0] + cx + bx);
   ay = y[3] - (y[0] + cy + by);
-  incr = 1.0 / (float)n;
+  incr = 1.0 / (double)n;
   pts = Xen_make_vector(2 * (n + 1), Xen_integer_zero);
 
   Xen_vector_set(pts, 0, C_int_to_Xen_integer(x[0]));

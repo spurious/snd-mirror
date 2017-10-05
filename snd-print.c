@@ -233,8 +233,8 @@ void ps_draw_grf_points(axis_info *ap, int j, mus_float_t y0, graph_style_t grap
 	  {
 	    snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f %.2f RF\n",
 			 ps_grf_x(ap, xpts[i]) - size8,
-			 (float)gy0,
-			 (float)size4,
+			 (double)gy0,
+			 (double)size4,
 			 ps_grf_y(ap, ypts[i]) - gy0);
 	    ps_write(pbuf);
 	  }
@@ -296,7 +296,7 @@ void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, in
 	  snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f %.2f %.2f RF\n",
 		       ps_grf_x(ap, xpts[i]) - size8,
 		       ps_grf_y(ap, ypts[i]),
-		       (float)size4,
+		       (double)size4,
 		       ps_grf_y(ap, ypts1[i]) - ps_grf_y(ap, ypts[i]));
 	  ps_write(pbuf);
 	}

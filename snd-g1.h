@@ -181,7 +181,7 @@ rgb_t *color_map_greens(int index);
 rgb_t *color_map_blues(int index);
 #endif
 void g_init_gxcolormaps(void);
-void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
+void phases_rgb(double x, rgb_t *r, rgb_t *g, rgb_t *b);
 
 
 

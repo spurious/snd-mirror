@@ -2970,8 +2970,8 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, b
 	    js[i][j] = skew_color(si->data[i][j] * inv_scl); /* can be NO_COLOR (-1) */
 	}
     }
-  xincr = 1.0 / (float)(si->active_slices);
-  yincr = 1.0 / (float)bins;
+  xincr = 1.0 / (double)(si->active_slices);
+  yincr = 1.0 / (double)bins;
   x1 = -0.5;
 
   for (slice = 0; slice < si->active_slices - 1; slice++)
@@ -9027,7 +9027,7 @@ void write_transform_peaks(FILE *fd, chan_info *ucp)
 		  fprintf(fd, ", fft %" PRId64 " points beginning at sample %" PRId64 " (%.3f secs), %s\n\n",
 			  fp->current_size, 
 			  ap->losamp, 
-			  (float)((double)(ap->losamp) / (double)srate),
+			  ((double)(ap->losamp) / (double)srate),
 			  mus_fft_window_name(cp->fft_window)); /* was Xen name */
 		  for (i = 0; i < num_peaks; i++)
 		    fprintf(fd, "  %.*f  %.*f\n",

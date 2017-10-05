@@ -40,7 +40,7 @@ typedef struct prefs_info {
   void (*arrow_up_func)(struct prefs_info *prf);
   void (*arrow_down_func)(struct prefs_info *prf);
   void (*text_func)(struct prefs_info *prf);
-  void (*color_func)(struct prefs_info *prf, float r, float g, float b);
+  void (*color_func)(struct prefs_info *prf, double r, double g, double b);
   void (*reflect_func)(struct prefs_info *prf);
   void (*save_func)(struct prefs_info *prf, FILE *fd);
   const char *(*help_func)(struct prefs_info *prf);
@@ -1080,7 +1080,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
 
 /* ---------------- color selector row(s) ---------------- */
 
-static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
+static void pixel_to_rgb(color_t pix, double *r, double *g, double *b)
 {
   (*r) = rgb_to_float(pix->red);
   (*g) = rgb_to_float(pix->green);
@@ -1115,7 +1115,7 @@ static void display_color(GtkWidget *w, color_t pixel)
 
 static void scale_set_color(prefs_info *prf, color_t pixel)
 {
-  float r = 0.0, g = 0.0, b = 0.0;
+  double r = 0.0, g = 0.0, b = 0.0;
   pixel_to_rgb(pixel, &r, &g, &b);
   float_to_textfield(prf->rtxt, r);
   ADJUSTMENT_SET_VALUE(prf->radj, r);
@@ -1182,14 +1182,14 @@ static void prefs_r_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r;
+  double r;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
-  r = (float)string_to_mus_float_t(str, 0.0, "red amount");
+  r = (double)string_to_mus_float_t(str, 0.0, "red amount");
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {
-      ADJUSTMENT_SET_VALUE(prf->radj, (float)mus_fclamp(0.0, r, 1.0));
+      ADJUSTMENT_SET_VALUE(prf->radj, (double)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
 }
@@ -1199,14 +1199,14 @@ static void prefs_g_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r;
+  double r;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
-  r = (float)string_to_mus_float_t(str, 0.0, "green amount");
+  r = (double)string_to_mus_float_t(str, 0.0, "green amount");
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {
-      ADJUSTMENT_SET_VALUE(prf->gadj, (float)mus_fclamp(0.0, r, 1.0));
+      ADJUSTMENT_SET_VALUE(prf->gadj, (double)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
 }
@@ -1216,14 +1216,14 @@ static void prefs_b_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   char *str;
-  float r;
+  double r;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
-  r = (float)string_to_mus_float_t(str, 0.0, "blue amount");
+  r = (double)string_to_mus_float_t(str, 0.0, "blue amount");
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {
-      ADJUSTMENT_SET_VALUE(prf->badj, (float)mus_fclamp(0.0, r, 1.0));
+      ADJUSTMENT_SET_VALUE(prf->badj, (double)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
 }
@@ -1234,7 +1234,7 @@ static void prefs_call_color_func_callback(GtkWidget *w, gpointer context)
   prefs_info *prf = (prefs_info *)context;
   if ((prf) && (prf->color_func))
     {
-      float r, g, b;
+      double r, g, b;
       r = ADJUSTMENT_VALUE(prf->radj);
       g = ADJUSTMENT_VALUE(prf->gadj);
       b = ADJUSTMENT_VALUE(prf->badj);
@@ -1264,11 +1264,11 @@ static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 static prefs_info *prefs_color_selector_row(const char *label, const char *varname, 
 					    color_t current_pixel,
 					    GtkWidget *box,
-					    void (*color_func)(prefs_info *prf, float r, float g, float b))
+					    void (*color_func)(prefs_info *prf, double r, double g, double b))
 {
   prefs_info *prf = NULL;
   GtkWidget *hb, *row, *row2, *sep3;
-  float r = 0.0, g = 0.0, b = 0.0;
+  double r = 0.0, g = 0.0, b = 0.0;
 
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;

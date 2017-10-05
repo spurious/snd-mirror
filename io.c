@@ -1031,7 +1031,7 @@ static const mus_float_t mus_ubyte[256] = {
 #define UBYTE_ZERO 128
 #define USHORT_ZERO 32768
 
-#define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
+#define MUS_SAMPLE_UNSCALED(n) (((mus_float_t)n) / 32768.0)
 /* see note in _sndlib.h" values are "unscaled" from the DAC's point of view */
 
 static mus_float_t *swapped_shorts = NULL;
@@ -2790,8 +2790,8 @@ static void min_max_floats(unsigned char *data, int bytes, int chan, int chans, 
 
   if (unscaled)
     {
-      (*min_samp) = cur_min / 32768.0;
-      (*max_samp) = cur_max / 32768.0;
+      (*min_samp) = (double)cur_min / 32768.0;
+      (*max_samp) = (double)cur_max / 32768.0;
     }
   else
     {
@@ -2853,8 +2853,8 @@ static void min_max_switch_floats(unsigned char *data, int bytes, int chan, int 
 
   if (unscaled)
     {
-      (*min_samp) = cur_min / 32768.0;
-      (*max_samp) = cur_max / 32768.0;
+      (*min_samp) = (double)cur_min / 32768.0;
+      (*max_samp) = (double)cur_max / 32768.0;
     }
   else
     {

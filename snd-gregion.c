@@ -150,7 +150,7 @@ static void make_region_labels(file_info *hdr)
 #else
   set_button_label(chans_text, str);
 #endif
-  snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
+  snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", ((double)(hdr->samples) / (double)(hdr->chans * hdr->srate)));
 #if (!GTK_CHECK_VERSION(3, 0, 0))
   set_label(length_text, str);
 #else
