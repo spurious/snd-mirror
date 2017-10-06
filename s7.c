@@ -626,7 +626,7 @@ typedef struct {
 
 typedef struct {
   s7_pointer initial_slot;      /* for built-in symbols (unlet) */
-  uint32_t type;
+  uint32_t type;                /* for is_type opts */
 } symbol_info_t;
 
 #define symbol_tag_t uint32_t
@@ -8045,6 +8045,7 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym)
 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
+  /* use find_local_symbol above to restrict the search to local_env */
   if ((local_env == sc->rootlet) || (is_global(sym)))
     {
       if (is_slot(global_slot(sym)))
@@ -39056,6 +39057,13 @@ static s7_pointer g_setter(s7_scheme *sc, s7_pointer args)
 
     case T_FLOAT_VECTOR:
       return(slot_value(global_slot(sc->float_vector_set_symbol)));
+
+    case T_SYMBOL:                             /* (symbol-setter obj) -- the env arg is not passable here */
+      if (is_keyword(p)) return(sc->F);
+      p = find_symbol(sc, p);
+      if (!is_slot(p)) return(sc->F);
+      if (slot_has_setter(p)) return(slot_setter(p));
+      return(sc->F);
     }
   return(s7_wrong_type_arg_error(sc, "setter", 0, p, "a procedure or a reasonable facsimile thereof"));
 }
@@ -45183,23 +45191,6 @@ static s7_pointer apply_boolean_method(s7_scheme *sc, s7_pointer obj, s7_pointer
   return(s7_apply_function(sc, func, list_1(sc, obj)));
 }
 
-#define all_x_bool(Sc, Checker, Method, Arg1)		       \
-  {							       \
-    s7_pointer Arg = Arg1;				       \
-    if (Checker(Arg)) return(Sc->T);                           \
-    if (!has_methods(Arg)) return(sc->F);		       \
-    return(apply_boolean_method(sc, Arg, Method));			       \
-  }
-
-#define all_x_not_bool(Sc, Checker, Method, Arg1)		       \
-  {							       \
-    s7_pointer Arg = Arg1;				       \
-    if (Checker(Arg)) return(Sc->F);                           \
-    if (!has_methods(Arg)) return(sc->T);		       \
-    return((apply_boolean_method(sc, Arg, Method) == sc->F) ? sc->T : sc->F);			       \
-  }
-
-
 /* arg here is the full expression */
 static s7_pointer all_x_c(s7_scheme *sc, s7_pointer arg)       {return(arg);}
 static s7_pointer all_x_q(s7_scheme *sc, s7_pointer arg)       {return(cadr(arg));}
@@ -45360,66 +45351,62 @@ static s7_pointer local_x_cadr_s(s7_scheme *sc, s7_pointer arg)
 
 static s7_pointer all_x_is_null_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_null, sc->is_null_symbol, find_symbol_unchecked(sc, cadr(arg)));
+  return((is_null(find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer local_x_is_null_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_null, sc->is_null_symbol, local_symbol_value(cadr(arg)));
+  return((is_null(local_symbol_value(cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_is_symbol_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_symbol, sc->is_symbol_symbol, find_symbol_unchecked(sc, cadr(arg)));
+  return((is_symbol(find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer local_x_is_symbol_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_symbol, sc->is_symbol_symbol, local_symbol_value(cadr(arg)));
+  return((is_symbol(local_symbol_value(cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_pair, sc->is_pair_symbol, find_symbol_unchecked(sc, cadr(arg)));
+  return((is_pair(find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer local_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_pair, sc->is_pair_symbol, local_symbol_value(cadr(arg)));
+  return((is_pair(local_symbol_value(cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_is_keyword_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_keyword, sc->is_keyword_symbol, find_symbol_unchecked(sc, cadr(arg)));
+  return((is_keyword(find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_is_integer_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_integer, sc->is_integer_symbol, find_symbol_unchecked(sc, cadr(arg)));
+  return((is_integer(find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_is_procedure_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_procedure, sc->is_procedure_symbol, find_symbol_unchecked(sc, cadr(arg)));
+  return((is_procedure(find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_is_string_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, is_string, sc->is_string_symbol, find_symbol_unchecked(sc, cadr(arg)));
+  return((is_string(find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_is_vector_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_bool(sc, s7_is_vector, sc->is_vector_symbol, find_symbol_unchecked(sc, cadr(arg)));
+  return((s7_is_vector(find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_is_proper_list_s(s7_scheme *sc, s7_pointer arg)
 {
-    s7_pointer lst;
-    lst = find_symbol_unchecked(sc, cadr(arg));
-    if (s7_is_proper_list(sc, lst)) return(sc->T);
-    if (!has_methods(lst)) return(sc->F);
-    return(apply_boolean_method(sc, lst, sc->is_proper_list_symbol));
+  return((s7_is_proper_list(sc, find_symbol_unchecked(sc, cadr(arg)))) ? sc->T : sc->F);
 }
 
 static s7_pointer all_x_not_s(s7_scheme *sc, s7_pointer arg)
@@ -45429,12 +45416,12 @@ static s7_pointer all_x_not_s(s7_scheme *sc, s7_pointer arg)
 
 static s7_pointer all_x_not_is_pair_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_not_bool(sc, is_pair, sc->is_pair_symbol, find_symbol_unchecked(sc, opt_sym3(arg)));
+  return((is_pair(find_symbol_unchecked(sc, opt_sym3(arg)))) ? sc->F : sc->T);
 }
 
 static s7_pointer local_x_not_is_pair_s(s7_scheme *sc, s7_pointer arg)
 {
-  all_x_not_bool(sc, is_pair, sc->is_pair_symbol, local_symbol_value(opt_sym3(arg)));
+  return((is_pair(local_symbol_value(opt_sym3(arg)))) ? sc->F : sc->T);
 }
 
 static s7_pointer all_x_c_sc(s7_scheme *sc, s7_pointer arg)
@@ -46515,12 +46502,14 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	  switch (optimize_op(arg))
 	    {
 	    case HOP_SAFE_C_C:
-	      if (c_call(arg) == g_not_is_pair_s)
+	      if ((c_call(arg) == g_not_is_pair_s) &&
+		  (is_global(sc->is_pair_symbol)))
 		{
 		  set_opt_sym3(arg, cadadr(arg));
 		  return((is_local_symbol(cdadr(arg))) ? local_x_not_is_pair_s : all_x_not_is_pair_s);
 		}
-	      if (c_call(arg) == g_is_pair_cdr_s)
+	      if ((c_call(arg) == g_is_pair_cdr_s) &&
+		  (is_global(sc->is_pair_symbol)))
 		{
 		  set_opt_sym2(cdr(arg), cadadr(arg));
 		  return((is_local_symbol(cdadr(arg))) ? local_x_is_pair_cdr_s : all_x_is_pair_cdr_s);
@@ -46560,16 +46549,19 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 		if (car(arg) == sc->cdr_symbol) return((is_local) ? local_x_cdr_s : all_x_cdr_s);
 		if (car(arg) == sc->car_symbol) return((is_local) ? local_x_car_s : all_x_car_s);
 		if (car(arg) == sc->cadr_symbol) return((is_local) ? local_x_cadr_s : all_x_cadr_s);
-		if (car(arg) == sc->is_null_symbol) return((is_local) ? local_x_is_null_s : all_x_is_null_s);
-		if (car(arg) == sc->is_pair_symbol) return((is_local) ? local_x_is_pair_s : all_x_is_pair_s);
-		if (car(arg) == sc->is_symbol_symbol) return((is_local) ? local_x_is_symbol_s : all_x_is_symbol_s);
-		if (car(arg) == sc->is_keyword_symbol) return(all_x_is_keyword_s);
-		if (car(arg) == sc->is_integer_symbol) return(all_x_is_integer_s);
-		if (car(arg) == sc->is_procedure_symbol) return(all_x_is_procedure_s);
-		if (car(arg) == sc->is_string_symbol) return(all_x_is_string_s);
-		if (car(arg) == sc->is_vector_symbol) return(all_x_is_vector_s);
-		if (car(arg) == sc->is_proper_list_symbol) return(all_x_is_proper_list_s);
-		if (car(arg) == sc->not_symbol) return(all_x_not_s);
+		if (is_global(car(arg)))
+		  {
+		    if (car(arg) == sc->is_null_symbol) return((is_local) ? local_x_is_null_s : all_x_is_null_s);
+		    if (car(arg) == sc->is_pair_symbol) return((is_local) ? local_x_is_pair_s : all_x_is_pair_s);
+		    if (car(arg) == sc->is_symbol_symbol) return((is_local) ? local_x_is_symbol_s : all_x_is_symbol_s);
+		    if (car(arg) == sc->is_keyword_symbol) return(all_x_is_keyword_s);
+		    if (car(arg) == sc->is_integer_symbol) return(all_x_is_integer_s);
+		    if (car(arg) == sc->is_procedure_symbol) return(all_x_is_procedure_s);
+		    if (car(arg) == sc->is_string_symbol) return(all_x_is_string_s);
+		    if (car(arg) == sc->is_vector_symbol) return(all_x_is_vector_s);
+		    if (car(arg) == sc->is_proper_list_symbol) return(all_x_is_proper_list_s);
+		    if (car(arg) == sc->not_symbol) return(all_x_not_s);
+		  }
 		return((is_local) ? local_x_c_s : all_x_c_s);
 	      }
 
@@ -46577,9 +46569,12 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 	      if (car(arg) == sc->cdr_symbol) return(local_x_cdr_s);
 	      if (car(arg) == sc->car_symbol) return(local_x_car_s);
 	      if (car(arg) == sc->cadr_symbol) return(local_x_cadr_s);
-	      if (car(arg) == sc->is_null_symbol) return(local_x_is_null_s);
-	      if (car(arg) == sc->is_pair_symbol) return(local_x_is_pair_s);
-	      if (car(arg) == sc->is_symbol_symbol) return(local_x_is_symbol_s);
+		if (is_global(car(arg)))
+		  {
+		    if (car(arg) == sc->is_null_symbol) return(local_x_is_null_s);
+		    if (car(arg) == sc->is_pair_symbol) return(local_x_is_pair_s);
+		    if (car(arg) == sc->is_symbol_symbol) return(local_x_is_symbol_s);
+		  }
 	      return(local_x_c_s);
 	      
 	    case HOP_SAFE_C_opSq:
@@ -58948,7 +58943,8 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	      choose_c_function(sc, expr, func, 1);
 
 	      /* these are border-line useless -- lint uses cxr_s */
-	      if (symbols == 1)
+	      if ((symbols == 1) &&
+		  (is_global(car(expr))))
 		{
 		  if (c_call(expr) == g_car)
 		    add_optimizer_fixup(sc, expr, (uint32_t)(hop + OP_SAFE_CAR_S));
@@ -70039,7 +70035,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer val;
 		    val = find_symbol_unchecked(sc, cadr(code));
-		    eval_boolean_method(sc, is_pair, sc->is_pair_symbol, val);
+		    sc->value = (is_pair(val)) ? sc->T : sc->F;
 		    goto START;
 		  }
 
@@ -70049,7 +70045,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer val;
 		    val = find_symbol_unchecked(sc, cadr(code));
-		    eval_boolean_method(sc, is_null, sc->is_null_symbol, val);
+		    sc->value = (is_null(val)) ? sc->T : sc->F;
 		    goto START;
 		  }
 
@@ -70059,7 +70055,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer val;
 		    val = find_symbol_unchecked(sc, cadr(code));
-		    eval_boolean_method(sc, is_symbol, sc->is_symbol_symbol, val);
+		    sc->value = (is_symbol(val)) ? sc->T : sc->F;
 		    goto START;
 		  }
 
@@ -83726,12 +83722,9 @@ int main(int argc, char **argv)
  *   is_type_car|cdr|a in all 3 cases
  *   need symbol->type-checker-recog->type -- symbol_type: object.sym.info->type
  * maybe pass \u... through in read_constant_string unchanged, or read in s7??  no worse than \x..;
- * doc entry could be a thunk, doc/sig for var without a setter? = slot_pending/expr + bits? collisions?
  *
  * c_object type table entries should also be s7_function, reported by object->let perhaps
  *    wrappers in the meantime? c_object_type_to_let -- also there's repetition now involving local obj->let methods
- * signatures for c_object funcs? s7_set_signature? all c_object funcs are implicit in type table
- *   c_function_signature(func) = signature (see c_object_set_function above)
  * maybe c-object-setter should be available as c-object-set! (currently #<c-object-setter>), c-object-ref?
  *
  * ex lint for specific ques: turn off lint-format, seek all calls of f global|local|with a specific arg etc
@@ -83741,19 +83734,17 @@ int main(int argc, char **argv)
  *
  * new proc-sig cases could be used elsewhere in opt (as in b_pp_direct)
  * *s7* should be a normal let
- * +arity+? (let ((+arity+ '(0 . 16))) (lambda args ...)) -- limits args to 16 entries??
  * syms_tag may need 64-bits
- * the symbol lookup of a signature entry should be global first I think else env->pair? etc
- *   also let-set! is a bit of a trap -- it can change a global value!
+ * set symbol-setter -> set setter?
  *
  * --------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  ||  16  | 17.4  17.7  17.8
  * tmac          |      |      |      || 9052 |  615   261   261
- * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1049
+ * index    44.3 | 3291 | 1725 | 1276 || 1255 | 1158  1053  1050
  * tref          |      |      | 2372 || 2125 | 1375  1109  1121
  * tauto     265 |   89 |  9   |  8.4 || 2993 | 3255  1378  1376
- * teq           |      |      | 6612 || 2777 | 2129  1921  1929
+ * teq           |      |      | 6612 || 2777 | 2129  1921  1924
  * s7test   1721 | 1358 |  995 | 1194 || 2926 | 2645  2172  2067
  * tlet     5318 | 3701 | 3712 | 3700 || 4006 | 3616  2436  2426
  * lint          |      |      |      || 4041 | 3376  2726  2677
@@ -83764,7 +83755,7 @@ int main(int argc, char **argv)
  * tfft          |      | 15.5 | 16.4 || 17.3 | 4901  3964  3964
  * tsort         |      |      |      || 8584 | 4869  4012  4012
  * titer         |      |      |      || 5971 | 5224  4562  4537
- * bench         |      |      |      || 7012 | 6378  5106  5080
+ * bench         |      |      |      || 7012 | 6378  5106  5078
  * thash         |      |      | 50.7 || 8778 | 8488  7537  7531
  * tgen          |   71 | 70.6 | 38.0 || 12.6 | 12.4  11.9  11.8
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.4  17.8  17.8

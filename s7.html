@@ -2458,7 +2458,7 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="unlet">unlet</em>)                 the current environment, but all built-in functions have their original values
 
 (<em class=def id="letref">let-ref</em> env sym)       get value of sym in env, same as (env sym)
-(<em class=def id="letset">let-set!</em> env sym val)
+(<em class=def id="letset">let-set!</em> env sym val)  set value of sym in val to val, same as (set! (env sym) val)
 
 (<em class=def id="inlet">inlet</em> . bindings)       make a new environment with the given bindings
 (<em class=def id="sublet">sublet</em> env . bindings)  same as inlet, but the new environment is local to env
@@ -2512,8 +2512,21 @@ chain up to the rootlet.  That is, two environments are equal if any local varia
 </p>
 
 <p><b>let-ref</b> and <b>let-set!</b> return #&lt;undefined&gt; if the first argument is not
-defined in the environment or its parents.
+defined in the environment or its parents.  To search just the given environment (ignoring its outlet chain),
+use defined? with the third argument #t before calling let-ref or let-set!:
 </p>
+
+<pre class="indented">
+&gt; (defined? 'car (inlet 'a 1) #t)
+<em class="gray">#f</em>
+&gt; (defined? 'car (inlet 'a 1))
+<em class="gray">#t</em>
+</pre>
+
+<p>This matters in let-set!: <code>(let-set! (inlet 'a 1) 'car #f)</code>
+is the same as <code>(set! car #f)</code>!
+</p>
+
 <p>
 <b>with-let</b> evaluates its body in the given environment, so
 <code>(with-let e . body)</code> is equivalent to

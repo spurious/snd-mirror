@@ -10195,7 +10195,7 @@
 		(lambda (types arg)
 		  (if (and (symbol? types)
 			   (not (eq? types 'values)))
-		      ((symbol->value types *e*) arg)
+		      ((symbol->value types *e*) arg) ; not (rootlet) for *e* since we have some local checkers: unused-parameter? etc
 		      (and (pair? types)
 			   (or (any-checker? (car types) arg)
 			       (any-checker? (cdr types) arg))))))
