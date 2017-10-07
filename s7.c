@@ -6802,10 +6802,12 @@ static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_openlet "(openlet? obj) returns #t is 'obj' has methods."
   #define Q_is_openlet pl_bt
+  s7_pointer e;
 
-  /* if car(args) is not a let, should this raise an error? -- no, easier to use this way in cond */
-  check_method(sc, car(args), sc->is_openlet_symbol, args);
-  return(make_boolean(sc, has_methods(car(args))));
+  e = car(args);
+  /* if e is not a let, should this raise an error? -- no, easier to use this way in cond */
+  check_method(sc, e, sc->is_openlet_symbol, args);
+  return(make_boolean(sc, has_methods(e)));
 }
 
 
@@ -7354,20 +7356,25 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
    */
 
   env = car(args);
+  symbol = cadr(args);
+
   if (!is_let(env))
     return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, env, a_let_string));
 
-  symbol = cadr(args);
   if (is_keyword(symbol))
     symbol = keyword_symbol(symbol);
 
   if (!is_symbol(symbol))
     {
-      check_method(sc, env, sc->let_ref_symbol, args);
+      check_method(sc, env, sc->let_ref_symbol, args); /* args is ok because if not a symbol, it's not a keyword either */
       if (has_ref_fallback(env))
 	check_method(sc, env, sc->let_ref_fallback_symbol, args);
       return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, symbol, a_symbol_string));
     }
+  /* TODO: let-ref method bugs */
+  /* this is totally broken -- if the let has a let-ref (or let-set!) method, it should be
+   *   called here no matter what "symbol" is.  But that leads to a lot of consequences...
+   */
 
   if (env == sc->rootlet)
     {
@@ -7385,30 +7392,34 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
       if (slot_symbol(y) == symbol)
 	return(slot_value(y));
 
-  /* now for a horrible kludge.  If a let is a mock-hash-table (for example), implicit
-   *   indexing of the hash-table collides with the same thing for the let (field names
-   *   versus keys), and we can't just try again here because that makes it too easy to
-   *   get into infinite recursion.  So, 'let-ref-fallback...
-   */
-
   if (has_methods(env))
     {
-      if (has_ref_fallback(env))
-	apply_known_method(sc, env, sc->let_ref_fallback_symbol, args);
+      /* this is not a redundant check -- if has_methods, don't check global slot */
 
-      /* why did this ignore a global value? Changed 24-May-16 to check rootlet if no methods --
-       *   apparently I was using #<undefined> here (pre-rootlet-check) to indicate that an
-       *   open let did not have a particular method (locally).  This seems inconsistent now,
-       *   but it was far worse before.  At least (let () ((curlet) 'pi)) is pi!
+      /* now for a horrible kludge.  If a let is a mock-hash-table (for example), implicit
+       *   indexing of the hash-table collides with the same thing for the let (field names
+       *   versus keys), and we can't just try again here because that makes it too easy to
+       *   get into infinite recursion.  So, 'let-ref-fallback...
        */
+      if (has_ref_fallback(env))
+	apply_known_method(sc, env, sc->let_ref_fallback_symbol, set_plist_2(sc, env, symbol));
+
+#if 0
+      /* TODO: define-class bug */
+      /* this happens in s7test for add-1 and subtract? is this a bug in the define-class stuff -- varlet add-1 -> rootlet?
+       */
+      if (is_slot(global_slot(symbol)))
+	fprintf(stderr, "%s global ignored in %s %s: %s\n", DISPLAY(symbol), DISPLAY(env), DISPLAY(sc->cur_code), DISPLAY(slot_value(global_slot(symbol))));
+      /* yes -- that code is buggy.  If another let is added, class-name is undefined -- it is a global?? */
+#endif
     }
   else
     {
+      /* (let () ((curlet) 'pi)) */
       y = global_slot(symbol);
       if (is_slot(y))
 	return(slot_value(y));
     }
-
   return(sc->undefined);
 }
 
@@ -50163,9 +50174,8 @@ static bool b_pp_ok(s7_scheme *sc, opt_info *opc, s7_pointer s_func, s7_pointer 
 	  call_sig = signature(sc, s_func);
 	  arg1_type = opt_arg_type(sc, cdr(car_x));
 	  arg2_type = opt_arg_type(sc, cddr(car_x));
-	  /* fprintf(stderr, "%s %s %s\n", DISPLAY(call_sig), DISPLAY(arg1_type), DISPLAY(arg2_type)); */
-	  if ((cadr(call_sig) == ((is_pair(arg1_type)) ? car(arg1_type) : arg1_type)) &&
-	      (caddr(call_sig) == ((is_pair(arg2_type)) ? car(arg2_type) : arg2_type)))
+	  if ((cadr(call_sig) == arg1_type) &&                   /* not car(arg1_type) here: (string>? (string) (read-line)) */
+	      (caddr(call_sig) == arg2_type))
 	    {
 	      opc->v3.b_pp_f = s7_b_pp_direct_function(s_func);
 	      return(true);
@@ -83736,6 +83746,7 @@ int main(int argc, char **argv)
  * *s7* should be a normal let
  * syms_tag may need 64-bits
  * set symbol-setter -> set setter?
+ * cowlet t707.scm -- this has uncovered a bunch of bugs...
  *
  * --------------------------------------------------------------
  *

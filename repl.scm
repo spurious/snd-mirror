@@ -34,7 +34,15 @@
 		    (when (and (>= sym-len text-len)
 			       (string=? text (substring sym 0 text-len)))
 		      (if match
-			  (return text)
+			  ;; more than one match, save the longest text that all syms match
+			  (let* ((match-len (string-length match))
+				 (min-len (min match-len sym-len)))
+			    (do ((i text-len (+ i 1)))
+				((or (= i min-len)
+				     (not (char=? (match i) (sym i))))
+				 (if (= min-len text-len)
+				     (return text)
+				     (set! match (substring match 0 i))))))
 			  (set! match sym)))))
 		st)
 	       (or match text)))))
