@@ -3210,7 +3210,7 @@ current environment chain, it is considered a local environment:
 	   	    :length (lambda (f) len)
 		    :object-&gt;string (lambda (f . args) "#&lt;fvector&gt;")
 		    :let-set! (lambda (fv i val) (#_vector-set! (fv 'v) i (-&gt;float val)))
-		    :let-ref (lambda (fv i) (#_vector-ref (fv 'v) i))))))
+		    :let-ref-fallback (lambda (fv i) (#_vector-ref (fv 'v) i))))))
     (set! fvector? (lambda (p)
 		     (and (let? p)
 			  (eq? (p 'type) type))))))

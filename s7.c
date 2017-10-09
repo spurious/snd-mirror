@@ -1955,13 +1955,13 @@ static s7_scheme *cur_sc = NULL;
 #define is_maybe_safe(p)              ((typeflag(_TFnc(p)) & T_MAYBE_SAFE) != 0)
 #define set_maybe_safe(p)             typeflag(_TFnc(p)) |= T_MAYBE_SAFE
 
-#define T_HAS_SET_FALLBACK            T_SAFE_STEPPER
-#define T_HAS_REF_FALLBACK            T_MUTABLE
-#define has_ref_fallback(p)           ((typeflag(_TLid(p)) & (T_HAS_REF_FALLBACK | T_HAS_METHODS)) == (T_HAS_REF_FALLBACK | T_HAS_METHODS))
-#define has_set_fallback(p)           ((typeflag(_TLid(p)) & (T_HAS_SET_FALLBACK | T_HAS_METHODS)) == (T_HAS_SET_FALLBACK | T_HAS_METHODS))
-#define set_has_ref_fallback(p)       typeflag(_TLet(p)) |= T_HAS_REF_FALLBACK
-#define set_has_set_fallback(p)       typeflag(_TLet(p)) |= T_HAS_SET_FALLBACK
-#define set_all_methods(p, e)         typeflag(_TLet(p)) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
+#define T_HAS_LET_SET_FALLBACK        T_SAFE_STEPPER
+#define T_HAS_LET_REF_FALLBACK        T_MUTABLE
+#define has_let_ref_fallback(p)       ((typeflag(_TLid(p)) & (T_HAS_LET_REF_FALLBACK | T_HAS_METHODS)) == (T_HAS_LET_REF_FALLBACK | T_HAS_METHODS))
+#define has_let_set_fallback(p)       ((typeflag(_TLid(p)) & (T_HAS_LET_SET_FALLBACK | T_HAS_METHODS)) == (T_HAS_LET_SET_FALLBACK | T_HAS_METHODS))
+#define set_has_let_ref_fallback(p)   typeflag(_TLet(p)) |= T_HAS_LET_REF_FALLBACK
+#define set_has_let_set_fallback(p)   typeflag(_TLet(p)) |= T_HAS_LET_SET_FALLBACK
+#define set_all_methods(p, e)         typeflag(_TLet(p)) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_LET_REF_FALLBACK | T_HAS_LET_SET_FALLBACK))
 
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
@@ -7152,11 +7152,11 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	  /* here we know new_e is a let and is not rootlet */
 	  make_slot_1(sc, new_e, sym, val);
 	  if (sym == sc->let_ref_fallback_symbol)
-	    set_has_ref_fallback(new_e);
+	    set_has_let_ref_fallback(new_e);
 	  else
 	    {
 	      if (sym == sc->let_set_fallback_symbol)
-		set_has_set_fallback(new_e);
+		set_has_let_set_fallback(new_e);
 	    }
 	}
       sc->temp3 = sc->nil;
@@ -7361,20 +7361,23 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
   if (!is_let(env))
     return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, env, a_let_string));
 
-  if (is_keyword(symbol))
-    symbol = keyword_symbol(symbol);
-
   if (!is_symbol(symbol))
     {
-      check_method(sc, env, sc->let_ref_symbol, args); /* args is ok because if not a symbol, it's not a keyword either */
-      if (has_ref_fallback(env))
+      if (has_let_ref_fallback(env))
 	check_method(sc, env, sc->let_ref_fallback_symbol, args);
       return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, symbol, a_symbol_string));
     }
-  /* TODO: let-ref method bugs */
-  /* this is totally broken -- if the let has a let-ref (or let-set!) method, it should be
-   *   called here no matter what "symbol" is.  But that leads to a lot of consequences...
+
+  if (has_methods(env))
+    check_method(sc, env, sc->let_ref_symbol, args);
+  /* a let-ref method is almost impossible to write without creating an infinite loop:
+   *   any reference to the let will probably call let-ref somewhere, calling us again, and looping.
+   *   This is not a problem in c-objects and funclets because c-object-ref and funclet-ref don't
+   *   exist -- perhaps let-ref should not also.
    */
+
+  if (is_keyword(symbol))
+    symbol = keyword_symbol(symbol);
 
   if (env == sc->rootlet)
     {
@@ -7396,14 +7399,14 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
     {
       /* this is not a redundant check -- if has_methods, don't check global slot */
 
-      /* now for a horrible kludge.  If a let is a mock-hash-table (for example), implicit
+      /* If a let is a mock-hash-table (for example), implicit
        *   indexing of the hash-table collides with the same thing for the let (field names
        *   versus keys), and we can't just try again here because that makes it too easy to
        *   get into infinite recursion.  So, 'let-ref-fallback...
        */
-      if (has_ref_fallback(env))
+      if (has_let_ref_fallback(env))
 	apply_known_method(sc, env, sc->let_ref_fallback_symbol, set_plist_2(sc, env, symbol));
-
+      
 #if 0
       /* TODO: define-class bug */
       /* this happens in s7test for add-1 and subtract? is this a bug in the define-class stuff -- varlet add-1 -> rootlet?
@@ -7415,8 +7418,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
     }
   else
     {
-      /* (let () ((curlet) 'pi)) */
-      y = global_slot(symbol);
+      y = global_slot(symbol);  /* (let () ((curlet) 'pi)) */
       if (is_slot(y))
 	return(slot_value(y));
     }
@@ -7434,7 +7436,7 @@ static s7_pointer lint_let_ref_1(s7_scheme *sc, s7_pointer lt, s7_pointer sym)
 
   if (has_methods(lt))
     {
-      if (has_ref_fallback(lt))
+      if (has_let_ref_fallback(lt))
 	apply_known_method(sc, lt, sc->let_ref_fallback_symbol, set_plist_2(sc, lt, sym));
     }
   else
@@ -7496,7 +7498,7 @@ static s7_pointer g_local_lint_let_ref(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer let_ref_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_pointer expr, bool ops)
 {
-  if (!ops) return(f);
+  if ((!ops) || (!is_global(sc->let_ref_symbol))) return(f);
   if ((is_h_safe_c_c(expr)) &&
       ((raw_opt1(expr) == lint_let_ref) || /* perhaps check is_safe_c_op(expr) then opt_cfunc(expr) rather than using raw_opt here and in the set case below */
        (raw_opt1(expr) == local_lint_let_ref)))
@@ -7596,7 +7598,6 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 
       if (!err) err = s7_make_permanent_string("let-set! ~A is not defined in ~A");
       return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, err, symbol, env)));
-      /* return(sc->undefined); */
     }
 
   for (x = env; is_let(x); x = outlet(x))
@@ -7611,7 +7612,7 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 
   if (has_methods(env))
     {
-      if (has_set_fallback(env))
+      if (has_let_set_fallback(env))
 	apply_known_method(sc, env, sc->let_set_fallback_symbol, sc->w = list_3(sc, env, symbol, value));
     }
   else
@@ -7628,7 +7629,6 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 
   if (!err) err = s7_make_permanent_string("let-set! ~A is not defined in ~A");
   return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, err, symbol, env)));
-  /* return(sc->undefined); */
   /* not sure about this -- what's the most useful choice? */
 }
 
@@ -7636,16 +7636,19 @@ s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_point
 {
   if (!is_let(env))
     return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 1, env, a_let_string));
+
   if (is_immutable(env)) /* opt_p_ppp_fff can't check at opt time for immutable let, and it calls us */
     return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, env)));
 
   if (!is_symbol(symbol))
     {
-      check_method(sc, env, sc->let_set_symbol, sc->w = list_3(sc, env, symbol, value));
-      if (has_set_fallback(env))
+      if (has_let_set_fallback(env))
 	apply_known_method(sc, env, sc->let_set_fallback_symbol, sc->w = list_3(sc, env, symbol, value));
       return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 2, symbol, a_symbol_string));
     }
+
+  if (has_methods(env))
+    check_method(sc, env, sc->let_set_symbol, sc->w = list_3(sc, env, symbol, value));
 
   return(let_set_1(sc, env, symbol, value));
 }
@@ -7669,6 +7672,10 @@ static s7_pointer g_lint_let_set_1(s7_scheme *sc, s7_pointer lt1, s7_pointer sym
   lt = (is_pair(lt1)) ? cdr(lt1) : g_cdr(sc, set_plist_1(sc, lt1));
   if (!is_let(lt))
     return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 1, lt, a_let_string));
+#if DEBUGGING
+  if (has_methods(lt))
+    fprintf(stderr, "has methods %s\n", __func__);
+#endif
   if (is_immutable(lt))
     return(immutable_object_error(sc, set_elist_3(sc, immutable_error_string, sc->let_set_symbol, lt)));
 
@@ -7698,7 +7705,7 @@ static s7_pointer g_lint_let_set_1(s7_scheme *sc, s7_pointer lt1, s7_pointer sym
 
   if (has_methods(lt))
     {
-      if (has_set_fallback(lt))
+      if (has_let_set_fallback(lt))
 	apply_known_method(sc, lt, sc->let_set_fallback_symbol, sc->w = list_3(sc, lt, sym, val));
     }
   else
@@ -7729,7 +7736,7 @@ static s7_pointer g_local_lint_let_set(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer let_set_chooser(s7_scheme *sc, s7_pointer f, int32_t args, s7_pointer expr, bool ops)
 {
-  if (!ops) return(f);
+  if ((!ops) || (!is_global(sc->let_set_symbol))) return(f);
   if ((is_h_safe_c_c(expr)) &&
       ((raw_opt1(expr) == lint_let_set) ||
        (raw_opt1(expr) == local_lint_let_set)))
@@ -56717,7 +56724,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
    */
-  if (has_ref_fallback(sc->envir)) /* an experiment -- see s7test (with-let *db* (+ int32_t (length str))) */
+  if (has_let_ref_fallback(sc->envir)) /* an experiment -- see s7test (with-let *db* (+ int32_t (length str))) */
     apply_known_method(sc, sc->envir, sc->let_ref_fallback_symbol, sc->w = list_2(sc, sc->envir, sym));
   /* but if the thing we want to hit this fallback happens to exist at a higher level, oops... */
 

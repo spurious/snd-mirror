@@ -17,10 +17,12 @@
 
 
 (define (mock->string obj . args)
-  (dynamic-wind
-      (lambda () (coverlet obj))
-      (lambda () (apply #_object->string (obj 'value) args))
-      (lambda () (openlet obj))))
+  (if (openlet? obj)
+      (dynamic-wind
+	  (lambda () (coverlet obj))
+	  (lambda () (apply #_object->string (obj 'value) args))
+	  (lambda () (openlet obj)))
+      (apply #_object->string (obj 'value) args)))
 
 
 (define (make-local-method f)
@@ -41,14 +43,14 @@
 					    (#_vector-set! (obj 'value) i val)
 					    (error 'wrong-type-arg "vector-set! ~S ~S ~S" obj i val))) ; the wrong arg here is 'i
 		  'vector-set!        (lambda (obj i val) ((obj 'local-set!) obj i val) val)
-		  'let-set!           (lambda (obj i val) ((obj 'local-set!) obj i val) val)
+		  'let-set!-fallback  (lambda (obj i val) ((obj 'local-set!) obj i val) val)
 		  
 		  'vector-ref         (lambda (obj i) 
 					(if (mock-vector? obj)
 					    (#_vector-ref (obj 'value) i)
 					    (error 'wrong-type-arg "vector-ref ~S ~S" obj i)))
 		  
-		  'let-ref            (lambda (obj i) (#_vector-ref (obj 'value) i))   ; the implicit case, so 'i can't be the culprit
+		  'let-ref-fallback   (lambda (obj i) (#_vector-ref (obj 'value) i))   ; the implicit case, so 'i can't be the culprit
 		  'vector-length      (lambda (obj) (#_length (obj 'value)))
 		  'vector-append      (make-local-method #_vector-append)
 		  'reverse            (lambda (obj) (#_reverse (obj 'value)))
@@ -147,9 +149,9 @@
        'object->string mock->string
        'initial-element #f
        'vector-ref local-ref
-       'let-ref local-ref
+       'let-ref-fallback local-ref
        'vector-set! local-set!
-       'let-set! local-set!))))
+       'let-set!-fallback local-set!))))
 |#
 
 
@@ -268,8 +270,8 @@
 		  'object->string         (lambda* (obj (w #t)) (copy (if (eq? w :readable) "*mock-string*" "#<mock-string-class>")))
 		  'arity                  (lambda (obj) (#_arity (obj 'value)))
 		  'make-iterator          (lambda (obj) (#_make-iterator (obj 'value)))
-		  'let-ref                (lambda (obj i) (#_string-ref (obj 'value) i))           ; these are the implicit cases
-		  'let-set!               (lambda (obj i val) (string-set! (obj 'value) i val))
+		  'let-ref-fallback       (lambda (obj i) (#_string-ref (obj 'value) i))           ; these are the implicit cases
+		  'let-set!-fallback      (lambda (obj i val) (string-set! (obj 'value) i val))
 		  'string-length          (lambda (obj) (#_length (obj 'value)))
 		  'string-append          (make-local-method #_string-append)
 		  'string-copy            (lambda (obj) (#_copy (obj 'value)))
@@ -896,8 +898,8 @@
 		  'memq             (lambda (val obj) (#_memq val (obj 'value)))
 		  'memv             (lambda (val obj) (#_memv val (obj 'value)))
 		  'member           (lambda (val obj . args) (apply #_member val (obj 'value) args))
-		  'let-ref          (lambda (obj ind) (coverlet obj) (let ((val (#_list-ref (obj 'value) ind))) (openlet obj) val))
-		  'let-set!         (lambda (obj ind val) (coverlet obj) (#_list-set! (obj 'value) ind val) (openlet obj) val)
+		  'let-ref-fallback (lambda (obj ind) (coverlet obj) (let ((val (#_list-ref (obj 'value) ind))) (openlet obj) val))
+		  'let-set!-fallback (lambda (obj ind val) (coverlet obj) (#_list-set! (obj 'value) ind val) (openlet obj) val)
 		  'arity            (lambda (obj) (#_arity (obj 'value)))
 		  'fill!            (lambda (obj val) (#_fill! (obj 'value) val))
 		  'reverse          (lambda (obj) (#_reverse (obj 'value)))
@@ -962,7 +964,7 @@
        (sublet (*mock-pair* 'mock-pair-class)
 	 'object->string   mock->string
 	 
-	 'let-set!         (lambda (obj i val) 
+	 'let-set!-fallback (lambda (obj i val) 
 			     (set! (obj 'value) (append (copy (obj 'value) (make-list (+ i 1))) (list-tail (obj 'value) (+ i 1))))
 			     (list-set! (obj 'value) i val))
 	 'list-set!        (lambda (obj i val) 
