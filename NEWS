@@ -1,9 +1,12 @@
-Snd 20.7:
+Snd 20.8:
 
-Snd: new configuration switch: --with-notcurses; uses nrepl.
-s7: added emscripten support for webassembly, thanks to Christos Vagias
-    mingw fix thanks to Kjetil
+Snd: removed gtk support
+     Mike Scholz updated the Forth and Ruby scripts.
 
-checked: gtk 3.99.0|1, OSX 10.15.6, sbcl 2.0.8
+s7: s7_free 
+    a git repository: git@cm-gitlab.stanford.edu:bil/s7.git
+                      https://cm-gitlab.stanford.edu/bil/s7.git
 
-Thanks!: Christos Vagias, Kjetil Matheussen
+checked: sbcl 2.0.9
+
+Thanks!: Tito Latini, James Hearon, Christos Vagias, Mike Scholz, Fernando
