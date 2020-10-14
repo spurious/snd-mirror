@@ -251,6 +251,11 @@ static char *glx_version(void)
   #include <sys/utsname.h>
 #endif
 
+#if USE_NOTCURSES
+  /* I don't want to include notcurses.h */
+  const char* notcurses_version(void);
+#endif
+
 char *version_info(void)
 {
   char *result, *xversion, *consistent = NULL;
@@ -310,6 +315,9 @@ char *version_info(void)
 	  "\n    Xpm ", snd_itoa(XpmFormat), ".", 
                         snd_itoa(XpmVersion), ".", 
                         snd_itoa(XpmRevision),
+#endif
+#if USE_NOTCURSES
+	  "\n    Notcurses ", notcurses_version(),
 #endif
 #if HAVE_LADSPA
 	  "\n    Ladspa: ",

@@ -5,7 +5,7 @@
 #   gmp, mpfr, and mpc deliberately have none!
 
 
-AC_INIT(snd, 20.8, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-20.tar.gz)
+AC_INIT(snd, 20.9, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-20.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST # needed by case $host below
@@ -24,7 +24,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=20.8
+VERSION=20.9
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -187,6 +187,7 @@ fi
 #--------------------------------------------------------------------------------
 
 # graphics: motif chosen if --with-motif
+#           notcurses if --with-notcurses -- I might expand this someday -- I think graphs are doable
 #           else no gui (notcurses possible)
 
 XLIBS=""
