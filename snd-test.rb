@@ -2,14 +2,14 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 2005/02/18 10:18:34
-# Changed: 2020/09/19 01:00:46
+# Changed: 2020/11/02 16:02:30
 
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
 #
 # Tested with:
 #   Snd 20.x
-#   Ruby 2.6
+#   Ruby 3.x
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
 # hooks, etc.
@@ -831,9 +831,9 @@ def clear_test_files
   fs = 0
   [$original_save_dir, $original_temp_dir, "/tmp"].each do |path|
     if File.exist?(path)
-      # FIXME: Dir[] <=> Dir.[]
-      fs += [path + "/snd_*"].length
-      [path + "/snd_*"].each do |f| delete_file(f) end
+      d = Dir[path + "/snd_*"]
+      fs += d.length
+      d.each do |f| delete_file(f) end
     end
   end
   snd_info("%s temporary file%s deleted",
@@ -19054,7 +19054,7 @@ def test_08_21
   incalls = outcalls = 0
   rd = make_sampler(0)
   pv = make_phase_vocoder(lambda do |dir| next_sample(rd) end,
-                          512, 4, (128 * 2.0).to_i, 1.0,
+                          512, 4, 128 * 2, 1.0,
                           lambda do |v, infunc|
                             incalls += 1
                             true
@@ -21721,7 +21721,7 @@ end
 def spectral_difference(snd1, snd2)
   size = [framples(snd1), framples(snd2)].max
   pow2 = (log(size) / log(2)).ceil
-  fftlen = (2 ** pow2).to_i
+  fftlen = (2.0 ** pow2).to_i
   fdr1 = channel2vct(0, fftlen, snd1, 0)
   fdr2 = channel2vct(0, fftlen, snd2, 0)
   spectr1 = snd_spectrum(fdr1, Blackman2_window, fftlen, true)
@@ -22711,7 +22711,6 @@ def test_13_01
   $before_exit_hook.add_hook!("snd-test-1") do | | false end
   $before_exit_hook.add_hook!("snd-test-2") do | | true end
   $exit_hook.add_hook!("snd-test-3") do | | false end
-  exit
   $exit_hook.reset_hook!
   $before_exit_hook.reset_hook!
   #
@@ -30531,7 +30530,7 @@ end
 
 def automorph(a, b, c, d, snd = false, chn = false)
   len = framples(snd, chn)
-  pow2 = (log(len) / log(2)).ceil.to_i
+  pow2 = (log(len) / log(2)).ceil
   fftlen = (2 ** pow2).round
   fftscale = 1.0 / fftlen
   rl = channel2vct(0, fftlen, snd, chn)

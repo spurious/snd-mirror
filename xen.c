@@ -88,14 +88,15 @@ return help associated with name (String or Symbol) or false"
 
 void xen_initialize(void)
 {
+  int argc = 4;
+  char *argv[] = {"xen", "--disable-gems", "-e", ";"};
+
 #ifdef RUBY_INIT_STACK
   RUBY_INIT_STACK;
 #endif
 
   ruby_init();
-  ruby_init_loadpath();
-  ruby_script("xen");        /* necessary in ruby 1.9 (else segfault in rb_raise -- is this the rb GC bug (see snd-xen.c)?) */
-
+  ruby_options(argc, argv);
   Init_Hook();
 }
 

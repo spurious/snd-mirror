@@ -368,6 +368,12 @@ fi
 
 # Yuri suggests: ruby -r rbconfig -e 'C = RbConfig::CONFIG' -e 'puts C["ruby_version"]' | sed -E 's|([[:digit:]]+\.[[:digit:]]+).*|\1|'
 
+# Mike Scholz suggests:
+#    For finding ruby*.pc, one way is to place a link from any version in your installation 
+#    to ruby.pc in a well-known directory which is first in your $PKG_CONFIG_PATH.
+#	ln -fs /usr/local/lib/pkgconfig/ruby-2.7.2.pc ~/lib/pkgconfig/ruby.pc
+#	setenv PKG_CONFIG_PATH ~/lib/pkgconfig:${PKG_CONFIG_PATH}
+
 if test "$with_ruby" = yes ; then
   if test x$PKG_CONFIG != xno ; then
     m4_foreach([ruby_version], [[ruby-3.0], [ruby-2.8], [ruby-2.7], [ruby-2.6], [ruby-2.5], [ruby-2.4], [ruby-2.3], [ruby-2.2], [ruby-2.1], [ruby-2.0], [ruby], [ruby-1.9.3], [ruby-1.9], [ruby-1.8]],
@@ -381,6 +387,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby_version --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby_version --modversion`
           ac_snd_extension_language=Ruby
+	  CC="$CC -fdeclspec"
           S7_LIB=""
           AC_SUBST(S7_LIB)
         fi
