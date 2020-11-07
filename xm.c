@@ -13,11 +13,13 @@
 #define HAVE_XP 0
 
 
-#define XM_DATE "27-Jul-17"
+#define XM_DATE "6-Nov-20"
 
 /* HISTORY: 
  *
- *   12-Jan-08: use s7_set_c_type_gc_free
+ *   6-Nov-20:  add noreturn attribute in error handlers.
+ *   --------
+ *   12-Jan-18: use s7_set_c_type_gc_free
  *   --------
  *   27-Jul-17: updated Init_libxm to pass s7 pointer in scheme.
  *   --------
@@ -13991,12 +13993,18 @@ static Xen gxm_XtMalloc(Xen arg1)
 static Xen xm_XtErrorHandler;
 static Xen xm_XtWarningHandler;
 
+#if (defined(__GNUC__) || defined(__clang__))
+static void gxm_XtErrorHandler(String msg) __attribute__((noreturn));
+#endif
+
 static void gxm_XtErrorHandler(String msg)
 {
   if (Xen_is_procedure(xm_XtErrorHandler))
     Xen_call_with_1_arg(xm_XtErrorHandler, 
 	       C_string_to_Xen_string(msg), 
 	       __func__);
+  else Xen_error(XEN_ERROR_TYPE("Xt-error"), C_string_to_Xen_string(msg));
+  exit(0);
 }
 
 static Xen gxm_XtAppSetErrorHandler(Xen arg1, Xen arg2)
@@ -14102,6 +14110,10 @@ handler and passes the specified information."
 static Xen xm_XtErrorMsgHandler;
 static Xen xm_XtWarningMsgHandler;
 
+#if (defined(__GNUC__) || defined(__clang__))
+static void gxm_XtErrorMsgHandler(String name, String type, String clas, String defp, String *pars, Cardinal *num) __attribute__((noreturn));
+#endif
+
 static void gxm_XtErrorMsgHandler(String name, String type, String clas, String defp, String *pars, Cardinal *num)
 {
   /* DIFF: XtErrorMsgHandler takes list of string pars
@@ -14124,6 +14136,8 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
 		 __func__);
       xm_unprotect_at(loc);
     }
+  else Xen_error(XEN_ERROR_TYPE("Xt-error"), C_string_to_Xen_string(name));
+  exit(0);
 }
 
 static Xen gxm_XtAppSetErrorMsgHandler(Xen arg1, Xen arg2)
