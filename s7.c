@@ -7065,7 +7065,6 @@ static int64_t gc(s7_scheme *sc)
 #else
   #define gc_call(Tp) p = (*Tp++); if (is_marked(p)) clear_mark(p); else {if (!is_free_and_clear(p)) {clear_type(p); (*fp++) = p;}}
 #endif
-
     while (tp < heap_top)          /* != here or ^ makes no difference, going to 64 doesn't matter (this is less than .1% in all cases) */
       {
 	s7_pointer p;
@@ -7077,6 +7076,7 @@ static int64_t gc(s7_scheme *sc)
     /* I tried using pthreads here, since there is no need for a lock in this loop, but the *fp++ part needs to
      *   be local to each thread, then merged at the end.  In my timing tests, the current version was faster.
      *   If NUM_THREADS=2, and all thread variables are local, surely there's no "false sharing"?
+     * Also marking the is_marked check as unlikely did not speed up the timing tests.
      */
     sc->free_heap_top = fp;
     sweep(sc);
@@ -56873,10 +56873,18 @@ static s7_pointer fx_c_sss_direct(s7_scheme *sc, s7_pointer arg)
   return(((s7_p_ppp_t)opt3_direct(cdr(arg)))(sc, lookup(sc, cadr(arg)), lookup(sc, opt1_sym(cdr(arg))), lookup(sc, opt2_sym(cdr(arg)))));
 }
 
+static s7_pointer fx_c_sts(s7_scheme *sc, s7_pointer arg)
+{
+  set_car(sc->t3_1, lookup(sc, cadr(arg)));
+  set_car(sc->t3_2, t_lookup(sc, opt1_sym(cdr(arg)), arg)); /* caddr(arg) */
+  set_car(sc->t3_3, lookup(sc, opt2_sym(cdr(arg)))); /* cadddr(arg) */
+  return(c_call(arg)(sc, sc->t3_1));
+}
+
 static s7_pointer fx_c_tus(s7_scheme *sc, s7_pointer arg)
 {
   set_car(sc->t3_1, t_lookup(sc, cadr(arg), arg));
-  set_car(sc->t3_2, u_lookup(sc, caddr(arg), arg));
+  set_car(sc->t3_2, u_lookup(sc, opt1_sym(cdr(arg)), arg)); /* caddr(arg), arg)); */
   set_car(sc->t3_3, lookup(sc, opt2_sym(cdr(arg)))); /* cadddr(arg) */
   return(c_call(arg)(sc, sc->t3_1));
 }
@@ -60131,6 +60139,7 @@ static bool fx_tree_in(s7_scheme *sc, s7_pointer tree, s7_pointer var1, s7_point
 	      ((c_callee(tree) == fx_c_sss) || (c_callee(tree) == fx_c_sss_direct)))
 	    {set_safe_optimize_op(p, OP_SAFE_C_TUS); return(with_c_call(tree, fx_c_tus));}
 	}
+      if (caddr(p) == var1) return(with_c_call(tree, fx_c_sts));
       break;
 
     case OP_SAFE_C_TUS:
@@ -97921,4 +97930,5 @@ int main(int argc, char **argv)
  *
  * can memory_usage use the new saved_pointers?
  * map or: safety?
+ * perhaps: if sym_ctr>1 mark slot pointer, ignore else?
  */
