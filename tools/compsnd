@@ -108,7 +108,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 clang                                ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=clang CFLAGS="-Wall -Wno-array-bounds -Wno-parentheses -Wextra -Wno-unused-parameter "  
+./configure --quiet CC=clang CFLAGS="--without-gui -Wall -Wno-array-bounds -Wno-parentheses -Wextra -Wno-unused-parameter "  
 make
 ./snd --version
 ./snd -noinit --features "'clm"
@@ -117,7 +117,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 
-./configure --quiet CC=clang CFLAGS="-Wall -Wno-array-bounds -Wno-parentheses -Wextra -Wno-unused-parameter "  
+./configure --quiet CC=clang CFLAGS="--with-motif --with-gmp -Wall -Wno-array-bounds -Wno-parentheses -Wextra -Wno-unused-parameter "  
 make
 make allclean
 rm -f snd
@@ -331,7 +331,7 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                WITH_PURE_S7  HAVE_OVERFLOW_CHECKS=0 --- '
+echo ' ----                with_pure_s7  have_overflow_checks=0 --- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DWITH_PURE_S7=1 -DHAVE_OVERFLOW_CHECKS=0"
 make
@@ -342,7 +342,7 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                WITH_PURE_S7  WITH_GMP --- '
+echo ' ----                with_pure_s7  with_gmp --- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet  -with-pure-s7 --with-gmp CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses"
 make
@@ -559,6 +559,7 @@ echo ' -------------------------------------------------------------------------
 echo ' ----                 --without-extension-language  --with-gl '
 echo ' -------------------------------------------------------------------------------- '
 ./configure  CFLAGS="" --without-extension-language  --with-motif --with-gl --quiet
+
 make
 ./snd --version
 make allclean
