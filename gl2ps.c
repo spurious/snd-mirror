@@ -3710,7 +3710,7 @@ static void gl2psPDFgroupListWriteMainStream(void)
                         prim->verts[0].xyz[0], prim->verts[0].xyz[1]);
         }
         else{
-          /* the two segements are connected, so we just append to the
+          /* the two segments are connected, so we just append to the
              current path */
           gl2ps->streamlength +=
             gl2psPrintf("%f %f l\n",

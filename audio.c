@@ -1118,7 +1118,7 @@ static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
     {
       /* default values are a problem because the concept does
        * not imply a direction (playback or capture). This works
-       * fine as long as both directions of a device are symetric,
+       * fine as long as both directions of a device are symmetric,
        * the Midiman 1010, for example, has 10 channel frames for
        * playback and 12 channel frames for capture and breaks 
        * the recorder (probes the default, defaults to output, 
@@ -2496,7 +2496,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, mus_sample_t samp_typ
 	      __FILE__, __LINE__, 
 	      info.record.channels, chans);
 
-  info.record.precision = bits; /* was play, changed 10-Jul-03 thanks to Jürgen Keil */
+  info.record.precision = bits; /* was play, changed 10-Jul-03 thanks to Jurgen Keil */
   info.record.encoding = encode;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
@@ -4535,7 +4535,7 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
 	return MUS_ERROR;
       }
       if (src_data.input_frames!=len){
-	printf("Unsuccessfull resampling: Should have used %d bytes, used %ld.",len,(long int)(src_data.input_frames));
+	printf("Unsuccessful resampling: Should have used %d bytes, used %ld.",len,(long int)(src_data.input_frames));
 	return MUS_ERROR;
       }
       if (ch>0 && src_data.output_frames_gen!=outlen){

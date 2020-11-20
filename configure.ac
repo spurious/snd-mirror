@@ -96,7 +96,47 @@ AC_ARG_ENABLE(deprecated,[  --disable-deprecated	  do not include any deprecated
 
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(void *)
-AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+
+
+#--------------------------------------------------------------------------------
+# pkg-config
+#--------------------------------------------------------------------------------
+# AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+# from pkg.m4
+dnl PKG_PROG_PKG_CONFIG([MIN-VERSION])
+dnl ----------------------------------
+dnl Since: 0.16
+dnl
+dnl Search for the pkg-config tool and set the PKG_CONFIG variable to
+dnl first found in the path. Checks that the version of pkg-config found
+dnl is at least MIN-VERSION. If MIN-VERSION is not specified, 0.9.0 is
+dnl used since that's the first version where most current features of
+dnl pkg-config existed.
+AC_DEFUN([PKG_PROG_PKG_CONFIG],
+[m4_pattern_forbid([^_?PKG_[A-Z_]+$])
+m4_pattern_allow([^PKG_CONFIG(_(PATH|LIBDIR|SYSROOT_DIR|ALLOW_SYSTEM_(CFLAGS|LIBS)))?$])
+m4_pattern_allow([^PKG_CONFIG_(DISABLE_UNINSTALLED|TOP_BUILD_DIR|DEBUG_SPEW)$])
+AC_ARG_VAR([PKG_CONFIG], [path to pkg-config utility])
+AC_ARG_VAR([PKG_CONFIG_PATH], [directories to add to pkg-config's search path])
+AC_ARG_VAR([PKG_CONFIG_LIBDIR], [path overriding pkg-config's built-in search path])
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	AC_PATH_TOOL([PKG_CONFIG], [pkg-config])
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=m4_default([$1], [0.9.0])
+	AC_MSG_CHECKING([pkg-config is at least version $_pkg_min_version])
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no])
+		PKG_CONFIG=""
+	fi
+fi[]dnl
+])dnl PKG_PROG_PKG_CONFIG
+
+PKG_PROG_PKG_CONFIG
 
 
 
@@ -441,8 +481,8 @@ AC_SUBST(XEN_CFLAGS)
 # OGG, Flac, Speex, Mpeg, Timidity, TTA, Wavpack
 # --------------------------------------------------------------------------------
 
-AC_PATH_PROG(PATH_OGGDEC, oggdec, no) # OGG read
-AC_PATH_PROG(PATH_OGGENC, oggenc, no) # OGG write
+AC_CHECK_PROG(PATH_OGGDEC, oggdec, no) # OGG read
+AC_CHECK_PROG(PATH_OGGENC, oggenc, no) # OGG write
 
 if test "$PATH_OGGDEC" != "no" ; then
   if test "$PATH_OGGENC" != "no" ; then
@@ -453,7 +493,7 @@ if test "$PATH_OGGDEC" != "no" ; then
 fi
 
 
-AC_PATH_PROG(PATH_MPG123, mpg123, no) # MPEG read/write?
+AC_CHECK_PROG(PATH_MPG123, mpg123, no) # MPEG read/write?
 
 if test "$PATH_MPG123" != "no" ; then
   AC_DEFINE(HAVE_MPEG)
@@ -461,7 +501,7 @@ if test "$PATH_MPG123" != "no" ; then
 fi
 
 
-AC_PATH_PROG(PATH_MPG321, mpg321, no) # MPEG read/write?
+AC_CHECK_PROG(PATH_MPG321, mpg321, no) # MPEG read/write?
 
 if test "$PATH_MPG321" != "no" ; then
   AC_DEFINE(HAVE_MPEG)
@@ -470,8 +510,8 @@ if test "$PATH_MPG321" != "no" ; then
 fi
 
 
-AC_PATH_PROG(PATH_SPEEXDEC, speexdec, no) # Speex read
-AC_PATH_PROG(PATH_SPEEXENC, speexenc, no) # Speex write
+AC_CHECK_PROG(PATH_SPEEXDEC, speexdec, no) # Speex read
+AC_CHECK_PROG(PATH_SPEEXENC, speexenc, no) # Speex write
 
 if test "$PATH_SPEEXDEC" != "no" ; then
   if test "$PATH_SPEEXENC" != "no" ; then
@@ -482,7 +522,7 @@ if test "$PATH_SPEEXDEC" != "no" ; then
 fi
 
 
-AC_PATH_PROG(PATH_FLAC, flac, no) # Flac read/write
+AC_CHECK_PROG(PATH_FLAC, flac, no) # Flac read/write
 
 if test "$PATH_FLAC" != "no" ; then
   AC_DEFINE(HAVE_FLAC)
@@ -490,7 +530,7 @@ if test "$PATH_FLAC" != "no" ; then
 fi
 
 
-AC_PATH_PROG(PATH_TIMIDITY, timidity, no) # Timidity for .mid -> .wav
+AC_CHECK_PROG(PATH_TIMIDITY, timidity, no) # Timidity for .mid -> .wav
 
 if test "$PATH_TIMIDITY" != "no" ; then
   AC_DEFINE(HAVE_TIMIDITY)
@@ -498,8 +538,8 @@ if test "$PATH_TIMIDITY" != "no" ; then
 fi
 
 
-AC_PATH_PROG(PATH_WAVPACK, wavpack, no)
-AC_PATH_PROG(PATH_WVUNPACK, wvunpack, no)
+AC_CHECK_PROG(PATH_WAVPACK, wavpack, no)
+AC_CHECK_PROG(PATH_WVUNPACK, wvunpack, no)
 
 if test "$PATH_WAVPACK" != "no" ; then
   if test "$PATH_WVUNPACK" != "no" ; then

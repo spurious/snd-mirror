@@ -270,7 +270,7 @@ static void dac_write(double data, int chan)
  * 	      SAWTOOTH 	Phase13 (but 0 when Phase13 is 1000000000000)
  * 	      SQUARE 	-1/2 (on a scale from -1 to +1) if Phase13 is negative,
  * 		   	  else +1/2
- * 	      PULSE 	+1/2 if overflow occured in step 1) or 4) above;
+ * 	      PULSE 	+1/2 if overflow occurred in step 1) or 4) above;
  * 		     	  else 0.
  * 	      SIN(K) 	TblOut13
  * 	      SIN(J+Fm) TblOut13

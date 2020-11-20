@@ -3530,7 +3530,7 @@ with_two_setter_args(g_set_read_only_reversed, g_set_read_only)
 
 static Xen g_contrast_control_on(Xen snd) 
 {
-  #define H_contrast_control_on "(" S_contrast_control_on " :optional snd): snd's control panel constrast button state"
+  #define H_contrast_control_on "(" S_contrast_control_on " :optional snd): snd's control panel contrast button state"
   return(sound_get(snd, SP_CONTRASTING, S_contrast_control_on));
 }
 

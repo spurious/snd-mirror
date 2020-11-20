@@ -279,7 +279,7 @@ char *run_save_state_hook(const char *file)
  *
  * each channel has a list of lists containing the current edit history and the associated sound temp files or buffers
  * undo: back up current list position
- * redo: push position foward
+ * redo: push position forward
  * No actual changes are flushed out to the file system until the file is saved.
  *
  * the editing possibilities are insert, change, delete, scale, zero, env, mix
@@ -2029,7 +2029,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  break;
 
 		case EXTEND_EDIT:
-		  /* not currently savable (this is a dummy edit fragment for zero-mix-drag position change) */
+		  /* not currently saveable (this is a dummy edit fragment for zero-mix-drag position change) */
 		  break;
 
 		case ZERO_EDIT:
@@ -2109,7 +2109,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  break;
 
 		case EXTEND_EDIT:
-		  /* not currently savable (this is a dummy edit fragment for zero-mix-drag position change) */
+		  /* not currently saveable (this is a dummy edit fragment for zero-mix-drag position change) */
 		  break;
 
 		case SCALED_EDIT: 

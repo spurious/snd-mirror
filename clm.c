@@ -11296,7 +11296,7 @@ static void flush_buffers(rdout *gen)
 	   * So, we need to write explicit sample-type 0 values in those cases where machine 0's
 	   *  won't be sample type 0.  sample_type_zero[type] != 0 signals we have such a
 	   *  case, and returns the nominal zero value.  For unsigned shorts, we also need to
-	   *  take endianess into account.
+	   *  take endianness into account.
 	   */
 	  
 	  mus_long_t filler, current_samps, bytes, bps;

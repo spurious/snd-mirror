@@ -3412,7 +3412,7 @@ static void transform_type_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    set_transform_type(curpos);
-	  else post_prefs_error("unknown tranform", prf);
+	  else post_prefs_error("unknown transform", prf);
 	}
       else post_prefs_error("no transform?", prf);
       free(trimmed_str);
