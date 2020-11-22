@@ -307,6 +307,9 @@ if test "$with_notcurses" = yes ; then
     GRFX_CFLAGS="`$PKG_CONFIG notcurses --cflags`"
     GRFX_LIBS="`$PKG_CONFIG notcurses --libs`"
     GRAPHICS_TOOLKIT=Notcurses-`$PKG_CONFIG notcurses --modversion`
+    if $PKG_CONFIG --exists 'notcurses < 2.0.0' ; then
+      GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_1=1"
+    fi
     AC_DEFINE(USE_NOTCURSES)
     fi
 fi
@@ -427,7 +430,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby_version --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby_version --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
           AC_SUBST(S7_LIB)
         fi
@@ -693,7 +696,7 @@ SO_LD="ld"
 
 case "$host" in
   *-*-linux*) 
-    CFLAGS="-Wno-stringop-overflow $CFLAGS"
+#    CFLAGS="-Wno-stringop-overflow $CFLAGS"
     LDSO_FLAGS="-shared"
     LIBS="$LIBS -lm -ldl"
     if test "$GCC" = yes ; then
@@ -869,6 +872,7 @@ fi
 
 if test "$with_s7_profiling" = yes ; then
   CFLAGS="-DWITH_S7_PROFILE $CFLAGS"
+  RANDOM_FEATURES="$RANDOM_FEATURES profiling"
 fi
 
 

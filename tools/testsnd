@@ -254,6 +254,12 @@ echo ' '
 echo ' '
 
 
+cp snd-test.scm orig-snd-test.scm
+./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define tests 1)" "(define tests 5)")'
+# sed snd-test.scm -e 's/(define tests 1)/(define tests 5)/g' > tmp
+# sed differs so much between systems that it is useless
+mv tmp snd-test.scm
+
 echo ' -------------------------------- without-gui -------------------------------- '
 make allclean
 rm -f snd

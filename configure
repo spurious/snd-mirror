@@ -5199,6 +5199,9 @@ if test "$with_notcurses" = yes ; then
     GRFX_CFLAGS="`$PKG_CONFIG notcurses --cflags`"
     GRFX_LIBS="`$PKG_CONFIG notcurses --libs`"
     GRAPHICS_TOOLKIT=Notcurses-`$PKG_CONFIG notcurses --modversion`
+    if $PKG_CONFIG --exists 'notcurses < 2.0.0' ; then
+      GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_1=1"
+    fi
     $as_echo "#define USE_NOTCURSES 1" >>confdefs.h
 
     fi
@@ -5325,7 +5328,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-3.0 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-3.0 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5341,7 +5344,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.8 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.8 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5357,7 +5360,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.7 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.7 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5373,7 +5376,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.6 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.6 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5389,7 +5392,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.5 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.5 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5405,7 +5408,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.4 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.4 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5421,7 +5424,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.3 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.3 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5437,7 +5440,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.2 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.2 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5453,7 +5456,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.1 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.1 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5469,7 +5472,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-2.0 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-2.0 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5485,7 +5488,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5501,7 +5504,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-1.9.3 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-1.9.3 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5517,7 +5520,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-1.9 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-1.9 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -5533,7 +5536,7 @@ if test "$with_ruby" = yes ; then
           XEN_LIBS="`$PKG_CONFIG ruby-1.8 --libs`"
           LOCAL_LANGUAGE=Ruby-`$PKG_CONFIG ruby-1.8 --modversion`
           ac_snd_extension_language=Ruby
-	  CC="$CC -fdeclspec"
+#	  CC="$CC -fdeclspec"
           S7_LIB=""
 
         fi
@@ -6253,7 +6256,7 @@ SO_LD="ld"
 
 case "$host" in
   *-*-linux*)
-    CFLAGS="-Wno-stringop-overflow $CFLAGS"
+#    CFLAGS="-Wno-stringop-overflow $CFLAGS"
     LDSO_FLAGS="-shared"
     LIBS="$LIBS -lm -ldl"
     if test "$GCC" = yes ; then
@@ -6434,6 +6437,7 @@ fi
 
 if test "$with_s7_profiling" = yes ; then
   CFLAGS="-DWITH_S7_PROFILE $CFLAGS"
+  RANDOM_FEATURES="$RANDOM_FEATURES profiling"
 fi
 
 

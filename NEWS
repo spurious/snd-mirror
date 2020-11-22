@@ -1,12 +1,12 @@
-Snd 20.8:
+Snd 20.9:
 
-Snd: removed gtk support
-     Mike Scholz updated the Forth and Ruby scripts.
+Snd: clm.rb and snd-test.rb updated for Ruby 3.0, thanks to Mike.
 
-s7: s7_free 
-    a git repository: git@cm-gitlab.stanford.edu:bil/s7.git
-                      https://cm-gitlab.stanford.edu/bil/s7.git
+s7: add s7_load_c_string and s7_load_c_string_with_environment
+    tools/tmock.scm, tnum.scm, concordance.scm
+    notcurses_s7.c assumes version 2 of notcurses; for version 1, pass -DNOTCURSES_1=1.
 
-checked: sbcl 2.0.9
+checked: Fedora 33, Ubuntu 20.10, sbcl 2.0.10
 
-Thanks!: Tito Latini, James Hearon, Christos Vagias, Mike Scholz, Fernando
+Thanks!:  Woody Douglass, Christos Vagias, Mike Scholz, IOhannes m zmoelnig, 
+          David Runge
