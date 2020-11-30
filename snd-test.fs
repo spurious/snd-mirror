@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 2006/08/05 00:09:28
-\ Changed: 2020/09/13 14:23:47
+\ Changed: 2020/11/29 03:22:06
 
 \ Tags:  FIXME - something is wrong
 \        XXX   - info marker
@@ -88,11 +88,11 @@
 
   :port-name "sndout"
   :write-line lambda: <{ line -- }> line snd-print ( line ) .stdout ;
-  make-soft-port set-*stdout* value stdout-io
+  make-soft-port value stdout-io
 
   :port-name "snderr"
   :write-line lambda: <{ line -- }> line snd-print ( line ) .stderr ;
-  make-soft-port set-*stderr* value stderr-io
+  make-soft-port value stderr-io
 [then]
 
 \ Output words: We can't use clm-print here if we want xterm output
@@ -1836,12 +1836,14 @@ black-and-white-colormap constant *better-colormap*
      name-click-hook
      after-apply-controls-hook
      enved-hook
-     mouse-enter-label-hook
-     mouse-enter-graph-hook
-     mouse-enter-listener-hook
-     mouse-leave-label-hook
-     mouse-leave-graph-hook
-     mouse-leave-listener-hook
+     *with-test-motif* if
+       mouse-enter-label-hook
+       mouse-enter-graph-hook
+       mouse-enter-listener-hook
+       mouse-leave-label-hook
+       mouse-leave-graph-hook
+       mouse-leave-listener-hook
+     then
      initial-graph-hook
      after-graph-hook
      graph-hook ) each { h }

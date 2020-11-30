@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/04/09 23:55:07
-# Changed: 17/11/30 22:57:04
+# Changed: 20/11/08 00:06:07
 
 # class Complex
 #  to_f
@@ -86,7 +86,8 @@ class Poly < Vec
       while self[i].zero? and i > 0
         i -= 1
       end
-      self[0, i + 1]
+      # FIXME: ruby3 requires to_poly
+      self[0, i + 1].to_poly
     else
       self
     end

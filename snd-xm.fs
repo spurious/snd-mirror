@@ -2,15 +2,15 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 05/12/26 22:36:46
-\ Changed: 20/09/13 13:45:40
+\ Changed: 20/11/29 02:58:28
 \
-\ @(#)snd-xm.fs	1.43 9/13/20
+\ @(#)snd-xm.fs	1.44 11/29/20
 
 \ Commentary:
 \
 \ Requires --with-motif
 \
-\ Tested with Snd 20.x
+\ Tested with Snd 21.x
 \             Fth 1.4.x
 \             Motif 2.3.3 X11R6
 \ 
@@ -185,18 +185,13 @@ require extensions
 '( "ArrowButton"
    "ArrowButtonGadget"
    "BulletinBoard"
-   "ButtonBox"
    "CascadeButton"
    "CascadeButtonGadget"
-   "ColorSelector"
-   "Column"
    "ComboBox"
    "Command"
    "Container"
-   "DataField"
    "DrawingArea"
    "DrawnButton"
-   "DropDown"
    "FileSelectionBox"
    "Form"
    "Frame"
@@ -220,7 +215,6 @@ require extensions
    "SeparatorGadget"
    "SimpleSpinBox"
    "SpinBox"
-   "TabStack"
    "Text"
    "TextField"
    "ToggleButton"
@@ -229,7 +223,8 @@ require extensions
 		"\
 : FXmVaCreateManaged%s ( parent name args -- w )
 	xm-length FXmCreate%s dup FXtManageChild drop
-;" '( name dup ) string-format string-eval
+;" '( name dup ) string-format <'> string-eval #t nil fth-catch { tag }
+		tag if stack-reset then
 	end-each
 ;let
 
