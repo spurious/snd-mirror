@@ -5202,6 +5202,9 @@ if test "$with_notcurses" = yes ; then
     if $PKG_CONFIG --exists 'notcurses < 2.0.0' ; then
       GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_1=1"
     fi
+    if $PKG_CONFIG --exists 'notcurses >= 2.0.5' ; then
+      GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_2_0_5=1"
+    fi
     $as_echo "#define USE_NOTCURSES 1" >>confdefs.h
 
     fi

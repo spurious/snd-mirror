@@ -310,6 +310,10 @@ if test "$with_notcurses" = yes ; then
     if $PKG_CONFIG --exists 'notcurses < 2.0.0' ; then
       GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_1=1"
     fi
+# someone screwed up notcurses/version.h in FC version 2.0.7 -- it is missing the numeric version macros
+    if $PKG_CONFIG --exists 'notcurses >= 2.0.5' ; then
+      GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_2_0_5=1"
+    fi
     AC_DEFINE(USE_NOTCURSES)
     fi
 fi
