@@ -299,23 +299,31 @@ fi
 #--------------------------------------------------------------------------------
 
 if test "$with_notcurses" = yes ; then
+  AC_MSG_CHECKING(for notcurses)
   AC_DEFINE(USE_NO_GUI)
   GX_FILES="NO_GUI_O_FILES"
   GX_HEADERS="NO_GUI_HEADERS"
   ac_snd_gui_choice=notcurses
+
   if $PKG_CONFIG notcurses --exists ; then
     GRFX_CFLAGS="`$PKG_CONFIG notcurses --cflags`"
     GRFX_LIBS="`$PKG_CONFIG notcurses --libs`"
     GRAPHICS_TOOLKIT=Notcurses-`$PKG_CONFIG notcurses --modversion`
+
     if $PKG_CONFIG --exists 'notcurses < 2.0.0' ; then
       GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_1=1"
     fi
+
 # someone screwed up notcurses/version.h in FC version 2.0.7 -- it is missing the numeric version macros
     if $PKG_CONFIG --exists 'notcurses >= 2.0.5' ; then
       GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_2_0_5=1"
     fi
+
     AC_DEFINE(USE_NOTCURSES)
-    fi
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no) 
+  fi
 fi
 
 
@@ -361,6 +369,7 @@ GL_FLAGS=""
 
 if test "$with_gl" = yes ; then
   if test x$PKG_CONFIG != xno ; then
+    AC_MSG_CHECKING(for opengl)
     if $PKG_CONFIG gl --exists ; then
 
       GL_CFLAGS="`$PKG_CONFIG gl --cflags`"
@@ -380,6 +389,9 @@ if test "$with_gl" = yes ; then
         RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
         GL_FILES="$GL_FILES gl2ps.o"
       fi
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no) 
     fi
   fi
 fi

@@ -5190,6 +5190,8 @@ fi
 #--------------------------------------------------------------------------------
 
 if test "$with_notcurses" = yes ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for notcurses" >&5
+$as_echo_n "checking for notcurses... " >&6; }
   $as_echo "#define USE_NO_GUI 1" >>confdefs.h
 
   GX_FILES="NO_GUI_O_FILES"
@@ -5202,12 +5204,18 @@ if test "$with_notcurses" = yes ; then
     if $PKG_CONFIG --exists 'notcurses < 2.0.0' ; then
       GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_1=1"
     fi
+# someone screwed up notcurses/version.h in FC version 2.0.7 -- it is missing the numeric version macros
     if $PKG_CONFIG --exists 'notcurses >= 2.0.5' ; then
       GRFX_CFLAGS="$GRFX_CFLAGS -DNOTCURSES_2_0_5=1"
     fi
     $as_echo "#define USE_NOTCURSES 1" >>confdefs.h
 
-    fi
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  fi
 fi
 
 
@@ -5255,6 +5263,8 @@ GL_FLAGS=""
 
 if test "$with_gl" = yes ; then
   if test x$PKG_CONFIG != xno ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opengl" >&5
+$as_echo_n "checking for opengl... " >&6; }
     if $PKG_CONFIG gl --exists ; then
 
       GL_CFLAGS="`$PKG_CONFIG gl --cflags`"
@@ -5277,6 +5287,11 @@ if test "$with_gl" = yes ; then
         RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
         GL_FILES="$GL_FILES gl2ps.o"
       fi
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
     fi
   fi
 fi
