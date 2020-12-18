@@ -89,7 +89,7 @@ return help associated with name (String or Symbol) or false"
 void xen_initialize(void)
 {
   int argc = 4;
-  char *argv[] = {"xen", "--disable-gems", "-e", ";"};
+  const char *argv[] = {"xen", "--disable-gems", "-e", ";"};
 
 #ifdef RUBY_INIT_STACK
   RUBY_INIT_STACK;
