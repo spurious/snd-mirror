@@ -96,7 +96,7 @@ void xen_initialize(void)
 #endif
 
   ruby_init();
-  ruby_options(argc, argv);
+  ruby_options(argc, (char **)argv);
   Init_Hook();
 }
 
