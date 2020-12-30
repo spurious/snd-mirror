@@ -687,7 +687,7 @@ void snd_doit(int argc, char **argv)
     }
   snd_load_init_file(noglob, noinit);
 
-#if (!_MSC_VER) && !__MINGW32__ 
+#if (!_MSC_VER) && !__MINGW32__
   signal(SIGTTIN, SIG_IGN); /* disallow terminal read/write if a background job */
   signal(SIGTTOU, SIG_IGN);
 #endif
@@ -723,6 +723,7 @@ void snd_doit(int argc, char **argv)
 #if HAVE_SCHEME && (!defined(__sun)) && (!defined(_MSC_VER))
   if (!nostdin)
     {
+      if (noinit) goto DUMB_REPL;
 #if USE_NOTCURSES
       if (nrepl(s7)) /* nrepl.c -- loads nrepl.scm, 0=success */
 #else
@@ -731,14 +732,15 @@ void snd_doit(int argc, char **argv)
 	  if ((listener_prompt(ss)) && (strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT) != 0))
 	    s7_eval_c_string(s7, "(set! (*repl* 'prompt)                \
                                   (lambda (num)				\
-                                    (with-let (sublet (*repl* 'repl-let) :num num)  \
+                                    (with-let (sublet (*repl* 'repl-let) :num num) \
 			              (set! prompt-string (format #f \"(~D)~A\" num *listener-prompt*)) \
 			              (set! prompt-length (length prompt-string)))))");
 	  s7_eval_c_string(s7, "((*repl* 'run))");
 	}
-      else
 #endif
+      else
 	{
+	DUMB_REPL:
 	  while (true)
 	    {
 	      char buffer[512];
