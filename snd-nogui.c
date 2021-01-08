@@ -725,9 +725,9 @@ void snd_doit(int argc, char **argv)
     {
       if (noinit) goto DUMB_REPL;
 #if USE_NOTCURSES
-      if (nrepl(s7)) /* nrepl.c -- loads nrepl.scm, 0=success */
+      if (nrepl(s7))                 /* nrepl.c -- loads nrepl.scm, 0=success */
 #else
-      if (s7_load(s7, "repl.scm"))                  /* returns NULL if can't find repl.scm */
+      if (s7_load(s7, "repl.scm"))   /* returns NULL if can't find repl.scm */
 	{
 	  if ((listener_prompt(ss)) && (strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT) != 0))
 	    s7_eval_c_string(s7, "(set! (*repl* 'prompt)                \
@@ -737,8 +737,8 @@ void snd_doit(int argc, char **argv)
 			              (set! prompt-length (length prompt-string)))))");
 	  s7_eval_c_string(s7, "((*repl* 'run))");
 	}
-#endif
       else
+#endif
 	{
 	DUMB_REPL:
 	  while (true)
