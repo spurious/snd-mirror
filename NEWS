@@ -1,8 +1,10 @@
-Snd 21.0:
+Snd 21.1:
 
-s7: add tools/tcase.scm
+s7: s7_hash_code and hash-code (like CL's sxhash)
+    s7_define_semisafe_typed_function
 
-checked: sbcl 2.0.11 and 2.1.0, notcurses 2.0.11
+checked: notcurses 2.1.6, sbcl 2.1.1
 
-Thanks!: Mike Scholz, David O'Toole
+Thanks!: Massimiliano Gubinelli, IOhannes m zmoelnig
+
 
