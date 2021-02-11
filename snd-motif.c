@@ -30074,7 +30074,7 @@ static jmp_buf top_level_jump;
 void top_level_catch(int ignore);
 void top_level_catch(int ignore)
 {
-  longjmp(top_level_jump, 1);
+  siglongjmp(top_level_jump, 1);
 }
 #endif
 
@@ -30782,7 +30782,7 @@ void snd_doit(int argc, char **argv)
   if (with_toolbar(ss)) show_toolbar();
 
 #ifndef _MSC_VER
-  if (setjmp(top_level_jump))
+  if (sigsetjmp(top_level_jump, 1))
     {
       if (!(ss->jump_ok))
 	snd_error_without_format("Caught top level error (will try to continue):\n");
