@@ -225,11 +225,10 @@
 		 (begin
 		   (set! (rb-name 0) #\$)
 		   (set! j 1))
-		 (if (hash-table-ref scheme-constant-names scheme-name)
-		     (begin
-		       (set! (rb-name 0) (char-upcase (scheme-name 0)))
-		       (set! i 1)
-		       (set! j 1))))
+		 (when (hash-table-ref scheme-constant-names scheme-name)
+		   (set! (rb-name 0) (char-upcase (scheme-name 0)))
+		   (set! i 1)
+		   (set! j 1)))
 	     (do ()
 		 ((>= i len))
 	       (let ((c (string-ref scheme-name i)))
@@ -290,39 +289,35 @@
 	  ((= i len))
 	(let ((c (string-ref xref i)))
 	  (if in-bracket
-	      (if (char=? c #\>)
-		  (begin
-		    (set! in-bracket #f)
-		    (if in-href
-			(set! in-name #t))
-		    (set! in-href #f)))
+	      (when (char=? c #\>)
+		(set! in-bracket #f)
+		(if in-href
+		    (set! in-name #t))
+		(set! in-href #f))
 	      (case c
 		((#\<)
-		 (if in-name
-		     (begin
-		       (set! (outstr j) #\})
-		       (set! j (+ j 1))
-		       (set! in-name #f)))
+		 (when in-name
+		   (set! (outstr j) #\})
+		   (set! j (+ j 1))
+		   (set! in-name #f))
 		 (set! in-bracket #t)
-		 (if (or (and (< (+ i 7) len) 
-			      (string=? "<a href" (substring xref i (+ i 7))))
-			 (and (< (+ i 17) len) 
-			      (string=? "<a class=def href" (substring xref i (+ i 17))))
-			 (and (< (+ i 19) len) 
-			      (string=? "<a class=quiet href" (substring xref i (+ i 19)))))
-		     (begin
-		       (if need-start
-			   (begin
-			     (set! (outstr j) #\,)
-			     (set! (outstr (+ j 1)) #\newline)
-			     (set! (outstr (+ j 2)) #\space)
-			     (set! (outstr (+ j 3)) #\space)
-			     (set! (outstr (+ j 4)) #\")
-			     (set! j (+ j 5))
-			     (set! need-start #f)))
-		       (set! in-href #t)
-		       (set! (outstr j) #\{)
-		       (set! j (+ j 1)))))
+		 (when (or (and (< (+ i 7) len) 
+				(string=? "<a href" (substring xref i (+ i 7))))
+			   (and (< (+ i 17) len) 
+				(string=? "<a class=def href" (substring xref i (+ i 17))))
+			   (and (< (+ i 19) len) 
+				(string=? "<a class=quiet href" (substring xref i (+ i 19)))))
+		   (when need-start
+		     (set! (outstr j) #\,)
+		     (set! (outstr (+ j 1)) #\newline)
+		     (set! (outstr (+ j 2)) #\space)
+		     (set! (outstr (+ j 3)) #\space)
+		     (set! (outstr (+ j 4)) #\")
+		     (set! j (+ j 5))
+		     (set! need-start #f))
+		   (set! in-href #t)
+		   (set! (outstr j) #\{)
+		   (set! j (+ j 1))))
 		
 		((#\")
 		 (set! (outstr j) #\\)
@@ -331,12 +326,11 @@
 		 (set! j (+ j 1)))
 		
 		((#\&)
-		 (if (and (< (+ i 4) len) 
-			  (string=? (substring xref i (+ i 4)) "&gt;"))
-		     (begin
-		       (set! (outstr j) #\>)
-		       (set! j (+ j 1))
-		       (set! i (+ i 3))))) ; incf'd again below
+		 (when (and (< (+ i 4) len) 
+			    (string=? (substring xref i (+ i 4)) "&gt;"))
+		   (set! (outstr j) #\>)
+		   (set! j (+ j 1))
+		   (set! i (+ i 3)))) ; incf'd again below
 		
 		((#\newline)
 		 (set! (outstr j) #\")
@@ -344,15 +338,14 @@
 		 (set! need-start #t))
 		
 		(else
-		 (if need-start
-		     (begin
-		       (set! (outstr j) #\,)
-		       (set! (outstr (+ j 1)) #\newline)
-		       (set! (outstr (+ j 2)) #\space)
-		       (set! (outstr (+ j 3)) #\space)
-		       (set! (outstr (+ j 4)) #\")
-		       (set! j (+ j 5))
-		       (set! need-start #f)))
+		 (when need-start
+		   (set! (outstr j) #\,)
+		   (set! (outstr (+ j 1)) #\newline)
+		   (set! (outstr (+ j 2)) #\space)
+		   (set! (outstr (+ j 3)) #\space)
+		   (set! (outstr (+ j 4)) #\")
+		   (set! j (+ j 5))
+		   (set! need-start #f))
 		 (set! (outstr j) c)
 		 (set! j (+ j 1))))
 	      )))
@@ -1037,17 +1030,16 @@
 		  (let ((this-char ((ind-sortby name) 0)))
 		    (if (char=? this-char #\*)
 			(set! this-char ((ind-sortby name) 1)))
-		    (if (and last-char
-			     (not (char-ci=? last-char this-char)))
-			(begin
-			 (set! (new-names j) (make-ind :name #f :sortby #f))
-			 (set! j (+ j 1))
-			 (set! (new-names j) (make-ind :name "    " 
-						       :char (char-upcase this-char)
-						       :sortby #f))
-			 (set! j (+ j 1))
-			 (set! (new-names j) (make-ind :name #f :sortby #f))
-			 (set! j (+ j 1))))
+		    (when (and last-char
+			       (not (char-ci=? last-char this-char)))
+		      (set! (new-names j) (make-ind :name #f :sortby #f))
+		      (set! j (+ j 1))
+		      (set! (new-names j) (make-ind :name "    " 
+						    :char (char-upcase this-char)
+						    :sortby #f))
+		      (set! j (+ j 1))
+		      (set! (new-names j) (make-ind :name #f :sortby #f))
+		      (set! j (+ j 1)))
 		    (set! (new-names j) name)
 		    (set! j (+ j 1))
 		    (set! last-char this-char)))))
@@ -1133,9 +1125,9 @@
 	      (format ofil "<td></td>"))
 	    
 	    (when (= ctr cols)
-	      (if got-tr (begin (format ofil "</tr>\n") (set! got-tr #f)))
+	      (when got-tr (format ofil "</tr>\n") (set! got-tr #f))
 	      (set! row (+ row 1))
-	      (if (< i n) (begin (format ofil "  <tr>") (set! got-tr #t)))
+	      (when (< i n) (format ofil "  <tr>") (set! got-tr #t))
 	      (set! ctr 0)))
 	  (format ofil "\n</table>\n</body></html>\n")))
       ;; end output
@@ -1289,17 +1281,15 @@
 				     in-comment))
 			    (format () "~A[~D]: ~A has unclosed <?\n" file linectr line))
 			(set! openctr (+ openctr 1))
-			(if (and (< i (- len 3))
-				 (char=? (string-ref line (+ i 1)) #\!)
-				 (char=? (string-ref line (+ i 2)) #\-)
-				 (char=? (string-ref line (+ i 3)) #\-))
-			    (begin
-			      (set! comments (+ comments 1))
-			      (if (> comments 1)
-				  (begin 
-				    (format () "~A[~D]: nested <!--?\n" file linectr)
-				    (set! comments (- comments 1))))
-			      (set! in-comment #t)))
+			(when (and (< i (- len 3))
+				   (char=? (string-ref line (+ i 1)) #\!)
+				   (char=? (string-ref line (+ i 2)) #\-)
+				   (char=? (string-ref line (+ i 3)) #\-))
+			  (set! comments (+ comments 1))
+			  (when (> comments 1)
+			    (format () "~A[~D]: nested <!--?\n" file linectr)
+			    (set! comments (- comments 1)))
+			  (set! in-comment #t))
 			(if (and (not in-comment)
 				 (< i (- len 1))
 				 (char=? (string-ref line (+ i 1)) #\space))
@@ -1315,10 +1305,9 @@
 			    (begin
 			      (set! in-comment #f)
 			      (set! comments (- comments 1))
-			      (if (< comments 0)
-				  (begin
-				    (format () "~A[~D]: extra -->?\n" file linectr)
-				    (set! comments 0))))
+			      (when (< comments 0)
+				(format () "~A[~D]: extra -->?\n" file linectr)
+				(set! comments 0)))
 			    (if (not (or (zero? openctr)
 					 (positive? p-quotes)
 					 in-comment))
@@ -1400,44 +1389,41 @@
 					   (if (not (eq? (car commands) closer))
 					       (format () "~A[~D]: ~A -> ~A?\n" file linectr closer commands))
 					   
-					   (if (memq closer '(p td pre))
-					       (begin
-						 (if (odd? p-quotes)
-						     (format () "~A[~D]: unmatched quote\n" file linectr))
-						 (set! p-quotes 0)
-						 (case p-curlys
-						   ((1)
-						    (format () "~A[~D]: extra '{'\n" file linectr))
-						   ((-1)
-						    (format () "~A[~D]: extra '}'\n" file linectr))
-						   ((0) #f)
-						   (else
-						    (format () "~A[~D]: curlys: ~D\n" file linectr p-curlys)))
-						 (set! p-curlys 0)
-						 (case p-curlys
-						   ((1)
-						    (format () "~A[~D]: extra '('\n" file linectr))
-						   ((-1)
-						    (format () "~A[~D]: extra ')'\n" file linectr))
-						   ((0) #f)
-						   (else
-						    (format () "~A[~D]: parens: ~D\n" file linectr p-parens)))
-						 (set! p-parens 0)))
+					   (when (memq closer '(p td pre))
+					     (if (odd? p-quotes)
+						 (format () "~A[~D]: unmatched quote\n" file linectr))
+					     (set! p-quotes 0)
+					     (case p-curlys
+					       ((1)
+						(format () "~A[~D]: extra '{'\n" file linectr))
+					       ((-1)
+						(format () "~A[~D]: extra '}'\n" file linectr))
+					       ((0) #f)
+					       (else
+						(format () "~A[~D]: curlys: ~D\n" file linectr p-curlys)))
+					     (set! p-curlys 0)
+					     (case p-curlys
+					       ((1)
+						(format () "~A[~D]: extra '('\n" file linectr))
+					       ((-1)
+						(format () "~A[~D]: extra ')'\n" file linectr))
+					       ((0) #f)
+					       (else
+						(format () "~A[~D]: parens: ~D\n" file linectr p-parens)))
+					     (set! p-parens 0))
 					   
 					   (set! commands (remove-one closer commands))
 					   (when (and (not warned)
 						      (eq? closer 'table)
 						      (not (memq 'table commands)))
-					     (if (memq 'tr commands)
-						 (begin
-						   (set! warned #t)
-						   (set! commands (remove-all 'tr commands))
-						   (format () "~A[~D]: unclosed tr at table (~A)\n" file linectr commands)))
-					     (if (memq 'td commands)
-						 (begin
-						   (set! warned #t)
-						   (set! commands (remove-all 'td commands))
-						   (format () "~A[~D]: unclosed td at table (~A)\n" file linectr commands))))))
+					     (when (memq 'tr commands)
+					       (set! warned #t)
+					       (set! commands (remove-all 'tr commands))
+					       (format () "~A[~D]: unclosed tr at table (~A)\n" file linectr commands))
+					     (when (memq 'td commands)
+					       (set! warned #t)
+					       (set! commands (remove-all 'td commands))
+					       (format () "~A[~D]: unclosed td at table (~A)\n" file linectr commands)))))
 				    (set! closing #f))
 				  
 				  ;; not closing
@@ -1471,24 +1457,22 @@
 					       ((td)
 						(if (not (eq? 'tr (car commands)))
 						    (format () "~A[~D]: td without tr?\n" file linectr))
-						(if (and (not warned)
-							 (memq 'td commands)
-							 (< (count-table commands) 2))
-						    (begin
-						      (set! warned #t)
-						      (set! commands (remove-one 'td commands))
-						      (format () "~A[~D]: unclosed td at table\n" file linectr))))
+						(when (and (not warned)
+							   (memq 'td commands)
+							   (< (count-table commands) 2))
+						  (set! warned #t)
+						  (set! commands (remove-one 'td commands))
+						  (format () "~A[~D]: unclosed td at table\n" file linectr)))
 					       ((tr)
 						(if (not (or (eq? (car commands) 'table)
 							     (eq? (cadr commands) 'table)))
 						    (format () "~A[~D]: tr without table?\n" file linectr))
-						(if (and (not warned)
-							 (memq 'tr commands)
-							 (< (count-table commands) 2))
-						    (begin
-						      (set! warned #t)
-						      (set! commands (remove-one 'tr commands))
-						      (format () "~A[~D]: unclosed tr at table\n" file linectr))))
+						(when (and (not warned)
+							   (memq 'tr commands)
+							   (< (count-table commands) 2))
+						  (set! warned #t)
+						  (set! commands (remove-one 'tr commands))
+						  (format () "~A[~D]: unclosed tr at table\n" file linectr)))
 					       ((p)
 						(if (eq? (car commands) 'table)
 						    (format () "~A[~D]: unclosed table?\n" file linectr)))
@@ -1516,11 +1500,11 @@
 				    (format () "~A[~D]: nested < ~A\n" file linectr line))
 				(set! start i)))
 			   ((#\/)
-			    (if (and (integer? start) (= start (- i 1)))
+			    (if (eqv? start (- i 1))
 				(set! closing #t)))
 			   
 			   ((#\!)
-			    (if (and (integer? start) (= start (- i 1)))
+			    (if (eqv? start (- i 1))
 				(set! start #f)))))))
 		   ) ; if not in-comment...
 		 
