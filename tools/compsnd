@@ -386,15 +386,15 @@ make sndinfo
 make sndplay
 make allclean
 
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 g++ --with-ruby                                        ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-ruby
-make
-./snd --version
-./snd -noinit --features ":clm, :snd_ruby"
-make allclean
-
+# echo ' -------------------------------------------------------------------------------- '
+# echo ' ----                 g++ --with-ruby                                        ---- '
+# echo ' -------------------------------------------------------------------------------- '
+# ./configure --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-ruby
+# make
+# ./snd --version
+# ./snd -noinit --features ":clm, :snd_ruby"
+# make allclean
+# 
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-ruby  --with-gl --with-alsa '
 echo ' -------------------------------------------------------------------------------- '
@@ -431,17 +431,17 @@ echo ' '
 ./snd -noinit --features ":clm, :snd_nogui, :snd_ruby"
 make allclean
 
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                g++ --with-ruby --without-gui        ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-ruby --without-gui 
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features ":clm, :snd_nogui, :snd_ruby"
-make allclean
-
+# echo ' -------------------------------------------------------------------------------- '
+# echo ' ----                g++ --with-ruby --without-gui        ---- '
+# echo ' -------------------------------------------------------------------------------- '
+# ./configure --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-ruby --without-gui 
+# make
+# echo ' '
+# echo ' '
+# ./snd --version
+# ./snd -noinit --features ":clm, :snd_nogui, :snd_ruby"
+# make allclean
+# 
 rm -f snd
 rm -f config.cache
 
