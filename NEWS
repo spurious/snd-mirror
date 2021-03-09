@@ -1,10 +1,5 @@
-Snd 21.1:
+Snd 21.2:
 
-s7: s7_hash_code and hash-code (like CL's sxhash)
-    s7_define_semisafe_typed_function
+mostly optimizations and bugfixes in s7
 
-checked: notcurses 2.1.6, sbcl 2.1.1
-
-Thanks!: Massimiliano Gubinelli, IOhannes m zmoelnig
-
-
+checked: notcurses 2.2.2
