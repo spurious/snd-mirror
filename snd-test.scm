@@ -150,8 +150,7 @@
 
 (define with-motif (provided? 'snd-motif))
 
-(define with-gui (or (provided? 'snd-gtk)
-		     (provided? 'snd-motif)))
+(define with-gui (provided? 'snd-motif))
 
 (if (not with-gui)
     (define y-bounds (dilambda
@@ -220,25 +219,18 @@
 (define dismiss-all-dialogs
   (let ((+documentation+ "(dismiss-all-dialogs) hides all dialogs"))
     (lambda ()
-      (if (or (provided? 'xm)
-	      (provided? 'xg))
+      (if (provided? 'xm)
 	  (for-each
 	   (lambda (dialog)
 	     (if dialog
 		 (if (symbol? (car dialog))
-		     (if (provided? 'snd-motif)
-			 (if ((*motif* 'XtIsManaged) dialog)
-			     ((*motif* 'XtUnmanageChild) dialog))
-			 (if (provided? 'snd-gtk)
-			     ((*gtk* 'gtk_widget_hide) dialog)))
+		     (if ((*motif* 'XtIsManaged) dialog)
+			 ((*motif* 'XtUnmanageChild) dialog))
 		     (for-each
 		      (lambda (d)
 			(if (symbol? (car d))
-			    (if (provided? 'snd-motif)
-				(if ((*motif* 'XtIsManaged) d)
-				    ((*motif* 'XtUnmanageChild) d))
-				(if (provided? 'snd-gtk)
-				    ((*gtk* 'gtk_widget_hide) d)))))
+			    (if ((*motif* 'XtIsManaged) d)
+				((*motif* 'XtUnmanageChild) d))))
 		      dialog))))
 	   (dialog-widgets))))))
 
@@ -364,11 +356,7 @@
 
 (if (and (provided? 'snd-motif)
 	 (provided? 'xm))
-    (require snd-snd-motif.scm)
-    (if (and (provided? 'snd-gtk)
-	     (provided? 'xg))
-	(require snd-snd-gtk.scm)))
-
+    (require snd-snd-motif.scm))
 
 (define default-file-buffer-size *clm-file-buffer-size*)
 					;(set! *clm-file-buffer-size* default-file-buffer-size)
@@ -738,7 +726,7 @@
       (snd-display "remember-sound-state set default: ~A" *remember-sound-state*))
   (if *with-smpte-label*
       (snd-display "with-smpte-label set default: ~A" *with-smpte-label*))
-  (if (not (eq? *with-toolbar* (provided? 'snd-gtk)))
+  (if (not (eq? *with-toolbar* #f))
       (snd-display "with-toolbar set default: ~A" *with-toolbar*))
   (if (not *with-tooltips*)
       (snd-display "with-tooltips set default: ~A" *with-tooltips*))
@@ -951,7 +939,7 @@
       (snd-display "* remember-sound-state set default: ~A" *remember-sound-state*))
   (if *with-smpte-label*
       (snd-display "* with-smpte-label set default: ~A" *with-smpte-label*))
-  (if (not (eq? *with-toolbar* (provided? 'snd-gtk)))
+  (if (not (eq? *with-toolbar* #f))
       (snd-display "* with-toolbar set default: ~A" *with-toolbar*))
   (if (not *with-tooltips*)
       (snd-display "* with-tooltips set default: ~A" *with-tooltips*))
@@ -1002,16 +990,15 @@
     (if (not (= *mus-max-table-size* (expt 2 36)))
 	(snd-display "mus-max-table-size as bignum: ~A" *mus-max-table-size*)))
   
-  (if (not (provided? 'snd-gtk))
-      (for-each
-       (lambda (func name)
-	 (let ((val (func)))
-	   (set! (func) "8x123")
-	   (if (not (and (string? (func))
-			 (string=? val (func))))
-	       (snd-display "set ~A to bogus value: ~A ~A" name val (func)))))
-       (list axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)
-       '(axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)))
+  (for-each
+   (lambda (func name)
+     (let ((val (func)))
+       (set! (func) "8x123")
+       (if (not (and (string? (func))
+		     (string=? val (func))))
+	   (snd-display "set ~A to bogus value: ~A ~A" name val (func)))))
+   (list axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)
+   '(axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font))
   
   (set! *ask-about-unsaved-edits* #f)
   (set! *remember-sound-state* #f))
@@ -1348,7 +1335,7 @@
 	    (list 'stdin-prompt ">" "")
 	    (list 'sync-style sync-by-sound sync-all)
 	    (list 'time-graph-type graph-once graph-as-wavogram)
-	    (list 'tiny-font (if (provided? 'snd-gtk) (values "Sans 8" "Monospace 10") (values "6x12" "9x15")))
+	    (list 'tiny-font "6x12" "9x15")
 	    (list 'tracking-cursor-style cursor-line cursor-cross)
 	    (list 'transform-graph-type graph-once graph-as-sonogram)
 	    (list 'transform-normalization normalize-by-channel dont-normalize)
@@ -1866,7 +1853,7 @@
 	  (list 'sync-style sync-by-sound sync-all)
 	  (list 'time-graph-type graph-once graph-as-wavogram)
 	  (list 'time-graph? #f #t)
-	  (list 'tiny-font (if (provided? 'snd-gtk) (values "Sans 8" "Monospace 10") (values "6x12" "9x15")))
+	  (list 'tiny-font "6x12" "9x15")
 	  (list 'tracking-cursor-style cursor-line cursor-cross)
 	  (list 'transform-graph-type graph-once graph-as-sonogram)
 	  (list 'transform-graph? #f #t)
@@ -8851,8 +8838,7 @@ EDITS: 2
 (require snd-rgb.scm)
 
 (define (snd_test_7)
-  (when (or (provided? 'snd-gtk)
-	    (provided? 'snd-motif))
+  (when (provided? 'snd-motif)
 
     (let* ((colormap-error-max 0.0)
 	   (cfneq (lambda (a b) (> (abs (- a b)) colormap-error-max)))
@@ -15556,14 +15542,16 @@ EDITS: 2
       (if (fneq (maxamp) .0013)
 	  (snd-display "differentiator: ~A" (maxamp)))
       (revert-sound ind)
-      (let ((val (window-rms)))
+      (let ((val (window-rms))) ; window len here can be 20
 	(if (fneq val 0.0) (snd-display "window-rms empty: ~A" val))
 	(set! (sample 10) 1.0)
 	(set! val (window-rms))
-	(if (fneq val .218) (snd-display "window-rms 1: ~A" val))
+	(if (and (fneq val .218) 
+		 (fneq val .223))
+	    (snd-display "window-rms 1: ~A" val))
 	(let ((vals (window-samples)))
 	  (if (or (not (float-vector? vals))
-		  (not (= (length vals) 21))
+		  (not (<= 20 (length vals) 21))
 		  (fneq (vals 10) 1.0))
 	      (snd-display "window-samples: ~A" vals))))
       (revert-sound ind)
@@ -23776,7 +23764,7 @@ EDITS: 2
     (transform-dialog)
     (if with-motif (view-files-dialog))
     (view-regions-dialog)
-    (if (not (provided? 'snd-gtk)) (print-dialog))
+    (print-dialog)
     (without-errors (edit-header-dialog))
     (open-file-dialog #f)
     (mix-file-dialog #f)
@@ -24145,7 +24133,6 @@ EDITS: 2
 
 (if (and (provided? 'snd-motif) (provided? 'xm) (not (provided? 'snd-effects-utils.scm))) (load "effects-utils.scm"))
 (if (and (provided? 'snd-motif) (provided? 'xm) (not (provided? 'snd-new-effects.scm))) (load "new-effects.scm"))
-(if (and (provided? 'snd-gtk) (provided? 'xg) (not (provided? 'snd-gtk-effects.scm))) (load "gtk-effects.scm"))
 
 (when (provided? 'snd-ladspa)
   (define (analyze-ladspa library label)
@@ -24826,13 +24813,13 @@ EDITS: 2
 			(XtDispatchEvent (XtAppNextEvent app)))))))
 	  
 	  (when with-gui
-	    (if (not (or gr (provided? 'snd-gtk)))
+	    (if (not gr)
 		(snd-display "graph-hook not called? ~A ~A ~A ~A" (time-graph? ind) (short-file-name ind) ind (sounds)))
-	    (if (not (or agr (provided? 'snd-gtk))) 
+	    (if (not agr)
 		(snd-display "after-graph-hook not called?"))
 	    (if (not gbf) 
 		(snd-display "before-transform-hook not called?"))
-	    (if (not (or abf (provided? 'snd-gtk)))
+	    (if (not abf)
 		(snd-display "after-transform-hook not called?")))
 	  (set! (hook-functions before-transform-hook) ())
 	  (set! (transform-graph? ind 0) #f)
@@ -26738,7 +26725,7 @@ EDITS: 2
 			       (left-sample id 0) (right-sample id 0)
 			       (abs (- fr (* 2 (right-sample id 0) (left-sample id 0))))))
 	      (set! (y-position-slider id 0) .1)
-	      (if (and (not (provided? 'snd-gtk)) (fneq (y-position-slider id 0) .1))
+	      (if (fneq (y-position-slider id 0) .1)
 		  (snd-display "set y-position-slider .1: ~A?" (y-position-slider id 0)))
 	      (set! (y-zoom-slider id 0) .5)
 	      (if (fneq (y-zoom-slider id 0) .5) (snd-display "set y-zoom-slider: ~A?" (y-zoom-slider id 0)))
@@ -35314,9 +35301,7 @@ EDITS: 1
 		(snd-display "channels=? of pad+set 0 err"))
 	    (if (not (channels=? ind1 0 ind2 0 .2))
 		(snd-display "channels=? of pad+set .2 err"))
-	    (when (and with-gui
-		       (or (provided? 'snd-motif)
-			   (provided? 'gtk4)))
+	    (when with-gui
 	      (add-comment 1234 "sample 1234" ind1 0)
 	      (let ((comments (show-comments ind1 0)))
 		(update-time-graph)
@@ -39189,8 +39174,7 @@ EDITS: 1
   (let ((o2 (optkey-4 1 3 4 5)))
     (if (not (equal? o2 '(1 3 4 5))) (snd-display "optkey-4 3: ~A 2" o2)))
   
-  (when (and (or (provided? 'snd-motif)
-		 (and (provided? 'snd-gtk) (defined? 'gtk_box_new)))
+  (when (and (provided? 'snd-motif)
 	     (defined? 'variable-display))
     (let ((wid3 (make-variable-display "do-loop" "i3" 'spectrum))
 	  (wid4 (make-variable-display "do-loop" "i4" 'graph)))
@@ -39201,10 +39185,7 @@ EDITS: 1
 	  (variable-display (variable-display (* (variable-display (sin (* (variable-display i wid1) .1)) wid3) .5) wid2) wid4)))
       (let ((tag (catch #t (lambda () (set! (sample 0 (car wid3) 0) .5)) (lambda args (car args)))))
 	(if (> (edit-position (car wid3) 0) 0) (snd-display "edited variable graph? ~A ~A" tag (edit-position (car wid3) 0))))
-      ((if (provided? 'snd-motif)
-	  (*motif* 'XtUnmanageChild)
-	  (*gtk* 'gtk_widget_hide))
-       variables-dialog)
+      ((*motif* 'XtUnmanageChild) variables-dialog)
       (close-sound (car wid3))
       (close-sound (car wid4))))
   
@@ -41796,9 +41777,7 @@ EDITS: 1
 					  region->float-vector region-srate forget-region)))
 			(list float-vector-5 #i(0 1) 0+i "hiho" (list 0 1)))
 	      
-	      (when (and with-gui
-			 (or (provided? 'snd-motif)
-			     (provided? 'gtk4)))
+	      (when with-gui
 		(for-each (lambda (n)
 			    (let ((tag
 				   (catch #t
@@ -42367,7 +42346,6 @@ EDITS: 1
 (set! (test-funcs 12) snd_test_12)
 (if (not (or (provided? 'openbsd)
 	     (provided? 'freebsd)
-	     ;(provided? 'snd-gtk)
 	     ))
     (begin
       (set! (test-funcs 13) snd_test_13)
@@ -42521,6 +42499,7 @@ EDITS: 1
 ;; 30-Jan-17: #(0 0 1 0  6  45 1 1 101 1  4 1 1  3  4 1  29 1    48 12   9 3  389     0 0 1 181) ;   8
 ;; 6-Aug-18:  #(1 1 1 1  7  52 1 1  95 1  5 1 2  4  6 1  29 1    43 15  15 3  367         1 168) ;   8
 ;; 10-Mar-20: #(0 0 1 0  6  45 0 0  84 0  3 0 1  3  4 0  28 0    38 11   8 1  331         0 168) ;   7
+;; 17-Mar-21: #(0 0 1 0  7  56 0 0  97 0  3 0 1  3  4 0  33 0    40 10  10 1  345         0 170) ;   8
 
 ;;; -------- cleanup temp files
 
@@ -42586,7 +42565,6 @@ EDITS: 1
   "tmp.snd"
   "with-mix.snd"
   "1"
-  "gtk-errors"
   "accelmap"
   ".snd-remember-sound"
   "test.clm"
