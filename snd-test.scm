@@ -32763,7 +32763,7 @@ EDITS: 1
       
       ;; ---- *.scm
       (when (and (defined? 'effects-squelch-channel)
-		 (or (provided? 'xm) (provided? 'xg)))
+		 (provided? 'xm))
 	(let ((ctr 1))
 	  (for-each
 	   (lambda (func1 descr)
