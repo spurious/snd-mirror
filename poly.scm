@@ -196,7 +196,7 @@
 
 
 (define (submatrix mx row col)
-  (let ((old-n (car (vector-dimensions mx))))
+  (let ((old-n (vector-dimension mx 0)))
     (do ((nmx (let ((new-n (- old-n 1)))
 		(make-float-vector (list new-n new-n))))
 	 (i 0 (+ i 1))
@@ -215,7 +215,7 @@
 (define (determinant mx)
   (if (not (float-vector? mx))
       (error 'wrong-type-arg "determinant argument should be a float-vector")
-      (let ((n (car (vector-dimensions mx))))
+      (let ((n (vector-dimension mx 0)))
 	(case n
 	  ((1) (mx 0 0))
 	  ((2) (- (* (mx 0 0) (mx 1 1)) (* (mx 0 1) (mx 1 0))))

@@ -2356,7 +2356,7 @@ is assumed to be outside -1.0 to 1.0."))
 					;(format () "~%~%invert-matrix n: ~D, ~S, b: ~A, ~S~%" (length matrix) matrix (and b (length b)) b)
       (call-with-exit
        (lambda (return)
-	 (let ((n (car (vector-dimensions matrix))))
+	 (let ((n (vector-dimension matrix 0)))
 	   (let ((cols (make-vector n 0))
 		 (rows (make-vector n 0))
 		 (pivots (make-vector n 0)))
