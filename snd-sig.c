@@ -3612,13 +3612,13 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		    for (kp = 0; kp < num; kp++)
 		      {
 			s7_slot_set_real_value(s7, yp, data[kp]);
-			data[kp] = opt_func(s7, res);
+			data[kp] = opt_func(s7);
 		      }
 		  }
 		else
 		  {
 		    for (kp = 0; kp < num; kp++)
-		      data[kp] = opt_func(s7, res);
+		      data[kp] = opt_func(s7);
 		  }
 		free_snd_fd(sf);
 		change_samples(beg, num, data, cp, caller, pos, -1.0);
