@@ -83,22 +83,16 @@
 
 (define (remove-all item sequence)
   (map (lambda (x)
-	 (if (eq? x item)
+	 (if (equal? x item)
 	     (values)
 	     x))
        sequence))
 
 (define (remove-one item sequence)
-  (let ((got-it #f))
-    (map (lambda (x)
-	   (if (and (not got-it)
-		    (eq? x item))
-	       (begin
-		 (set! got-it #t)
-		 (values))
-	       x))
-	 sequence)))
-
+  (cond ((not (pair? sequence)) sequence)
+	((eq? item (car sequence)) (cdr sequence))
+	(else (cons (car sequence)
+		    (remove-one item (cdr sequence))))))
 
 (define (count-table commands)
   (do ((count 0 (+ count 1))
