@@ -99,7 +99,6 @@
        (c (memq 'table commands) (memq 'table (cdr c))))
       ((not c) count)))
 
-
 (define (string</* a1 b1)
   (let ((a (ind-sortby a1))
 	(b (ind-sortby b1)))
