@@ -3987,14 +3987,13 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
       e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
 
 	{
-	  s7_pointer res, yp, old_e, y, val;
-	  s7_function func;
+	  s7_pointer yp, old_e, y, val;
+	  s7_pfunc func;
 
 	  old_e = s7_set_curlet(s7, e);                  /* new env for scan lambda */
 	  y = s7_make_mutable_real(s7, 1.5);             /* slot for the scan lambda arg */
 	  yp = s7_make_slot(s7, e, arg, y);
 	  val = y;
-	  res = s7_car(body);
 
 	  if (s7_is_null(s7, s7_cdr(body)))
 	    func = s7_optimize(s7, body);
@@ -4004,7 +4003,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 	      for (kp = 0; kp < num; kp++)
 		{
 		  s7_slot_set_real_value(s7, yp, read_sample(sf));
-		  val = func(s7, res);
+		  val = func(s7);
 		  
 		  if (val != s7_f(s7))
 		    {
