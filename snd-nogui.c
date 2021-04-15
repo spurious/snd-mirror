@@ -302,7 +302,7 @@ static bool noglob = false, noinit = false, nostdin = false;
 #ifndef _MSC_VER
 #include <setjmp.h>
 
-static jmp_buf top_level_jump;
+static sigjmp_buf top_level_jump;
 void top_level_catch(int ignore);
 void top_level_catch(int ignore)
 {

@@ -1,5 +1,12 @@
-Snd 21.2:
+Snd 21.3:
 
-mostly optimizations and bugfixes in s7
+s7: tools/tgsl.scm
+    removed deprecated nan.0 and inf.0 (use +nan.0 etc)
+    added vector-rank, vector-dimension
+    added s7_make_c_object_without_gc
+    if you're using s7_optimize, it now returns an s7_pfunc, not an s7_function.
 
-checked: notcurses 2.2.2
+checked: notcurses 2.2.3, sbcl 2.1.3
+
+Thanks!: Manuel, Christos Vagias
+
