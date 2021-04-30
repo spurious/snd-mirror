@@ -43,25 +43,25 @@ echo ' -------------------------------------------------------------------------
 echo ' ----                 basic configure test                                  ----- '
 echo ' -------------------------------------------------------------------------------- '
 
-./configure --quiet --with-motif CFLAGS="-O3 -Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "  
+./configure --quiet --with-motif CFLAGS="-O3 -Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "  
 make
 echo ' '
 echo ' '
 
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif 'sndlib"
-./snd -e '(begin (load "cload.scm") (set! *cload-cflags* "-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow"))' libm.scm libc.scm libgdbm.scm libdl.scm libgsl.scm -e '(exit)'
+./snd -e '(begin (load "cload.scm") (set! *cload-cflags* "-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow"))' libm.scm libc.scm libgdbm.scm libdl.scm libgsl.scm -e '(exit)'
 
-gcc s7.c -o repl -Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g3 -Wl,-export-dynamic -ldl -lm
+gcc s7.c -o repl -Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g3 -Wl,-export-dynamic -ldl -lm
 
 echo '#define WITH_SYSTEM_EXTRAS 0' >mus-config.h
-gcc -c s7.c -o s7.o -Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow
+gcc -c s7.c -o s7.o -Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow
 rm s7.o
 echo '#define WITH_C_LOADER 0' >mus-config.h
-gcc -c s7.c -o s7.o -Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow
+gcc -c s7.c -o s7.o -Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow
 rm s7.o
 echo '#define WITH_EXTRA_EXPONENT_MARKERS 1' >mus-config.h
-gcc -c s7.c -o s7.o -Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow
+gcc -c s7.c -o s7.o -Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow
 rm s7.o
 
 make clmclean
@@ -69,7 +69,7 @@ make sndinfo
 make sndplay
 make allclean
 
-./configure --quiet --with-motif CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -Wdeclaration-after-statement" 
+./configure --quiet --with-motif CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -Wdeclaration-after-statement" 
 make allclean
 make
 echo ' '
@@ -85,7 +85,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 g++                                ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wextra -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-clobbered "  
+./configure --quiet CC=g++ CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wextra -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-clobbered "  
 make
 ./snd --version
 ./snd -noinit --features "'clm"
@@ -129,7 +129,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-gui                                         ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --without-gui
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --without-gui
 make
 echo ' '
 echo ' '
@@ -145,7 +145,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-gui                                          ---  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DWITH_MAIN" --without-gui
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DWITH_MAIN" --without-gui
 make
 echo ' '
 echo ' '
@@ -161,7 +161,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-audio                                         ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --without-audio
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --without-audio
 make
 echo ' '
 echo ' '
@@ -177,7 +177,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-audio C++                                       ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --without-audio CC=g++
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --without-audio CC=g++
 make
 echo ' '
 echo ' '
@@ -193,7 +193,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-gui --with-oss --with-s7-profiling|history                         ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" --without-gui --with-oss --with-s7-profiling --with-s7-history
+./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" --without-gui --with-oss --with-s7-profiling --with-s7-history
 make
 echo ' '
 echo ' '
@@ -209,7 +209,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-gui --with-gmp                              ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-gui --with-gmp --with-ladspa CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -I/usr/local/include"
+./configure --quiet --without-gui --with-gmp --with-ladspa CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -I/usr/local/include"
 make
 echo ' '
 echo ' '
@@ -225,7 +225,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 -without-gui --with-ladspa ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -I/usr/local/include" --without-gui --with-ladspa
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -I/usr/local/include" --without-gui --with-ladspa
 make
 echo ' '
 echo ' '
@@ -241,7 +241,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-forth                                           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --quiet --with-motif --with-forth
+./configure  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --quiet --with-motif --with-forth
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'snd-motif"
@@ -256,7 +256,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-forth  --with-motif --with-gl ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth  --with-motif --with-gl  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
+./configure --quiet --with-forth  --with-motif --with-gl  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'xm 'gl"
@@ -267,7 +267,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-forth --without-gui                              --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth --without-gui  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
+./configure --quiet --with-forth --without-gui  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'snd-nogui"
@@ -311,7 +311,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                --with-gsl                           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-motif --with-gsl
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-motif --with-gsl
 make
 echo ' '
 echo ' '
@@ -322,7 +322,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                --with-gmp                                              ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-gmp
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-gmp
 make
 echo ' '
 echo ' '
@@ -333,7 +333,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                --with-gmp g++                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CC=g++ CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-gmp
+./configure --quiet  CC=g++ CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-gmp
 make
 echo ' '
 echo ' '
@@ -344,7 +344,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                with_pure_s7  have_overflow_checks=0 --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DWITH_PURE_S7=1 -DHAVE_OVERFLOW_CHECKS=0"
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DWITH_PURE_S7=1 -DHAVE_OVERFLOW_CHECKS=0"
 make
 echo ' '
 echo ' '
@@ -355,7 +355,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                with_pure_s7  with_gmp --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  -with-pure-s7 --with-gmp CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses"
+./configure --quiet  -with-pure-s7 --with-gmp CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses"
 make
 echo ' '
 echo ' '
@@ -366,7 +366,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                  editres                              ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "  --with-motif --with-editres --disable-deprecated
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "  --with-motif --with-editres --disable-deprecated
 make
 make allclean
 
@@ -375,7 +375,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++                                    ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --with-motif  --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
+./configure --with-motif  --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
 make
 
 make allclean
@@ -385,7 +385,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-ruby                                            ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-ruby --with-motif 
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-ruby --with-motif 
 make
 echo ' '
 echo ' '
@@ -400,7 +400,7 @@ make allclean
 # echo ' -------------------------------------------------------------------------------- '
 # echo ' ----                 g++ --with-ruby                                        ---- '
 # echo ' -------------------------------------------------------------------------------- '
-# ./configure --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-ruby
+# ./configure --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-ruby
 # make
 # ./snd --version
 # ./snd -noinit --features ":clm, :snd_ruby"
@@ -409,7 +409,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-ruby  --with-gl --with-alsa '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-ruby  --with-motif --with-gl --with-alsa
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-ruby  --with-motif --with-gl --with-alsa
 make
 echo ' '
 echo ' '
@@ -423,7 +423,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-ruby --without-gui --without-fftw                --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-ruby --without-gui --without-fftw
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --with-ruby --without-gui --without-fftw
 make
 echo ' '
 echo ' '
@@ -434,7 +434,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-ruby --without-gui                             ----- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-ruby --without-gui
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-ruby --without-gui
 make
 echo ' '
 echo ' '
@@ -445,7 +445,7 @@ make allclean
 # echo ' -------------------------------------------------------------------------------- '
 # echo ' ----                g++ --with-ruby --without-gui        ---- '
 # echo ' -------------------------------------------------------------------------------- '
-# ./configure --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-ruby --without-gui 
+# ./configure --quiet CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -DS7_DEBUGGING" --with-ruby --without-gui 
 # make
 # echo ' '
 # echo ' '
@@ -459,7 +459,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++                                                      --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-motif --with-ladspa CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -I/usr/local/include"
+./configure --quiet --with-motif --with-ladspa CC=g++  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses  -I/usr/local/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif 'snd-ladspa 'sndlib"
@@ -473,7 +473,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++ --without-gui                                       ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --quiet CC=g++ --without-gui
+./configure  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --quiet CC=g++ --without-gui
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-nogui 'snd-s7"
@@ -492,7 +492,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++  --without-gsl --with-alsa '
 echo ' -------------------------------------------------------------------------------- '
-./configure  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --quiet CC=g++  --without-gsl --with-alsa
+./configure  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --quiet CC=g++  --without-gsl --with-alsa
 make
 ./snd --version
 ./snd -noinit --features "'clm 'alsa 'xm"
@@ -508,7 +508,7 @@ rm -f sndinfo
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                sndlib                                                 ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
 make sndinfo
 sndinfo oboe.snd
 sndinfo test.snd
@@ -519,7 +519,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --without-gui                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --without-gui
+./configure --quiet  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses " --without-gui
 make
 echo ' '
 echo ' '
@@ -537,7 +537,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 -DXM_DISABLE_DEPRECATED              ----- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet   CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -DXM_DISABLE_DEPRECATED -Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
+./configure --quiet   CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -DXM_DISABLE_DEPRECATED -Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
 make
 ./snd --version
 ./snd -noinit --features "'clm 'xm"
@@ -548,7 +548,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --with-ruby -DXM_DISABLE_DEPRECATED   ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet  --with-ruby  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -DXM_DISABLE_DEPRECATED -Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
+./configure --quiet  --with-ruby  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -DXM_DISABLE_DEPRECATED -Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "
 make
 ./snd --version
 ./snd -noinit --features ":clm, :snd_ruby"
@@ -580,7 +580,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --with-gl --with-gl2ps         ------ '
 echo ' -------------------------------------------------------------------------------- '
-./configure  CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "  --with-motif --with-gl --quiet --with-gl2ps --without-gsl
+./configure  CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "  --with-motif --with-gl --quiet --with-gl2ps --without-gsl
 make
 ./snd --version
 ./snd -noinit --features "'clm 'xm 'gl2ps"
@@ -625,7 +625,7 @@ cp ~/sndlib/* .
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                sndlib tests                                           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow"
+./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow"
 make
 make clean
 echo ' -------------------------------------------------------------------------------- '
