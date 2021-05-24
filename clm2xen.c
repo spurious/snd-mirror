@@ -9615,12 +9615,13 @@ static mus_float_t as_needed_block_input_float(void *ptr, int direction, mus_flo
   return(val);
 }
 
-
+#if USE_SND
 static mus_float_t as_needed_input_any(void *ptr, int direction)
 {
   mus_xen *gn = (mus_xen *)ptr;
   return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? as_needed_arglist_one : as_needed_arglist_minus_one)));
 }
+#endif
 #endif
 
 
