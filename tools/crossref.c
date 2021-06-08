@@ -326,6 +326,8 @@ int main(int argc, char **argv)
   add_file("libgsl_s7.c");
   add_file("libm_s7.c");
   add_file("utf8proc_s7.c");
+  add_file("notcurses_s7.c");
+  add_file("libarb_s7.c");
   
   add_file("xen.h");
 
