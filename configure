@@ -669,8 +669,6 @@ GSL_LIBS
 GMP_LIBS
 FFTW_CFLAGS
 FFTW_LIBS
-PKG_CONFIG_LIBDIR
-PKG_CONFIG_PATH
 PKG_CONFIG
 EGREP
 GREP
@@ -774,9 +772,6 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
-PKG_CONFIG
-PKG_CONFIG_PATH
-PKG_CONFIG_LIBDIR
 XMKMF'
 
 
@@ -1450,11 +1445,6 @@ Some influential environment variables:
   CPPFLAGS    (Objective) C/C++ preprocessor flags, e.g. -I<include dir> if
               you have headers in a nonstandard directory <include dir>
   CPP         C preprocessor
-  PKG_CONFIG  path to pkg-config utility
-  PKG_CONFIG_PATH
-              directories to add to pkg-config's search path
-  PKG_CONFIG_LIBDIR
-              path overriding pkg-config's built-in search path
   XMKMF       Path to xmkmf, Makefile generator for X Window System
 
 Use these variables to override the choices made by `configure' or to help
@@ -4204,26 +4194,8 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-
-
-
-#--------------------------------------------------------------------------------
-# pkg-config
-#--------------------------------------------------------------------------------
-# AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-# from pkg.m4
-
-
-
-
-
-
-
-
-if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
-	if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
-set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+# Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
 if ${ac_cv_path_PKG_CONFIG+:} false; then :
@@ -4249,6 +4221,7 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
   ;;
 esac
 fi
@@ -4262,77 +4235,6 @@ $as_echo "no" >&6; }
 fi
 
 
-fi
-if test -z "$ac_cv_path_PKG_CONFIG"; then
-  ac_pt_PKG_CONFIG=$PKG_CONFIG
-  # Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $ac_pt_PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
-if test -n "$ac_pt_PKG_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
-$as_echo "$ac_pt_PKG_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-  if test "x$ac_pt_PKG_CONFIG" = x; then
-    PKG_CONFIG=""
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
-$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
-ac_tool_warned=yes ;;
-esac
-    PKG_CONFIG=$ac_pt_PKG_CONFIG
-  fi
-else
-  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
-fi
-
-fi
-if test -n "$PKG_CONFIG"; then
-	_pkg_min_version=0.9.0
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
-$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
-	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-		PKG_CONFIG=""
-	fi
-fi
 
 
 
@@ -5651,20 +5553,22 @@ fi
 set dummy oggdec; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_OGGDEC+:} false; then :
+if ${ac_cv_path_PATH_OGGDEC+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_OGGDEC"; then
-  ac_cv_prog_PATH_OGGDEC="$PATH_OGGDEC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_OGGDEC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_OGGDEC="$PATH_OGGDEC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_OGGDEC="no"
+    ac_cv_path_PATH_OGGDEC="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5672,9 +5576,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_OGGDEC" && ac_cv_path_PATH_OGGDEC="no"
+  ;;
+esac
 fi
-fi
-PATH_OGGDEC=$ac_cv_prog_PATH_OGGDEC
+PATH_OGGDEC=$ac_cv_path_PATH_OGGDEC
 if test -n "$PATH_OGGDEC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_OGGDEC" >&5
 $as_echo "$PATH_OGGDEC" >&6; }
@@ -5688,20 +5594,22 @@ fi
 set dummy oggenc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_OGGENC+:} false; then :
+if ${ac_cv_path_PATH_OGGENC+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_OGGENC"; then
-  ac_cv_prog_PATH_OGGENC="$PATH_OGGENC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_OGGENC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_OGGENC="$PATH_OGGENC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_OGGENC="no"
+    ac_cv_path_PATH_OGGENC="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5709,9 +5617,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_OGGENC" && ac_cv_path_PATH_OGGENC="no"
+  ;;
+esac
 fi
-fi
-PATH_OGGENC=$ac_cv_prog_PATH_OGGENC
+PATH_OGGENC=$ac_cv_path_PATH_OGGENC
 if test -n "$PATH_OGGENC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_OGGENC" >&5
 $as_echo "$PATH_OGGENC" >&6; }
@@ -5742,20 +5652,22 @@ fi
 set dummy mpg123; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_MPG123+:} false; then :
+if ${ac_cv_path_PATH_MPG123+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_MPG123"; then
-  ac_cv_prog_PATH_MPG123="$PATH_MPG123" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_MPG123 in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_MPG123="$PATH_MPG123" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_MPG123="no"
+    ac_cv_path_PATH_MPG123="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5763,9 +5675,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_MPG123" && ac_cv_path_PATH_MPG123="no"
+  ;;
+esac
 fi
-fi
-PATH_MPG123=$ac_cv_prog_PATH_MPG123
+PATH_MPG123=$ac_cv_path_PATH_MPG123
 if test -n "$PATH_MPG123"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_MPG123" >&5
 $as_echo "$PATH_MPG123" >&6; }
@@ -5790,20 +5704,22 @@ fi
 set dummy mpg321; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_MPG321+:} false; then :
+if ${ac_cv_path_PATH_MPG321+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_MPG321"; then
-  ac_cv_prog_PATH_MPG321="$PATH_MPG321" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_MPG321 in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_MPG321="$PATH_MPG321" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_MPG321="no"
+    ac_cv_path_PATH_MPG321="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5811,9 +5727,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_MPG321" && ac_cv_path_PATH_MPG321="no"
+  ;;
+esac
 fi
-fi
-PATH_MPG321=$ac_cv_prog_PATH_MPG321
+PATH_MPG321=$ac_cv_path_PATH_MPG321
 if test -n "$PATH_MPG321"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_MPG321" >&5
 $as_echo "$PATH_MPG321" >&6; }
@@ -5840,20 +5758,22 @@ fi
 set dummy speexdec; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_SPEEXDEC+:} false; then :
+if ${ac_cv_path_PATH_SPEEXDEC+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_SPEEXDEC"; then
-  ac_cv_prog_PATH_SPEEXDEC="$PATH_SPEEXDEC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_SPEEXDEC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_SPEEXDEC="$PATH_SPEEXDEC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_SPEEXDEC="no"
+    ac_cv_path_PATH_SPEEXDEC="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5861,9 +5781,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_SPEEXDEC" && ac_cv_path_PATH_SPEEXDEC="no"
+  ;;
+esac
 fi
-fi
-PATH_SPEEXDEC=$ac_cv_prog_PATH_SPEEXDEC
+PATH_SPEEXDEC=$ac_cv_path_PATH_SPEEXDEC
 if test -n "$PATH_SPEEXDEC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_SPEEXDEC" >&5
 $as_echo "$PATH_SPEEXDEC" >&6; }
@@ -5877,20 +5799,22 @@ fi
 set dummy speexenc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_SPEEXENC+:} false; then :
+if ${ac_cv_path_PATH_SPEEXENC+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_SPEEXENC"; then
-  ac_cv_prog_PATH_SPEEXENC="$PATH_SPEEXENC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_SPEEXENC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_SPEEXENC="$PATH_SPEEXENC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_SPEEXENC="no"
+    ac_cv_path_PATH_SPEEXENC="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5898,9 +5822,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_SPEEXENC" && ac_cv_path_PATH_SPEEXENC="no"
+  ;;
+esac
 fi
-fi
-PATH_SPEEXENC=$ac_cv_prog_PATH_SPEEXENC
+PATH_SPEEXENC=$ac_cv_path_PATH_SPEEXENC
 if test -n "$PATH_SPEEXENC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_SPEEXENC" >&5
 $as_echo "$PATH_SPEEXENC" >&6; }
@@ -5931,20 +5857,22 @@ fi
 set dummy flac; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_FLAC+:} false; then :
+if ${ac_cv_path_PATH_FLAC+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_FLAC"; then
-  ac_cv_prog_PATH_FLAC="$PATH_FLAC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_FLAC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_FLAC="$PATH_FLAC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_FLAC="no"
+    ac_cv_path_PATH_FLAC="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5952,9 +5880,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_FLAC" && ac_cv_path_PATH_FLAC="no"
+  ;;
+esac
 fi
-fi
-PATH_FLAC=$ac_cv_prog_PATH_FLAC
+PATH_FLAC=$ac_cv_path_PATH_FLAC
 if test -n "$PATH_FLAC"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_FLAC" >&5
 $as_echo "$PATH_FLAC" >&6; }
@@ -5979,20 +5909,22 @@ fi
 set dummy timidity; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_TIMIDITY+:} false; then :
+if ${ac_cv_path_PATH_TIMIDITY+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_TIMIDITY"; then
-  ac_cv_prog_PATH_TIMIDITY="$PATH_TIMIDITY" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_TIMIDITY in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_TIMIDITY="$PATH_TIMIDITY" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_TIMIDITY="no"
+    ac_cv_path_PATH_TIMIDITY="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -6000,9 +5932,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_TIMIDITY" && ac_cv_path_PATH_TIMIDITY="no"
+  ;;
+esac
 fi
-fi
-PATH_TIMIDITY=$ac_cv_prog_PATH_TIMIDITY
+PATH_TIMIDITY=$ac_cv_path_PATH_TIMIDITY
 if test -n "$PATH_TIMIDITY"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_TIMIDITY" >&5
 $as_echo "$PATH_TIMIDITY" >&6; }
@@ -6027,20 +5961,22 @@ fi
 set dummy wavpack; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_WAVPACK+:} false; then :
+if ${ac_cv_path_PATH_WAVPACK+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_WAVPACK"; then
-  ac_cv_prog_PATH_WAVPACK="$PATH_WAVPACK" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_WAVPACK in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_WAVPACK="$PATH_WAVPACK" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_WAVPACK="no"
+    ac_cv_path_PATH_WAVPACK="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -6048,9 +5984,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_WAVPACK" && ac_cv_path_PATH_WAVPACK="no"
+  ;;
+esac
 fi
-fi
-PATH_WAVPACK=$ac_cv_prog_PATH_WAVPACK
+PATH_WAVPACK=$ac_cv_path_PATH_WAVPACK
 if test -n "$PATH_WAVPACK"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_WAVPACK" >&5
 $as_echo "$PATH_WAVPACK" >&6; }
@@ -6064,20 +6002,22 @@ fi
 set dummy wvunpack; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PATH_WVUNPACK+:} false; then :
+if ${ac_cv_path_PATH_WVUNPACK+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PATH_WVUNPACK"; then
-  ac_cv_prog_PATH_WVUNPACK="$PATH_WVUNPACK" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PATH_WVUNPACK in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_WVUNPACK="$PATH_WVUNPACK" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PATH_WVUNPACK="no"
+    ac_cv_path_PATH_WVUNPACK="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -6085,9 +6025,11 @@ done
   done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_PATH_WVUNPACK" && ac_cv_path_PATH_WVUNPACK="no"
+  ;;
+esac
 fi
-fi
-PATH_WVUNPACK=$ac_cv_prog_PATH_WVUNPACK
+PATH_WVUNPACK=$ac_cv_path_PATH_WVUNPACK
 if test -n "$PATH_WVUNPACK"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PATH_WVUNPACK" >&5
 $as_echo "$PATH_WVUNPACK" >&6; }
@@ -6268,7 +6210,6 @@ SO_LD="ld"
 
 case "$host" in
   *-*-linux*)
-#    CFLAGS="-Wno-stringop-overflow $CFLAGS"
     LDSO_FLAGS="-shared"
     LIBS="$LIBS -lm -ldl"
     if test "$GCC" = yes ; then
