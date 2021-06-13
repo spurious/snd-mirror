@@ -8203,7 +8203,8 @@ mus_any *mus_make_formant_bank(int size, mus_any **formants, mus_float_t *amps)
 {
   frm_bank *gen;
   int i;
-
+  
+  if (size <= 0) return(NULL); /* make the compiler happy */
   gen = (frm_bank *)malloc(sizeof(frm_bank));
   gen->core = &FORMANT_BANK_CLASS;
   gen->size = size;
