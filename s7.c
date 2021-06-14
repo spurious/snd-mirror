@@ -2861,8 +2861,8 @@ void s7_show_history(s7_scheme *sc);
 #define pair_macro(P)                  opt2_sym(P)
 #define set_pair_macro(P, Name)        set_opt2_sym(P, Name)
 
-#define fn_proc(f)                     ((s7_function)opt2(f, OPT2_FN))
-#define fx_proc(f)                     ((s7_function)opt2(f, OPT2_FX))
+#define fn_proc(f)                     ((s7_function)(opt2(f, OPT2_FN)))
+#define fx_proc(f)                     ((s7_function)(opt2(f, OPT2_FX)))
 #define fn_proc_unchecked(f)           ((s7_function)(T_Pair(f)->object.cons.opt2))
 #define fx_proc_unchecked(f)           ((s7_function)(T_Pair(f)->object.cons.opt2)) /* unused */
 
@@ -58352,7 +58352,7 @@ static s7_function fx_choose(s7_scheme *sc, s7_pointer holder, s7_pointer e, saf
 	  return((fx_proc(closure_body(opt1_lambda(arg))) == fx_sqr_t) ? fx_safe_closure_a_sqr : fx_safe_closure_a_a);
 
 	case HOP_SAFE_CLOSURE_3S_A:
-	  if ((s7_function)(fx_proc(closure_body(opt1_lambda(arg))) == fx_vref_vref_tu_v)) return(fx_vref_vref_3_no_let); /* extra cast is for C++ */
+	  if (fx_proc(closure_body(opt1_lambda(arg))) == fx_vref_vref_tu_v) return(fx_vref_vref_3_no_let);
 
 	default:
 	  /* if ((!fx_function[optimize_op(arg)]) && (is_h_optimized(arg))) fprintf(stderr, "fx_choose %s %s\n", op_names[optimize_op(arg)], display(arg)); */
