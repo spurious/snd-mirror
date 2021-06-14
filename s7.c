@@ -58352,7 +58352,7 @@ static s7_function fx_choose(s7_scheme *sc, s7_pointer holder, s7_pointer e, saf
 	  return((fx_proc(closure_body(opt1_lambda(arg))) == fx_sqr_t) ? fx_safe_closure_a_sqr : fx_safe_closure_a_a);
 
 	case HOP_SAFE_CLOSURE_3S_A:
-	  if (fx_proc(closure_body(opt1_lambda(arg)) == fx_vref_vref_tu_v)) return(fx_vref_vref_3_no_let);
+	  if ((s7_function)(fx_proc(closure_body(opt1_lambda(arg))) == fx_vref_vref_tu_v)) return(fx_vref_vref_3_no_let); /* extra cast is for C++ */
 
 	default:
 	  /* if ((!fx_function[optimize_op(arg)]) && (is_h_optimized(arg))) fprintf(stderr, "fx_choose %s %s\n", op_names[optimize_op(arg)], display(arg)); */
