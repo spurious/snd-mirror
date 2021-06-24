@@ -1516,7 +1516,14 @@ If you'd rather think in terms of e^-kt, set the 'base' to (exp k).
 pulsed-env produces a repeating envelope.  <a href="#env">env</a> sticks at its last value, but pulsed-env repeats it over and over.
 "duration" is the envelope duration, and "frequency" is the repeitition rate, changeable via the "fm" argument to the pulsed-env generator.
 </p>
-
+<pre class="indented">
+(with-sound ()
+  (let ((e (make-pulsed-env '(0 0 1 1 2 0) .01 1)) 
+        (frq (make-env '(0 0 1 1) :duration 1.0 :scaler (hz-&gt;radians 50))))
+    (do ((i 0 (+ i 1)))
+        ((= i 44100))
+      (outa i (* .5 (pulsed-env e (env frq)))))))
+</pre>
 
 <p>
 An envelope applied to the amplitude of a signal is a form of amplitude modulation,
@@ -6728,7 +6735,7 @@ called whenever convolve needs input.
 (with-sound (:play #t :statistics #t)
   (let ((cnv (make-convolve 
               (make-readin "pistol.snd")
-              (file-&gt;float-vector "oboe.snd" 0 (make-float-vector (framples "pistol.snd"))))))
+              (samples 0 (framples "pistol.snd") "oboe.snd"))))
     (do ((i 0 (+ i 1)))
 	((= i 88200))
       (outa i (* 0.25 (convolve cnv))))))
