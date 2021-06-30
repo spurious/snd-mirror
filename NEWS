@@ -1,10 +1,7 @@
-Snd 21.4:
+Snd 21.5:
 
-nrepl: notcurses 2.1.6 or later is required now (notcurses got split
-         into 2 libraries, notcurses-core and notcurses, and the APIs
-         are not compatible.  notcurses-core is much smaller, so I'm
-         using it).
+mostly s7 work -- bugs, optimizations, etc
 
-checked: notcurses 2.3.0, Fedora 34, sbcl 2.1.4, Ubuntu 21.04
+checked: sbcl 2.1.5|6
 
-Thanks!: chai xiaoxiang, Kjetil Matheussen, Nick Black
+Thanks!: Daniel Hensel, Brad Christensen
