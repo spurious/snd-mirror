@@ -578,6 +578,40 @@ X features:
   --x-includes=DIR    X include files are in DIR
   --x-libraries=DIR   X library files are in DIR
 
+--------
+And Daniel Hensel's OSX instructions for BigSur (30-Jun-21):
+
+Download and install XCode
+open terminal:
+install Command Line Tools by typing
+xcode-select --install
+
+Install Homebrew
+
+brew install gcc 
+brew install ruby
+brew install gtk+
+brew install openmotif
+brew install poppler
+brew install gsl
+brew install timidity
+brew install wavpack
+brew install wvunpack
+brew install mpg123
+brew install mpg321
+brew install vorbis-tools
+brew install flac
+brew install fftw
+
+cd to snd
+
+./configure -prefix=/opt/snd-s7 CFLAGS="-arch x86_64 -I/opt/X11/include" LDFLAGS="-L/opt/X11/lib -lmx -bind_at_load" -with-motif -with-s7
+
+make
+
+sudo make install
+sudo ln -s /opt/snd-s7/bin/snd /usr/local/bin
+
 
 
 -------- FreeBSD 9.n --------
