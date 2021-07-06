@@ -3776,8 +3776,8 @@ returns a sum of cosines scaled in a very complicated way."))
 	;; also omitting the original divide by (* pi (sqrt arg)) -- it's just an amplitude scaler
 	;;   and in this context, we get -1..1 peak amps from the sin anyway.
 	(let ((arg (+ (* r r) 
-		       (* a a)
-		       (* a -2.0 r (cos angle)))))
+		      (* a a)
+		      (* a -2.0 r (cos angle)))))
 	  (set! angle (+ angle fm frequency))
 	  (if (< (abs arg) nearly-zero) ; r = a, darn it! This will produce a spike, but at least it's not a NaN
 	      1.0
