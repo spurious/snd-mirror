@@ -587,9 +587,11 @@ if test "$with_audio" != no ; then
   if test "$AUDIO_SYSTEM" = None ; then
     case "$host" in
       *-*-linux*) 
-        AUDIO_SYSTEM=ALSA
-        AC_DEFINE(HAVE_ALSA)
-        AUDIO_LIB="-lasound"
+        if test "$with_alsa" != no ; then
+          AUDIO_SYSTEM=ALSA
+          AC_DEFINE(HAVE_ALSA)
+          AUDIO_LIB="-lasound"
+        fi
 	;;
       *-*-sunos4*) 
 	AUDIO_SYSTEM=Sun
