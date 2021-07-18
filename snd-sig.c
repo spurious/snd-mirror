@@ -3536,6 +3536,9 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      free_snd_fd(sf);
 	      if (res == s7_f(s7))
 		delete_samples(beg, num, cp, pos);
+	      else 
+		if (res == arg) /* this change and two below courtesy of Tito Latini (to avoid returning a pointer into the procedure source) */
+		  return(Xen_true);
 	      return(res);
 	    }
 	  
@@ -3581,13 +3584,17 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		}
 	      x = s7_number_to_real_with_caller(s7, fx, "map-channel");
 	      if (s7_car(res) == s7_make_symbol(s7, "*"))
-		scale_channel(cp, x, beg, num, pos, NOT_IN_AS_ONE_EDIT);
+		{
+		  scale_channel(cp, x, beg, num, pos, NOT_IN_AS_ONE_EDIT);
+		  res = C_double_to_Xen_real(chn_sample(num - 1, cp, cp->edit_ctr));
+		}
 	      else
 		{
 		  data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
 		  samples_to_vct_with_reader(num, data, sf);
 		  for (kp = 0; kp < num; kp++) data[kp] += x;
 		  change_samples(beg, num, data, cp, caller, pos, -1.0);
+		  res = C_double_to_Xen_real(data[num - 1]);
 		  free(data);
 		}
 	      free_snd_fd(sf);
@@ -3622,6 +3629,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		  }
 		free_snd_fd(sf);
 		change_samples(beg, num, data, cp, caller, pos, -1.0);
+		res = C_double_to_Xen_real(data[num - 1]);
 		free(data);
 		s7_set_curlet(s7, old_e);
 		return(res);
