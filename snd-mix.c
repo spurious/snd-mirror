@@ -25,10 +25,6 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
   return(result);
 }
 
-
-mus_float_t next_sample_value_unscaled(snd_fd *sf);
-mus_float_t next_sound(snd_fd *sf);
-
 static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, mus_long_t beg, mus_long_t num, file_delete_t auto_delete, const char *origin)
 {
   file_info *ihdr, *ohdr;
@@ -108,34 +104,8 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
       mus_long_t kdur;
       kdur = num - i;
       if (kdur > size) kdur = size;
-      if (sf->runf == next_sample_value_unscaled)
-	{
-#if (!WITH_VECTORIZE)
-	  for (j = 0; j < kdur; j++)
-	    chandata[j] += (sf->loc > sf->last) ? next_sound(sf) : sf->data[sf->loc++];
-#else
-	  for (j = 0; j < kdur; )
-	    {
-	      mus_long_t ksize;
-	      ksize = sf->last - sf->loc + 1;
-	      if (ksize == 1)
-		chandata[j++] = next_sound(sf);
-	      else 
-		{
-		  if (j + ksize > kdur) ksize = kdur - j;
-		  mus_copy_floats((mus_float_t *)(chandata + j), (mus_float_t *)(sf->data + sf->loc), ksize);
-		  j += ksize;
-		  if (j < kdur)
-		    chandata[j++] = next_sound(sf);
-		}
-	    }
-#endif
-	}
-      else
-	{
-	  for (j = 0; j < kdur; j++)
-	    chandata[j] += read_sample(sf);
-	}
+      for (j = 0; j < kdur; j++)
+	chandata[j] += read_sample(sf);
       err = mus_file_write(ofd, 0, kdur - 1, 1, &chandata);
       mus_file_read_chans(ifd, i, size, in_chans, data, data);
       if (err != MUS_NO_ERROR) break;

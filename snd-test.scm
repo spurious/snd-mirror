@@ -30587,7 +30587,7 @@ EDITS: 1
 	    )	
 	  
 	  (when (and all-args (= test-16 0))
-	    (let ((tries 256))
+	    (let ((tries 64))
 	      (snd-display "framples: ~,2F ~,2F" 
 			   (* 1.0 (/ (mus-sound-framples "1.snd") (mus-sound-framples "oboe.snd")))
 			   (* 1.0 (/ (mus-sound-framples "1.snd") (mus-sound-framples "1a.snd"))))
