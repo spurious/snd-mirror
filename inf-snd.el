@@ -341,10 +341,10 @@ point to the correct path where snd-xref.c is located.")
 snd/snd-xref.c.  The user variable `inf-snd-index-path' should
 point to the correct path where snd-xref.c is located.")
 
-(defvar inf-snd-ruby-keyword-regexp "^  \"\\([A-Za-z0-9$_?!()]+?\\)\"[,}]+?"
+(defvar inf-snd-ruby-keyword-regexp "\"\\([A-Za-z0-9$_?!()]+?\\)\"[,}]+?" ; was "^  \"\\([A-Za-z0-9$_?!()]+?\\)\"[,}]+?"
   "*User variable to find Snd-Ruby's keywords in snd-xref.c.")
 
-(defvar inf-snd-scheme-keyword-regexp "^  \"\\([-A-Za-z0-9*>?!()]+?\\)\"[,}]+?"
+(defvar inf-snd-scheme-keyword-regexp "\"\\([-A-Za-z0-9#*+>?()]+?\\)\"[,}]+?" ; was "^  \"\\([-A-Za-z0-9*>?!()]+?\\)\"[,}]+?"
   "*User variable to find Snd-Scheme's and Snd-Forth's keywords in snd-xref.c.")
 
 (defun inf-snd-set-keywords ()
