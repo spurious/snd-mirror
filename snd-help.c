@@ -3032,7 +3032,7 @@ static char *snd_finder(const char *name, bool got_help)
 	  if (!fgrep)
 	    fgrep = call_grep("(define (", name, ")", path, tempfile);
 	  if (!fgrep)
-	    fgrep = call_grep("(define ", name, "\n", path, tempfile);
+	    fgrep = call_grep("(define ", name, "\\\n", path, tempfile);
 #endif
 	}
     }
