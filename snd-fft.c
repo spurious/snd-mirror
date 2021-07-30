@@ -2423,6 +2423,7 @@ static Xen g_delete_transform(Xen type)
       if (transform_type(ss) == typ) set_transform_type(DEFAULT_TRANSFORM_TYPE);
       deleted_type = typ;
       for_each_chan(unset_deleted_transform_type);
+      make_transform_type_list();
       return(Xen_true);
     }
   return(Xen_false);
