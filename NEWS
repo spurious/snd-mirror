@@ -1,7 +1,15 @@
-Snd 21.5:
+Snd 21.6:
 
-mostly s7 work -- bugs, optimizations, etc
+s7.h: added s7_is_random_state, s7_make_normal_vector, s7_array_to_list
 
-checked: sbcl 2.1.5|6
+s7.c: I changed the default heap size to 64k (half its previous size) --
+      my timing tests and benchmarks seem to indicate that this is usually
+      faster (perhaps cache-related?).  Pushing it down to 32k doesn't
+      affect runtimes very much.  To get the old size back,
+      (set! (*s7* 'heap-size) 128000).
 
-Thanks!: Daniel Hensel, Brad Christensen
+Checked: sbcl 2.1.7
+
+Thanks!: Daniel Hensel, Brad Christensen, James Hearon, Christos Vagias, 
+         Tito Latini, Elijah Stone, Kjetil Matheussen, Woody Douglass
+

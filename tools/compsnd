@@ -36,7 +36,8 @@ echo ' '
 rm -f snd
 rm -f config.cache
 
-cppcheck --enable=all s7.c
+# cppcheck --enable=all s7.c
+# too slow
 
 
 echo ' -------------------------------------------------------------------------------- '
