@@ -46,6 +46,8 @@ The configure script has a bunch of arguments:
                          in FC, install the motif, motif-devel, and libXpm-devel packages.
                          in *BSD, pkg install open-motif, or perhaps use pkgin?
                          in Debian, apt-get install libmotif4, libmotif-dev, libxt-dev, libxpm-dev
+			    in Ubuntu 21.04 the Motif libraries appear to be libmotif-common libxm4 libmotif-dev
+			      and X11/extensions/shape.h is in libxext-dev
 
      --with-gui        make Snd with graphics support (actually intended for use as --without-gui)
   

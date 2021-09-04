@@ -1554,6 +1554,7 @@ void stop_applying(snd_info *sp)
 {
   /* called if C-g during the apply process */
   sp->apply_ok = false;
+  sp->applying = false;
 }
 
 typedef struct {
@@ -1607,7 +1608,7 @@ static bool apply_controls(apply_state *ap)
 
   if (!ap) return(false);
   sp = ap->sp;
-  if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(false);
+  if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) {sp->applying = false; return(false);}
 
   if (sp->filter_control_on) 
     added_dur = sp->filter_control_order;
@@ -1644,6 +1645,7 @@ static bool apply_controls(apply_state *ap)
       if (!si)
 	{
 	  sp->sync = old_sync;
+	  sp->applying = false;
 	  return(false);
 	}
 
@@ -1700,7 +1702,7 @@ static bool apply_controls(apply_state *ap)
 
 	    case APPLY_TO_SELECTION: 
 	      ap->hdr->chans = selection_chans();
-	      if (ap->hdr->chans <= 0) return(false);
+	      if (ap->hdr->chans <= 0) {sp->applying = false; return(false);}
 	      if (apply_dur == 0)
 		apply_dur = selection_len(); 
 	      break;
@@ -1778,11 +1780,11 @@ static bool apply_controls(apply_state *ap)
 
 	  if (ap->ofd == -1)
 	    {
+	      sp->applying = false;
 	      snd_error("%s apply temp file %s: %s\n", 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			ap->ofile, 
 			snd_open_strerror());
-	      sp->applying = false;
 	      free_apply_state(ap);
 	      return(false);
 	    }
@@ -4165,8 +4167,6 @@ static s7_pointer g_save_sound_as(s7_scheme *sc, s7_pointer args)
   s7_pointer p, fp, index, edpos, pchan, filep;
   bool free_outcom = false;
   int edit_position = AT_CURRENT_EDIT_POSITION;
-
-  /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, args)); */
 
   fp = s7_car(args);
   filep = fp;
