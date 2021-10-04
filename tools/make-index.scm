@@ -1,5 +1,12 @@
 ;;; make-index.scm translated from index.cl
 ;;;   run this -noinit so that loads in ~/.snd_s7 don't confuse matters
+
+(when (provided? 'pure-s7)
+  (define (exact->inexact x)
+    (if (number? x)
+	(* x 1.0)
+	(error 'wrong-type-arg "exact->inexact argument should be a number: ~A" x))))
+
 (set! (*s7* 'heap-size) (* 2 1024000))
 
 (if (provided? 'pure-s7)

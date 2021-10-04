@@ -4517,7 +4517,7 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
       break;
     }
     if (len<0){
-      printf("Errur. Input buffer to large for mus_audio_write.\n");
+      printf("Error. Input buffer to large for mus_audio_write.\n");
       return MUS_ERROR;
     }
 
