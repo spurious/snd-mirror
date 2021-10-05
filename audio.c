@@ -4036,14 +4036,17 @@ static int sndjack_getnumoutchannels(void){
       ? 2
       : num_ch;
   }else{
+    int ret = 0;
     int lokke=0;
     const char **ports=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
     while(ports!=NULL && ports[lokke]!=NULL){
+      if (!strcmp(ports[lokke], JACK_DEFAULT_AUDIO_TYPE))
+        ret++;
       lokke++;
     }
     
-    if (lokke<2) return 2;
-    return lokke;
+    if (ret<2) return 2;
+    return ret;
   }
 }
 
@@ -4056,9 +4059,12 @@ static int sndjack_getnuminchannels(void){
       ? 2
       : num_ch;
   }else{
+    int ret = 0;
     int lokke=0;
     const char **ports=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
     while(ports!=NULL && ports[lokke]!=NULL){
+      if (!strcmp(ports[lokke], JACK_DEFAULT_AUDIO_TYPE))
+        ret++;
       lokke++;
     }
     if (lokke<2) return 2;
@@ -4069,8 +4075,6 @@ static int sndjack_getnuminchannels(void){
 
 static int sndjack_init(void){
   int ch;
-  int numch;
-
   {
     jack_status_t status;
     sndjack_client=jack_client_open("sndlib",JackNoStartServer,&status,NULL);
@@ -4093,9 +4097,11 @@ static int sndjack_init(void){
 
   jack_set_process_callback(sndjack_client,sndjack_process,NULL);
 
-  sndjack_num_channels_allocated = numch = sndjack_getnumoutchannels();
-  sndjack_num_read_channels_allocated    = sndjack_getnuminchannels();
-     
+  const int numch = sndjack_getnumoutchannels();
+  
+  sndjack_num_channels_allocated = numch;
+  sndjack_num_read_channels_allocated = sndjack_getnuminchannels();
+  
   sndjack_channels=(struct SndjackChannel *)calloc(sizeof(struct SndjackChannel),numch);
   sndjack_read_channels=(struct SndjackChannel *)calloc(sizeof(struct SndjackChannel),sndjack_num_read_channels_allocated);
 
@@ -4105,8 +4111,9 @@ static int sndjack_init(void){
   for (ch=0;ch<sndjack_num_read_channels_allocated;ch++){
     sndjack_read_channels[ch].buffer=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
   }
+  
   sj_buffersize=SNDJACK_BUFFERSIZE;
-
+  
   for (ch=0;ch<numch;ch++){
     char temp[500];
     snprintf(temp, 500, "out_%d",ch+1);
@@ -4154,29 +4161,37 @@ static int sndjack_init(void){
 
     const char **outportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
     for (ch=0;outportnames && outportnames[ch]!=NULL && ch<numch;ch++){
-      if (
-	  jack_connect(
-		       sndjack_client,
-		       jack_port_name(sndjack_channels[ch].port),
-		       outportnames[ch]
-		       )
-	  )
-	{
-	  printf ("Warning. Cannot connect jack output port %d: \"%s\".\n",ch,outportnames[ch]);
-	}
+      jack_port_t *physical_port = jack_port_by_name(sndjack_client, outportnames[ch]);
+      
+      if (physical_port != NULL && !strcmp(jack_port_type(sndjack_channels[ch].port), jack_port_type(physical_port))) {
+        if (
+            jack_connect(
+                         sndjack_client,
+                         jack_port_name(sndjack_channels[ch].port),
+                         outportnames[ch]
+                         )
+            )
+          {
+            printf ("Warning. Cannot connect jack output port %d: \"%s\".\n",ch,outportnames[ch]);
+          }
+      }
     }
 
     const char **inportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
-    for (ch=0;inportnames && inportnames[ch]!=NULL && ch<numch;ch++){
-    if (
-	jack_connect(
-		     sndjack_client,
-		     inportnames[ch],
-		     jack_port_name(sndjack_read_channels[ch].port)
-		     )
-	)
-      {
-	printf ("Warning. Cannot connect jack input port %d: \"%s\".\n",ch,inportnames[ch]);
+    for (ch=0;inportnames && inportnames[ch]!=NULL && ch<sndjack_num_read_channels_allocated;ch++){
+      jack_port_t *physical_port = jack_port_by_name(sndjack_client, inportnames[ch]);
+      
+      if (physical_port != NULL && !strcmp(jack_port_type(sndjack_read_channels[ch].port), jack_port_type(physical_port))) {
+        if (
+            jack_connect(
+                         sndjack_client,
+                         inportnames[ch],
+                         jack_port_name(sndjack_read_channels[ch].port)
+                         )
+            )
+          {
+            printf ("Warning. Cannot connect jack input port %d: \"%s\".\n",ch,inportnames[ch]);
+          }
       }
     }
   }
