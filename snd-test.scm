@@ -36433,8 +36433,8 @@ EDITS: 1
 	    (lambda ()
 	      (display (fv02)) (newline))
 	    (lambda args 
-	      (apply format #f (cadr args))))   ; float-vector-set! argument 2, 1/2, is a ratio but should be an integer
-	  "float-vector-set! argument 2, 1/2, is a ratio but should be an integer")
+	      (apply format #f (cadr args))))   ; float-vector-set! second argument, 1/2, is a ratio but should be an integer
+	  "float-vector-set! second argument, 1/2, is a ratio but should be an integer")
     
     ;; (+ (* s1 s2) (* (- 1.0 s1) s3)) 
     
@@ -36455,8 +36455,8 @@ EDITS: 1
        (lambda ()
 	 (fv1 1+i 2+2i 3+3i)) ; 'error? -- 3+i 
        (lambda args 
-	 (apply format #f (cadr args))))   ; float-vector-set! argument 3, 3+1i, is a complex number but should be a real
-     "float-vector-set! argument 3, 3.0+1.0i, is a complex number but should be a real")
+	 (apply format #f (cadr args))))   ; float-vector-set! third argument, 3+1i, is a complex number but should be a real
+     "float-vector-set! third argument, 3.0+1.0i, is a complex number but should be a real")
     
     (define (fv2 s2 s3)
       (do ((fv (make-float-vector 4))
