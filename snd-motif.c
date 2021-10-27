@@ -30467,10 +30467,12 @@ void snd_doit(int argc, char **argv)
 	      (mus_strcmp(argv[i], "--separate")))
 	    set_sound_style(SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
-	    if (mus_strcmp(argv[i], "-noglob"))
+	    if ((mus_strcmp(argv[i], "-noglob")) ||
+		(mus_strcmp(argv[i], "--noglob")))
 	      noglob = true;
 	    else
-	      if (mus_strcmp(argv[i], "-noinit"))
+	      if ((mus_strcmp(argv[i], "-noinit")) ||
+		  (mus_strcmp(argv[i], "--noinit")))
 		noinit = true;
 	      else
 		if (mus_strcmp(argv[i], "-nostdin"))

@@ -670,10 +670,10 @@ void snd_doit(int argc, char **argv)
 
   for (i = 1; i < argc; i++)
     {
-      if (mus_strcmp(argv[i], "-noglob"))
+      if ((mus_strcmp(argv[i], "-noglob")) || (mus_strcmp(argv[i], "--noglob")))
 	noglob = true;
       else
-	if (mus_strcmp(argv[i], "-noinit"))
+	if ((mus_strcmp(argv[i], "-noinit")) || (mus_strcmp(argv[i], "--noinit")))
 	  noinit = true;
 	else
 	  if (mus_strcmp(argv[i], "-nostdin"))
