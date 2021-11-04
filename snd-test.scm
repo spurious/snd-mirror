@@ -41313,9 +41313,10 @@ EDITS: 1
 					  expand-control-length expand-control-ramp expand-control? filter-control-in-dB filter-control-in-hz
 					  filter-control-envelope filter-control-order filter-control? framples header-type read-only
 					  reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
-					  reverb-control-scale reverb-control? sound-loop-info soundfont-info speed-control
+					  reverb-control-scale reverb-control? sound-loop-info speed-control
 					  speed-control-style speed-control-tones srate channel-style sync)))
 			(list float-vector-5 0+i 1.5 "hiho" delay-32))
+	      ;; soundfont-info 'no-setter
 	      
 	      (let ((index (open-sound "obtest.snd")))
 		(for-each (lambda (arg)
@@ -41501,12 +41502,19 @@ EDITS: 1
 				   (lambda args (car args)))))
 			    (if (not (memq tag '(wrong-type-arg syntax-error error)))
 				(snd-display "mus-gen ~A: ~A" n tag))))
-			(list mus-channel mus-channels mus-data
-			      mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
-			      mus-location mus-file-mix mus-name mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
-			      mus-ycoeffs))
-	      
-	      
+			(list mus-data mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
+			      mus-location mus-phase mus-ramp mus-scaler))
+
+	      (for-each (lambda (n)
+			  (let ((tag
+				 (catch #t
+				   (lambda ()
+				     (set! (n (make-oscil)) vector-0))
+				   (lambda args (car args)))))
+			    (if (not (eq? tag 'no-setter))
+				(snd-display "mus-gen ~A: ~A" n tag))))
+			(list mus-channel mus-channels mus-file-mix mus-name mus-order mus-random mus-run mus-xcoeffs mus-ycoeffs))
+
 	      (for-each (lambda (n)
 			  (let ((tag
 				 (catch #t
@@ -41682,7 +41690,7 @@ EDITS: 1
 				     (lambda ()
 				       (set! (n index 0) float-vector-5))
 				     (lambda args (car args)))))
-			      (if (not (memq tag '(wrong-type-arg syntax-error error)))
+			      (if (not (memq tag '(wrong-type-arg syntax-error no-setter error)))
 				  (snd-display " set chn procs ~A: ~A" n tag))))
 			  (list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
 				fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
@@ -41707,7 +41715,7 @@ EDITS: 1
 				   (lambda ()
 				     (n float-vector-5))
 				   (lambda args (car args)))))
-			    (if (not (memq tag '(error wrong-type-arg syntax-error)))
+			    (if (not (memq tag '(error wrong-type-arg no-setter syntax-error)))
 				(snd-display "[0]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
 			(list mix-amp mix-amp-env mix-length mix-name mix-position mix-home mix-speed mix-tag-y)
 			'(mix-amp mix-amp-env mix-length mix-name mix-position mix-home mix-speed mix-tag-y))
@@ -41718,7 +41726,7 @@ EDITS: 1
 				   (lambda ()
 				     (set! (n (integer->mix 1234)) float-vector-5))
 				   (lambda args (car args)))))
-			    (if (not (memq tag '(error wrong-type-arg syntax-error no-such-mix)))
+			    (if (not (memq tag '(error wrong-type-arg syntax-error no-setter no-such-mix)))
 				(snd-display "[2]: mix procs ~A: ~A" n tag))))
 			(list mix-name mix-position mix-home mix-speed mix-tag-y))
 	      
@@ -41730,7 +41738,7 @@ EDITS: 1
 				     (lambda ()
 				       (set! (n id) float-vector-5))
 				     (lambda args (car args)))))
-			      (if (not (memq tag '(error wrong-type-arg syntax-error)))
+			      (if (not (memq tag '(error wrong-type-arg no-setter syntax-error)))
 				  (snd-display "[3]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
 			  (list  mix-name mix-position mix-home mix-speed mix-tag-y)
 			  '(mix-name mix-position mix-home mix-speed mix-tag-y))
@@ -41784,7 +41792,7 @@ EDITS: 1
 				     (lambda ()
 				       (set! (n) float-vector-5))
 				     (lambda args (car args)))))
-			      (if (not (memq tag '(error wrong-type-arg syntax-error)))
+			      (if (not (memq tag '(error wrong-type-arg no-setter syntax-error)))
 				  (snd-display " misc procs ~A: ~A" n tag))))
 			  (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite ask-about-unsaved-edits
 				auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration show-full-range initial-beg initial-dur
@@ -41807,7 +41815,6 @@ EDITS: 1
 				window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 				mix-tag-width with-relative-panes clm-table-size mark-tag-width mark-tag-height
 				)))
-	      
 	      
 	      (set! *ask-about-unsaved-edits* #f)
 	      (set! *remember-sound-state* #f)
