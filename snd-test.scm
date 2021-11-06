@@ -15933,6 +15933,18 @@ EDITS: 2
        three-sin
        hundred-sin
        thousand-sin))
+
+#|
+(with-sound (:srate 48000 :channels 1 :play #t)
+  (let* ((dur 1.0)
+	 (samps (seconds->samples dur))
+	 (coeffs (float-vector 0 1 0 1/3 0 1/5 0 1/7 0 1/9)) ; square wave
+	 (incr (hz->radians 200.0)))
+    (do ((i 0 (+ i 1))
+	 (x 0.0 (+ x incr)))
+	((= i samps))
+      (outa i (* 0.1 (mus-chebyshev-u-sum x coeffs))))))
+|#
     
     (for-each 
      (lambda (camps samps name)
