@@ -15935,6 +15935,23 @@ EDITS: 2
        thousand-sin))
 
 #|
+(let ((g (make-polywave 100 '(1 1 3 1/3 5 1/5 7 1/7 9 1/9)
+                        :type mus-chebyshev-second-kind)))
+    (with-sound ()
+       (do ((i 0 (+ i 1)))
+          ((= i 44100))
+          (outa i (polywave g)))))
+
+(with-sound (:srate 48000 :channels 1 :play #t)
+   (let ((gen (make-polyshape 100.0
+			     :coeffs (partials->polynomial
+				      (float-vector 1 1 3 1/3 5 1/5 7 1/7 9 1/9)
+				      mus-chebyshev-second-kind)
+			     :kind mus-chebyshev-second-kind)))
+     (do ((i 0 (+ i 1)))
+         ((= i 88200))
+       (outa i (* .75 (polyshape gen 1.0))))))
+
 (with-sound (:srate 48000 :channels 1 :play #t)
   (let* ((dur 1.0)
 	 (samps (seconds->samples dur))
