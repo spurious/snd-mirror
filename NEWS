@@ -1,20 +1,8 @@
-Snd 21.8
+Snd 21.9
 
-sndlib: Kjetil updated the Jack support in audio.c.
+s7: mainly work on error handling
 
-s7:  now using __has_include if it is defined (gcc has it)
-       this means mus-config.h is optional in gcc/clang (you
-       don't need an empty file).
-     s7_make_byte_vector and friends (s7.h)
-     added (*s7* 'profile-prefix), a symbol or #f
-     profile-info now includes the file and line-number of the function
-       and the function-local value of (*s7* 'profile-prefix), if any.
-     added support for tcc (Tiny C compiler) -- no dynamic loading yet
+checked: Ubuntu 21.10, notcurses 2.4.5|7|8, sbcl 2.1.10, Fedora 35
 
-checked: notcurses 2.4.1|3, sbcl 2.1.9
+Thanks!: Christos Vagias, Woody Douglass
 
-due to a blizzard of changes in notcurses, nrepl currently needs
-  notcurses version 2.4.3 or later -- sorry for the inconvenience!
-
-Thanks!: Iain Duncan, Brad Christensen, Christos Vagias, Woody Douglass,
-	 James Hearon, Juan Reyes, Kjetil Matheussen
