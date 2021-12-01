@@ -2902,12 +2902,12 @@ static void gl_display(chan_info *cp)
 
 #define GL_COLOR_SET(R, G, B) glColor3us(R, G, B)
 
-static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, bool use_dB, mus_float_t min_dB,
+static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t spect_start, mus_float_t spect_end, bool use_dB, mus_float_t min_dB,
 			   rgb_t br, rgb_t bg, rgb_t bb)
 {
   mus_float_t lin_dB = 0.0;
   mus_float_t xincr, yincr, y0, x1;
-  int bins = 0, slice, i, j;
+  int bins = 0, start_bin, slice, i, j, k;
   float inv_scl;
   int **js = NULL;
 
@@ -2916,7 +2916,8 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, b
 
   glNewList((GLuint)gl_fft_list, GL_COMPILE);
 
-  bins = (int)(si->target_bins * cutoff);
+  start_bin = spect_start * si->target_bins;
+  bins = (int)(si->target_bins * (spect_end - spect_start));
   if (bins <= 0) bins = 1;
 
   js = (int **)calloc(si->active_slices, sizeof(int *));
@@ -2925,13 +2926,13 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, b
       js[i] = (int *)calloc(bins, sizeof(int));
       if (use_dB) 
 	{
-	  for (j = 0; j < bins; j++)
-	    js[i][j] = skew_color(1.0 - (in_dB(min_dB, lin_dB, si->data[i][j] * inv_scl)) / min_dB);
+	  for (j = 0, k = start_bin; j < bins; j++, k++)
+	    js[i][j] = skew_color(1.0 - (in_dB(min_dB, lin_dB, si->data[i][k] * inv_scl)) / min_dB);
 	}
       else
 	{
-	  for (j = 0; j < bins; j++)
-	    js[i][j] = skew_color(si->data[i][j] * inv_scl); /* can be NO_COLOR (-1) */
+	  for (j = 0, k = start_bin; j < bins; j++, k++)
+	    js[i][j] = skew_color(si->data[i][k] * inv_scl); /* can be NO_COLOR (-1) */
 	}
     }
   xincr = 1.0 / (double)(si->active_slices);
@@ -2945,7 +2946,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, b
       x1 += xincr;
       y1 = -0.5;
 
-      for (i = 0; i < bins - 1; i++)
+      for (i = 0, k = start_bin; i < bins - 1; i++, k++)
 	{
 	  rgb_t r, g, b;
 	  mus_float_t val00, val01, val11, val10;
@@ -2955,10 +2956,10 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, b
 	  y0 = y1;
 	  y1 += yincr;
 
-	  val00 = si->data[slice][i] * inv_scl;
-	  val01 = si->data[slice][i + 1] * inv_scl;
-	  val10 = si->data[slice + 1][i] * inv_scl;
-	  val11 = si->data[slice + 1][i + 1] * inv_scl;
+	  val00 = si->data[slice][k] * inv_scl;
+	  val01 = si->data[slice][k + 1] * inv_scl;
+	  val10 = si->data[slice + 1][k] * inv_scl;
+	  val11 = si->data[slice + 1][k + 1] * inv_scl;
 
 	  if (use_dB) 
 	    {
@@ -3081,7 +3082,7 @@ static bool make_gl_spectrogram(chan_info *cp)
 #endif
   
   if (need_relist)
-    gl_spectrogram(si, cp->gl_fft_list, cp->spectrum_end, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
+    gl_spectrogram(si, cp->gl_fft_list, cp->spectrum_start, cp->spectrum_end, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
 
   glViewport(fap->graph_x0, 0, fap->width, fap->height);
   glMatrixMode(GL_PROJECTION);
@@ -3144,7 +3145,7 @@ static bool make_spectrogram(chan_info *cp)
   mus_float_t xyz[3];
   mus_float_t xoff, yoff, xincr, yincr, x0, y0, binval, scl = 1.0;
   mus_float_t fwidth, fheight, zscl, yval, xval;
-  int bins = 0, slice, i, j, xx = 0, yy = 0;
+  int bins = 0, start_bin, slice, i, j, k, xx = 0, yy = 0;
   bool old_with_gl = false;
 
   mus_float_t minlx = 0.0, lscale = 0.0, fap_incr = 0.0;
@@ -3167,7 +3168,8 @@ static bool make_spectrogram(chan_info *cp)
 
   scl = si->scale;                     /* unnormalized fft doesn't make much sense here (just washes out the graph) */
   fap = cp->fft->axis;
-  bins = (int)(si->target_bins * cp->spectrum_end);
+  start_bin = (int)(si->target_bins * cp->spectrum_start);
+  bins = (int)(si->target_bins * (cp->spectrum_end - cp->spectrum_start));
   fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
   fheight = (fap->y_axis_y1 - fap->y_axis_y0); /* negative! */
   xincr = fwidth / (mus_float_t)bins;
@@ -3208,13 +3210,13 @@ static bool make_spectrogram(chan_info *cp)
 	{
 	  xyz[0] = x - x0; 
 	  xyz[1] = y - y0; 
-	  xyz[2] = fdata[0]; 
+	  xyz[2] = fdata[start_bin]; 
 	  rotate(xyz, matrix);
 	  xx = (int)(xyz[0] + x0); 
 	  yy = (int)(xyz[1] + xyz[2] + y0);
 	}
       
-      for (i = 0; i < bins; i++, x += xincr)
+      for (i = 0, k = start_bin; i < bins; i++, k++, x += xincr)
 	{
 	  mus_float_t logx;
 	  if (cp->fft_log_frequency) 
@@ -3228,9 +3230,9 @@ static bool make_spectrogram(chan_info *cp)
 
 	  xyz[0] = logx - x0; 
 	  xyz[1] = y - y0;
-	  binval = fdata[i] / scl;
+	  binval = fdata[k] / scl;
 	  if (!(cp->fft_log_magnitude)) 		  
-	    xyz[2] = fdata[i];
+	    xyz[2] = fdata[k];
 	  else 
 	    {
 	      xyz[2] = 1.0 - (in_dB(cp->min_dB, cp->lin_dB, binval)) / cp->min_dB; 
@@ -9326,6 +9328,7 @@ data and passes it to openGL.  See snd-gl.scm for an example."
     }
   gl_spectrogram(si, 
 		 Xen_integer_to_C_int(gl_list),
+		 0.0, /* spectrum_start */
 		 Xen_real_to_C_double(cutoff),
 		 Xen_boolean_to_C_bool(use_dB),
 		 Xen_real_to_C_double(min_dB),
