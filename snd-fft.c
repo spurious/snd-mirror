@@ -1643,12 +1643,19 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
       mus_float_t val;
       if (cp->transform_type == FOURIER)
 	{
-	  for (i = 0; i < sg->spectrum_size; i++) 
+	  if (cp->transform_normalization == DONT_NORMALIZE) /* 1-Dec-22 */
 	    {
-	      val = fs->data[i];
-	      if (val > si->scale) si->scale = val;
-	      si->data[si->active_slices][i] = val;
+	      si->scale = sg->spectrum_size / 2.0; /* not good if fft size large etc */
+	      for (i = 0; i < sg->spectrum_size; i++)
+		si->data[si->active_slices][i] = fs->data[i];
 	    }
+	  else
+	    for (i = 0; i < sg->spectrum_size; i++) 
+	      {
+		val = fs->data[i];
+		if (val > si->scale) si->scale = val;
+		si->data[si->active_slices][i] = val;
+	      }
 	}
       else
 	{
