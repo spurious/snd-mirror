@@ -5,7 +5,7 @@
 #   gmp, mpfr, and mpc deliberately have none!
 
 
-AC_INIT(snd, 21.9, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-21.tar.gz)
+AC_INIT(snd, 22.0, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-21.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST # needed by case $host below
@@ -24,7 +24,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=21.9
+VERSION=22.0
 
 #--------------------------------------------------------------------------------
 # configuration options
@@ -36,7 +36,7 @@ VERSION=21.9
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --disable-deprecated  do not include any deprecated stuff (in motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
-#   --with-gui            make Snd with(out) any graphics support
+#   --with-gui            make Snd with graphics support (Motif)
 #   --with-notcurses      make Snd with notcurses (text-based interface)
 #   --with-forth          use Forth as the extension language
 #   --with-ruby           use Ruby as the extension language
@@ -204,10 +204,15 @@ GRFX_LD_LIBS=""
 
 ac_snd_gui_choice=none
 
-if test "$with_motif" = no ; then
-  with_gui=no
-fi
+# if test "$with_motif" = no ; then
+#   with_gui=no
+# fi
 # Motif has no pkg-config file, so to make it the default would mean looking for /usr/include/Xm or something 
+# but Motif is our only choice if --with-gui, so...
+if test "$with_gui" = yes ; then
+  with_motif=yes
+fi
+
 
 if test "$with_gui" = no ; then
   AC_DEFINE(USE_NO_GUI)
