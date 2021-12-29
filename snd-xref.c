@@ -1190,7 +1190,6 @@ static const char *Deletions_xrefs[] = {
   "remove a menu item: {remove-from-menu} or remove-main-menu in snd-motif.scm",
   "delete a mix or all mixes: {silence-mixes}",
   "add a 'delete' option to the file selection dialog: {add-delete-option}",
-  "Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! string-delete",
   NULL};
 
 static const char *Deletions_urls[] = {
