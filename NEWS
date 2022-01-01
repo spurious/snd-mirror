@@ -1,8 +1,8 @@
-Snd 21.9
+Snd 22.0:
 
-s7: mainly work on error handling
+The spectrogram now notices dont-normalize.
 
-checked: Ubuntu 21.10, notcurses 2.4.5|7|8, sbcl 2.1.10, Fedora 35
+checked: notcurses 2.4.9|3.0.0 (the latter is needed for nrepl.scm), sbcl 2.1.11
 
-Thanks!: Christos Vagias, Woody Douglass
-
+Thanks!: Tito Latini, Chris Chafe, Kjetil Matheussen, Woody Douglass,
+	 Christos Vagias
