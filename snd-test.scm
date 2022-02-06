@@ -41333,7 +41333,7 @@ EDITS: 1
 					       (lambda ()
 						 (set! (n arg) 0))
 					       (lambda args (car args)))))
-					(if (not (memq tag '(wrong-type-arg syntax-error error)))
+					(if (not (memq tag '(wrong-type-arg syntax-error error no-setter)))
 					    (snd-display "snd set wrong-type-arg: ~A: ~A ~A" n tag arg))))
 				    (list amp-control channels chans comment contrast-control contrast-control-amp 
 					  amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
@@ -41345,7 +41345,6 @@ EDITS: 1
 					  reverb-control-scale reverb-control? sound-loop-info speed-control
 					  speed-control-style speed-control-tones srate channel-style sync)))
 			(list float-vector-5 0+i 1.5 "hiho" delay-32))
-	      ;; soundfont-info 'no-setter
 	      
 	      (let ((index (open-sound "obtest.snd")))
 		(for-each (lambda (arg)
@@ -41529,7 +41528,7 @@ EDITS: 1
 				   (lambda ()
 				     (set! (n (make-oscil)) vector-0))
 				   (lambda args (car args)))))
-			    (if (not (memq tag '(wrong-type-arg syntax-error error)))
+			    (if (not (memq tag '(wrong-type-arg syntax-error error no-setter)))
 				(snd-display "mus-gen ~A: ~A" n tag))))
 			(list mus-data mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
 			      mus-location mus-phase mus-ramp mus-scaler))
