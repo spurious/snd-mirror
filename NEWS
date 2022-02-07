@@ -1,8 +1,7 @@
-Snd 22.0:
+Snd 22.1:
 
-The spectrogram now notices dont-normalize.
+no major changes
 
-checked: notcurses 2.4.9|3.0.0 (the latter is needed for nrepl.scm), sbcl 2.1.11
+checked: notcurses 3.0.2|3|4|5, Ubuntu 22.04
 
-Thanks!: Tito Latini, Chris Chafe, Kjetil Matheussen, Woody Douglass,
-	 Christos Vagias
+Thanks!: Christos Vagias, Iain Duncan, Rudolf Adamkovic, Woody Douglass
