@@ -1,14 +1,14 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: 03/09/16 01:27:09
-# Changed: 14/11/28 02:16:54
+# Created: 2003/09/16 01:27:09
+# Changed: 2022/02/12 17:05:08
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
 #   with_dac   (dac output, except at least for fullmix)
 #
-# Tested with Snd 15.x and Ruby 2.x.x
+# Tested with Snd 22.x and Ruby 3.x.x
 
 # pluck                  reson
 # vox                    cellon
@@ -63,9 +63,6 @@ require "ws"
 require "spectr"
 require "env"
 include Math
-with_silence do
-  require "matrix"
-end
 
 def normalize_partials(partials)
   sum = 0.0

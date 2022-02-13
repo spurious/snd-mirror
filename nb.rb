@@ -1,10 +1,10 @@
 # nb.rb -- translation of nb.scm
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: 02/12/10 22:08:15
-# Changed: 14/11/13 03:02:23
+# Created: 2002/12/10 22:08:15
+# Changed: 2022/02/12 17:20:46
 
-# Tested with Snd 15.x, Ruby 2.x.x
+# Tested with Snd 22.x, Ruby 3.x.x
 #
 # type nb = make_nb
 #      nb.help
@@ -44,11 +44,6 @@ nb.help                      # this help
 =end
 
 require "hooks"
-with_silence do
-  unless defined? DBM.open
-    require "dbm"
-  end
-end
 
 $nb_database = "nb" unless defined? $nb_database
 
@@ -93,6 +88,7 @@ class NB
   
   def initialize(path)
     @nb_database = path
+    @nb = {}
     @type = nil
     @position = nil
     @name = nil
@@ -129,13 +125,7 @@ class NB
   end
 
   def with_dbm(&body)
-    ret = nil
-    db = DBM.open(@nb_database)
-    ret = body.call(db)
-    db.close
-    ret
-  rescue
-    Snd.warning("%s#%s", self.class, get_func_name)
+    body.call(@nb)
   end
 
   def prune_db
@@ -199,7 +189,7 @@ class NB
       info_dialog(@name, file_info)
       if info_widget = dialog_widgets[Info_dialog]
         unless info_exists_p
-          width, height = widget_size(dialog_widgets[View_files_dialog])
+          width = widget_size(dialog_widgets[View_files_dialog])[0]
           set_widget_position(info_widget, [width + 10, 10])
         end
       end
@@ -363,8 +353,8 @@ the $nb_database entries of SND will be returned.")
                   "Edit info DB of sound files (see nb.scm).
 
 Provides pop-up help in the Files viewer.  \
-If you have `dbm', any data associated with \
-the file in the dbm database will also be posted.  \
+Any data associated with the file \
+in the hash database will also be posted.  \
 The database name is defined by $nb_database \
 (#{$nb_database.inspect}).
 
@@ -386,7 +376,7 @@ o Submit:    submits info from edit widget
                   ["{Libxm}: graphics module",
                    "{Ruby}: extension language",
                    "{Motif}: Motif extensions via libxm"])
-    end
+  end
 
   def post_popup?
     $mouse_enter_label_hook.member?(@db_hook_name) and

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 2004/01/03 17:30:23
-# Changed: 2018/04/15 22:50:30
+# Changed: 2022/02/12 17:32:48
 
 # module Compatibility
 #  scan_sound_chans(beg, end, snd, edpos) do |y| ... end
@@ -968,14 +968,10 @@ Deletes key-value pair.")
 
     include Enumerable
     include Info
-    with_silence do
-      unless defined? DBM.open
-        require "dbm"
-      end
-    end
     
     def initialize(database)
-      @database      = database
+      @database      = {}
+      @db_name       = database
       @sound_funcs   = $sound_funcs
       @channel_funcs = $channel_funcs
       set_help
@@ -984,14 +980,11 @@ Deletes key-value pair.")
     alias help description
     
     def inspect
-      format("#<%s: database: %s>", self.class, @database.inspect)
+      format("#<%s: database: %s>", self.class, @db_name.inspect)
     end
 
     def with_db
-      db = DBM.open(@database)
-      ret = yield(db)
-      db.close
-      ret
+      yield(@database)
     end
     
     def load(snd)
@@ -1096,7 +1089,7 @@ Deletes key-value pair.")
    end
 
     def contents
-      Snd.display("contents of %s", @database.inspect)
+      Snd.display("contents of %s", @db_name.inspect)
       with_db do |db|
         db.each do |file, value|
           Snd.display(file)
