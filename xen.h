@@ -9,12 +9,14 @@
  * None:      all versions
  */
 
-#define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 28
-#define XEN_VERSION "3.28"
+#define XEN_MAJOR_VERSION 4
+#define XEN_MINOR_VERSION 0
+#define XEN_VERSION "4.0"
 
 /* HISTORY:
  *
+ *  8-Mar-22:  moved s7_apply_* here from s7.h.
+ * --------
  *  14-May-20: g++ xen.h|c changes for Ruby 2.7 and gcc version 10.
  *  --------
  *  26-Apr-18: changed XEN_MAKE_OBJECT_TYPE in s7 again...
@@ -990,6 +992,43 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #include "s7.h"
 
+#if (DISABLE_DEPRECATED)
+s7_pointer s7_apply_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1));
+s7_pointer s7_apply_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2));
+s7_pointer s7_apply_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3));
+s7_pointer s7_apply_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4));
+s7_pointer s7_apply_5(s7_scheme *sc, s7_pointer args, s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5));
+s7_pointer s7_apply_6(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+				       s7_pointer a5, s7_pointer a6));
+s7_pointer s7_apply_7(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7));
+s7_pointer s7_apply_8(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8));
+s7_pointer s7_apply_9(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9));
+
+s7_pointer s7_apply_n_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1));
+s7_pointer s7_apply_n_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2));
+s7_pointer s7_apply_n_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3));
+s7_pointer s7_apply_n_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4));
+s7_pointer s7_apply_n_5(s7_scheme *sc, s7_pointer args, s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5));
+s7_pointer s7_apply_n_6(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+				       s7_pointer a5, s7_pointer a6));
+s7_pointer s7_apply_n_7(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7));
+s7_pointer s7_apply_n_8(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8));
+s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args, 
+		      s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, 
+				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9));
+#endif
 
 #ifdef __cplusplus
 extern "C" {
