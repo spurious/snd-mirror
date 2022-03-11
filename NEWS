@@ -1,7 +1,7 @@
-Snd 22.1:
+Snd 22.2:
 
-no major changes
+moved s7_apply_* from s7.h to xen.h if DISABLE_DEPRECATED.
 
-checked: notcurses 3.0.2|3|4|5, Ubuntu 22.04
+checked: sbcl 2.2.1|2, notcurses 3.0.6|7
 
-Thanks!: Christos Vagias, Iain Duncan, Rudolf Adamkovic, Woody Douglass
+Thanks!: Mike Scholz
