@@ -1458,7 +1458,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
   apply_n_args(9);
   return(f9(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8]));
 }
-
+#endif
 
 
 char *xen_version(void)
@@ -1477,7 +1477,6 @@ void xen_s7_set_repl_prompt(const char *new_prompt)
   if (xen_s7_repl_prompt) free(xen_s7_repl_prompt);
   xen_s7_repl_prompt = xen_strdup(new_prompt);
 }
-#endif
 
 
 #if USE_SND
