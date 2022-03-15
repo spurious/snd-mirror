@@ -1314,6 +1314,153 @@ void xen_initialize(void)
 s7_scheme *s7;
 Xen xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
+
+#if DISABLE_DEPRECATED
+s7_pointer s7_apply_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1)) /* not currently used */
+{
+  return(f1(s7_car(args)));
+}
+
+s7_pointer s7_apply_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2))
+{
+  return(f2(s7_car(args), s7_cadr(args)));
+}
+
+s7_pointer s7_apply_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3))
+{
+  s7_pointer a1 = s7_car(args);
+  args = s7_cdr(args);
+  return(f3(a1, s7_car(args), s7_cadr(args)));
+}
+
+s7_pointer s7_apply_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4))
+{
+  s7_pointer a1 = s7_car(args), a2 = s7_cadr(args);
+  args = s7_cddr(args);
+  return(f4(a1, a2, s7_car(args), s7_cadr(args)));
+}
+
+s7_pointer s7_apply_5(s7_scheme *sc, s7_pointer args, s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5))
+{
+  s7_pointer a1 = s7_car(args), a2 = s7_cadr(args), a3, a4;
+  args = s7_cddr(args); a3 = s7_car(args);  a4 = s7_cadr(args);  args = s7_cddr(args);
+  return(f5(a1, a2, a3, a4, s7_car(args)));
+}
+
+s7_pointer s7_apply_6(s7_scheme *sc, s7_pointer args,
+		      s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5, s7_pointer a6))
+{
+  s7_pointer a1 = s7_car(args), a2 = s7_cadr(args), a3, a4;
+  args = s7_cddr(args); a3 = s7_car(args);  a4 = s7_cadr(args);  args = s7_cddr(args);
+  return(f6(a1, a2, a3, a4, s7_car(args), s7_cadr(args)));
+}
+
+s7_pointer s7_apply_7(s7_scheme *sc, s7_pointer args,
+		      s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5, s7_pointer a6, s7_pointer a7))
+{
+  s7_pointer a1 = s7_car(args), a2 = s7_cadr(args), a3, a4, a5, a6;
+  args = s7_cddr(args); a3 = s7_car(args);  a4 = s7_cadr(args);  args = s7_cddr(args); a5 = s7_car(args);  a6 = s7_cadr(args);  args = s7_cddr(args);
+  return(f7(a1, a2, a3, a4, a5, a6, s7_car(args)));
+}
+
+s7_pointer s7_apply_8(s7_scheme *sc, s7_pointer args,
+		      s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8))
+{
+  s7_pointer a1 = s7_car(args), a2 = s7_cadr(args), a3, a4, a5, a6;
+  args = s7_cddr(args); a3 = s7_car(args);  a4 = s7_cadr(args);  args = s7_cddr(args); a5 = s7_car(args);  a6 = s7_cadr(args);  args = s7_cddr(args);
+  return(f8(a1, a2, a3, a4, a5, a6, s7_car(args), s7_cadr(args)));
+}
+
+s7_pointer s7_apply_9(s7_scheme *sc, s7_pointer args, s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+								       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9))
+{
+  s7_pointer a1 = s7_car(args), a2 = s7_cadr(args), a3, a4, a5, a6;
+  args = s7_cddr(args); a3 = s7_car(args);  a4 = s7_cadr(args);  args = s7_cddr(args); a5 = s7_car(args);  a6 = s7_cadr(args);  args = s7_cddr(args);
+  return(f9(a1, a2, a3, a4, a5, a6, s7_car(args), s7_cadr(args), s7_caddr(args)));
+}
+
+s7_pointer s7_apply_n_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1))
+{
+  if (s7_is_pair(args))
+    return(f1(s7_car(args)));
+  return(f1(xen_undefined));
+}
+
+s7_pointer s7_apply_n_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2))
+{
+  if (s7_is_pair(args))
+    return((s7_is_pair(s7_cdr(args))) ? f2(s7_car(args), s7_cadr(args)) : f2(s7_car(args), xen_undefined));
+  return(f2(xen_undefined, xen_undefined));
+}
+
+s7_pointer s7_apply_n_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3))
+{
+  s7_pointer a1, a2;
+  if (!s7_is_pair(args))
+    return(f3(xen_undefined, xen_undefined, xen_undefined));
+  a1 = s7_car(args);
+  args = s7_cdr(args);
+  if (!s7_is_pair(args))
+    return(f3(a1, xen_undefined, xen_undefined));
+  a2 = s7_car(args);
+  return((s7_is_pair(s7_cdr(args))) ? f3(a1, a2, s7_cadr(args)) : f3(a1, a2, xen_undefined));
+}
+
+#define apply_n_args(N) \
+  do {int32_t i; s7_pointer p; for (i = 0, p = args; s7_is_pair(p); p = s7_cdr(p), i++) a[i] = s7_car(p); for (; i < N; i++) a[i] = xen_undefined;} while (0)
+
+s7_pointer s7_apply_n_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4))
+{
+  s7_pointer a[4];
+  apply_n_args(4);
+  return(f4(a[0], a[1], a[2], a[3]));
+}
+
+s7_pointer s7_apply_n_5(s7_scheme *sc, s7_pointer args,
+			s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5))
+{
+  s7_pointer a[5];
+  apply_n_args(5);
+  return(f5(a[0], a[1], a[2], a[3], a[4]));
+}
+
+s7_pointer s7_apply_n_6(s7_scheme *sc, s7_pointer args,
+			s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5, s7_pointer a6))
+{
+  s7_pointer a[6];
+  apply_n_args(6);
+  return(f6(a[0], a[1], a[2], a[3], a[4], a[5]));
+}
+
+s7_pointer s7_apply_n_7(s7_scheme *sc, s7_pointer args,
+			s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+					 s7_pointer a5, s7_pointer a6, s7_pointer a7))
+{
+  s7_pointer a[7];
+  apply_n_args(7);
+  return(f7(a[0], a[1], a[2], a[3], a[4], a[5], a[6]));
+}
+
+s7_pointer s7_apply_n_8(s7_scheme *sc, s7_pointer args,
+			s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+					 s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8))
+{
+  s7_pointer a[8];
+  apply_n_args(8);
+  return(f8(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]));
+}
+
+s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
+			s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+					 s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9))
+{
+  s7_pointer a[9];
+  apply_n_args(9);
+  return(f9(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8]));
+}
+
+
+
 char *xen_version(void)
 {
   char *buf;
@@ -1330,6 +1477,7 @@ void xen_s7_set_repl_prompt(const char *new_prompt)
   if (xen_s7_repl_prompt) free(xen_s7_repl_prompt);
   xen_s7_repl_prompt = xen_strdup(new_prompt);
 }
+#endif
 
 
 #if USE_SND
