@@ -466,6 +466,26 @@ make
 sudo make install
 sudo ln -s /opt/snd-s7/bin/snd /usr/local/bin
 
+--------
+Daniel Hensel's instructions for a Mac M1 MacBook
+
+I built Snd on Monterey like this:
+
+./configure -prefix=/opt/snd-s7 CFLAGS="-target arm64-apple-macos11"  --with-s7 --with-motif --with-gsl
+
+make 
+sudo make install
+sudo ln -s /opt/snd-s7/bin/snd /usr/local/bin/snd
+
+after that, I make an Apple script to make a Snd.app.
+Open Scripteditor, make a new script and type,
+
+tell application "Terminal"
+	do script "/usr/local/bin/snd; exit"
+end tell
+
+Save as an App. Go to your Applications folder to Snd and 
+get app information via Cmd+i and drag your Snd.png File into it.
 
 
 -------- FreeBSD 9.n --------
