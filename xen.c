@@ -1315,7 +1315,6 @@ s7_scheme *s7;
 Xen xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 
-#if DISABLE_DEPRECATED
 s7_pointer s7_apply_n_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1))
 {
   if (s7_is_pair(args))
@@ -1386,7 +1385,6 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
   s7_list_to_array(sc, args, a, 9);
   return(f9(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8]));
 }
-#endif
 
 
 char *xen_version(void)

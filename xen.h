@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 4
-#define XEN_MINOR_VERSION 1
-#define XEN_VERSION "4.1"
+#define XEN_MINOR_VERSION 2
+#define XEN_VERSION "4.2"
 
 /* HISTORY:
  *
+ *  10-Apr:    s7_apply_*.
  *  16-Mar:    more changes for s7_apply_*.
  *  8-Mar-22:  moved s7_apply_* here from s7.h.
  * --------
@@ -993,7 +994,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #include "s7.h"
 
-#if (DISABLE_DEPRECATED)
 s7_pointer s7_apply_n_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1));
 s7_pointer s7_apply_n_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointer a1, s7_pointer a2));
 s7_pointer s7_apply_n_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3));
@@ -1020,7 +1020,6 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_apply_7 s7_apply_n_7
 #define s7_apply_8 s7_apply_n_8
 #define s7_apply_9 s7_apply_n_9
-#endif
 
 #ifdef __cplusplus
 extern "C" {
