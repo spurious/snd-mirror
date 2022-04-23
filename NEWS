@@ -1,7 +1,10 @@
-Snd 22.2:
+Snd 22.3:
 
-moved s7_apply_* from s7.h to xen.h if DISABLE_DEPRECATED.
+s7_eval_with_location, thanks to Woody Douglass.
+s7_apply_n* removed (now in xen.c|h)
+s7_is_multiple_value
 
-checked: sbcl 2.2.1|2, notcurses 3.0.6|7
+checked: notcurses 3.0.8
 
-Thanks!: Mike Scholz
+Thanks!: Daniel Hensel, Woody Douglass, johnm
+
