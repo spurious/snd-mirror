@@ -2367,9 +2367,9 @@ void snd_encode(mus_header_t type, const char *input_filename, const char *outpu
     {
       int err;
       err = system(command);
-      free(command);
       if (err == -1)
 	fprintf(stderr, "%s failed?", command);
+      free(command);
     }
 }
 
@@ -2440,9 +2440,9 @@ int snd_decode(mus_header_t type, const char *input_filename, const char *output
     {
       int err;
       err = system(command);
-      free(command);
       if (err == -1)
 	fprintf(stderr, "%s failed?", command);
+      free(command);
     }
   return(err);
 }

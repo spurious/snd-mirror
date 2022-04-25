@@ -3152,13 +3152,15 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
   ofd = open_temp_file(tempfile, chans, hdr, &io_err);
   if (ofd == -1)
     {
+      char *result;
       (*temp_file_err) = true;
+      result = mus_format("%s temp file %s: %s\n", 
+			  (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			  tempfile, 
+			  snd_open_strerror());
       free_file_info(hdr);
       free(tempfile);
-      return(mus_format("%s temp file %s: %s\n", 
-			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
-			tempfile, 
-			snd_open_strerror()));
+      return(result);
     }
 
   olen = len * sizeof(snd_fd **); /* try to turn off gcc's alloc-size-larger-than error message */
