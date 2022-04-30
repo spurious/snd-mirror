@@ -7096,7 +7096,7 @@ snd can be a filename, a mix, a region, or a sound index number."
       const char *filename;
       int chan = 0;
       Xen_check_type(Xen_is_integer_boolean_or_unbound(chn), chn, 3, S_make_sampler, "an integer or boolean");
-      filename = Xen_string_to_C_string(snd);
+      filename = mus_expand_filename(Xen_string_to_C_string(snd));
       if (mus_file_probe(filename))
 	loc_sp = make_sound_readable(filename, false);
       else return(snd_no_such_file_error(S_make_sampler, snd));
