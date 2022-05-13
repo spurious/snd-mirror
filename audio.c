@@ -3164,6 +3164,9 @@ static bool writing = false, open_for_input = false;
 #if HAVE_OSX_10_5
   static AudioDeviceIOProcID read_procId, write_procId;
 #endif 
+#if (!defined(MAC_OS_VERSION_12_0)) || (MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_VERSION_12_0)
+  #define kAudioObjectPropertyElementMain kAudioObjectPropertyElementMaster
+#endif
 
 int mus_audio_close(int line) 
 {
@@ -3206,7 +3209,7 @@ int mus_audio_close(int line)
 	      {
 		AudioObjectPropertyAddress device_address = { kAudioDevicePropertyDeviceIsRunning,
 							      kAudioDevicePropertyScopeOutput,
-							      kAudioObjectPropertyElementMaster };
+							      kAudioObjectPropertyElementMain};
 		err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_running, &running);
 	      }	      
 	    }
@@ -3216,7 +3219,7 @@ int mus_audio_close(int line)
 	      {
 		AudioObjectPropertyAddress device_address = { kAudioDevicePropertyDeviceIsRunning,
 							      kAudioDevicePropertyScopeOutput,
-							      kAudioObjectPropertyElementMaster };
+							      kAudioObjectPropertyElementMain};
 		err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_running, &running);
 	      }
 	    }
@@ -3274,7 +3277,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
   {
     AudioObjectPropertyAddress device_address = { kAudioHardwarePropertyDefaultOutputDevice,
 						  kAudioObjectPropertyScopeGlobal,
-						  kAudioObjectPropertyElementMaster };
+						  kAudioObjectPropertyElementMain};
     err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &device_address, 0, NULL, &sizeof_device, &device);
   }
 
@@ -3285,7 +3288,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
       {
 	AudioObjectPropertyAddress device_address = { kAudioDevicePropertyBufferSize,
 						      kAudioDevicePropertyScopeOutput,
-						      kAudioObjectPropertyElementMaster };
+						      kAudioObjectPropertyElementMain};
 	err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_bufsize, &bufsize);
       }
     }
@@ -3300,7 +3303,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
   {
     AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
 						  kAudioDevicePropertyScopeOutput,
-						  kAudioObjectPropertyElementMaster };
+						  kAudioObjectPropertyElementMain};
     err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_format, &device_desc);
   }
 
@@ -3330,7 +3333,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
 	  {
 	    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
 							  kAudioDevicePropertyScopeOutput,
-							  kAudioObjectPropertyElementMaster };
+							  kAudioObjectPropertyElementMain};
 	    err = AudioObjectSetPropertyData(device, &device_address, 0, NULL, sizeof_format, &device_desc);
 	  }
 	  
@@ -3355,7 +3358,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
 	      {
 		AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
 							      kAudioDevicePropertyScopeOutput,
-							      kAudioObjectPropertyElementMaster };
+							      kAudioObjectPropertyElementMain};
 		err = AudioObjectSetPropertyData(device, &device_address, 0, NULL, sizeof_format, &device_desc);
 	      }
 	      if (err != noErr)
@@ -3365,7 +3368,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
 		  {
 		    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormatMatch,
 								  kAudioDevicePropertyScopeOutput,
-								  kAudioObjectPropertyElementMaster };
+								  kAudioObjectPropertyElementMain};
 		    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_format, &device_desc);
 		  }
 
@@ -3380,7 +3383,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
 		      {
 			AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
 								      kAudioDevicePropertyScopeOutput,
-								      kAudioObjectPropertyElementMaster };
+								      kAudioObjectPropertyElementMain};
 			err = AudioObjectSetPropertyData(device, &device_address, 0, NULL, sizeof_format, &device_desc);
 		      }
 		      if (err != noErr) 
@@ -3391,7 +3394,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
 			  {
 			    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
 									  kAudioDevicePropertyScopeOutput,
-									  kAudioObjectPropertyElementMaster };
+									  kAudioObjectPropertyElementMain};
 			    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_format, &device_desc);
 			  }
 			}
@@ -3405,7 +3408,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
 		  {
 		    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyStreamFormat,
 								  kAudioDevicePropertyScopeOutput,
-								  kAudioObjectPropertyElementMaster };
+								  kAudioObjectPropertyElementMain};
 		    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_format, &device_desc);
 		  }
 		}
@@ -3625,7 +3628,7 @@ int mus_audio_write(int line, char *buf, int bytes)
 	  {
 	    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyDeviceIsRunning,
 							  kAudioDevicePropertyScopeOutput,
-							  kAudioObjectPropertyElementMaster };
+							  kAudioObjectPropertyElementMain};
 	    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_running, &running);
 	  }
 	  /* usleep(10); */
@@ -3658,7 +3661,7 @@ int mus_audio_open_input(int dev, int srate, int chans, mus_sample_t samp_type, 
   {
     AudioObjectPropertyAddress device_address = { kAudioHardwarePropertyDefaultInputDevice,
 						  kAudioObjectPropertyScopeGlobal,
-						  kAudioObjectPropertyElementMaster };
+						  kAudioObjectPropertyElementMain};
     err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &device_address, 0, NULL, &sizeof_device, &device);
   }
 
@@ -3669,7 +3672,7 @@ int mus_audio_open_input(int dev, int srate, int chans, mus_sample_t samp_type, 
       {
 	AudioObjectPropertyAddress device_address = { kAudioDevicePropertyBufferSize,
 						      kAudioDevicePropertyScopeInput,
-						      kAudioObjectPropertyElementMaster };
+						      kAudioObjectPropertyElementMain};
 	err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_bufsize, &bufsize);
       }
     }
@@ -3733,7 +3736,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 	  {
 	    AudioObjectPropertyAddress device_address = { kAudioDevicePropertyDeviceIsRunning,
 							  kAudioDevicePropertyScopeInput,
-							  kAudioObjectPropertyElementMaster };
+							  kAudioObjectPropertyElementMain};
 	    err = AudioObjectGetPropertyData(device, &device_address, 0, NULL, &sizeof_running, &running);
 	  }
 	  if (err != noErr) 
