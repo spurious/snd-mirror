@@ -1564,6 +1564,7 @@ env *get_env(Xen e, const char *origin) /* list in e */
 		  Xen_list_3(C_string_to_Xen_string("~A, ~A"),
 			     msg,
 			     e));
+	return(NULL); /* make the compiler happy */
       }
   return(new_env);
 }
