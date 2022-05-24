@@ -5208,7 +5208,23 @@ static int sndlib_to_pa_format(mus_sample_t samp_type)
       return(0);
       break;
     }
-} 
+}
+
+
+static int pulseaudio_sample_types(int ur_dev, mus_sample_t *vals)
+{
+  vals[0] = (mus_sample_t)9;
+  vals[1] = MUS_BSHORT;
+  vals[2] = MUS_LSHORT;
+  vals[3] = MUS_BFLOAT;
+  vals[4] = MUS_LFLOAT;
+  vals[5] = MUS_ALAW;
+  vals[6] = MUS_MULAW;
+  vals[7] = MUS_BINT;
+  vals[8] = MUS_LINT;
+  vals[9] = MUS_BYTE;
+  return(MUS_NO_ERROR);
+}
 
 
 static pa_simple *pa_out = NULL, *pa_in = NULL;
@@ -5674,6 +5690,11 @@ mus_sample_t mus_audio_device_sample_type(int dev) /* snd-dac */
 #endif
 #endif
 
+#if defined(MUS_PULSEAUDIO)
+  if (mixer_vals[0] == MUS_UNKNOWN_SAMPLE)
+    pulseaudio_sample_types(dev, mixer_vals);
+#endif
+
   samp_type = look_for_sample_type(mixer_vals, MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE);
   if (samp_type != MUS_UNKNOWN_SAMPLE)
     return(samp_type);
@@ -5685,7 +5706,10 @@ mus_sample_t mus_audio_device_sample_type(int dev) /* snd-dac */
       samp_type = look_for_sample_type(mixer_vals, MUS_LSHORT);
       if (samp_type == MUS_UNKNOWN_SAMPLE)
 	samp_type = mixer_vals[1];
+      if (samp_type == MUS_UNKNOWN_SAMPLE) 
+	samp_type = MUS_LSHORT; /* jgm */
     }
+  
 #else
   samp_type = look_for_sample_type(mixer_vals, MUS_BFLOAT);
   if (samp_type == MUS_UNKNOWN_SAMPLE)
@@ -5693,6 +5717,8 @@ mus_sample_t mus_audio_device_sample_type(int dev) /* snd-dac */
       samp_type = look_for_sample_type(mixer_vals, MUS_BSHORT);
       if (samp_type == MUS_UNKNOWN_SAMPLE)
 	samp_type = mixer_vals[1];
+      if (samp_type == MUS_UNKNOWN_SAMPLE) 
+	samp_type = MUS_BSHORT; /* jgm */
     }
 #endif
   return(samp_type);
