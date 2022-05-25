@@ -21,7 +21,7 @@
  *    HPUX
  *    OpenBSD
  *    NetBSD
- *    PulseAudio (in progress?)
+ *    PulseAudio
  *    PortAudio
  */
 
@@ -5176,12 +5176,6 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, mus_sample_t samp_typ
 
 #if defined(MUS_PULSEAUDIO) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK 1
-
-
-/* this code compiles/loads, but I don't know if it works -- paplay itself
- *   doesn't work on my machine due to either a libtool/dlopen mismatch
- *   or some problem with "pulse-rt".
- */
 
 
 #include <pulse/simple.h>
