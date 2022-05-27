@@ -319,8 +319,8 @@ static point_t *vector_to_points(Xen pts, const char *caller, int *vector_len)
 			 pts));
   len = vlen / 2;
   if (len > 10000000) len = 10000000; /* gcc gabbles stupidly about calloc overflow! */
-  (*vector_len) = len;
   pack_pts = (point_t *)calloc(len, sizeof(point_t));
+  (*vector_len) = len;
 
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
