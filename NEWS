@@ -1,10 +1,13 @@
-Snd 22.3:
+Snd 22.4:
 
-s7_eval_with_location, thanks to Woody Douglass.
-s7_apply_n* removed (now in xen.c|h)
-s7_is_multiple_value
+in Snd, johnm got the pulseaudio playback to work.
 
-checked: notcurses 3.0.8
+defined? with let changed; you may want to add #t=locally defined
 
-Thanks!: Daniel Hensel, Woody Douglass, johnm
+generic append changed slightly, see s7test.scm ca line 10989
+
+checked: Fedora 36 (gcc 12.0), openbsd 7.1
+
+Thanks!:  Anders Vinjar, Michael Edwards, Fernando Oleo Blanco,
+	  Rudy Adamkovic, johnm, Michael Mee
 
