@@ -12675,8 +12675,8 @@ static char *describe_move_sound(mus_any *ptr)
 
   len = 64 + strlen(starts) + strlen(dopdly) + strlen(dopenv) + strlen(revenv) + 
     strlen(outdlys) + strlen(outenvs) + strlen(revenvs) + strlen(outmap);
-  if (len > 8192) len = 8192; /* to squelch a dumb compiler warning */
   allstr = (char *)malloc(len * sizeof(char));
+  /* gcc has a truly stupid warning here; use -Wno-format-truncation or diagnostic gcc pragmas to squelch it */
   snprintf(allstr, len, "%s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  free: arrays: %s, gens: %s\n",
 		      starts, dopdly, dopenv, revenv, outdlys, outenvs, revenvs, outmap,
 		      (gen->free_arrays) ? "true" : "false",
