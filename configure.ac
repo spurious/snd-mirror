@@ -674,6 +674,7 @@ case "$host" in
     if test "$GCC" = yes ; then
       SO_FLAGS="-fPIC $SO_FLAGS"
       SO_LD="$CC"
+      CFLAGS="$CFLAGS -Wno-format-truncation -Wno-stringop-overflow"
     fi
     ;;
 
