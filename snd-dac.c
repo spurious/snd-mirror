@@ -1144,6 +1144,21 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
 	      (sp->inuse == SOUND_NORMAL))
 	    {
 	      cp->original_cursor = cursor_sample(cp);
+
+	      /* 11-Jul-22, if sync'd and with-tracking-cursor :track-and-return, make sure all sync'd cursors return to the same place */
+	      {
+		snd_info *sp;
+		sp = cp->sound;
+		if (sp->sync != 0)
+		  {
+		    int i;
+		    sync_info *si;
+		    si = snd_sync(sp->sync);
+		    for (i = 0; i < si->chans; i++)
+		      si->cps[i]->original_cursor = cursor_sample(cp);
+		  }
+	      }
+
 	      if (cp->axis)
 		{
 		  cp->original_left_sample = cp->axis->losamp;

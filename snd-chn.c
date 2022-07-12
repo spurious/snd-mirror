@@ -6565,7 +6565,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	    cp->cursor_on = true; 
 	    cursor_moveto(cp, samp);
 	  }
-	cp->original_cursor = samp; /* for snd-dac, track-and-return */
+	cp->original_cursor = samp; /* for snd-dac, track-and-return (probably not needed now 11-Jul-22) */
 	return(C_llong_to_Xen_llong(samp));
       }
 
