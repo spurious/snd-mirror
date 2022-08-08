@@ -1,13 +1,8 @@
-Snd 22.5:
+Snd 22.6
 
-s7: add vector-type to return or set the type checking part of the vector element setter,
-    and similarly hash-table-key-typer and hash-table-value-typer
+s7: (random-state) returns the current random-state object.
+    copy can handle random-state objects (but in s7/gmp it's a no-op)
 
-checked: sbcl 2.2.5|6
-  new ghostscript is unhappy with cmn eps files; version 9.55 is unhappy, 
-  9.52 is happy.  I think this is caused by negative origin bounding boxes 
-  which have worked fine for 30 years.
+checked: sbcl 2.2.7
 
-
-Thanks!: Woody Douglass, Michael Mees, Elijah Stone
-
+Thanks!:  Anders Vinjar
