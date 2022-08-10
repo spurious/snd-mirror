@@ -776,7 +776,7 @@ with_forth
 with_ruby
 with_pure_s7
 with_s7_history
-with_s7_profiling
+with_s7_number_separator
 with_gsl
 with_fftw
 with_gmp
@@ -1448,7 +1448,7 @@ Optional Packages:
   --with-ruby             use Ruby as the extension language
   --with-pure-s7	  s7 WITH_PURE_S7
   --with-s7-history	  s7 WITH_HISTORY
-  --with-s7-profiling	  s7 WITH_PROFILE
+  --with-s7-number-separator	  s7 WITH_NUMBER_SEPARATOR
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no
@@ -3986,7 +3986,7 @@ VERSION=22.7
 #   --with-s7             use s7 as the extension language (default = yes)
 #   --with-pure-s7        s7 WITH_PURE_S7
 #   --with-s7-history     s7 WITH_HISTORY
-#   --with-s7-profiling   s7 WITH_PROFILE
+#   --with-s7-number-separator s7 WITH_NUMBER_SEPARATOR
 #   --with-extension-language use some extension language (default=yes)
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
@@ -4131,10 +4131,10 @@ then :
 fi
 
 
-# Check whether --with-s7-profiling was given.
-if test ${with_s7_profiling+y}
+# Check whether --with-s7-number-separator was given.
+if test ${with_s7_number_separator+y}
 then :
-  withval=$with_s7_profiling;
+  withval=$with_s7_number_separator;
 fi
 
 
@@ -6915,14 +6915,12 @@ if test "$with_s7_history" = yes ; then
 fi
 
 #--------------------------------------------------------------------------------
-# s7-profiling
+# s7-number-separator
 #--------------------------------------------------------------------------------
 
-if test "$with_s7_profiling" = yes ; then
-  CFLAGS="-DWITH_S7_PROFILE $CFLAGS"
-  RANDOM_FEATURES="$RANDOM_FEATURES profiling"
+if test "$with_s7_number_separator" = yes ; then
+  CFLAGS="-DWITH_NUMBER_SEPARATOR $CFLAGS"
 fi
-
 
 
 #--------------------------------------------------------------------------------

@@ -43,7 +43,7 @@ VERSION=22.7
 #   --with-s7             use s7 as the extension language (default = yes)
 #   --with-pure-s7        s7 WITH_PURE_S7
 #   --with-s7-history     s7 WITH_HISTORY
-#   --with-s7-profiling   s7 WITH_PROFILE
+#   --with-s7-number-separator s7 WITH_NUMBER_SEPARATOR
 #   --with-extension-language use some extension language (default=yes)
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
@@ -79,7 +79,7 @@ AC_ARG_WITH(ruby,        [  --with-ruby             use Ruby as the extension la
 
 AC_ARG_WITH(pure-s7,     [  --with-pure-s7	  s7 WITH_PURE_S7])
 AC_ARG_WITH(s7-history,  [  --with-s7-history	  s7 WITH_HISTORY])
-AC_ARG_WITH(s7-profiling, [  --with-s7-profiling	  s7 WITH_PROFILE])
+AC_ARG_WITH(s7-number-separator,  [  --with-s7-number-separator	  s7 WITH_NUMBER_SEPARATOR])
 
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
@@ -840,14 +840,12 @@ if test "$with_s7_history" = yes ; then
 fi
 
 #--------------------------------------------------------------------------------
-# s7-profiling
+# s7-number-separator
 #--------------------------------------------------------------------------------
 
-if test "$with_s7_profiling" = yes ; then
-  CFLAGS="-DWITH_S7_PROFILE $CFLAGS"
-  RANDOM_FEATURES="$RANDOM_FEATURES profiling"
+if test "$with_s7_number_separator" = yes ; then
+  CFLAGS="-DWITH_NUMBER_SEPARATOR $CFLAGS"
 fi
-
 
 
 #--------------------------------------------------------------------------------
