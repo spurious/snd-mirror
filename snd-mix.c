@@ -2182,6 +2182,7 @@ static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
 	{
 	  graphics_context *ax;
 	  ax = mix_waveform_context(cp);
+	  set_foreground_color(ax, md->color); /* Tito Latini 11-Aug-22 */
 	  if (two_sided)
 	    draw_both_grf_points(cp->dot_size, ax, pts, cp->time_graph_style);
 	  else draw_grf_points(cp->dot_size, ax, pts, ap, ungrf_y(ap, y), cp->time_graph_style);
