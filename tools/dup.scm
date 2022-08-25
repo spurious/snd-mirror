@@ -127,7 +127,7 @@
   )
 
 (dup 16 "s7.c" 110000)
-;(dup 2 "s7.c" 110000)
+;(dup 8 "s7.c" 110000)
 ;(dup 12 "ffitest.c" 10000)
 ;(dup 8 "ffitest.c" 10000)
 ;(dup 1 "s7test.scm" 110000)

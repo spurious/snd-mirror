@@ -8436,7 +8436,7 @@ history position to read (defaults to current position). snd can be a filename, 
       if (Xen_is_integer(chn_n)) chan = Xen_integer_to_C_int(chn_n);
       if (chan < 0) return(snd_no_such_channel_error(S_samples, snd, chn_n));	
 
-      filename = Xen_string_to_C_string(snd);
+      filename = mus_expand_filename(Xen_string_to_C_string(snd));
       if (!mus_file_probe(filename))
 	return(snd_no_such_file_error(S_make_sampler, snd));
 

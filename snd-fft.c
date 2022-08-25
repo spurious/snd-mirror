@@ -1520,7 +1520,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
       (cp->transform_type == CEPSTRUM))
     sg->spectrum_size = sg->fs->size / 2;
   else sg->spectrum_size = sg->fs->size;
-   if (sg->spectrum_size <= 0) return(SONO_QUIT);
+  if (sg->spectrum_size <= 0) return(SONO_QUIT);
 
   sg->edit_ctr = cp->edit_ctr;
   si = cp->sonogram_data;
