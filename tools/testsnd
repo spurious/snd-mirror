@@ -17,7 +17,7 @@ echo ' -------------------------------- without-gui ----------------------------
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -I/usr/local/include" --without-gui
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -53,7 +53,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -I/usr/local/include -DS7_DEBUGGING" --without-gui --disable-deprecated
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -76,7 +76,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -I/usr/local/include -DWITH_PURE_S7=1" --without-gui --disable-deprecated
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -92,7 +92,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -I/usr/local/include -DWITH_VECTORIZE=0 -DHAVE_OVERFLOW_CHECKS=0" --without-gui --disable-deprecated
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -108,7 +108,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -DWITH_EXTRA_EXPONENT_MARKERS=1" --without-gui --disable-deprecated CC=g++
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -131,7 +131,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" --without-gui --with-gmp --disable-deprecated
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -158,7 +158,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -DS7_DEBUGGING=1" --without-gui --with-gmp --disable-deprecated
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -175,7 +175,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet --with-motif CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" 
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -204,7 +204,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet --with-gl --with-motif CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" 
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -228,7 +228,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet --with-gl --with-motif CFLAGS="-DS7_DEBUGGING -Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" 
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -244,7 +244,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --without-gui --quiet CC=clang CFLAGS="-Wall -Wno-array-bounds -Wno-parentheses" LDFLAGS="-Wl,-export-dynamic"
-make
+make snd
 ./snd --version
 ./snd -l snd-test
 echo ' '
@@ -265,7 +265,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" --without-gui
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -334,7 +334,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" CC=g++
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -349,7 +349,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" --with-gmp --without-gui
-make
+make snd
 echo ' '
 echo ' '
 ./snd --version
@@ -368,7 +368,7 @@ make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses" --without-gui
-make
+make snd
 echo ' '
 echo ' '
 ./snd -l snd-test
