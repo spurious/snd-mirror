@@ -1522,6 +1522,7 @@ static Xen mus_xen_apply(Xen gen, Xen arg1, Xen arg2)
 #if HAVE_SCHEME
 
 /* these are for mus_xen_tag, so need not handle float-vectors */
+static s7_pointer mus_apply_symbol;
 
 static Xen mus_xen_apply(s7_scheme *sc, Xen args1)
 {
@@ -1531,10 +1532,10 @@ static Xen mus_xen_apply(s7_scheme *sc, Xen args1)
   if (s7_is_pair(args))
     {
       mus_float_t arg1, arg2;
-      arg1 = s7_number_to_real_with_caller(sc, s7_car(args), "mus-apply");
+      arg1 = s7_number_to_real_with_symbol_caller(sc, s7_car(args), mus_apply_symbol);
       args = s7_cdr(args);
       if (s7_is_pair(args))
-	arg2 = s7_number_to_real_with_caller(sc, s7_car(args), "mus-apply");
+	arg2 = s7_number_to_real_with_symbol_caller(sc, s7_car(args), mus_apply_symbol);
       else arg2 = 0.0;
       return(s7_make_real(s7, mus_run(Xen_to_mus_any(gen), arg1, arg2)));
     }
@@ -2669,6 +2670,22 @@ static mus_long_t d_size(s7_scheme *sc, s7_pointer size, int arg_n, const char *
   return(x);
 }
 
+static s7_pointer an_integer_string, a_float_vector_or_list_string;
+static mus_long_t d_size_1(s7_scheme *sc, s7_pointer size, int arg_n, s7_pointer caller)
+{
+  mus_long_t x;
+  if (size == Xen_false)
+    return(-1);
+  if (!s7_is_integer(size))
+    s7_wrong_type_error(sc, caller, arg_n, size, an_integer_string);    
+  x = s7_integer(size);
+  if (x < 0)
+    Xen_out_of_range_error(s7_symbol_name(caller), arg_n, size, "size < 0?");
+  if (x > mus_max_table_size())
+    Xen_out_of_range_error(s7_symbol_name(caller), arg_n, size, "size too large (see mus-max-table-size)");
+  return(x);
+}
+
 static mus_long_t d_max_size(s7_scheme *sc, s7_pointer msize, int arg_n, const char *caller)
 {
   mus_long_t max_size;
@@ -2744,6 +2761,8 @@ static s7_pointer d_contents(s7_scheme *sc, s7_pointer contents, s7_pointer init
 }
   
 /* I don't think any of these mus_make* funcs call clm_error, so the local mus_error handlers are not needed */
+static s7_pointer make_delay_symbol, make_comb_symbol, make_filtered_comb_symbol, make_notch_symbol;
+static s7_pointer make_all_pass_symbol, make_moving_average_symbol, make_moving_norm_symbol;
 
 static s7_pointer g_make_delay(s7_scheme *sc, s7_pointer args)
 {
@@ -2755,7 +2774,7 @@ static s7_pointer g_make_delay(s7_scheme *sc, s7_pointer args)
   s7_pointer initial_contents;
   
   p = s7_cdddr(args);
-  size = d_size(sc, s7_car(args), 1, S_make_delay);        /* -1 if no size key */
+  size = d_size_1(sc, s7_car(args), 1, make_delay_symbol);        /* -1 if no size key */
   max_size = d_max_size(sc, s7_car(p), 4, S_make_delay);   /* -1 if no max-size key */
   if (max_size < size) max_size = (size == 0) ? 1 : size;
 
@@ -2782,7 +2801,7 @@ static s7_pointer g_make_comb(s7_scheme *sc, s7_pointer args)
   s7_pointer initial_contents;
   mus_float_t scl;
   
-  size = d_size(sc, s7_cadr(args), 2, S_make_comb);        /* -1 if no size key */
+  size = d_size_1(sc, s7_cadr(args), 2, make_comb_symbol);        /* -1 if no size key */
   p = s7_cdddr(args);
   max_size = d_max_size(sc, s7_cadr(p), 5, S_make_comb);   /* -1 if no max-size key */
   if (max_size < size) max_size = (size == 0) ? 1 : size;
@@ -2811,7 +2830,7 @@ static s7_pointer g_make_filtered_comb(s7_scheme *sc, s7_pointer args)
   s7_pointer initial_contents;
   mus_float_t scl;
   
-  size = d_size(sc, s7_cadr(args), 2, S_make_filtered_comb);        /* -1 if no size key */
+  size = d_size_1(sc, s7_cadr(args), 2, make_filtered_comb_symbol);        /* -1 if no size key */
   p = s7_cdddr(args);
   max_size = d_max_size(sc, s7_cadr(p), 5, S_make_filtered_comb);   /* -1 if no max-size key */
   if (max_size < size) max_size = (size == 0) ? 1 : size;
@@ -2851,7 +2870,7 @@ static s7_pointer g_make_notch(s7_scheme *sc, s7_pointer args)
   s7_pointer initial_contents;
   mus_float_t scl;
   
-  size = d_size(sc, s7_cadr(args), 2, S_make_notch);        /* -1 if no size key */
+  size = d_size_1(sc, s7_cadr(args), 2, make_notch_symbol);        /* -1 if no size key */
   p = s7_cdddr(args);
   max_size = d_max_size(sc, s7_cadr(p), 5, S_make_notch);   /* -1 if no max-size key */
   if (max_size < size) max_size = (size == 0) ? 1 : size;
@@ -2880,7 +2899,7 @@ static s7_pointer g_make_all_pass(s7_scheme *sc, s7_pointer args)
   s7_pointer initial_contents;
   mus_float_t feedback, feedforward;
   
-  size = d_size(sc, s7_caddr(args), 3, S_make_all_pass);        /* -1 if no size key */
+  size = d_size_1(sc, s7_caddr(args), 3, make_all_pass_symbol);        /* -1 if no size key */
   p = s7_cdddr(args);
   max_size = d_max_size(sc, s7_caddr(p), 6, S_make_all_pass);   /* -1 if no max-size key */
   if (max_size < size) max_size = (size == 0) ? 1 : size;
@@ -2909,7 +2928,7 @@ static s7_pointer g_make_moving_average(s7_scheme *sc, s7_pointer args)
   mus_float_t *line;
   mus_float_t sum;
   
-  size = d_size(sc, s7_car(args), 1, S_make_moving_average);        /* -1 if no size key */
+  size = d_size_1(sc, s7_car(args), 1, make_moving_average_symbol);        /* -1 if no size key */
   initial_contents = d_contents(sc, s7_cadr(args), s7_caddr(args), size, 2, S_make_moving_average);
   size = s7_vector_length(initial_contents);
   if (size == 0)
@@ -2964,7 +2983,7 @@ static s7_pointer g_make_moving_norm(s7_scheme *sc, s7_pointer args)
   mus_float_t *line;
   s7_pointer initial_contents;
 
-  size = d_size(sc, s7_car(args), 1, S_make_moving_norm);        /* -1 if no size key */
+  size = d_size_1(sc, s7_car(args), 1, make_moving_norm_symbol);        /* -1 if no size key */
   initial_contents = d_contents(sc, s7_caddr(args), s7_cadddr(args), size, 3, S_make_moving_norm);
   size = s7_vector_length(initial_contents);
   if (size == 0)
@@ -4029,7 +4048,9 @@ return a new " S_rand " generator, producing a sequence of random numbers (a ste
 frequency is the rate at which new numbers are chosen."
 
 #if HAVE_SCHEME
-static s7_pointer g_make_noi(s7_scheme *sc, s7_pointer args, bool rand_case, const char *caller)
+static s7_pointer make_rand_symbol, make_rand_interp_symbol, a_distribution_envelope_string;
+
+static s7_pointer g_make_noi(s7_scheme *sc, s7_pointer args, bool rand_case, const char *caller, s7_pointer calsym)
 {
   mus_any *ge;
   mus_float_t freq, base;
@@ -4060,7 +4081,7 @@ static s7_pointer g_make_noi(s7_scheme *sc, s7_pointer args, bool rand_case, con
       int len;
       len = s7_list_length(sc, fp);
       if ((len < 4) || (len & 1))
-	return(s7_wrong_type_arg_error(sc, caller, 3, fp, "a distribution envelope"));
+	return(s7_wrong_type_error(sc, calsym, 3, fp, a_distribution_envelope_string));
       if (s7_cadr(p) != Xen_false)
 	clm_error(caller, ":envelope and :distribution in same call?", args);
       distribution = inverse_integrate(fp, distribution_size);
@@ -4102,8 +4123,8 @@ static s7_pointer g_make_noi(s7_scheme *sc, s7_pointer args, bool rand_case, con
   return(Xen_false);
 }
 
-static s7_pointer g_make_rand_interp(s7_scheme *sc, s7_pointer args) {return(g_make_noi(sc, args, false, S_make_rand_interp));}
-static s7_pointer g_make_rand(s7_scheme *sc, s7_pointer args)        {return(g_make_noi(sc, args, true, S_make_rand));}
+static s7_pointer g_make_rand_interp(s7_scheme *sc, s7_pointer args) {return(g_make_noi(sc, args, false, S_make_rand_interp, make_rand_interp_symbol));}
+static s7_pointer g_make_rand(s7_scheme *sc, s7_pointer args)        {return(g_make_noi(sc, args, true, S_make_rand, make_rand_symbol));}
 #else
 static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
 {
@@ -6614,6 +6635,8 @@ static Xen g_is_polywave(Xen obj)
 return a new polynomial-based waveshaping generator.  (" S_make_polywave " :partials (float-vector 1 1.0)) is the same in effect as " S_make_oscil "."
 
 #if HAVE_SCHEME
+static s7_pointer make_polywave_symbol;
+
 static s7_pointer g_make_polywave(s7_scheme *sc, s7_pointer args)
 {
   mus_any *ge;
@@ -6636,12 +6659,12 @@ static s7_pointer g_make_polywave(s7_scheme *sc, s7_pointer args)
 	  else
 	    {
 	      if (s7_is_int_vector(pr))
-		return(s7_wrong_type_arg_error(sc, S_make_polywave, 2, pr, "a float-vector or a list"));
+		return(s7_wrong_type_error(sc, make_polywave_symbol, 2, pr, a_float_vector_or_list_string));
 	      else
 		{
 		  if (s7_is_vector(pr))
 		    xcoeffs = mus_vector_to_partials(pr, &n, &error);
-		  else return(s7_wrong_type_arg_error(sc, S_make_polywave, 2, pr, "a float-vector or a list"));
+		  else return(s7_wrong_type_error(sc, make_polywave_symbol, 2, pr, a_float_vector_or_list_string));
 		}
 	    }
 	}
@@ -13775,6 +13798,20 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_frample_to_frample,	g_frample_to_frample_w,     5, 0, 0, H_frample_to_frample,	pl_fffifi);
 
 #if HAVE_SCHEME
+  mus_apply_symbol = s7_make_symbol(s7, "mus-apply");
+  make_delay_symbol = s7_make_symbol(s7, S_make_delay);
+  make_comb_symbol = s7_make_symbol(s7, S_make_comb);
+  make_filtered_comb_symbol = s7_make_symbol(s7, S_make_filtered_comb);
+  make_notch_symbol = s7_make_symbol(s7, S_make_notch);
+  make_all_pass_symbol = s7_make_symbol(s7, S_make_all_pass);
+  make_moving_average_symbol = s7_make_symbol(s7, S_make_moving_average);
+  make_moving_norm_symbol = s7_make_symbol(s7, S_make_moving_norm);
+  make_polywave_symbol = s7_make_symbol(s7, S_make_polywave);
+  make_rand_symbol = s7_make_symbol(s7, S_make_rand);
+  make_rand_interp_symbol = s7_make_symbol(s7, S_make_rand_interp);
+  an_integer_string = s7_make_permanent_string(s7, "an integer");
+  a_float_vector_or_list_string = s7_make_permanent_string(s7, "a float-vector or a list");
+  a_distribution_envelope_string = s7_make_string(s7, "a distribution envelope");
   init_choosers(s7);
 #endif
 
