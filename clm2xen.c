@@ -988,6 +988,9 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   return(url);
 }
 
+#if HAVE_SCHEME
+s7_pointer an_integer_window_type_string, make_fft_window_symbol;
+#endif
 
 static Xen g_make_fft_window(Xen type, Xen size, Xen ubeta, Xen ualpha)
 {
@@ -1010,7 +1013,11 @@ is the window family parameter, if any:\n  " make_window_example
   int fft_window;
   mus_float_t *data;
 
+#if HAVE_SCHEME
+  if (!s7_is_integer(type)) s7_wrong_type_error(s7, make_fft_window_symbol, 1, type, an_integer_window_type_string);
+#else
   Xen_check_type(Xen_is_integer(type), type, 1, S_make_fft_window, "an integer (window type)");
+#endif
   Xen_check_type(Xen_is_llong(size), size, 2, S_make_fft_window, "an integer");
 
   if (Xen_is_number(ubeta)) beta = Xen_real_to_C_double(ubeta);
@@ -7482,7 +7489,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 
 
 #if HAVE_SCHEME
-static s7_pointer make_env;
+static s7_pointer make_env, make_env_symbol, a_float_vector_or_even_string;
+
 static s7_pointer g_make_env(s7_scheme *sc, s7_pointer args)
 {
   mus_any *ge;
@@ -7540,7 +7548,7 @@ static s7_pointer g_make_env(s7_scheme *sc, s7_pointer args)
 	  v = envp;
 	  len = s7_vector_length(envp);
 	  if ((len < 2) || (len & 1))
-	    return(s7_wrong_type_arg_error(sc, S_make_env, 1, envp, "a float-vector with an even number of entries"));
+	    return(s7_wrong_type_error(sc, make_env_symbol, 1, envp, a_float_vector_or_even_string));
 	  brkpts = s7_float_vector_elements(envp);
 	}
       else
@@ -13809,9 +13817,14 @@ static void mus_xen_init(void)
   make_polywave_symbol = s7_make_symbol(s7, S_make_polywave);
   make_rand_symbol = s7_make_symbol(s7, S_make_rand);
   make_rand_interp_symbol = s7_make_symbol(s7, S_make_rand_interp);
+  make_fft_window_symbol = s7_make_symbol(s7, S_make_fft_window);
+  make_env_symbol = s7_make_symbol(s7, S_make_env);
+
+  an_integer_window_type_string = s7_make_permanent_string(s7, "an integer (window type)");
+  a_float_vector_or_even_string = s7_make_permanent_string(s7, "a float-vector with an even number of entries");
   an_integer_string = s7_make_permanent_string(s7, "an integer");
   a_float_vector_or_list_string = s7_make_permanent_string(s7, "a float-vector or a list");
-  a_distribution_envelope_string = s7_make_string(s7, "a distribution envelope");
+  a_distribution_envelope_string = s7_make_permanent_string(s7, "a distribution envelope");
   init_choosers(s7);
 #endif
 
