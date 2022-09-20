@@ -1539,10 +1539,10 @@ static Xen mus_xen_apply(s7_scheme *sc, Xen args1)
   if (s7_is_pair(args))
     {
       mus_float_t arg1, arg2;
-      arg1 = s7_number_to_real_with_symbol_caller(sc, s7_car(args), mus_apply_symbol);
+      arg1 = s7_number_to_real_with_location(sc, s7_car(args), mus_apply_symbol);
       args = s7_cdr(args);
       if (s7_is_pair(args))
-	arg2 = s7_number_to_real_with_symbol_caller(sc, s7_car(args), mus_apply_symbol);
+	arg2 = s7_number_to_real_with_location(sc, s7_car(args), mus_apply_symbol);
       else arg2 = 0.0;
       return(s7_make_real(s7, mus_run(Xen_to_mus_any(gen), arg1, arg2)));
     }
@@ -2493,11 +2493,11 @@ static s7_pointer g_make_oscil(s7_scheme *sc, s7_pointer args)
   mus_any *ge;
   mus_float_t freq, phase;
   
-  freq = s7_number_to_real(s7, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_oscil, 1, s7_car(args), "freq > srate/2?");
 
-  phase = s7_number_to_real(s7, s7_cadr(args));
+  phase = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
 
   ge = mus_make_oscil(freq, phase);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
@@ -2731,7 +2731,7 @@ static s7_pointer d_contents(s7_scheme *sc, s7_pointer contents, s7_pointer init
       if (init != Xen_false)
 	{
 	  mus_float_t initial_element;
-	  initial_element = s7_number_to_real(sc, init);
+	  initial_element = s7_number_to_real_with_caller(sc, init, __func__);
 	  if (initial_element != 0.0)
 	    {
 	      mus_long_t i;
@@ -2745,7 +2745,8 @@ static s7_pointer d_contents(s7_scheme *sc, s7_pointer contents, s7_pointer init
     }
 
   if (s7_is_number(init))
-    s7_wrong_type_arg_error(sc, caller, arg_n, contents, "initial-contents and initial-element in the same call?");
+    s7_wrong_type_error(sc, s7_make_string_wrapper(sc, caller), arg_n, contents, 
+			s7_make_string_wrapper_with_length(sc, "initial-contents and initial-element in the same call?", 54));
 
   if (s7_is_float_vector(contents))
     {
@@ -2764,7 +2765,8 @@ static s7_pointer d_contents(s7_scheme *sc, s7_pointer contents, s7_pointer init
 	Xen_out_of_range_error(caller, arg_n, contents, "size > initial-contents length");
       return(xen_list_to_vct(contents));
     }
-  return(s7_wrong_type_arg_error(sc, caller, arg_n, contents, "a float-vector or a proper list"));
+  return(s7_wrong_type_error(sc, s7_make_string_wrapper(sc, caller), arg_n, contents, 
+			     s7_make_string_wrapper_with_length(sc, "a float-vector or a proper list", 31)));
 }
   
 /* I don't think any of these mus_make* funcs call clm_error, so the local mus_error handlers are not needed */
@@ -2819,7 +2821,7 @@ static s7_pointer g_make_comb(s7_scheme *sc, s7_pointer args)
   if (size == -1)
     size = max_size;
 
-  scl = s7_number_to_real(sc, s7_car(args));
+  scl = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   interp_type = d_interp(sc, s7_caddr(p), max_size != size, 6, S_make_comb);
   ge = mus_make_comb(scl, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type);
   if (ge) 
@@ -2848,7 +2850,7 @@ static s7_pointer g_make_filtered_comb(s7_scheme *sc, s7_pointer args)
   if (size == -1)
     size = max_size;
 
-  scl = s7_number_to_real(sc, s7_car(args));
+  scl = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   interp_type = d_interp(sc, s7_caddr(p), max_size != size, 6, S_make_filtered_comb);
 
   flt = s7_cadddr(p);
@@ -2888,7 +2890,7 @@ static s7_pointer g_make_notch(s7_scheme *sc, s7_pointer args)
   if (size == -1)
     size = max_size;
 
-  scl = s7_number_to_real(sc, s7_car(args));
+  scl = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   interp_type = d_interp(sc, s7_caddr(p), max_size != size, 6, S_make_notch);
   ge = mus_make_notch(scl, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type);
   if (ge) 
@@ -2917,8 +2919,8 @@ static s7_pointer g_make_all_pass(s7_scheme *sc, s7_pointer args)
   if (size == -1)
     size = max_size;
 
-  feedback = s7_number_to_real(sc, s7_car(args));
-  feedforward = s7_number_to_real(sc, s7_cadr(args));
+  feedback = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
+  feedforward = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   interp_type = d_interp(sc, s7_cadddr(p), max_size != size, 7, S_make_all_pass);
   ge = mus_make_all_pass(feedback, feedforward, size, s7_float_vector_elements(initial_contents), max_size, (mus_interp_t)interp_type);
   if (ge) 
@@ -2996,7 +2998,7 @@ static s7_pointer g_make_moving_norm(s7_scheme *sc, s7_pointer args)
   if (size == 0)
     Xen_out_of_range_error(S_make_moving_norm, 1, s7_car(args), "size = 0?");
 
-  scl = s7_number_to_real(sc, s7_cadr(args));
+  scl = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   line = s7_float_vector_elements(initial_contents);
   ge = mus_make_moving_norm(size, line, scl);
   if (ge) 
@@ -3816,7 +3818,7 @@ static s7_pointer g_make_ncos(s7_scheme *sc, s7_pointer args)
   int n;
   s7_pointer un;
 
-  freq = s7_number_to_real(s7, s7_car(args));
+  freq = s7_number_to_real_with_caller(s7, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_ncos, 1, s7_car(args), "freq > srate/2?");
 
@@ -3899,7 +3901,7 @@ static s7_pointer g_make_nsin(s7_scheme *sc, s7_pointer args)
   int n;
   s7_pointer un;
 
-  freq = s7_number_to_real(s7, s7_car(args));
+  freq = s7_number_to_real_with_caller(s7, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_nsin, 1, s7_car(args), "freq > srate/2?");
 
@@ -4065,7 +4067,7 @@ static s7_pointer g_make_noi(s7_scheme *sc, s7_pointer args, bool rand_case, con
   s7_pointer v = NULL, p, fp;
   int distribution_size = RANDOM_DISTRIBUTION_TABLE_SIZE;
   
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > mus_srate())
     Xen_out_of_range_error(caller, 1, s7_car(args), "freq > srate?");
   
@@ -4107,7 +4109,7 @@ static s7_pointer g_make_noi(s7_scheme *sc, s7_pointer args, bool rand_case, con
 	}
     }
 
-  base = s7_number_to_real(sc, s7_cadr(args));
+  base = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
 
   if (!distribution)
     {
@@ -4508,11 +4510,11 @@ static s7_pointer g_make_table_lookup(s7_scheme *sc, s7_pointer args)
   s7_pointer v, p, fp;
   int interp_type = (int)MUS_INTERP_LINEAR;
 
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_table_lookup, 1, s7_car(args), "freq > srate/2?");
   
-  phase = s7_number_to_real(sc, s7_cadr(args));
+  phase = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   if (phase < 0.0)
     Xen_out_of_range_error(S_make_table_lookup, 2, s7_cadr(args), "initial phase <= 0.0?"); /* is this actually an error? */
 
@@ -4530,7 +4532,7 @@ static s7_pointer g_make_table_lookup(s7_scheme *sc, s7_pointer args)
   if (fp != Xen_false)
     {
       if (!s7_is_integer(fp))
-	return(s7_wrong_type_arg_error(s7, S_make_table_lookup, 4, fp, "an integer"));
+	return(s7_wrong_type_error(s7, s7_make_string_wrapper_with_length(sc, S_make_table_lookup, 17), 4, fp, an_integer_string));
       table_size = s7_integer(fp);
       if (table_size <= 0)
 	Xen_out_of_range_error(S_make_table_lookup, 4, fp, "size <= 0?");
@@ -4658,11 +4660,11 @@ return a new " S_sawtooth_wave " generator."
   mus_any *ge;
   mus_float_t freq, base, phase;
 
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > mus_srate())
     Xen_out_of_range_error(S_make_sawtooth_wave, 1, s7_car(args), "freq > srate/2?");
-  base = s7_number_to_real(sc, s7_cadr(args));
-  phase = s7_number_to_real(sc, s7_caddr(args));
+  base = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
+  phase = s7_number_to_real_with_caller(sc, s7_caddr(args), __func__);
 
   ge = mus_make_sawtooth_wave(freq, base, phase);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
@@ -4677,11 +4679,11 @@ return a new " S_square_wave " generator."
   mus_any *ge;
   mus_float_t freq, base, phase;
 
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > mus_srate())
     Xen_out_of_range_error(S_make_square_wave, 1, s7_car(args), "freq > srate/2?");
-  base = s7_number_to_real(sc, s7_cadr(args));
-  phase = s7_number_to_real(sc, s7_caddr(args));
+  base = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
+  phase = s7_number_to_real_with_caller(sc, s7_caddr(args), __func__);
 
   ge = mus_make_square_wave(freq, base, phase);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
@@ -4696,11 +4698,11 @@ return a new " S_triangle_wave " generator."
   mus_any *ge;
   mus_float_t freq, base, phase;
 
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > mus_srate())
     Xen_out_of_range_error(S_make_triangle_wave, 1, s7_car(args), "freq > srate/2?");
-  base = s7_number_to_real(sc, s7_cadr(args));
-  phase = s7_number_to_real(sc, s7_caddr(args));
+  base = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
+  phase = s7_number_to_real_with_caller(sc, s7_caddr(args), __func__);
 
   ge = mus_make_triangle_wave(freq, base, phase);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
@@ -4715,11 +4717,11 @@ return a new " S_pulse_train " generator.  This produces a sequence of impulses.
   mus_any *ge;
   mus_float_t freq, base, phase;
 
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > mus_srate())
     Xen_out_of_range_error(S_make_pulse_train, 1, s7_car(args), "freq > srate/2?");
-  base = s7_number_to_real(sc, s7_cadr(args));
-  phase = s7_number_to_real(sc, s7_caddr(args));
+  base = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
+  phase = s7_number_to_real_with_caller(sc, s7_caddr(args), __func__);
 
   ge = mus_make_pulse_train(freq, base, phase);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
@@ -4911,19 +4913,19 @@ return a new " S_asymmetric_fm " generator."
   s7_pointer x;
 
   x = s7_car(args);
-  freq = s7_number_to_real(s7, x);
+  freq = s7_number_to_real_with_caller(s7, x, __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_asymmetric_fm, 1, x, "freq > srate/2?");
 
   args = s7_cdr(args);
   x = s7_car(args);
-  phase = s7_number_to_real(s7, x);
+  phase = s7_number_to_real_with_caller(s7, x, __func__);
 
   args = s7_cdr(args);
   x = s7_car(args);
-  r = s7_number_to_real(s7, x);
+  r = s7_number_to_real_with_caller(s7, x, __func__);
   x = s7_cadr(args);
-  ratio = s7_number_to_real(s7, x);
+  ratio = s7_number_to_real_with_caller(s7, x, __func__);
   
   ge = mus_make_asymmetric_fm(freq, phase, r, ratio);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
@@ -5003,8 +5005,8 @@ static s7_pointer g_make_one_zero(s7_scheme *sc, s7_pointer args)
   mus_any *gen;
   mus_float_t a0, a1;
   
-  a0 = s7_number_to_real(sc, s7_car(args));
-  a1 = s7_number_to_real(sc, s7_cadr(args));
+  a0 = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
+  a1 = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   gen = mus_make_one_zero(a0, a1);
 
   if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
@@ -5017,8 +5019,8 @@ static s7_pointer g_make_one_pole(s7_scheme *sc, s7_pointer args)
   mus_any *gen;
   mus_float_t a0, b1;
 
-  a0 = s7_number_to_real(sc, s7_car(args));
-  b1 = s7_number_to_real(sc, s7_cadr(args));
+  a0 = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
+  b1 = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   gen = mus_make_one_pole(a0, b1);
 
   if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
@@ -5031,13 +5033,13 @@ static s7_pointer g_make_two_zero_a(s7_scheme *sc, s7_pointer args)
   mus_any *gen;
   mus_float_t a0, a1;
 
-  a0 = s7_number_to_real(sc, s7_car(args));
+  a0 = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   args = s7_cdr(args);
-  a1 = s7_number_to_real(sc, s7_car(args));
+  a1 = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (a0 < 20.0)
     {
       mus_float_t a2;
-      a2 = s7_number_to_real(sc, s7_cadr(args));
+      a2 = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
       gen = mus_make_two_zero(a0, a1, a2);
     }
   else gen = mus_make_two_zero_from_frequency_and_radius(a0, a1);
@@ -5051,8 +5053,8 @@ static s7_pointer g_make_two_zero_f(s7_scheme *sc, s7_pointer args)
   mus_any *gen;
   mus_float_t freq, radius;
 
-  freq = s7_number_to_real(sc, s7_car(args));
-  radius = s7_number_to_real(sc, s7_cadr(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
+  radius = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   gen = mus_make_two_zero_from_frequency_and_radius(freq, radius);
 
   if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
@@ -5087,8 +5089,8 @@ static s7_pointer g_make_two_pole_f(s7_scheme *sc, s7_pointer args)
   mus_any *gen;
   mus_float_t freq, radius;
 
-  freq = s7_number_to_real(sc, s7_car(args));
-  radius = s7_number_to_real(sc, s7_cadr(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
+  radius = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   gen = mus_make_two_pole_from_frequency_and_radius(freq, radius);
 
   if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
@@ -5100,13 +5102,13 @@ static s7_pointer g_make_two_pole_a(s7_scheme *sc, s7_pointer args)
   mus_any *gen;
   mus_float_t a0, b1;
 
-  a0 = s7_number_to_real(sc, s7_car(args));
+  a0 = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   args = s7_cdr(args);
-  b1 = s7_number_to_real(sc, s7_car(args));
+  b1 = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (a0 < 2.0)
     {
       mus_float_t b2;
-      b2 = s7_number_to_real(sc, s7_cadr(args));
+      b2 = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
       gen = mus_make_two_pole(a0, b1, b2);
     }
   else gen = mus_make_two_pole_from_frequency_and_radius(a0, b1);
@@ -5387,11 +5389,11 @@ frequency sets the resonance center frequency (Hz)."
   mus_any *ge;
   mus_float_t freq, radius;
   
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_formant, 1, s7_car(args), "freq > srate/2?");
 
-  radius = s7_number_to_real(sc, s7_cadr(args));
+  radius = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
 
   ge = mus_make_formant(freq, radius);
   if (ge)
@@ -5408,11 +5410,11 @@ frequency sets the resonance center frequency (Hz)."
   mus_any *ge;
   mus_float_t freq, radius;
   
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_firmant, 1, s7_car(args), "freq > srate/2?");
 
-  radius = s7_number_to_real(sc, s7_cadr(args));
+  radius = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
 
   ge = mus_make_firmant(freq, radius);
   if (ge) 
@@ -5780,7 +5782,7 @@ static Xen g_singer_filter(Xen start, Xen end, Xen tmp, Xen dline1, Xen dline2, 
   d1 = s7_float_vector_elements(dline1);
   d2 = s7_float_vector_elements(dline2);
   cf = s7_float_vector_elements(coeffs);
-  temp = s7_number_to_real(s7, tmp);
+  temp = s7_number_to_real_with_caller(s7, tmp, __func__);
 
   for (k = beg, j = beg + 1; j < lim; k++, j++)
     {
@@ -5813,7 +5815,7 @@ static Xen g_singer_nose_filter(Xen end, Xen tmp, Xen dline1, Xen dline2, Xen co
   d1 = s7_float_vector_elements(dline1);
   d2 = s7_float_vector_elements(dline2);
   cf = s7_float_vector_elements(coeffs);
-  temp = s7_number_to_real(s7, tmp);
+  temp = s7_number_to_real_with_caller(s7, tmp, __func__);
 
   for (k = 1, j = 2; j < lim; k++, j++)
     {
@@ -5849,13 +5851,13 @@ static s7_pointer g_make_wave_train(s7_scheme *sc, s7_pointer args)
   s7_pointer v, p, fp;
   int interp_type = (int)MUS_INTERP_LINEAR;
 
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_wave_train, 1, s7_car(args), "freq > srate/2?");
   if (freq < 0.0)
     Xen_out_of_range_error(S_make_wave_train, 1, s7_car(args), "freq < 0.0?");
   
-  phase = s7_number_to_real(sc, s7_cadr(args));
+  phase = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   if (phase < 0.0)
     Xen_out_of_range_error(S_make_wave_train, 2, s7_cadr(args), "initial phase <= 0.0?");
 
@@ -6447,7 +6449,7 @@ static s7_pointer g_make_polyshape(s7_scheme *sc, s7_pointer args)
   mus_float_t *coeffs = NULL;
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
 
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_polyshape, 1, s7_car(args), "freq > srate/2?");
 
@@ -6456,7 +6458,7 @@ static s7_pointer g_make_polyshape(s7_scheme *sc, s7_pointer args)
   if (fp != Xen_false)
     {
       if (!s7_is_integer(fp))
-	return(s7_wrong_type_arg_error(s7, S_make_polyshape, 5, fp, "an integer"));
+	return(s7_wrong_type_error(s7, s7_make_string_wrapper_with_length(sc, S_make_polyshape, 14), 5, fp, an_integer_string));
       kind = (mus_polynomial_t)s7_integer(fp);
       if ((kind < MUS_CHEBYSHEV_EITHER_KIND) || (kind > MUS_CHEBYSHEV_SECOND_KIND))
 	Xen_out_of_range_error(S_make_polyshape, 5, fp, "unknown Chebyshev polynomial kind");
@@ -6504,7 +6506,7 @@ static s7_pointer g_make_polyshape(s7_scheme *sc, s7_pointer args)
       csize = 2;
     }
   if (!s7_is_float_vector(v)) v = xen_make_vct(csize, coeffs);
-  phase = s7_number_to_real(sc, s7_cadr(args));
+  phase = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
 
   ge = mus_make_polyshape(freq, phase, coeffs, csize, kind);
   if (ge) 
@@ -6706,7 +6708,7 @@ static s7_pointer g_make_polywave(s7_scheme *sc, s7_pointer args)
     }
 
   pf = s7_car(args);
-  freq = s7_number_to_real(sc, pf);
+  freq = s7_number_to_real_with_caller(sc, pf, __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_polywave, 1, pf, "freq > srate/2?");
 
@@ -6910,12 +6912,12 @@ static s7_pointer g_make_nrxy(s7_scheme *sc, s7_pointer args, bool sin_case, con
   int n;
   s7_pointer un;
 
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(caller, 1, s7_car(args), "freq > srate/2?");
 
   args = s7_cdr(args);
-  ratio = s7_number_to_real(sc, s7_car(args));
+  ratio = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
 
   args = s7_cdr(args);
   un = s7_car(args);
@@ -6925,7 +6927,7 @@ static s7_pointer g_make_nrxy(s7_scheme *sc, s7_pointer args, bool sin_case, con
   if (n < 0)
     Xen_out_of_range_error(caller, 3, un, "n (sidebands) < 0?");
 
-  r = s7_number_to_real(sc, s7_cadr(args));
+  r = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   if ((r >= 1.0) ||
     (r <= -1.0))
     Xen_out_of_range_error(caller, 4, s7_cadr(args), "r (sideband amp ratio) not within -1.0 to 1.0?");
@@ -7064,12 +7066,12 @@ static s7_pointer g_make_rxyk(s7_scheme *sc, s7_pointer args, bool sin_case, con
   mus_any *ge;
   mus_float_t freq, r, ratio;
   
-  freq = s7_number_to_real(sc, s7_car(args));
+  freq = s7_number_to_real_with_caller(sc, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(caller, 1, s7_car(args), "freq > srate/2?");
   
-  ratio = s7_number_to_real(sc, s7_cadr(args));
-  r = s7_number_to_real(sc, s7_caddr(args));
+  ratio = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
+  r = s7_number_to_real_with_caller(sc, s7_caddr(args), __func__);
 
   if (sin_case)
     ge = mus_make_rxyksin(freq, 0.0, r, ratio);
@@ -7503,7 +7505,7 @@ static s7_pointer g_make_env(s7_scheme *sc, s7_pointer args)
   durationp = s7_caddr(args);
   if (durationp != Xen_false)
     {
-      duration = s7_number_to_real(sc, durationp);
+      duration = s7_number_to_real_with_caller(sc, durationp, __func__);
       if (duration <= 0.0)
 	Xen_out_of_range_error(S_make_env, 3, durationp, "duration <= 0.0?");	
     }
@@ -7531,14 +7533,14 @@ static s7_pointer g_make_env(s7_scheme *sc, s7_pointer args)
 	{
 	  for (i = 0, ep = envp; i < len; i += 2, ep = s7_cdr(ep))
 	    {
-	      brkpts[i] = s7_number_to_real(sc, s7_caar(ep));
-	      brkpts[i + 1] = s7_number_to_real(sc, s7_cadar(ep));
+	      brkpts[i] = s7_number_to_real_with_caller(sc, s7_caar(ep), __func__);
+	      brkpts[i + 1] = s7_number_to_real_with_caller(sc, s7_cadar(ep), __func__);
 	    }
 	}
       else
 	{
 	  for (i = 0, ep = envp; i < len; i++, ep = s7_cdr(ep))
-	    brkpts[i] = s7_number_to_real(sc, s7_car(ep));
+	    brkpts[i] = s7_number_to_real_with_caller(sc, s7_car(ep), __func__);
 	}
     }
   else
@@ -7554,7 +7556,8 @@ static s7_pointer g_make_env(s7_scheme *sc, s7_pointer args)
       else
 	{
 	  if (s7_is_int_vector(envp))
-	    return(s7_wrong_type_arg_error(sc, S_make_env, 1, envp, "a list, float-vector, or a normal vector"));
+	    return(s7_wrong_type_error(sc, s7_make_string_wrapper_with_length(sc, S_make_env, 8), 1, envp, 
+				       s7_make_string_wrapper_with_length(sc, "a list, float-vector, or a normal vector", 40)));
 	  else
 	    {
 	      if (s7_is_vector(envp))
@@ -7567,7 +7570,7 @@ static s7_pointer g_make_env(s7_scheme *sc, s7_pointer args)
 		  brkpts = s7_float_vector_elements(v);	
 		  els = s7_vector_elements(envp);
 		  for (i = 0; i < len; i++)
-		    brkpts[i] = s7_number_to_real(sc, els[i]);
+		    brkpts[i] = s7_number_to_real_with_caller(sc, els[i], __func__);
 		}
 	      else return(s7_wrong_type_arg_error(sc, S_make_env, 1, envp, "a list, float-vector, or vector"));
 	    }
@@ -7604,12 +7607,12 @@ static s7_pointer g_make_env(s7_scheme *sc, s7_pointer args)
   if ((end == 0) && (duration == 0.0))
     Xen_out_of_range_error(S_make_env, 0, durationp, "duration <= 0.0?");
 
-  base = s7_number_to_real(sc, s7_cadr(p));
+  base = s7_number_to_real_with_caller(sc, s7_cadr(p), __func__);
   if (base < 0.0) 
     Xen_out_of_range_error(S_make_env, 5, s7_cadr(p), "base < 0.0?");
 
-  scaler = s7_number_to_real(sc, s7_cadr(args));
-  offset = s7_number_to_real(sc, s7_car(p));
+  scaler = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
+  offset = s7_number_to_real_with_caller(sc, s7_car(p), __func__);
 
   if (duration > (24 * 3600 * 365))
     Xen_out_of_range_error(S_make_env, 0, durationp, "duration > year?");
@@ -9126,11 +9129,11 @@ static s7_pointer g_make_locsig(s7_scheme *sc, s7_pointer args)
   type = clm_locsig_type;
   
   fp = s7_car(args);
-  if (fp != Xen_false) degree = s7_number_to_real(sc, fp);
+  if (fp != Xen_false) degree = s7_number_to_real_with_caller(sc, fp, __func__);
   fp = s7_cadr(args);
-  if (fp != Xen_false) distance = s7_number_to_real(sc, fp);
+  if (fp != Xen_false) distance = s7_number_to_real_with_caller(sc, fp, __func__);
   fp = s7_caddr(args);
-  if (fp != Xen_false) reverb = s7_number_to_real(sc, fp);
+  if (fp != Xen_false) reverb = s7_number_to_real_with_caller(sc, fp, __func__);
 
   p = s7_cdddr(args);
   fp = s7_car(p);
@@ -9389,7 +9392,7 @@ static Xen g_move_locsig(Xen obj, Xen degree, Xen distance)
   mus_move_locsig(Xen_to_mus_any(obj), Xen_real_to_C_double(degree), Xen_real_to_C_double(distance));
 #else
   mus_move_locsig(Xen_to_mus_any(obj), 
-		  s7_number_to_real_with_caller(s7, degree, S_move_locsig), 
+		  s7_number_to_real_with_caller(s7, degree, S_move_locsig),
 		  s7_number_to_real_with_caller(s7, distance, S_move_locsig));
 #endif
   return(obj);
@@ -9650,7 +9653,7 @@ static mus_float_t as_needed_block_input_float(void *ptr, int direction, mus_flo
 static mus_float_t as_needed_input_any(void *ptr, int direction)
 {
   mus_xen *gn = (mus_xen *)ptr;
-  return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? as_needed_arglist_one : as_needed_arglist_minus_one)));
+  return(s7_number_to_real_with_caller(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? as_needed_arglist_one : as_needed_arglist_minus_one), __func__));
 }
 #endif
 #endif
@@ -9921,7 +9924,7 @@ static s7_pointer g_make_src(s7_scheme *sc, s7_pointer args)
       if (wid > 2000) 
 	Xen_out_of_range_error(S_make_src, 3, p, "width > 2000?");
     }
-  srate = s7_number_to_real(sc, s7_cadr(args));
+  srate = s7_number_to_real_with_caller(sc, s7_cadr(args), __func__);
   
   gn = mx_alloc(MUS_MAX_VCTS);
   {int i; for (i = 0; i < MUS_MAX_VCTS; i++) gn->vcts[i] = Xen_undefined;}
@@ -10129,7 +10132,7 @@ static s7_pointer g_make_granulate(s7_scheme *sc, s7_pointer args)
   fp = s7_cadr(args);
   if (fp != Xen_false)
     {
-      expansion = s7_number_to_real(sc, fp);
+      expansion = s7_number_to_real_with_caller(sc, fp, __func__);
       if (expansion <= 0.0) 
 	Xen_out_of_range_error(S_make_granulate, 2, fp, "expansion <= 0.0?");
     }
@@ -10137,7 +10140,7 @@ static s7_pointer g_make_granulate(s7_scheme *sc, s7_pointer args)
   fp = s7_car(p);
   if (fp != Xen_false)
     {
-      segment_length = s7_number_to_real(sc, fp);
+      segment_length = s7_number_to_real_with_caller(sc, fp, __func__);
       if (segment_length <= 0.0) 
 	Xen_out_of_range_error(S_make_granulate, 3, fp, "segment-length <= 0.0?");
     }
@@ -10145,7 +10148,7 @@ static s7_pointer g_make_granulate(s7_scheme *sc, s7_pointer args)
   fp = s7_cadr(p);
   if (fp != Xen_false)
     {
-      segment_scaler = s7_number_to_real(sc, fp);
+      segment_scaler = s7_number_to_real_with_caller(sc, fp, __func__);
       if (segment_scaler == 0.0) 
 	Xen_out_of_range_error(S_make_granulate, 4, fp, "segment-scaler should be greater than 0.0?");
     }
@@ -10154,7 +10157,7 @@ static s7_pointer g_make_granulate(s7_scheme *sc, s7_pointer args)
   fp = s7_car(p);
   if (fp != Xen_false)
     {
-      output_hop = s7_number_to_real(sc, fp);
+      output_hop = s7_number_to_real_with_caller(sc, fp, __func__);
       if (output_hop <= 0.0) 
 	Xen_out_of_range_error(S_make_granulate, 5, fp, "hop <= 0?");
       if (output_hop > 3600.0) 
@@ -10166,7 +10169,7 @@ static s7_pointer g_make_granulate(s7_scheme *sc, s7_pointer args)
   fp = s7_cadr(p);
   if (fp != Xen_false)
     {
-      ramp_time = s7_number_to_real(sc, fp);
+      ramp_time = s7_number_to_real_with_caller(sc, fp, __func__);
       if ((ramp_time < 0.0) || (ramp_time > 0.5))
 	Xen_out_of_range_error(S_make_granulate, 6, fp, "ramp must be between 0.0 and 0.5");
     }
@@ -10175,7 +10178,7 @@ static s7_pointer g_make_granulate(s7_scheme *sc, s7_pointer args)
   fp = s7_car(p);
   if (fp != Xen_false)
     {
-      jitter = s7_number_to_real(sc, fp);
+      jitter = s7_number_to_real_with_caller(sc, fp, __func__);
       if ((jitter < 0.0) || (jitter > 100.0))
 	Xen_out_of_range_error(S_make_granulate, 7, fp, "jitter must be between 0.0 and 100.0");
     }
@@ -10753,7 +10756,7 @@ static s7_pointer g_make_phase_vocoder(s7_scheme *sc, s7_pointer args)
   p = s7_cddr(p);
   fp = s7_car(p);
   if (fp != Xen_false)
-    pitch = s7_number_to_real(sc, fp);
+    pitch = s7_number_to_real_with_caller(sc, fp, __func__);
   else pitch = 1.0;
 
   analyze_obj = s7_cadr(p);
@@ -11019,7 +11022,7 @@ static s7_pointer g_make_ssb_am(s7_scheme *sc, s7_pointer args)
   mus_float_t freq;
   s7_pointer un;
 
-  freq = s7_number_to_real(s7, s7_car(args));
+  freq = s7_number_to_real_with_caller(s7, s7_car(args), __func__);
   if (freq > (0.5 * mus_srate()))
     Xen_out_of_range_error(S_make_ssb_am, 1, s7_car(args), "freq > srate/2?");
   
@@ -11900,7 +11903,7 @@ DF_1(radians_to_degrees)
 DF_1(degrees_to_radians)
 DF_1(random)
 
-static s7_double mus_hz_to_radians_d_p(s7_pointer x) {return((s7_double)mus_hz_to_radians(s7_number_to_real(s7, x)));}
+static s7_double mus_hz_to_radians_d_p(s7_pointer x) {return((s7_double)mus_hz_to_radians(s7_number_to_real_with_caller(s7, x, __func__)));}
 
 DF_2(contrast_enhancement)
 DF_2(odd_multiple)
