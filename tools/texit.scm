@@ -1,6 +1,6 @@
 (set! (*s7* 'heap-size) (* 3 1024000))
 
-(define size 1000000)
+(define size 100000)
 
 (define (memb x ls)
   (call-with-exit
@@ -17,7 +17,7 @@
     (memb 'b '(a b c))))
 
 (membtest)
-(exit)
+
 
 (define (find-if f sequence)
   (call-with-exit
