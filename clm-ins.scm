@@ -2019,7 +2019,7 @@ is a physical model of a flute:
 	  (fill! current-peak-amps 0.0)
 	  (fill! peak-amps 0.0)
 	  
-	  (let ((peaks 0))
+	  (let ((pks 0))
 	    (let ((ra (fdr 0))
 		  (la 0.0)
 		  (ca 0.0))
@@ -2044,7 +2044,7 @@ is a physical model of a flute:
 		      (let ((amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
 			    (freq (* fft-mag (+ k offset -1))))
 			;; (if (not (real? amp)) (format *stderr* "~A ~A ~A -> ~A ~A~%" la ca ra offset amp))
-			(if (= peaks max-peaks-1)
+			(if (= pks max-peaks-1)
 			    ;; gotta either flush this peak, or find current lowest and flush him
 			    (let ((minp 0)
 				  (minpeak (peak-amps 0)))
@@ -2059,15 +2059,15 @@ is a physical model of a flute:
 				    (set! (peak-freqs minp) freq)
 				    (set! (peak-amps minp) amp))))
 			    (begin
-			      (set! (peak-freqs peaks) freq)
-			      (set! (peak-amps peaks) amp)
-			      (set! peaks (+ peaks 1))))))))))
+			      (set! (peak-freqs pks) freq)
+			      (set! (peak-amps pks) amp)
+			      (set! pks (+ pks 1))))))))))
 	    ;; now we have the current peaks -- match them to the previous set and do something interesting with the result
 	    ;; the end results are reflected in the updated values in the rates and sweeps arrays.
 	    ;; search for fits between last and current, set rates/sweeps for those found
 	    ;;   try to go by largest amp first 
 	    (do ((k 0 (+ k 1)))
-		((= k peaks))
+		((= k pks))
 	      (let ((pl (float-vector-peak-and-location peak-amps)))
 		(let ((maxpk (car pl))
 		      (maxp (cadr pl)))

@@ -294,14 +294,14 @@
 		  (snd-print (format #f "odd: ~S is using a reserved Version ID" mpgfile)))
 	      (if (= layer 0)
 		  (snd-print (format #f "odd: ~S is using a reserved layer description" mpgfile)))
-	      (let ((chans (if (= channel-mode 3) 1 2))
+	      (let ((chns (if (= channel-mode 3) 1 2))
 		    (mpeg-layer (case layer ((3) 1) ((2)) (else 3)))
 		    (srate (/ (#i(44100 48000 32000 0) srate-index)
 			      (case id ((0) 4) ((2)) (else 1)))))
 		(snd-print (format #f "~S: ~A Hz, ~A, MPEG-~A~%" 
-				   mpgfile srate (if (= chans 1) "mono" "stereo") mpeg-layer))
+				   mpgfile srate (if (= chns 1) "mono" "stereo") mpeg-layer))
 		(system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
-		(open-raw-sound rawfile chans srate (if (little-endian?) mus-lshort mus-bshort)))))))))
+		(open-raw-sound rawfile chns srate (if (little-endian?) mus-lshort mus-bshort)))))))))
 
 ;;; (mpg "mpeg.mpg" "mpeg.raw")
 
@@ -1918,11 +1918,11 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, and 1 in 3, (scramble-channels 3 2 0 1)")
       
 	   (scramble-channels-1
-	    (let ((find-chan (lambda (chans chan len)
+	    (let ((find-chan (lambda (chns chan len)
 			       (do ((pos #f)
 				    (i 0 (+ i 1)))
 				   ((or pos (= i len)) pos)
-				 (if (= (chans i) chan)
+				 (if (= (chns i) chan)
 				     (set! pos i))))))
 	      (lambda (cur-chans end-chans chans loc)
 		(if (> chans loc)

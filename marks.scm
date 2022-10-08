@@ -175,7 +175,7 @@
 (define play-syncd-marks 
   (let ((+documentation+ "(play-syncd-marks sync) starts playing from all marks sharing sync"))
     (lambda (synch)
-      (let ((chans 1)
+      (let ((chns 1)
 	    (rate 22050))
 	(for-each
 	 (lambda (m)
@@ -183,10 +183,10 @@
 		  (channel (cadr (mark-home m)))
 		  (new-player (make-player sound channel)))
 	     (add-player new-player (mark-sample m))
-	     (set! chans (max chans (+ 1 channel)))
+	     (set! chns (max chns (+ 1 channel)))
 	     (set! rate (max rate (srate sound)))))
 	 (syncd-marks synch))
-	(start-playing chans rate)))))
+	(start-playing chns rate)))))
 
 (define play-between-marks
   (let ((+documentation+ "(play-between-marks ...) plays the portion between the marks (searching for plausible default marks)"))

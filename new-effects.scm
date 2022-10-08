@@ -1437,21 +1437,21 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 			       src-timevar-label
 			       
 			       (lambda (w context info)
-				 (let ((env (scale-envelope (xe-envelope src-timevar-envelope)
-							    src-timevar-scale)))
+				 (let ((e (scale-envelope (xe-envelope src-timevar-envelope)
+							  src-timevar-scale)))
 				   (case src-timevar-target
 				     ((sound)
-				      (src-sound env))
+				      (src-sound e))
 				     ((selection)
 				      (if (selection-member? (selected-sound))
-					  (src-selection env)
+					  (src-selection e)
 					  (display ";no selection")))
 				     (else 
 				      (let ((pts (plausible-mark-samples)))
 					(if pts
 					    (let* ((beg (car pts))
 						   (len (- (cadr pts) beg)))
-					      (src-channel (make-env env :length len) beg len (selected-sound)))))))))
+					      (src-channel (make-env e :length len) beg len (selected-sound)))))))))
 			       
 			       (lambda (w context info)
 				 (help-dialog "Src-Timevar"

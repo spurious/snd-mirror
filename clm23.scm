@@ -1283,7 +1283,7 @@
 (define* (fmdoc-vox beg dur freq amp (indices '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(car (make-oscil 0))
+	(cr (make-oscil 0))
 	(per-vib (make-triangle-wave 6 :amplitude (* freq .03)))
 	(ran-vib (make-rand-interp 20 :amplitude (* freq .5 .02))))
     
@@ -1307,7 +1307,7 @@
 	  ((= i end))
 	(let* ((frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
 	       (frq1 (hz->radians frq))
-	       (carg (oscil car frq1))
+	       (carg (oscil cr frq1))
 	       (frm0 (/ (env f0) frq))
 	       (frm1 (/ (env f1) frq))
 	       (frm2 (/ (env f2) frq)))

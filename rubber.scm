@@ -195,7 +195,7 @@
 		       (handled 0)
 		       (mult 1)
 		       (curs 0)
-		       (edits (make-float-vector weights)))
+		       (eds (make-float-vector weights)))
 		   (do ((best-mark -1 -1)
 			(old-handled handled handled))
 		       ((or (= curs weights) (>= handled needed-samps)))
@@ -214,7 +214,7 @@
 		     (if (or (< handled needed-samps)
 			     (< (- handled needed-samps) (- needed-samps old-handled)))
 			 (begin
-			   (set! (edits curs) best-mark)
+			   (set! (eds curs) best-mark)
 			   (set! curs (+ 1 curs))))
 		     (set! (cross-weights best-mark) 1000.0))
 		   
@@ -228,7 +228,7 @@
 			    (> changed-len samps))
 			(if show-details
 			    (snd-print (format #f "wanted: ~D, got ~D~%" (floor samps) (floor changed-len)))))
-		     (let* ((best-mark (floor (edits i)))
+		     (let* ((best-mark (floor (eds i)))
 			    (beg (floor (cross-samples best-mark)))
 			    (next-beg (floor (cross-samples (floor (cross-marks best-mark)))))
 			    (len (floor (cross-periods best-mark))))
