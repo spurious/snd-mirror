@@ -1,7 +1,8 @@
-Snd 22.7
+Snd 22.8
 
-s7: (*s7* 'number-separator)
+s7: s7_number_to_real_with_location. s7_wrong_type_error. 
+    s7_make_string_wrapper_with_length. s7_make_semipermanent_string.
+    CL-style doc strings, (symbol...) settable.
 
-checked: sbcl 2.2.8
+checked: sbcl 2.2.9
 
-Thanks!: Tito Latini, IOhannes Zmoelnig
