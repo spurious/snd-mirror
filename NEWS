@@ -1,8 +1,10 @@
-Snd 22.8
+Snd 22.9
 
-s7: s7_number_to_real_with_location. s7_wrong_type_error. 
-    s7_make_string_wrapper_with_length. s7_make_semipermanent_string.
-    CL-style doc strings, (symbol...) settable.
+s7: added support for NaN "payloads": new functions nan and nan-payload
+      to create such a NaN or get its payload, read-time support for
+      +nan.123 (123 is the payload), and so on.
+    S7_EXPORT for MSVC thanks to vladimir florentino
 
-checked: sbcl 2.2.9
+checked: sbcl 2.2.10
 
+Thanks!:  Hyogeol Lee, vladimir florentino
