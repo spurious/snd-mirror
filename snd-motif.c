@@ -17384,6 +17384,47 @@ static char *atom_to_string(Atom type, XtPointer value, unsigned long length)
   return(str);
 }
 
+static void decode_file_uri(char *s) /* from Tito Latini 5-Dec-22 */
+{
+  char *tmp = s, pct_decoded = 0;
+  while (s[0] != '\0')
+    {
+      if ((s[1] == '\0') || (s[2] == '\0'))
+        {
+          if (pct_decoded)
+	    {
+	      /* The resulting string is shorter. */
+	      *tmp++ = s[0];
+	      if (s[1] != '\0') *tmp++ = s[1];
+	    }
+          break;
+        }
+      if ((s[0] == '%') &&
+          (s[1] >= '2') && (s[1] <= '7') &&
+          /* Skip the control character 7F. */
+          (!((s[1] == '7') && ((s[2] == 'f') || s[2] == 'F'))) &&
+          /* Percent-encoding a character from 0x20 to 0x7E. */
+          (((s[2] >= '0') && (s[2] <= '9')) || 
+	   ((s[2] >= 'a') && (s[2] <= 'f')) || 
+	   ((s[2] >= 'A') && (s[2] <= 'F'))))
+        {
+          pct_decoded = (s[1] - '0') * 16;
+          if (s[2] >= 'a')
+	    pct_decoded += s[2] - 'a' + 10;
+          else 
+	    if (s[2] >= 'A') 
+	      pct_decoded += s[2] - 'A' + 10;
+	    else pct_decoded += s[2] - '0';
+          *tmp++ = pct_decoded;
+          s += 3;
+        }
+      else 
+	if (pct_decoded) 
+	  *tmp++ = *s++;
+      else tmp = ++s;
+    }
+  if (pct_decoded) *tmp = '\0';
+}
 
 static Position mx, my;
 
@@ -17421,6 +17462,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 			    {
 			      char *tmp;
 			      tmp = (char *)(filename + 7);
+			      decode_file_uri(tmp);
 			      (*(d->drop_watcher))(caller, (const char *)tmp, mx, my, d->context);
 			    }
 			  else (*(d->drop_watcher))(caller, (const char *)filename, mx, my, d->context);
@@ -21076,8 +21118,11 @@ static void menu_drop_watcher(Widget w, const char *str, Position x, Position y,
 {
   snd_info *sp = NULL;
   ss->open_requestor = FROM_DRAG_AND_DROP;
-  sp = snd_open_file(str, FILE_READ_WRITE);
-  if (sp) select_channel(sp, 0);
+  if (!(is_directory(str)))
+    {
+      sp = snd_open_file(str, FILE_READ_WRITE);
+      if (sp) select_channel(sp, 0);
+    }
 }
 
 
@@ -25791,8 +25836,11 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
 static void channel_drop_watcher(Widget w, const char *str, Position x, Position y, void *context)
 {
   intptr_t data;
-  data = (intptr_t)context;
-  drag_and_drop_mix_at_x_y((int)data, str, x, y);
+  if (!(is_directory(str)))
+    {
+      data = (intptr_t)context;
+      drag_and_drop_mix_at_x_y((int)data, str, x, y);
+    }
 }
 
 
