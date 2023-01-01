@@ -1,10 +1,15 @@
-Snd 22.9
+Snd 23.0:
 
-s7: added support for NaN "payloads": new functions nan and nan-payload
-      to create such a NaN or get its payload, read-time support for
-      +nan.123 (123 is the payload), and so on.
-    S7_EXPORT for MSVC thanks to vladimir florentino
+In Snd, drag and drop can handle "percent-encoded" file names, 
+  thanks to Tito Latini.
 
-checked: sbcl 2.2.10
+In clm, Orm Finnendahl got Juan Pampin's ATS system running: 
+  https://github.com/ormf/cl-ats.
 
-Thanks!:  Hyogeol Lee, vladimir florentino
+In s7: reverted s7.h to previous version; use tools/s7.def instead.
+
+
+checked: Ubuntu 22.10 (gcc 12.2.0), sbcl 2.2.11|2.3.0
+
+Thanks!: Rudolf Adamkovic, Tito Latini, Iohannes zmoelnig, jingkaimori
+
