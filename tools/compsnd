@@ -632,18 +632,18 @@ make allclean
 
 
 
-cp ~/sndlib/* .
+cp -rf ~/sndlib/* .
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                sndlib tests                                           ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses -Wno-format-overflow"
-make snd
+make
 make clean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -------------------------------- sndlib forth -------------------------------- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --with-forth
-make snd
+make
 make clean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -------------------------------- sndlib s7 c++ -------------------------------- '

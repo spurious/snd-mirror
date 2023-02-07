@@ -416,8 +416,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->auto_resize_symbol =           s7_define_variable(s7, "*" S_auto_resize "*",            s7_make_boolean(s7, DEFAULT_AUTO_RESIZE));
 #if USE_MOTIF
   #define DEFAULT_LISTENER_FONT "9x15"
-#endif
-#if (!USE_NO_GUI)
   ss->listener_font_symbol =         s7_define_variable(s7, "*" S_listener_font "*",          s7_make_string(s7, DEFAULT_LISTENER_FONT));
 #else
   ss->listener_font_symbol =         s7_define_variable(s7, "*" S_listener_font "*",          s7_make_string(s7, ""));
