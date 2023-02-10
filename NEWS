@@ -1,15 +1,9 @@
-Snd 23.0:
+Snd 23.1:
 
-In Snd, drag and drop can handle "percent-encoded" file names, 
-  thanks to Tito Latini.
+clm: Michael Edwards fixed a bug in scentroid.ins.
 
-In clm, Orm Finnendahl got Juan Pampin's ATS system running: 
-  https://github.com/ormf/cl-ats.
+s7: David St-Hilaire integrated s7 into tic-80.
 
-In s7: reverted s7.h to previous version; use tools/s7.def instead.
+checked: FC 37, sbcl 2.3.1
 
-
-checked: Ubuntu 22.10 (gcc 12.2.0), sbcl 2.2.11|2.3.0
-
-Thanks!: Rudolf Adamkovic, Tito Latini, Iohannes zmoelnig, jingkaimori
-
+Thanks!: David St-Hilaire, Michael Edwards
