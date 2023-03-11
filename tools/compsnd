@@ -44,7 +44,7 @@ echo ' -------------------------------------------------------------------------
 echo ' ----                 basic configure test                                  ----- '
 echo ' -------------------------------------------------------------------------------- '
 
-./configure --quiet --with-motif CFLAGS="-O3 -Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "  
+./configure --quiet --with-motif CFLAGS="-Wall -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-stringop-overflow -Wno-parentheses "  
 make snd
 echo ' '
 echo ' '

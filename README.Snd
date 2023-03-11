@@ -301,6 +301,11 @@ package if you want to build Snd (you need the Motif headers).
 
 On 64-bit machines, use motif 2.3.2 or later.
 
+I think some of the newer Motif packages (like post-2012)
+need both /usr/include/X11/extensions/Print.h and
+/usr/include/X11/bitmaps/gray -- in the latter case I
+sometimes have to create the bitmaps directory.
+I can send copies of these files if needed.
 
 
 ---- Mac OSX: ---- 
