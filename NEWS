@@ -1,9 +1,7 @@
-Snd 23.1:
+Snd 23.2
 
-clm: Michael Edwards fixed a bug in scentroid.ins.
+the usual minor bugfixes and whatnot.
 
-s7: David St-Hilaire integrated s7 into tic-80.
+checked: sbcl 2.3.2
 
-checked: FC 37, sbcl 2.3.1
-
-Thanks!: David St-Hilaire, Michael Edwards
+Thanks!: Woody Douglass
